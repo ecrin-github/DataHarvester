@@ -32,7 +32,7 @@ namespace DataHarvester
 		public int? max_age_units_id { get; set; }
 		public string max_age_units { get; set; }
 
-		public DateTime datetime_of_data_fetch { get; set; }
+		public DateTime? datetime_of_data_fetch { get; set; }
 
 		public List<StudyIdentifier> identifiers { get; set; }
 		public List<StudyTitle> titles { get; set; }
@@ -78,7 +78,7 @@ namespace DataHarvester
 		public int? max_age_units_id { get; set; }
 		public string max_age_units { get; set; }
 
-		public DateTime datetime_of_data_fetch { get; set; }
+		public DateTime? datetime_of_data_fetch { get; set; }
 
 		public StudyInDB(Study s)
 		{
@@ -331,10 +331,12 @@ namespace DataHarvester
 		public DateTime? url_last_checked { get; set; }
 		public bool add_study_contribs { get; set; }
 		public bool add_study_topics { get; set; }
+		public DateTime? datetime_of_data_fetch { get; set; }
 
 		public DataObject(string _sd_id, int _do_id, string _display_name, int? _publication_year, int _object_class_id,
 							string _object_class, int? _object_type_id, string _object_type,
-							int? _managing_org_id, string _managing_org, int? _access_type_id)
+							int? _managing_org_id, string _managing_org, int? _access_type_id, 
+							DateTime? _datetime_of_data_fetch)
 		{
 			sd_id = _sd_id;
 			do_id = _do_id;
@@ -352,13 +354,15 @@ namespace DataHarvester
 			if (_access_type_id == 12) access_type = "Public on-screen access (open)";
 			add_study_contribs = true;
 			add_study_topics = true;
+			datetime_of_data_fetch = _datetime_of_data_fetch;
 		}
 
 		public DataObject(string _sd_id, int _do_id, string _display_name, int? _publication_year, int _object_class_id,
 							string _object_class, int _object_type_id, string _object_type,
 							int? _managing_org_id, string _managing_org,
 							int? _access_type_id, string _access_type, string _access_details,
-							string _access_details_url, DateTime? _url_last_checked)
+							string _access_details_url, DateTime? _url_last_checked,
+							DateTime? _datetime_of_data_fetch)
 		{
 			sd_id = _sd_id;
 			do_id = _do_id;
@@ -378,6 +382,7 @@ namespace DataHarvester
 			url_last_checked = _url_last_checked;
 			add_study_contribs = true;
 			add_study_topics = true;
+			datetime_of_data_fetch = _datetime_of_data_fetch;
 		}
 
 	}

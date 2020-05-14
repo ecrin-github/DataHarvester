@@ -44,7 +44,6 @@ namespace DataHarvester
 				.MapVarchar("comments", x => x.comments);
 
 
-
 		public static PostgreSQLCopyHelper<DataObject> data_objects_helper =
 			new PostgreSQLCopyHelper<DataObject>("sd", "data_objects")
 				.MapVarchar("sd_id", x => x.sd_id)
@@ -62,9 +61,10 @@ namespace DataHarvester
 				.MapVarchar("access_type", x => x.access_type)
 				.MapVarchar("access_details", x => x.access_details)
 				.MapVarchar("access_details_url", x => x.access_details_url)
-				.MapDate("url_last_checked ", x => x.url_last_checked)
+				.MapDate("url_last_checked", x => x.url_last_checked)
 				.MapBoolean("add_study_contribs", x => x.add_study_contribs)
-				.MapBoolean("add_study_topics", x => x.add_study_topics);
+				.MapBoolean("add_study_topics", x => x.add_study_topics)
+			    .MapTimeStampTz("datetime_of_data_fetch", x => x.datetime_of_data_fetch);
 
 
 		public static PostgreSQLCopyHelper<DataSetProperties> dataset_properties_helper =

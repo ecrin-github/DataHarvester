@@ -16,11 +16,11 @@ namespace DataHarvester.BioLincc
 
 		public BioLinccController(DataLayer _common_repo, int _harvest_type_id, int _source_id)
 		{
-			repo = new BioLinccDataLayer();
+			source_id = _source_id;
+			repo = new BioLinccDataLayer(source_id);
 			processor = new BioLinccProcessor();
 			common_repo = _common_repo;
 			harvest_type_id = _harvest_type_id;
-			source_id = _source_id;
 		}
 
 		public void EstablishNewSDTables()
@@ -65,7 +65,7 @@ namespace DataHarvester.BioLincc
 					BioLinccRecord studyRegEntry = (BioLinccRecord)serializer.Deserialize(rdr);
 
                     // break up the file into relevant data classes
-                    Study s = processor.ProcessData(repo, studyRegEntry);
+                    Study s = processor.ProcessData(repo, studyRegEntry, rec.download_datetime);
 
                     // store the data in the database			
                     processor.StoreData(repo, s);
@@ -79,10 +79,19 @@ namespace DataHarvester.BioLincc
 			}
 		}
 
-		public void CreateJsonBData()
+		public void UpdateIds()
 		{
-			repo.CreateJSonBStudyData();
-			repo.CreateJSonBObjectData();
+			repo.UpdateStudyIdentifierOrgs();
+			repo.UpdateDataObjectOrgs();
+		}
+
+		public void InsertHashes()
+		{
+			repo.CreateStudyHashes();
+			repo.CreateStudyCompositeHashes();
+			repo.CreateDataObjectHashes();
+			repo.CreateObjectCompositeHashes();
+			repo.CreateRollUpHashes();
 		}
 
 	}

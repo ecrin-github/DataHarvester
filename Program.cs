@@ -72,7 +72,8 @@ namespace DataHarvester
 							BioLinccController biolincc_controller = new BioLinccController(repo, harvest_type_id, source_id);
 							biolincc_controller.EstablishNewSDTables();
 							biolincc_controller.LoopThroughFiles();
-							biolincc_controller.CreateJsonBData();
+							biolincc_controller.UpdateIds();
+							biolincc_controller.InsertHashes();
 							break;
 						}
 					case 100901:

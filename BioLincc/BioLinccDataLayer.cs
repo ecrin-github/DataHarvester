@@ -16,6 +16,7 @@ namespace DataHarvester.BioLincc
 		private string _biolincc_connString;
 		private string _biolincc_pp_connString;
 		private string _ctg_connString;
+		private int source_id;
 
 		/// <summary>
 		/// Parameterless constructor is used to automatically build
@@ -24,8 +25,10 @@ namespace DataHarvester.BioLincc
 		/// The json file also includes the root folder path, which is
 		/// stored in the class's folder_base property.
 		/// </summary>
-		public BioLinccDataLayer()
+		public BioLinccDataLayer(int _source_id)
 		{
+			source_id = _source_id;
+
 			IConfigurationRoot settings = new ConfigurationBuilder()
 				.SetBasePath(AppContext.BaseDirectory)
 				.AddJsonFile("appsettings.json")
@@ -89,7 +92,7 @@ namespace DataHarvester.BioLincc
 			StudyTableBuilders.create_table_study_relationships(_biolincc_connString);
 			StudyTableBuilders.create_table_study_references(_biolincc_connString);
 			StudyTableBuilders.create_table_study_titles(_biolincc_connString);
-			StudyTableBuilders.create_table_study_jsonb(_biolincc_connString);
+			StudyTableBuilders.create_table_study_hashes(_biolincc_connString);
 		}
 
 
@@ -100,7 +103,7 @@ namespace DataHarvester.BioLincc
 			ObjectTableBuilders.create_table_object_dates(_biolincc_connString);
 			ObjectTableBuilders.create_table_object_instances(_biolincc_connString);
 			ObjectTableBuilders.create_table_object_titles(_biolincc_connString);
-			ObjectTableBuilders.create_table_object_jsonb(_biolincc_connString);
+			ObjectTableBuilders.create_table_object_hashes(_biolincc_connString);
 		}
 			
 
@@ -228,18 +231,71 @@ namespace DataHarvester.BioLincc
 			}
 		}
 
-		public void CreateJSonBStudyData()
+		public void UpdateStudyIdentifierOrgs()
 		{
-
-
+			OrgHelper.update_study_identifiers_using_default_name(_biolincc_connString);
+			OrgHelper.update_study_identifiers_using_other_name(_biolincc_connString);
+			OrgHelper.update_study_identifiers_insert_default_names(_biolincc_connString);
 		}
 
-
-		public void CreateJSonBObjectData()
+		public void UpdateDataObjectOrgs()
 		{
-
-
+			OrgHelper.update_data_objects_using_default_name(_biolincc_connString);
+			OrgHelper.update_data_objects_using_other_name(_biolincc_connString);
+			OrgHelper.update_data_objects_insert_default_names(_biolincc_connString);
 		}
 
+		public void CreateStudyHashes()
+		{
+			StudyHashCreators.CreateStudyIdHashes(_biolincc_connString, source_id);
+
+			StudyHashCreators.CreateStudyRecordHashes(_biolincc_connString);
+			StudyHashCreators.CreateStudyIdentifierHashes(_biolincc_connString);
+			StudyHashCreators.CreateStudyTitleHashes(_biolincc_connString);
+			StudyHashCreators.CreateStudyReferenceHashes(_biolincc_connString);
+
+			StudyHashInserters.InsertStudyHashesIntoStudyIdentifiers(_biolincc_connString);
+			StudyHashInserters.InsertStudyHashesIntoStudyTitles(_biolincc_connString);
+			StudyHashInserters.InsertStudyHashesIntoStudyReferences(_biolincc_connString);
+		}
+
+		public void CreateStudyCompositeHashes()
+		{
+			StudyCompositeHashCreators.CreateCompositeStudyIdentifierHashes(_biolincc_connString);
+			StudyCompositeHashCreators.CreateCompositeStudyTitleHashes(_biolincc_connString);
+			StudyCompositeHashCreators.CreateCompositeStudyReferenceHashes(_biolincc_connString);
+		}
+
+		public void CreateDataObjectHashes()
+		{
+			ObjectHashCreators.CreateObjectIdHashes(_biolincc_connString);
+
+			ObjectHashCreators.CreateObjectRecordHashes(_biolincc_connString);
+			ObjectHashCreators.CreateRecordsetPropertiesHashes(_biolincc_connString);
+			ObjectHashCreators.CreateObjectInstanceHashes(_biolincc_connString);
+			ObjectHashCreators.CreateObjectTitledHashes(_biolincc_connString);
+			ObjectHashCreators.CreateObjectDateHashes(_biolincc_connString);
+
+			ObjectHashCreators.InsertStudyHashesIntoDataObjects(_biolincc_connString);
+			ObjectHashCreators.InsertObjectHashesIntoDatasetProperties(_biolincc_connString);
+			ObjectHashCreators.InsertObjectHashesIntoObjectInstances(_biolincc_connString);
+			ObjectHashCreators.InsertObjectHashesIntoObjectTitles(_biolincc_connString);
+			ObjectHashCreators.InsertObjectHashesIntoObjectDates(_biolincc_connString);
+		}
+
+		public void CreateObjectCompositeHashes()
+		{
+			ObjectCompositeHashCreators.CreateCompositeObjectInstanceHashes(_biolincc_connString);
+			ObjectCompositeHashCreators.CreateCompositeObjectTitlesHashes(_biolincc_connString);
+			ObjectCompositeHashCreators.CreateCompositeObjectDatesHashes(_biolincc_connString);
+		}
+
+		public void CreateRollUpHashes()
+		{
+			// objects must be done first..
+			ObjectCompositeHashCreators.CreateFullDataObjectHashes(_biolincc_connString);
+			StudyCompositeHashCreators.CreateCompositeDataObjectHashes(_biolincc_connString);
+			StudyCompositeHashCreators.CreateFullStudyHashes(_biolincc_connString);
+		}
 	}
 }

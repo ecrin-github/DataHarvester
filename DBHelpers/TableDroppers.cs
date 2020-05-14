@@ -55,7 +55,7 @@ namespace DataHarvester.DBHelpers
 
 		public static void drop_table_study_jsonb(string db_conn)
 		{
-			string sql_string = @"DROP TABLE IF EXISTS sd.study_jsonb;";
+			string sql_string = @"DROP TABLE IF EXISTS sd.study_hashes;";
 			using (var conn = new NpgsqlConnection(db_conn))
 			{
 				conn.Execute(sql_string);
@@ -112,7 +112,7 @@ namespace DataHarvester.DBHelpers
 
 		public static void drop_table_object_jsonb(string db_conn)
 		{
-			string sql_string = @"DROP TABLE IF EXISTS sd.object_jsonb;";
+			string sql_string = @"DROP TABLE IF EXISTS sd.object_hashes;";
 			using (var conn = new NpgsqlConnection(db_conn))
 			{
 				conn.Execute(sql_string);
