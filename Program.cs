@@ -70,6 +70,7 @@ namespace DataHarvester
 					case 100900:
 						{
 							BioLinccController biolincc_controller = new BioLinccController(repo, harvest_type_id, source_id);
+							biolincc_controller.EstablishNewADTables();
 							biolincc_controller.EstablishNewSDTables();
 							biolincc_controller.LoopThroughFiles();
 							biolincc_controller.UpdateIds();

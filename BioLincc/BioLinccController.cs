@@ -31,6 +31,13 @@ namespace DataHarvester.BioLincc
 			repo.BuildNewSDObjectTables();
 		}
 
+
+		public void EstablishNewADTables()
+		{
+			//repo.BuildNewADStudyTables();
+			//repo.BuildNewADObjectTables();
+		}
+
 		public void LoopThroughFiles()
 		{
 			// at the moment, for Yoda and BioLincc, harvest_type_id always 1

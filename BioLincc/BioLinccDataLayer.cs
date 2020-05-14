@@ -87,23 +87,23 @@ namespace DataHarvester.BioLincc
 
 		public void BuildNewSDStudyTables()
 		{
-			StudyTableBuilders.create_table_studies(_biolincc_connString);
-			StudyTableBuilders.create_table_study_identifiers(_biolincc_connString);
-			StudyTableBuilders.create_table_study_relationships(_biolincc_connString);
-			StudyTableBuilders.create_table_study_references(_biolincc_connString);
-			StudyTableBuilders.create_table_study_titles(_biolincc_connString);
-			StudyTableBuilders.create_table_study_hashes(_biolincc_connString);
+			StudyTableBuildersSD.create_table_studies(_biolincc_connString);
+			StudyTableBuildersSD.create_table_study_identifiers(_biolincc_connString);
+			StudyTableBuildersSD.create_table_study_relationships(_biolincc_connString);
+			StudyTableBuildersSD.create_table_study_references(_biolincc_connString);
+			StudyTableBuildersSD.create_table_study_titles(_biolincc_connString);
+			StudyTableBuildersSD.create_table_study_hashes(_biolincc_connString);
 		}
 
 
 		public void BuildNewSDObjectTables()
 		{
-			ObjectTableBuilders.create_table_data_objects(_biolincc_connString);
-			ObjectTableBuilders.create_table_dataset_properties(_biolincc_connString);
-			ObjectTableBuilders.create_table_object_dates(_biolincc_connString);
-			ObjectTableBuilders.create_table_object_instances(_biolincc_connString);
-			ObjectTableBuilders.create_table_object_titles(_biolincc_connString);
-			ObjectTableBuilders.create_table_object_hashes(_biolincc_connString);
+			ObjectTableBuildersSD.create_table_data_objects(_biolincc_connString);
+			ObjectTableBuildersSD.create_table_dataset_properties(_biolincc_connString);
+			ObjectTableBuildersSD.create_table_object_dates(_biolincc_connString);
+			ObjectTableBuildersSD.create_table_object_instances(_biolincc_connString);
+			ObjectTableBuildersSD.create_table_object_titles(_biolincc_connString);
+			ObjectTableBuildersSD.create_table_object_hashes(_biolincc_connString);
 		}
 			
 

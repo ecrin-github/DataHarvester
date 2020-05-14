@@ -9,6 +9,7 @@ namespace DataHarvester
 	{
 		public string sd_id { get; set; }
 		public string display_title { get; set; }
+		public string title_lang_code { get; set; }
 
 		public string brief_description { get; set; }
 		public bool bd_contains_html { get; set; }
@@ -55,6 +56,7 @@ namespace DataHarvester
 	{
 		public string sd_id { get; set; }
 		public string display_title { get; set; }
+		public string title_lang_code { get; set; }
 
 		public string brief_description { get; set; }
 		public bool bd_contains_html { get; set; }
@@ -84,6 +86,7 @@ namespace DataHarvester
 		{
 			sd_id = s.sd_id;
 			display_title = s.display_title;
+			title_lang_code = s.title_lang_code ?? "en";
 			brief_description = s.brief_description;
 			bd_contains_html = s.bd_contains_html;
 			data_sharing_statement = s.data_sharing_statement;
