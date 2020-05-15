@@ -177,7 +177,7 @@ namespace DataHarvester.Yoda
 
 			if (st.is_yoda_only)
 			{
-				study_contributors.Add(new StudyContributor(s.sd_id, 54, "Study Sponsor", sponsor_org, null, null, null));
+				study_contributors.Add(new StudyContributor(s.sd_id, 54, "Study Sponsor", sponsor_org_id, sponsor_org, null, null));
 			}
 
 			// study topics
@@ -330,10 +330,10 @@ namespace DataHarvester.Yoda
 					// for datasets also add dataset properties - even if they are largely unknown
 					if (object_type_id == 80)
 					{
-						dataset_properties.Add(new DataSetProperties(s.sd_id, do_id, 0, "", "", 
+						dataset_properties.Add(new DataSetProperties(s.sd_id, do_id, 0, "Not yet known", "", 
 							                      2 , "De-identified", 
 												  "Yoda states that '...researchers will be granted access to participant-level study data that are devoid of personally identifiable information; current best guidelines for de-identification of data will be used.'", 
-												  0, "", ""));
+												  0, "Not yet known", ""));
 					}
 				}
 			}

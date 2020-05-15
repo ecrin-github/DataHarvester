@@ -210,7 +210,7 @@ namespace DataHarvester.BioLincc
 
 			// If there is a study web site...
 
-			if (st.study_website != "")
+			if (!string.IsNullOrEmpty(st.study_website))
 			{
 				do_id++;
 				object_display_title = s.display_title + " :: " + "Study web site";

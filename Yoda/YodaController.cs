@@ -47,7 +47,7 @@ namespace DataHarvester.Yoda
 			{
 				n++;
 				// for testing...
-				if (n == 50) break;
+				//if (n == 50) break;
 
 				filePath = rec.local_path;
 				if (File.Exists(filePath))
@@ -79,16 +79,16 @@ namespace DataHarvester.Yoda
 
 		public void UpdateIds()
 		{
-			//repo.UpdateStudyIdentifierOrgs();
-			//repo.UpdateDataObjectOrgs();
+			repo.UpdateStudyIdentifierOrgs();
+			repo.UpdateDataObjectOrgs();
 		}
 
 		public void InsertHashes()
 		{
-			//repo.CreateStudyHashes();
-			//repo.CreateStudyCompositeHashes();
-			//repo.CreateDataObjectHashes();
-			//repo.CreateObjectCompositeHashes();
+			repo.CreateStudyHashes();
+			repo.CreateStudyCompositeHashes();
+			repo.CreateDataObjectHashes();
+			repo.CreateObjectCompositeHashes();
 		}
 	}
 

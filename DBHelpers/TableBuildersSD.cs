@@ -42,7 +42,9 @@ namespace DataHarvester
 			  , datetime_of_data_fetch TIMESTAMPTZ     NULL
               , record_hash            CHAR(32)        NULL
               , study_full_hash        CHAR(32)        NULL
-			);";
+			);
+            CREATE INDEX studies_sd_id ON sd.studies(sd_id);
+            CREATE INDEX studies_hash_id ON sd.studies(hash_id);";
 
 			using (var conn = new NpgsqlConnection(db_conn))
 			{
@@ -64,7 +66,9 @@ namespace DataHarvester
 			  , identifier_date        VARCHAR         NULL
 			  , identifier_link        VARCHAR         NULL
               , record_hash            CHAR(32)        NULL
-			);";
+			);
+            CREATE INDEX study_identifiers_study_sd_id ON sd.study_identifiers(sd_id);
+            CREATE INDEX study_identifiers_study_hash_id ON sd.study_identifiers(study_hash_id);";
 
 			using (var conn = new NpgsqlConnection(db_conn))
 			{
@@ -82,7 +86,10 @@ namespace DataHarvester
 			  , relationship_type      VARCHAR         NULL
 			  , target_sd_id           VARCHAR         NULL
               , record_hash            CHAR(32)        NULL
-			);";
+			);
+            CREATE INDEX study_relationships_study_sd_id ON sd.study_relationships(sd_id);
+            CREATE INDEX study_relationships_study_hash_id ON sd.study_relationships(study_hash_id);
+			CREATE INDEX study_relationships_target_sd_id ON sd.study_relationships(target_sd_id);"; 
 
 			using (var conn = new NpgsqlConnection(db_conn))
 			{
@@ -101,7 +108,9 @@ namespace DataHarvester
 			  , doi                    VARCHAR         NULL	
 			  , comments               VARCHAR         NULL
               , record_hash            CHAR(32)        NULL
-			);";
+			);
+            CREATE INDEX study_references_study_sd_id ON sd.study_references(sd_id);
+            CREATE INDEX study_references_study_hash_id ON sd.study_references(study_hash_id);";
 
 			using (var conn = new NpgsqlConnection(db_conn))
 			{
@@ -124,7 +133,9 @@ namespace DataHarvester
 			  , comments               VARCHAR         NULL
 			  , comparison_text        VARCHAR         NULL
               , record_hash            CHAR(32)        NULL
-			);";
+			);
+            CREATE INDEX study_titles_study_sd_id ON sd.study_titles(sd_id);
+            CREATE INDEX study_titles_study_hash_id ON sd.study_titles(study_hash_id);";
 
 			using (var conn = new NpgsqlConnection(db_conn))
 			{
@@ -153,7 +164,9 @@ namespace DataHarvester
 			  , affil_org_id           VARCHAR         NULL
 			  , affil_org_id_type      VARCHAR         NULL
               , record_hash            CHAR(32)        NULL
-			);";
+			);
+            CREATE INDEX study_contributors_study_sd_id ON sd.study_contributors(sd_id);
+            CREATE INDEX study_contributors_study_hash_id ON sd.study_contributors(study_hash_id);";
 
 			using (var conn = new NpgsqlConnection(db_conn))
 			{
@@ -175,7 +188,9 @@ namespace DataHarvester
 			  , topic_ct_code          VARCHAR         NULL
 			  , where_found            VARCHAR         NULL
               , record_hash            CHAR(32)        NULL
-			);";
+			);
+            CREATE INDEX study_topics_study_sd_id ON sd.study_topics(sd_id);
+            CREATE INDEX study_topics_study_hash_id ON sd.study_topics(study_hash_id);";
 
 			using (var conn = new NpgsqlConnection(db_conn))
 			{
@@ -192,7 +207,9 @@ namespace DataHarvester
 			  , hash_type_id           INT             NULL
 			  , hash_type              VARCHAR         NULL
 			  , composite_hash         CHAR(32)        NULL
-			);";
+			);
+            CREATE INDEX study_hashes_study_sd_id ON sd.study_hashes(sd_id);
+            CREATE INDEX study_hashes_study_hash_id ON sd.study_hashes(study_hash_id);";
 
 			using (var conn = new NpgsqlConnection(db_conn))
 			{
@@ -239,7 +256,10 @@ namespace DataHarvester
 			  , datetime_of_data_fetch TIMESTAMPTZ     NULL
               , record_hash            CHAR(32)        NULL
               , object_full_hash       CHAR(32)        NULL
-			);";
+			);
+            CREATE INDEX data_objects_study_sd_id_do_id ON sd.data_objects(sd_id, do_id);
+            CREATE INDEX data_objects_hash_id ON sd.data_objects(hash_id);
+            CREATE INDEX data_objects_study_hash_id ON sd.data_objects(study_hash_id);";
 
 			using (var conn = new NpgsqlConnection(db_conn))
 			{
@@ -265,7 +285,10 @@ namespace DataHarvester
 			  , consents_type          VARCHAR         NULL    
 			  , consents_details       VARCHAR         NULL 
               , record_hash            CHAR(32)        NULL
-			);";
+			);
+            CREATE INDEX dataset_properties_sd_id_do_id ON sd.dataset_properties(sd_id, do_id);
+            CREATE INDEX dataset_properties_object_hash_id ON sd.dataset_properties(object_hash_id);
+            CREATE INDEX dataset_properties_study_hash_id ON sd.dataset_properties(study_hash_id);";
 
 			using (var conn = new NpgsqlConnection(db_conn))
 			{
@@ -293,7 +316,10 @@ namespace DataHarvester
 			  , end_day                INT             NULL
 			  , details                VARCHAR         NULL
               , record_hash            CHAR(32)        NULL
-			);";
+			);
+            CREATE INDEX object_dates_sd_id_do_id ON sd.object_dates(sd_id, do_id);
+            CREATE INDEX object_dates_object_hash_id ON sd.object_dates(object_hash_id);
+            CREATE INDEX object_dates_study_hash_id ON sd.object_dates(study_hash_id);";
 
 			using (var conn = new NpgsqlConnection(db_conn))
 			{
@@ -321,7 +347,10 @@ namespace DataHarvester
 			  , resource_size          VARCHAR         NULL
 			  , resource_size_units    VARCHAR         NULL
               , record_hash            CHAR(32)        NULL
-			);";
+			);
+            CREATE INDEX object_instances_sd_id_do_id ON sd.object_instances(sd_id, do_id);
+            CREATE INDEX object_instances_object_hash_id ON sd.object_instances(object_hash_id);
+            CREATE INDEX object_instances_study_hash_id ON sd.object_instances(study_hash_id);";
 
 			using (var conn = new NpgsqlConnection(db_conn))
 			{
@@ -350,7 +379,10 @@ namespace DataHarvester
 			  , affil_org_id           VARCHAR         NULL
 			  , affil_org_id_type      VARCHAR         NULL
               , record_hash            CHAR(32)        NULL
-			);";
+			);
+            CREATE INDEX object_contributors_sd_id_do_id ON sd.object_contributors(sd_id, do_id);
+            CREATE INDEX object_contributors_object_hash_id ON sd.object_contributors(object_hash_id);
+            CREATE INDEX object_contributors_study_hash_id ON sd.object_contributors(study_hash_id);";
 
 			using (var conn = new NpgsqlConnection(db_conn))
 			{
@@ -375,7 +407,10 @@ namespace DataHarvester
 			  , comments               VARCHAR         NULL
 			  , comparison_text        VARCHAR         NULL
               , record_hash            CHAR(32)        NULL
-			);";
+			);
+            CREATE INDEX object_titles_sd_id_do_id ON sd.object_titles(sd_id, do_id);
+            CREATE INDEX object_titles_object_hash_id ON sd.object_titles(object_hash_id);
+            CREATE INDEX object_titles_study_hash_id ON sd.object_titles(study_hash_id);";
 
 			using (var conn = new NpgsqlConnection(db_conn))
 			{
@@ -396,7 +431,10 @@ namespace DataHarvester
 			  , topic_ct_code          VARCHAR         NULL
 			  , where_found            VARCHAR         NULL
               , record_hash            CHAR(32)        NULL
-			);";
+			);
+            CREATE INDEX object_topics_sd_id_do_id ON sd.object_topics(sd_id, do_id);
+            CREATE INDEX object_topics_object_hash_id ON sd.object_topics(object_hash_id);
+            CREATE INDEX object_topics_study_hash_id ON sd.object_topics(study_hash_id);";
 
 			using (var conn = new NpgsqlConnection(db_conn))
 			{
@@ -415,7 +453,10 @@ namespace DataHarvester
 			  , hash_type_id           INT             NULL
 			  , hash_type              VARCHAR         NULL
               , composite_hash         CHAR(32)        NULL
-			);"; 
+			);
+            CREATE INDEX object_hashes_sd_id_do_id ON sd.object_hashes(sd_id, do_id);
+            CREATE INDEX object_hashes_object_hash_id ON sd.object_hashes(object_hash_id);
+            CREATE INDEX object_hashes_study_hash_id ON sd.object_hashes(study_hash_id);";
 
 
 			using (var conn = new NpgsqlConnection(db_conn))

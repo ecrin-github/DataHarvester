@@ -233,7 +233,8 @@ namespace DataHarvester.DBHelpers
         {
             string sql_string = @"Insert into sd.study_hashes 
               (sd_id, study_hash_id, hash_type_id, hash_type, composite_hash)
-              select sd_id, study_hash_id, 15, 'contributors', 
+              select sd_id, study_hash_id, 15, 'contributors',
+              md5(to_json(array_agg(record_hash))::varchar)::char(32)
               from sd.study_contributors
               group by sd_id, study_hash_id;";
 
@@ -247,7 +248,7 @@ namespace DataHarvester.DBHelpers
         {
             string sql_string = @"Insert into sd.study_hashes 
               (sd_id, study_hash_id, hash_type_id, hash_type, composite_hash)
-              select sd_id, study_hash_id, 14, 'topics', 
+              select sd_id, study_hash_id, 14, 'topics',
               md5(to_json(array_agg(record_hash))::varchar)::char(32)
               from sd.study_topics
               group by sd_id, study_hash_id;";
@@ -263,7 +264,7 @@ namespace DataHarvester.DBHelpers
         {
             string sql_string = @"Insert into sd.study_hashes 
               (sd_id, study_hash_id, hash_type_id, hash_type, composite_hash)
-              select sd_id, study_hash_id, 17, 'references', 
+              select sd_id, study_hash_id, 17, 'references',
               md5(to_json(array_agg(record_hash))::varchar)::char(32)
               from sd.study_references
               group by sd_id, study_hash_id;";
