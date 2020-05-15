@@ -4,9 +4,16 @@ using Npgsql;
 
 namespace DataHarvester
 {
-	public static class StudyTableBuildersSD
+	public class StudyTableBuildersSD
 	{
-		public static void create_table_studies(string db_conn)
+		string db_conn;
+
+		public StudyTableBuildersSD(string _db_conn)
+		{
+			db_conn = _db_conn;
+		}
+
+		public void create_table_studies()
 		{
 			string sql_string = @"CREATE TABLE sd.studies(
 				sd_id                  VARCHAR         PRIMARY KEY
@@ -44,7 +51,7 @@ namespace DataHarvester
 		}
 
 
-		public static void create_table_study_identifiers(string db_conn)
+		public void create_table_study_identifiers()
 		{
 			string sql_string = @"CREATE TABLE sd.study_identifiers(
 			    sd_id                  VARCHAR         NOT NULL
@@ -66,7 +73,7 @@ namespace DataHarvester
 		}
 
 
-		public static void create_table_study_relationships(string db_conn)
+		public void create_table_study_relationships()
 		{
 			string sql_string = @"CREATE TABLE sd.study_relationships(
 			    sd_id                  VARCHAR         NOT NULL
@@ -84,7 +91,7 @@ namespace DataHarvester
 		}
 
 
-		public static void create_table_study_references(string db_conn)
+		public void create_table_study_references()
 		{
 			string sql_string = @"CREATE TABLE sd.study_references(
 				sd_id                  VARCHAR         NOT NULL
@@ -103,7 +110,7 @@ namespace DataHarvester
 		}
 
 
-		public static void create_table_study_titles(string db_conn)
+		public void create_table_study_titles()
 		{
 			string sql_string = @"CREATE TABLE sd.study_titles(
 				sd_id                  VARCHAR         NOT NULL
@@ -126,7 +133,58 @@ namespace DataHarvester
 		}
 
 
-		public static void create_table_study_hashes(string db_conn)
+		public void create_table_study_contributors()
+		{
+			string sql_string = @"CREATE TABLE sd.study_contributors(
+				sd_id                  VARCHAR         NOT NULL
+              , study_hash_id          CHAR(32)        NULL
+			  , contrib_type_id        INT             NULL
+			  , contrib_type           VARCHAR         NULL
+			  , is_individual          BOOLEAN         NULL
+			  , organisation_id        INT             NULL
+              , organisation_name      VARCHAR         NULL
+			  , person_id              INT             NULL
+			  , person_given_name      VARCHAR         NULL
+			  , person_family_name     VARCHAR         NULL
+			  , person_full_name       VARCHAR         NULL
+			  , person_identifier      VARCHAR         NULL
+			  , identifier_type        VARCHAR         NULL
+			  , person_affiliation     VARCHAR         NULL
+			  , affil_org_id           VARCHAR         NULL
+			  , affil_org_id_type      VARCHAR         NULL
+              , record_hash            CHAR(32)        NULL
+			);";
+
+			using (var conn = new NpgsqlConnection(db_conn))
+			{
+				conn.Execute(sql_string);
+			}
+		}
+
+
+		public void create_table_study_topics()
+		{
+			string sql_string = @"CREATE TABLE sd.study_topics(
+				sd_id                  VARCHAR         NOT NULL
+              , study_hash_id          CHAR(32)        NULL
+			  , topic_type_id          INT             NULL
+			  , topic_type             VARCHAR         NULL
+			  , topic_value            VARCHAR         NULL
+			  , topic_ct_id            INT             NULL
+			  , topic_ct               VARCHAR         NULL
+			  , topic_ct_code          VARCHAR         NULL
+			  , where_found            VARCHAR         NULL
+              , record_hash            CHAR(32)        NULL
+			);";
+
+			using (var conn = new NpgsqlConnection(db_conn))
+			{
+				conn.Execute(sql_string);
+			}
+		}
+
+
+		public void create_table_study_hashes()
 		{
 			string sql_string = @"CREATE TABLE sd.study_hashes(
 				sd_id                  VARCHAR         NOT NULL
@@ -144,9 +202,17 @@ namespace DataHarvester
 	}
 
 
-	public static class ObjectTableBuildersSD
+	public class ObjectTableBuildersSD
 	{
-		public static void create_table_data_objects(string db_conn)
+		string db_conn;
+
+		public ObjectTableBuildersSD(string _db_conn)
+		{
+			db_conn = _db_conn;
+		}
+
+
+		public void create_table_data_objects()
 		{
 			string sql_string = @"CREATE TABLE sd.data_objects(
 				sd_id                  VARCHAR         NOT NULL
@@ -182,7 +248,7 @@ namespace DataHarvester
 		}
 
 
-		public static void create_table_dataset_properties(string db_conn)
+		public void create_table_dataset_properties()
 		{
 			string sql_string = @"CREATE TABLE sd.dataset_properties(
 				sd_id                  VARCHAR         NOT NULL
@@ -208,7 +274,7 @@ namespace DataHarvester
 		}
 
 
-		public static void create_table_object_dates(string db_conn)
+		public void create_table_object_dates()
 		{
 			string sql_string = @"CREATE TABLE sd.object_dates(
 				sd_id                  VARCHAR         NOT NULL
@@ -236,7 +302,7 @@ namespace DataHarvester
 		}
 
 
-		public static void create_table_object_instances(string db_conn)
+		public void create_table_object_instances()
 		{
 			string sql_string = @"CREATE TABLE sd.object_instances(
 				sd_id                  VARCHAR         NOT NULL
@@ -264,7 +330,36 @@ namespace DataHarvester
 		}
 
 
-		public static void create_table_object_titles(string db_conn)
+		public void create_table_object_contributors()
+		{
+			string sql_string = @"CREATE TABLE sd.object_contributors(
+				sd_id                  VARCHAR         NOT NULL
+              , study_hash_id          CHAR(32)        NULL
+			  , contrib_type_id        INT             NULL
+			  , contrib_type           VARCHAR         NULL
+			  , is_individual          BOOLEAN         NULL
+			  , organisation_id        INT             NULL
+              , organisation_name      VARCHAR         NULL
+			  , person_id              INT             NULL
+			  , person_given_name      VARCHAR         NULL
+			  , person_family_name     VARCHAR         NULL
+			  , person_full_name       VARCHAR         NULL
+			  , person_identifier      VARCHAR         NULL
+			  , identifier_type        VARCHAR         NULL
+			  , person_affiliation     VARCHAR         NULL
+			  , affil_org_id           VARCHAR         NULL
+			  , affil_org_id_type      VARCHAR         NULL
+              , record_hash            CHAR(32)        NULL
+			);";
+
+			using (var conn = new NpgsqlConnection(db_conn))
+			{
+				conn.Execute(sql_string);
+			}
+		}
+
+
+		public void create_table_object_titles()
 		{
 			string sql_string = @"CREATE TABLE sd.object_titles(
 				sd_id                  VARCHAR         NOT NULL
@@ -288,8 +383,29 @@ namespace DataHarvester
 			}
 		}
 
+		public void create_table_object_topics()
+		{
+			string sql_string = @"CREATE TABLE sd.object_topics(
+				sd_id                  VARCHAR         NOT NULL
+              , study_hash_id          CHAR(32)        NULL
+			  , topic_type_id          INT             NULL
+			  , topic_type             VARCHAR         NULL
+			  , topic_value            VARCHAR         NULL
+			  , topic_ct_id            INT             NULL
+			  , topic_ct               VARCHAR         NULL
+			  , topic_ct_code          VARCHAR         NULL
+			  , where_found            VARCHAR         NULL
+              , record_hash            CHAR(32)        NULL
+			);";
 
-		public static void create_table_object_hashes(string db_conn)
+			using (var conn = new NpgsqlConnection(db_conn))
+			{
+				conn.Execute(sql_string);
+			}
+		}
+
+
+		public void create_table_object_hashes()
 		{
 			string sql_string = @"CREATE TABLE sd.object_hashes(
 				sd_id                  VARCHAR         NOT NULL

@@ -6,12 +6,21 @@ using System.Text;
 
 namespace DataHarvester.DBHelpers
 {
-    public static class StudyHashCreators
+    public class StudyHashCreators
     {
-        public static void CreateStudyIdHashes(string db_conn, int source_id)
+        string db_conn;
+
+        public StudyHashCreators(string _db_conn)
+        {
+            db_conn = _db_conn;
+        }
+
+
+        public void CreateStudyIdHashes(int source_id)
         {
             string sql_string = @"Update sd.studies
-              set hash_id = md5(json_build_array('" + source_id.ToString() + "' || sd_id, display_title)::varchar)::char(32);";
+              set hash_id = md5(json_build_array('" + source_id.ToString() +
+                                      "' || sd_id, display_title)::varchar)::char(32);";
 
             using (var conn = new NpgsqlConnection(db_conn))
             {
@@ -20,7 +29,7 @@ namespace DataHarvester.DBHelpers
         }
 
 
-        public static void CreateStudyRecordHashes(string db_conn)
+        public void CreateStudyRecordHashes()
         {
             string sql_string = @"Update sd.studies
               set record_hash = md5(json_build_array(display_title, brief_description, bd_contains_html,
@@ -35,7 +44,7 @@ namespace DataHarvester.DBHelpers
         }
 
 
-        public static void CreateStudyIdentifierHashes(string db_conn)
+        public void CreateStudyIdentifierHashes()
         {
             string sql_string = @"Update sd.study_identifiers
               set record_hash = md5(json_build_array(identifier_value, identifier_type_id, identifier_org_id,
@@ -48,7 +57,7 @@ namespace DataHarvester.DBHelpers
         }
 
 
-        public static void CreateStudyTitleHashes(string db_conn)
+        public void CreateStudyTitleHashes()
         {
             string sql_string = @"Update sd.study_titles
               set record_hash = md5(json_build_array(title_text, title_type_id, title_lang_code,
@@ -61,7 +70,36 @@ namespace DataHarvester.DBHelpers
         }
 
 
-        public static void CreateStudyReferenceHashes(string db_conn)
+        public void CreateStudyContributorHashes()
+        {
+            string sql_string = @"Update sd.study_contributors
+              set record_hash = md5(json_build_array(contrib_type_id, is_individual, organisation_id,
+              organisation_name, person_id, person_given_name, person_family_name, person_full_name,
+              person_identifier, identifier_type, person_affiliation, 
+              affil_org_id, affil_org_id_type)::varchar)::char(32);";
+
+            using (var conn = new NpgsqlConnection(db_conn))
+            {
+                 conn.Execute(sql_string);
+            }
+        }
+
+
+        public void CreateStudyTopicHashes()
+        {
+            string sql_string = @"Update sd.study_topics
+              set record_hash = md5(json_build_array(topic_type_id, topic_value, topic_ct_id,
+              topic_ct_code, where_found)::varchar)::char(32);";
+
+            using (var conn = new NpgsqlConnection(db_conn))
+            {
+                conn.Execute(sql_string);
+            }
+        }
+
+
+
+        public void CreateStudyReferenceHashes()
         {
             string sql_string = @"Update sd.study_references
               set record_hash = md5(json_build_array(pmid, citation, doi, comments)::varchar)::char(32);";
@@ -74,9 +112,17 @@ namespace DataHarvester.DBHelpers
     }
 
 
-    public static class StudyHashInserters
+    public class StudyHashInserters
     {
-        public static void InsertStudyHashesIntoStudyIdentifiers(string db_conn)
+        string db_conn;
+
+        public StudyHashInserters(string _db_conn)
+        {
+            db_conn = _db_conn;
+        }
+
+
+        public void InsertStudyHashesIntoStudyIdentifiers()
         {
             string sql_string = @"Update sd.study_identifiers t
               set study_hash_id = s.hash_id 
@@ -89,7 +135,7 @@ namespace DataHarvester.DBHelpers
             }
         }
 
-        public static void InsertStudyHashesIntoStudyTitles(string db_conn)
+        public void InsertStudyHashesIntoStudyTitles()
         {
             string sql_string = @"Update sd.study_titles t
               set study_hash_id = s.hash_id 
@@ -102,7 +148,33 @@ namespace DataHarvester.DBHelpers
             }
         }
 
-        public static void InsertStudyHashesIntoStudyReferences(string db_conn)
+        public void InsertStudyHashesIntoStudyContributors()
+        {
+            string sql_string = @"Update sd.study_contributors t
+              set study_hash_id = s.hash_id 
+              from sd.studies s 
+              where t.sd_id = s.sd_id;";
+
+            using (var conn = new NpgsqlConnection(db_conn))
+            {
+                conn.Execute(sql_string);
+            }
+        }
+
+        public void InsertStudyHashesIntoStudyTopics()
+        {
+            string sql_string = @"Update sd.study_topics t
+              set study_hash_id = s.hash_id 
+              from sd.studies s 
+              where t.sd_id = s.sd_id;";
+
+            using (var conn = new NpgsqlConnection(db_conn))
+            {
+                conn.Execute(sql_string);
+            }
+        }
+
+        public void InsertStudyHashesIntoStudyReferences()
         {
             string sql_string = @"Update sd.study_references t
               set study_hash_id = s.hash_id 
@@ -117,9 +189,17 @@ namespace DataHarvester.DBHelpers
     }
 
 
-    public static class StudyCompositeHashCreators
+    public class StudyCompositeHashCreators
     {
-        public static void CreateCompositeStudyIdentifierHashes(string db_conn)
+        string db_conn;
+
+        public StudyCompositeHashCreators(string _db_conn)
+        {
+            db_conn = _db_conn;
+        }
+
+
+        public void CreateCompositeStudyIdentifierHashes()
         {
             string sql_string = @"Insert into sd.study_hashes 
               (sd_id, study_hash_id, hash_type_id, hash_type, composite_hash)
@@ -134,7 +214,7 @@ namespace DataHarvester.DBHelpers
             }
         }
 
-        public static void CreateCompositeStudyTitleHashes(string db_conn)
+        public void CreateCompositeStudyTitleHashes()
         {
             string sql_string = @"Insert into sd.study_hashes 
               (sd_id, study_hash_id, hash_type_id, hash_type, composite_hash)
@@ -149,7 +229,37 @@ namespace DataHarvester.DBHelpers
             }
         }
 
-        public static void CreateCompositeStudyReferenceHashes(string db_conn)
+        public void CreateCompositeStudyContributorHashes()
+        {
+            string sql_string = @"Insert into sd.study_hashes 
+              (sd_id, study_hash_id, hash_type_id, hash_type, composite_hash)
+              select sd_id, study_hash_id, 15, 'contributors', 
+              from sd.study_contributors
+              group by sd_id, study_hash_id;";
+
+            using (var conn = new NpgsqlConnection(db_conn))
+            {
+                conn.Execute(sql_string);
+            }
+        }
+
+        public void CreateCompositeStudyTopicHashes()
+        {
+            string sql_string = @"Insert into sd.study_hashes 
+              (sd_id, study_hash_id, hash_type_id, hash_type, composite_hash)
+              select sd_id, study_hash_id, 14, 'topics', 
+              md5(to_json(array_agg(record_hash))::varchar)::char(32)
+              from sd.study_topics
+              group by sd_id, study_hash_id;";
+
+            using (var conn = new NpgsqlConnection(db_conn))
+            {
+                 conn.Execute(sql_string);
+            }
+        }
+
+
+        public void CreateCompositeStudyReferenceHashes()
         {
             string sql_string = @"Insert into sd.study_hashes 
               (sd_id, study_hash_id, hash_type_id, hash_type, composite_hash)
@@ -164,7 +274,7 @@ namespace DataHarvester.DBHelpers
             }
         }
 
-        public static void CreateCompositeDataObjectHashes(string db_conn)
+        public void CreateCompositeDataObjectHashes()
         {
             string sql_string = @"Insert into sd.study_hashes 
               (sd_id, study_hash_id, hash_type_id, hash_type, composite_hash)
@@ -179,7 +289,7 @@ namespace DataHarvester.DBHelpers
             }
         }
 
-        public static void CreateFullStudyHashes(string db_conn)
+        public void CreateFullStudyHashes()
         {
             string sql_string = @"update sd.studies s
             set study_full_hash = b.rollup
@@ -203,9 +313,17 @@ namespace DataHarvester.DBHelpers
     }
 
 
-    public static class ObjectHashCreators
+    public class ObjectHashCreators
     {
-        public static void CreateObjectIdHashes(string db_conn)
+        string db_conn;
+
+        public ObjectHashCreators(string _db_conn)
+        {
+            db_conn = _db_conn;
+        }
+
+
+        public void CreateObjectIdHashes()
         {
             string sql_string = @"Update sd.data_objects d
               set hash_id = md5(json_build_array(s.hash_id, d.display_title)::varchar)::char(32)
@@ -218,7 +336,7 @@ namespace DataHarvester.DBHelpers
             }
         }
 
-        public static void CreateObjectRecordHashes(string db_conn)
+        public void CreateObjectRecordHashes()
         {
             string sql_string = @"Update sd.data_objects
               set record_hash = md5(json_build_array(display_title, doi, doi_status_id, publication_year,
@@ -233,7 +351,7 @@ namespace DataHarvester.DBHelpers
         }
 
 
-        public static void CreateRecordsetPropertiesHashes(string db_conn)
+        public void CreateRecordsetPropertiesHashes()
         {
             string sql_string = @"Update sd.dataset_properties
               set record_hash = md5(json_build_array(record_keys_type_id, record_keys_details, 
@@ -246,7 +364,7 @@ namespace DataHarvester.DBHelpers
             }
         }
 
-        public static void CreateObjectDateHashes(string db_conn)
+        public void CreateObjectDateHashes()
         {
             string sql_string = @"Update sd.object_dates
               set record_hash = md5(json_build_array(date_type_id, is_date_range, date_as_string, 
@@ -259,7 +377,7 @@ namespace DataHarvester.DBHelpers
             }
         }
 
-        public static void CreateObjectInstanceHashes(string db_conn)
+        public void CreateObjectInstanceHashes()
         {
             string sql_string = @"Update sd.object_instances
               set record_hash = md5(json_build_array(instance_type_id, repository_org_id, repository_org, url, url_accessible,
@@ -271,7 +389,7 @@ namespace DataHarvester.DBHelpers
             }
         }
 
-        public static void CreateObjectTitledHashes(string db_conn)
+        public void CreateObjectTitledHashes()
         {
             string sql_string = @"Update sd.object_titles
               set record_hash = md5(json_build_array(title_text, title_type_id, title_lang_code, lang_usage_id,
@@ -283,7 +401,19 @@ namespace DataHarvester.DBHelpers
             }
         }
 
-        public static void InsertStudyHashesIntoDataObjects(string db_conn)
+    }
+
+    public class ObjectHashInserters
+    {
+        string db_conn;
+
+        public ObjectHashInserters(string _db_conn)
+        {
+            db_conn = _db_conn;
+        }
+
+
+        public void InsertStudyHashesIntoDataObjects()
         {
             string sql_string = @"Update sd.data_objects t
               set study_hash_id = s.hash_id 
@@ -296,7 +426,7 @@ namespace DataHarvester.DBHelpers
             }
         }
 
-        public static void InsertObjectHashesIntoDatasetProperties(string db_conn)
+        public void InsertObjectHashesIntoDatasetProperties()
         {
             string sql_string = @"Update sd.dataset_properties t
               set study_hash_id = d.study_hash_id,
@@ -311,7 +441,7 @@ namespace DataHarvester.DBHelpers
             }
         }
 
-        public static void InsertObjectHashesIntoObjectInstances(string db_conn)
+        public void InsertObjectHashesIntoObjectInstances()
         {
             string sql_string = @"Update sd.object_instances t
               set study_hash_id = d.study_hash_id,
@@ -326,7 +456,7 @@ namespace DataHarvester.DBHelpers
             }
         }
 
-        public static void InsertObjectHashesIntoObjectTitles(string db_conn)
+        public void InsertObjectHashesIntoObjectTitles()
         {
             string sql_string = @"Update sd.object_titles t
               set study_hash_id = d.study_hash_id,
@@ -341,7 +471,7 @@ namespace DataHarvester.DBHelpers
             }
         }
 
-        public static void InsertObjectHashesIntoObjectDates(string db_conn)
+        public void InsertObjectHashesIntoObjectDates()
         {
             string sql_string = @"Update sd.object_dates t
               set study_hash_id = d.study_hash_id,
@@ -358,14 +488,21 @@ namespace DataHarvester.DBHelpers
 
     }
 
-    public static class ObjectCompositeHashCreators
+    public class ObjectCompositeHashCreators
     {
+        string db_conn;
 
-        public static void CreateCompositeObjectInstanceHashes(string db_conn)
+        public ObjectCompositeHashCreators(string _db_conn)
+        {
+            db_conn = _db_conn;
+        }
+
+
+        public void CreateCompositeObjectInstanceHashes()
         {
             string sql_string = @"Insert into sd.object_hashes 
               (sd_id, do_id, study_hash_id, object_hash_id, hash_type_id, hash_type, composite_hash)
-              select sd_id, do_id, study_hash_id, object_hash_id, 11, 'instances', 
+              select sd_id, do_id, study_hash_id, object_hash_id, 51, 'instances', 
               md5(to_json(array_agg(record_hash))::varchar)::char(32)
               from sd.object_instances
               group by sd_id, do_id, study_hash_id, object_hash_id;";
@@ -376,11 +513,11 @@ namespace DataHarvester.DBHelpers
             }
         }
 
-        public static void CreateCompositeObjectTitlesHashes(string db_conn)
+        public void CreateCompositeObjectTitlesHashes()
         {
             string sql_string = @"Insert into sd.object_hashes 
               (sd_id, do_id, study_hash_id, object_hash_id, hash_type_id, hash_type, composite_hash)
-              select sd_id, do_id, study_hash_id, object_hash_id, 12, 'titles', 
+              select sd_id, do_id, study_hash_id, object_hash_id, 52, 'titles', 
               md5(to_json(array_agg(record_hash))::varchar)::char(32)
               from sd.object_titles
               group by sd_id, do_id, study_hash_id, object_hash_id;";
@@ -391,11 +528,11 @@ namespace DataHarvester.DBHelpers
             }
         }
 
-        public static void CreateCompositeObjectDatesHashes(string db_conn)
+        public void CreateCompositeObjectDatesHashes()
         {
             string sql_string = @"Insert into sd.object_hashes 
               (sd_id, do_id, study_hash_id, object_hash_id, hash_type_id, hash_type, composite_hash)
-              select sd_id, do_id, study_hash_id, object_hash_id, 13, 'dates', 
+              select sd_id, do_id, study_hash_id, object_hash_id, 53, 'dates', 
               md5(to_json(array_agg(record_hash))::varchar)::char(32)
               from sd.object_dates
               group by sd_id, do_id, study_hash_id, object_hash_id;";
@@ -406,7 +543,7 @@ namespace DataHarvester.DBHelpers
             }
         }
 
-        public static void CreateFullDataObjectHashes(string db_conn)
+        public void CreateFullDataObjectHashes()
         {
             // needs to roll up, for any particular data object
             // all of the composite hashes plus any hash for a dataset property record,

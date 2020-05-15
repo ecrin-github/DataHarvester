@@ -7,7 +7,7 @@ namespace DataHarvester.Yoda
 {
 	public class YodaCopyHelpers
 	{
-
+		/*
 		public PostgreSQLCopyHelper<Summary> study_list_copy_helper =
 			new PostgreSQLCopyHelper<Summary>("pp", "study_list")
 				.MapInteger("id", x => x.id)
@@ -26,6 +26,6 @@ namespace DataHarvester.Yoda
 				.MapVarchar("doc_name", x => x.doc_name)
 				.MapVarchar("comment", x => x.comment)
 				.MapVarchar("url", x => x.url);
-
+				*/
 	}
 }

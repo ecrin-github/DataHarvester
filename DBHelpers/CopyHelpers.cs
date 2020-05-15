@@ -16,7 +16,6 @@ namespace DataHarvester
 				.MapInteger("identifier_org_id", x => x.identifier_org_id)
 				.MapVarchar("identifier_org", x => x.identifier_org);
 
-
 		public static PostgreSQLCopyHelper<StudyTitle> study_titles_helper =
 			new PostgreSQLCopyHelper<StudyTitle>("sd", "study_titles")
 				.MapVarchar("sd_id", x => x.sd_id)
@@ -25,6 +24,37 @@ namespace DataHarvester
 				.MapVarchar("title_type", x => x.title_type)
 				.MapBoolean("is_default", x => x.is_default)
 				.MapVarchar("comments", x => x.comments);
+
+
+		public static PostgreSQLCopyHelper<StudyTopic> study_topics_helper =
+			new PostgreSQLCopyHelper<StudyTopic>("sd", "study_topics")
+				.MapVarchar("sd_id", x => x.sd_id)
+				.MapInteger("topic_type_id", x => x.topic_type_id)
+				.MapVarchar("topic_type", x => x.topic_type)
+				.MapVarchar("topic_value", x => x.topic_value)
+				.MapInteger("topic_ct_id", x => x.topic_ct_id)
+				.MapVarchar("topic_ct", x => x.topic_ct)
+				.MapVarchar("topic_ct_code", x => x.topic_ct_code)
+				.MapVarchar("where_found", x => x.where_found);
+
+
+		public static PostgreSQLCopyHelper<StudyContributor> study_contributors_helper =
+			new PostgreSQLCopyHelper<StudyContributor>("sd", "study_contributors")
+				.MapVarchar("sd_id", x => x.sd_id)
+				.MapInteger("contrib_type_id", x => x.contrib_type_id)
+				.MapVarchar("contrib_type", x => x.contrib_type)
+				.MapBoolean("is_individual", x => x.is_individual)
+				.MapInteger("organisation_id", x => x.organisation_id)
+				.MapVarchar("organisation_name", x => x.organisation_name)
+				.MapInteger("person_id", x => x.person_id)
+				.MapVarchar("person_given_name", x => x.person_given_name)
+				.MapVarchar("person_family_name", x => x.person_family_name)
+				.MapVarchar("person_full_name", x => x.person_full_name)
+				.MapVarchar("person_identifier", x => x.person_identifier)
+				.MapVarchar("identifier_type", x => x.identifier_type)
+				.MapVarchar("person_affiliation", x => x.person_affiliation)
+				.MapVarchar("affil_org_id", x => x.affil_org_id)
+		    	.MapVarchar("affil_org_id_type", x => x.affil_org_id_type);
 
 
 		public static PostgreSQLCopyHelper<StudyRelationship> study_relationship_helper =

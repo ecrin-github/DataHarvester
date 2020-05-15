@@ -12,19 +12,24 @@ namespace DataHarvester.Yoda
 		DataLayer common_repo; 
 		YodaDataLayer repo;
 		YodaProcessor processor;
-		YodaCopyHelpers yoda_mappings;
-
 		int harvest_type_id;
 		int source_id;
 
 		public YodaController(DataLayer _common_repo, int _harvest_type_id, int _source_id)
 		{
-			repo = new YodaDataLayer();
+			source_id = _source_id;
+			repo = new YodaDataLayer(source_id);
 			processor = new YodaProcessor();
-			yoda_mappings = new YodaCopyHelpers();
 			common_repo = _common_repo;
 			harvest_type_id = _harvest_type_id;
-			source_id = _source_id;
+		}
+
+		public void EstablishNewSDTables()
+		{
+			repo.DeleteSDStudyTables();
+			repo.DeleteSDObjectTables();
+			repo.BuildNewSDStudyTables();
+			repo.BuildNewSDObjectTables();
 		}
 
 		public void LoopThroughFiles()
@@ -36,14 +41,15 @@ namespace DataHarvester.Yoda
 			// and construct a list of the files 
 			// N.B. (only one folder for all files) 
 
-			IEnumerable<string> file_list = repo.FetchFilePaths(source_id);
-			int n = 0;
-			foreach (string filePath in file_list)
+			IEnumerable<FileRecord> file_list = common_repo.FetchStudyFileRecords(source_id);
+			int n = 0; string filePath = "";
+			foreach (FileRecord rec in file_list)
 			{
 				n++;
 				// for testing...
 				if (n == 50) break;
 
+				filePath = rec.local_path;
 				if (File.Exists(filePath))
 				{
 					string inputString = "";
@@ -52,20 +58,37 @@ namespace DataHarvester.Yoda
 						inputString += streamReader.ReadToEnd();
 					}
 
-					XmlSerializer serializer = new XmlSerializer(typeof(Yoda_Record));
+					XmlSerializer serializer = new XmlSerializer(typeof(YodaRecord));
 					StringReader rdr = new StringReader(inputString);
-					Yoda_Record studyRegEntry = (Yoda_Record)serializer.Deserialize(rdr);
+					YodaRecord studyRegEntry = (YodaRecord)serializer.Deserialize(rdr);
 
 					// break up the file into relevant data classes
-					Study s = processor.ProcessData(repo, studyRegEntry);
+					Study s = processor.ProcessData(repo, studyRegEntry, rec.download_datetime);
 
 					// store the data in the database			
-					processor.StoreData(yoda_mappings, repo, s);  // FOR NOW!!!!!
+					processor.StoreData(repo, s);  // FOR NOW!!!!!
+
+					// update file record with last processed datetime
+					common_repo.UpdateStudyFileRecLastProcessed(rec.id);
 
 				}
 
-				if (n % 100 == 0) Console.WriteLine(n.ToString());
+				if (n % 10 == 0) Console.WriteLine(n.ToString());
 			}
+		}
+
+		public void UpdateIds()
+		{
+			//repo.UpdateStudyIdentifierOrgs();
+			//repo.UpdateDataObjectOrgs();
+		}
+
+		public void InsertHashes()
+		{
+			//repo.CreateStudyHashes();
+			//repo.CreateStudyCompositeHashes();
+			//repo.CreateDataObjectHashes();
+			//repo.CreateObjectCompositeHashes();
 		}
 	}
 

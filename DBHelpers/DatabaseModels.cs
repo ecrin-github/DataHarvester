@@ -162,24 +162,33 @@ namespace DataHarvester
 		public int? contrib_type_id { get; set; }
 		public string contrib_type { get; set; }
 		public bool is_individual { get; set; }
-		public string org_name { get; set; }
-		public string person_name { get; set; }
+		public int? organisation_id { get; set; }
+		public string organisation_name { get; set; }
+		public int? person_id { get; set; }
+		public string person_given_name { get; set; }
+		public string person_family_name { get; set; }
+		public string person_full_name { get; set; }
+		public string person_identifier { get; set; }
+		public string identifier_type { get; set; }
 		public string person_affiliation { get; set; }
-		public string source_field { get; set; }
+		public string affil_org_id { get; set; }
+		public string affil_org_id_type { get; set; }
 
 		public StudyContributor(string _sd_id, int? _contrib_type_id, string _contrib_type,
-								string _org_name, string _person_name,
-								string _person_affiliation, string _source_field)
+								int? _organisation_id, string _organisation_name, string _person_full_name,
+								string _person_affiliation)
 		{
 			sd_id = _sd_id;
 			contrib_type_id = _contrib_type_id;
 			contrib_type = _contrib_type;
-			is_individual = (_person_name == null) ? false : true;
-			org_name = _org_name;
-			person_name = _person_name;
+			is_individual = (_person_full_name == null) ? false : true;
+			organisation_id = _organisation_id;
+			organisation_name = organisation_name;
+			person_full_name = _person_full_name;
 			person_affiliation = _person_affiliation;
-			source_field = _source_field;
 		}
+
+		// more constructors needed here
 	}
 
 
@@ -197,7 +206,6 @@ namespace DataHarvester
 			relationship_type = _relationship_type;
 			target_sd_id = _target_sd_id;
 		}
-
 	}
 
 
@@ -277,18 +285,22 @@ namespace DataHarvester
 	public class StudyTopic
 	{
 		public string sd_id { get; set; }
+		public int topic_type_id { get; set; }
 		public string topic_type { get; set; }
-		public string topic { get; set; }
-		public string mesh_code { get; set; }
+		public string topic_value { get; set; }
+		public int topic_ct_id { get; set; }
+		public string topic_ct { get; set; }
+		public string topic_ct_code { get; set; }
 		public string where_found { get; set; }
 
-		public StudyTopic(string _sd_id, string _topic_type,
-					 string _topic, string _mesh_code, string _where_found)
+		public StudyTopic(string _sd_id, int _topic_type_id, string _topic_type,
+					 string _topic_value, string _topic_ct_code, string _where_found)
 		{
 			sd_id = _sd_id;
+			topic_type_id = _topic_type_id;
 			topic_type = _topic_type;
-			topic = _topic;
-			mesh_code = _mesh_code;
+			topic_value = _topic_value;
+			topic_ct_code = _topic_ct_code;
 			where_found = _where_found;
 		}
 	}

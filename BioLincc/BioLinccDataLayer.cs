@@ -13,7 +13,7 @@ namespace DataHarvester.BioLincc
 	public class BioLinccDataLayer
 	{
 		private string _mon_connString;
-		private string _biolincc_connString;
+		private string biolincc_connString;
 		private string _biolincc_pp_connString;
 		private string _ctg_connString;
 		private int source_id;
@@ -45,7 +45,7 @@ namespace DataHarvester.BioLincc
 
 			builder.Database = "biolincc";
 			builder.SearchPath = "sd";
-			_biolincc_connString = builder.ConnectionString;
+			biolincc_connString = builder.ConnectionString;
 
 			builder.Database = "biolincc";
 			builder.SearchPath = "pp";
@@ -67,43 +67,47 @@ namespace DataHarvester.BioLincc
 
 		public void DeleteSDStudyTables()
 		{
-			StudyTableDroppers.drop_table_studies(_biolincc_connString);
-			StudyTableDroppers.drop_table_study_identifiers(_biolincc_connString);
-			StudyTableDroppers.drop_table_study_titles(_biolincc_connString);
-			StudyTableDroppers.drop_table_study_relationships(_biolincc_connString);
-			StudyTableDroppers.drop_table_study_references(_biolincc_connString);
-			StudyTableDroppers.drop_table_study_jsonb(_biolincc_connString);
+			StudyTableDroppers dropper = new StudyTableDroppers(biolincc_connString);
+			dropper.drop_table_studies();
+			dropper.drop_table_study_identifiers();
+			dropper.drop_table_study_titles();
+			dropper.drop_table_study_relationships();
+			dropper.drop_table_study_references();
+			dropper.drop_table_study_hashes();
 		}
 
 		public void DeleteSDObjectTables()
 		{
-			ObjectTableDroppers.drop_table_data_objects(_biolincc_connString);
-			ObjectTableDroppers.drop_table_dataset_properties(_biolincc_connString);
-			ObjectTableDroppers.drop_table_object_dates(_biolincc_connString);
-			ObjectTableDroppers.drop_table_object_instances(_biolincc_connString);
-			ObjectTableDroppers.drop_table_object_titles(_biolincc_connString);
-			ObjectTableDroppers.drop_table_object_jsonb(_biolincc_connString);
+			ObjectTableDroppers dropper = new ObjectTableDroppers(biolincc_connString);
+			dropper.drop_table_data_objects();
+			dropper.drop_table_dataset_properties();
+			dropper.drop_table_object_dates();
+			dropper.drop_table_object_instances();
+			dropper.drop_table_object_titles();
+			dropper.drop_table_object_hashes();
 		}
 
 		public void BuildNewSDStudyTables()
 		{
-			StudyTableBuildersSD.create_table_studies(_biolincc_connString);
-			StudyTableBuildersSD.create_table_study_identifiers(_biolincc_connString);
-			StudyTableBuildersSD.create_table_study_relationships(_biolincc_connString);
-			StudyTableBuildersSD.create_table_study_references(_biolincc_connString);
-			StudyTableBuildersSD.create_table_study_titles(_biolincc_connString);
-			StudyTableBuildersSD.create_table_study_hashes(_biolincc_connString);
+			StudyTableBuildersSD builder = new StudyTableBuildersSD(biolincc_connString);
+			builder.create_table_studies();
+			builder.create_table_study_identifiers();
+			builder.create_table_study_relationships();
+			builder.create_table_study_references();
+			builder.create_table_study_titles();
+			builder.create_table_study_hashes();
 		}
 
 
 		public void BuildNewSDObjectTables()
 		{
-			ObjectTableBuildersSD.create_table_data_objects(_biolincc_connString);
-			ObjectTableBuildersSD.create_table_dataset_properties(_biolincc_connString);
-			ObjectTableBuildersSD.create_table_object_dates(_biolincc_connString);
-			ObjectTableBuildersSD.create_table_object_instances(_biolincc_connString);
-			ObjectTableBuildersSD.create_table_object_titles(_biolincc_connString);
-			ObjectTableBuildersSD.create_table_object_hashes(_biolincc_connString);
+			ObjectTableBuildersSD builder = new ObjectTableBuildersSD(biolincc_connString);
+			builder.create_table_data_objects();
+			builder.create_table_dataset_properties();
+			builder.create_table_object_dates();
+			builder.create_table_object_instances();
+			builder.create_table_object_titles();
+			builder.create_table_object_hashes();
 		}
 			
 
@@ -141,7 +145,7 @@ namespace DataHarvester.BioLincc
 
 		public void StoreStudy(StudyInDB st_db)
 		{
-			using (var conn = new NpgsqlConnection(_biolincc_connString))
+			using (var conn = new NpgsqlConnection(biolincc_connString))
 			{
 				conn.Insert<StudyInDB>(st_db);
 			}
@@ -149,7 +153,7 @@ namespace DataHarvester.BioLincc
 
 		public ulong StoreStudyIdentifiers(PostgreSQLCopyHelper<StudyIdentifier> copyHelper, IEnumerable<StudyIdentifier> entities)
 		{
-			using (var conn = new NpgsqlConnection(_biolincc_connString))
+			using (var conn = new NpgsqlConnection(biolincc_connString))
 			{
 				conn.Open();
 				return copyHelper.SaveAll(conn, entities);
@@ -158,7 +162,7 @@ namespace DataHarvester.BioLincc
 
 		public ulong StoreStudyTitles(PostgreSQLCopyHelper<StudyTitle> copyHelper, IEnumerable<StudyTitle> entities)
 		{
-			using (var conn = new NpgsqlConnection(_biolincc_connString))
+			using (var conn = new NpgsqlConnection(biolincc_connString))
 			{
 				conn.Open();
 				return copyHelper.SaveAll(conn, entities);
@@ -167,7 +171,7 @@ namespace DataHarvester.BioLincc
 
 		public ulong StoreStudyRelationships(PostgreSQLCopyHelper<StudyRelationship> copyHelper, IEnumerable<StudyRelationship> entities)
 		{
-			using (var conn = new NpgsqlConnection(_biolincc_connString))
+			using (var conn = new NpgsqlConnection(biolincc_connString))
 			{
 				conn.Open();
 				return copyHelper.SaveAll(conn, entities);
@@ -176,7 +180,7 @@ namespace DataHarvester.BioLincc
 		}
 		public ulong StoreStudyReferences(PostgreSQLCopyHelper<StudyReference> copyHelper, IEnumerable<StudyReference> entities)
 		{
-			using (var conn = new NpgsqlConnection(_biolincc_connString))
+			using (var conn = new NpgsqlConnection(biolincc_connString))
 			{
 				conn.Open();
 				return copyHelper.SaveAll(conn, entities);
@@ -185,7 +189,7 @@ namespace DataHarvester.BioLincc
 
 		public ulong StoreDataObjects(PostgreSQLCopyHelper<DataObject> copyHelper, IEnumerable<DataObject> entities)
 		{
-			using (var conn = new NpgsqlConnection(_biolincc_connString))
+			using (var conn = new NpgsqlConnection(biolincc_connString))
 			{
 				conn.Open();
 				return copyHelper.SaveAll(conn, entities);
@@ -194,7 +198,7 @@ namespace DataHarvester.BioLincc
 
 		public ulong StoreDatasetProperties(PostgreSQLCopyHelper<DataSetProperties> copyHelper, IEnumerable<DataSetProperties> entities)
 		{
-			using (var conn = new NpgsqlConnection(_biolincc_connString))
+			using (var conn = new NpgsqlConnection(biolincc_connString))
 			{
 				conn.Open();
 				return copyHelper.SaveAll(conn, entities);
@@ -204,7 +208,7 @@ namespace DataHarvester.BioLincc
 		public ulong StoreObjectTitles(PostgreSQLCopyHelper<DataObjectTitle> copyHelper,
 						IEnumerable<DataObjectTitle> entities)
 		{
-			using (var conn = new NpgsqlConnection(_biolincc_connString))
+			using (var conn = new NpgsqlConnection(biolincc_connString))
 			{
 				conn.Open();
 				return copyHelper.SaveAll(conn, entities);
@@ -214,7 +218,7 @@ namespace DataHarvester.BioLincc
 		public ulong StoreObjectDates(PostgreSQLCopyHelper<DataObjectDate> copyHelper,
 						IEnumerable<DataObjectDate> entities)
 		{
-			using (var conn = new NpgsqlConnection(_biolincc_connString))
+			using (var conn = new NpgsqlConnection(biolincc_connString))
 			{
 				conn.Open();
 				return copyHelper.SaveAll(conn, entities);
@@ -224,7 +228,7 @@ namespace DataHarvester.BioLincc
 		public ulong StoreObjectInstances(PostgreSQLCopyHelper<DataObjectInstance> copyHelper,
 						IEnumerable<DataObjectInstance> entities)
 		{
-			using (var conn = new NpgsqlConnection(_biolincc_connString))
+			using (var conn = new NpgsqlConnection(biolincc_connString))
 			{
 				conn.Open();
 				return copyHelper.SaveAll(conn, entities);
@@ -233,69 +237,74 @@ namespace DataHarvester.BioLincc
 
 		public void UpdateStudyIdentifierOrgs()
 		{
-			OrgHelper.update_study_identifiers_using_default_name(_biolincc_connString);
-			OrgHelper.update_study_identifiers_using_other_name(_biolincc_connString);
-			OrgHelper.update_study_identifiers_insert_default_names(_biolincc_connString);
+			OrgHelper helper = new OrgHelper(biolincc_connString);
+			helper.update_study_identifiers_using_default_name();
+			helper.update_study_identifiers_using_other_name();
+			helper.update_study_identifiers_insert_default_names();
 		}
 
 		public void UpdateDataObjectOrgs()
 		{
-			OrgHelper.update_data_objects_using_default_name(_biolincc_connString);
-			OrgHelper.update_data_objects_using_other_name(_biolincc_connString);
-			OrgHelper.update_data_objects_insert_default_names(_biolincc_connString);
+			OrgHelper helper = new OrgHelper(biolincc_connString);
+			helper.update_data_objects_using_default_name();
+			helper.update_data_objects_using_other_name();
+			helper.update_data_objects_insert_default_names();
 		}
 
 		public void CreateStudyHashes()
 		{
-			StudyHashCreators.CreateStudyIdHashes(_biolincc_connString, source_id);
+			StudyHashCreators hashcreator = new StudyHashCreators(biolincc_connString);
+			hashcreator.CreateStudyIdHashes(source_id);
+			hashcreator.CreateStudyRecordHashes();
+			hashcreator.CreateStudyIdentifierHashes();
+			hashcreator.CreateStudyTitleHashes();
+			hashcreator.CreateStudyReferenceHashes();
 
-			StudyHashCreators.CreateStudyRecordHashes(_biolincc_connString);
-			StudyHashCreators.CreateStudyIdentifierHashes(_biolincc_connString);
-			StudyHashCreators.CreateStudyTitleHashes(_biolincc_connString);
-			StudyHashCreators.CreateStudyReferenceHashes(_biolincc_connString);
-
-			StudyHashInserters.InsertStudyHashesIntoStudyIdentifiers(_biolincc_connString);
-			StudyHashInserters.InsertStudyHashesIntoStudyTitles(_biolincc_connString);
-			StudyHashInserters.InsertStudyHashesIntoStudyReferences(_biolincc_connString);
+			StudyHashInserters hashinserter = new StudyHashInserters(biolincc_connString);
+			hashinserter.InsertStudyHashesIntoStudyIdentifiers();
+			hashinserter.InsertStudyHashesIntoStudyTitles();
+			hashinserter.InsertStudyHashesIntoStudyReferences();
 		}
 
 		public void CreateStudyCompositeHashes()
 		{
-			StudyCompositeHashCreators.CreateCompositeStudyIdentifierHashes(_biolincc_connString);
-			StudyCompositeHashCreators.CreateCompositeStudyTitleHashes(_biolincc_connString);
-			StudyCompositeHashCreators.CreateCompositeStudyReferenceHashes(_biolincc_connString);
+			StudyCompositeHashCreators hashcreator = new StudyCompositeHashCreators(biolincc_connString);
+			hashcreator.CreateCompositeStudyIdentifierHashes();
+			hashcreator.CreateCompositeStudyTitleHashes();
+			hashcreator.CreateCompositeStudyReferenceHashes();
 		}
 
 		public void CreateDataObjectHashes()
 		{
-			ObjectHashCreators.CreateObjectIdHashes(_biolincc_connString);
+			ObjectHashCreators hashcreator = new ObjectHashCreators(biolincc_connString);
+			hashcreator.CreateObjectIdHashes();
+			hashcreator.CreateObjectRecordHashes();
+			hashcreator.CreateRecordsetPropertiesHashes();
+			hashcreator.CreateObjectInstanceHashes();
+			hashcreator.CreateObjectTitledHashes();
+			hashcreator.CreateObjectDateHashes();
 
-			ObjectHashCreators.CreateObjectRecordHashes(_biolincc_connString);
-			ObjectHashCreators.CreateRecordsetPropertiesHashes(_biolincc_connString);
-			ObjectHashCreators.CreateObjectInstanceHashes(_biolincc_connString);
-			ObjectHashCreators.CreateObjectTitledHashes(_biolincc_connString);
-			ObjectHashCreators.CreateObjectDateHashes(_biolincc_connString);
-
-			ObjectHashCreators.InsertStudyHashesIntoDataObjects(_biolincc_connString);
-			ObjectHashCreators.InsertObjectHashesIntoDatasetProperties(_biolincc_connString);
-			ObjectHashCreators.InsertObjectHashesIntoObjectInstances(_biolincc_connString);
-			ObjectHashCreators.InsertObjectHashesIntoObjectTitles(_biolincc_connString);
-			ObjectHashCreators.InsertObjectHashesIntoObjectDates(_biolincc_connString);
+			ObjectHashInserters hashinserter = new ObjectHashInserters(biolincc_connString);
+			hashinserter.InsertStudyHashesIntoDataObjects();
+			hashinserter.InsertObjectHashesIntoDatasetProperties();
+			hashinserter.InsertObjectHashesIntoObjectInstances();
+			hashinserter.InsertObjectHashesIntoObjectTitles();
+			hashinserter.InsertObjectHashesIntoObjectDates();
 		}
 
 		public void CreateObjectCompositeHashes()
 		{
-			ObjectCompositeHashCreators.CreateCompositeObjectInstanceHashes(_biolincc_connString);
-			ObjectCompositeHashCreators.CreateCompositeObjectTitlesHashes(_biolincc_connString);
-			ObjectCompositeHashCreators.CreateCompositeObjectDatesHashes(_biolincc_connString);
-		}
+			ObjectCompositeHashCreators hashcreator = new ObjectCompositeHashCreators(biolincc_connString);
+			hashcreator.CreateCompositeObjectInstanceHashes();
+			hashcreator.CreateCompositeObjectTitlesHashes();
+			hashcreator.CreateCompositeObjectDatesHashes();
 
-		public void CreateRollUpHashes()
-		{
-			// objects must be done first..
-			ObjectCompositeHashCreators.CreateFullDataObjectHashes(_biolincc_connString);
-			StudyCompositeHashCreators.CreateCompositeDataObjectHashes(_biolincc_connString);
-			StudyCompositeHashCreators.CreateFullStudyHashes(_biolincc_connString);
+			// objects must fully rolled up first..
+			hashcreator.CreateFullDataObjectHashes();
+
+			StudyCompositeHashCreators studyhashcreator  = new StudyCompositeHashCreators(biolincc_connString);
+			studyhashcreator.CreateCompositeDataObjectHashes();
+			studyhashcreator.CreateFullStudyHashes();
 		}
 	}
 }

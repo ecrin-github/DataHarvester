@@ -70,7 +70,6 @@ namespace DataHarvester
 					case 100900:
 						{
 							BioLinccController biolincc_controller = new BioLinccController(repo, harvest_type_id, source_id);
-							biolincc_controller.EstablishNewADTables();
 							biolincc_controller.EstablishNewSDTables();
 							biolincc_controller.LoopThroughFiles();
 							biolincc_controller.UpdateIds();
@@ -80,7 +79,10 @@ namespace DataHarvester
 					case 100901:
 						{
 							YodaController yoda_controller = new YodaController(repo, harvest_type_id, source_id);
+							yoda_controller.EstablishNewSDTables();
 							yoda_controller.LoopThroughFiles();
+							yoda_controller.UpdateIds();
+							yoda_controller.InsertHashes();
 							break;
 						}
 				}

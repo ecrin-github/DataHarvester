@@ -6,22 +6,24 @@ using Dapper.Contrib.Extensions;
 namespace DataHarvester.Yoda
 {
 
-	public class Yoda_Record
+	public class YodaRecord
 	{
 		public int id { get; set; }
 		public string nct_number { get; set; }
 		public string sd_id { get; set; }
-		public string title { get; set; }
+		public string display_title { get; set; }
+		public string public_title { get; set; }
 		public bool is_yoda_only { get; set; }
 		public string remote_url { get; set; }
 		public int? sponsor_id { get; set; }
+		public int? type_id { get; set; }
 		public string sponsor { get; set; }
 		public string compound_generic_name { get; set; }
 		public string compound_product_name { get; set; }
 		public string therapaeutic_area { get; set; }
 		public string enrolment { get; set; }
 		public string percent_female { get; set; }
-		public string percent_male { get; set; }
+		public string percent_white { get; set; }
 		public string product_class { get; set; }
 		public string sponsor_protocol_id { get; set; }
 		public string data_partner { get; set; }

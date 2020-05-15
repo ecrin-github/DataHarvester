@@ -98,7 +98,6 @@ namespace DataHarvester.BioLincc
 			repo.CreateStudyCompositeHashes();
 			repo.CreateDataObjectHashes();
 			repo.CreateObjectCompositeHashes();
-			repo.CreateRollUpHashes();
 		}
 
 	}

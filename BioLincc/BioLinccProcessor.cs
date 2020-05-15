@@ -17,13 +17,8 @@ namespace DataHarvester.BioLincc
 		{
 			Study s = new Study();
 
-			// add in date retrieved in object fetch
+			// get date retrieved in object fetch
 			// transfer to study and data object records
-
-			// set up html tag processing for the title fields
-			// study display title, title text, object display title
-
-			// add in date processed to log record
 
 			List<StudyIdentifier> study_identifiers = new List<StudyIdentifier>();
 			List<StudyTitle> study_titles = new List<StudyTitle>();
@@ -59,16 +54,13 @@ namespace DataHarvester.BioLincc
 			if (st.display_title.Contains("<"))
 			{
 				s.display_title = hp.replace_tags(st.display_title);
-				s.display_title = hp.strip_tags(st.display_title);
+				s.display_title = hp.strip_tags(s.display_title);
 			}
 			else
 			{
 				s.display_title = st.display_title;
 			}
-
-			// need a generic display title processor here, to replace sup / sub text and remove other tags
-			// but none required for BioLincc
-
+			
 			if (st.brief_description.Contains("<"))
 			{
 				s.brief_description = hp.replace_tags(st.brief_description);
@@ -184,8 +176,8 @@ namespace DataHarvester.BioLincc
 			// BioLINCC web page 
 
 			int? pub_year = st.publication_year;
-
-			string object_display_title = s.display_title + " :: " + "NHLBI web page";
+			string name_base = string.IsNullOrEmpty(st.public_title) ? s.display_title : st.public_title;
+			string object_display_title = name_base + " :: " + "NHLBI web page";
 
 			data_objects.Add(new DataObject(st.sd_id, do_id, object_display_title, pub_year, 23, "Text", 38, "Study Overview",
 				100167, "National Heart, Lung, and Blood Institute (US)", 12, download_datetime));
@@ -238,7 +230,7 @@ namespace DataHarvester.BioLincc
 			if (st.resources_available.ToLower().Contains("datasets"))
 			{
 				do_id++;
-			    object_display_title = s.display_title + " :: " + "IPD Datasets";
+			    object_display_title = name_base + " :: " + "IPD Datasets";
 			    data_objects.Add(new DataObject(st.sd_id, do_id, object_display_title, null, 14, "Datasets",
 						80, "Individual Participant Data", 100167, "National Heart, Lung, and Blood Institute (US)",
 						17, "Case by case download", access_details,
@@ -294,7 +286,7 @@ namespace DataHarvester.BioLincc
 				{
 					// for the resource, set up new data object, object title, object instance
 					do_id++;
-					object_display_title = s.display_title + " :: " + r.doc_name;
+					object_display_title = name_base + " :: " + r.doc_name;
 					data_objects.Add(new DataObject(st.sd_id, do_id, object_display_title, pub_year, 23, "Text", r.object_type_id, r.object_type,
 										sponsor_org_id, sponsor_org, r.access_type_id, download_datetime));
 					data_object_titles.Add(new DataObjectTitle(st.sd_id, do_id, object_display_title, 21, "Study short name :: object name", true));

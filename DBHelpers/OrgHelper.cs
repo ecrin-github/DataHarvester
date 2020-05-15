@@ -6,9 +6,16 @@ using System.Text;
 
 namespace DataHarvester.DBHelpers
 {
-    public static class OrgHelper
+    public class OrgHelper
     {
-        public static void update_study_identifiers_using_default_name(string db_conn)
+        string db_conn;
+
+        public OrgHelper(string _db_conn)
+        {
+            db_conn = _db_conn;
+        }
+
+        public void update_study_identifiers_using_default_name()
         {
             string sql_string = @"update sd.study_identifiers i
             set identifier_org_id = g.id
@@ -22,7 +29,7 @@ namespace DataHarvester.DBHelpers
             }
         }
 
-        public static void update_study_identifiers_using_other_name(string db_conn)
+        public void update_study_identifiers_using_other_name()
         {
             string sql_string = @"update sd.study_identifiers i
             set identifier_org_id = a.org_id
@@ -36,7 +43,7 @@ namespace DataHarvester.DBHelpers
             }
         }
 
-        public static void update_study_identifiers_insert_default_names(string db_conn)
+        public void update_study_identifiers_insert_default_names()
         {
             string sql_string = @"update sd.study_identifiers i
             set identifier_org = g.default_name ||
@@ -52,8 +59,7 @@ namespace DataHarvester.DBHelpers
         }
 
 
-
-        public static void update_study_contributors_using_default_name(string db_conn)
+        public void update_study_contributors_using_default_name()
         {
             string sql_string = @"update sd.study_contributors c
             set org_id = g.id
@@ -67,7 +73,7 @@ namespace DataHarvester.DBHelpers
             }
         }
 
-        public static void update_study_contributors_using_other_name(string db_conn)
+        public void update_study_contributors_using_other_name()
         {
             string sql_string = @"update sd.study_contributors c
             set org_id = a.org_id
@@ -81,7 +87,7 @@ namespace DataHarvester.DBHelpers
             }
         }
 
-        public static void update_study_contributors_insert_default_names(string db_conn)
+        public void update_study_contributors_insert_default_names()
         {
             string sql_string = @"update sd.study_contributors c
             set org_name = g.default_name ||
@@ -98,8 +104,7 @@ namespace DataHarvester.DBHelpers
 
 
 
-
-        public static void update_data_objects_using_default_name(string db_conn)
+        public void update_data_objects_using_default_name()
         {
             string sql_string = @"update sd.data_objects d
             set managing_org_id = g.id
@@ -113,7 +118,7 @@ namespace DataHarvester.DBHelpers
             }
         }
 
-        public static void update_data_objects_using_other_name(string db_conn)
+        public void update_data_objects_using_other_name()
         {
             string sql_string = @"update sd.data_objects d
             set managing_org_id = a.org_id
@@ -127,7 +132,7 @@ namespace DataHarvester.DBHelpers
             }
         }
 
-        public static void update_data_objects_insert_default_names(string db_conn)
+        public void update_data_objects_insert_default_names()
         {
             string sql_string = @"update sd.data_objects d
             set managing_org = g.default_name ||
