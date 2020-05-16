@@ -84,6 +84,7 @@ namespace DataHarvester.BioLincc
 			dropper.drop_table_object_dates();
 			dropper.drop_table_object_instances();
 			dropper.drop_table_object_titles();
+			dropper.drop_table_object_languages();
 			dropper.drop_table_object_hashes();
 		}
 
@@ -107,6 +108,7 @@ namespace DataHarvester.BioLincc
 			builder.create_table_object_dates();
 			builder.create_table_object_instances();
 			builder.create_table_object_titles();
+			builder.create_table_object_languages();
 			builder.create_table_object_hashes();
 		}
 			
@@ -235,6 +237,13 @@ namespace DataHarvester.BioLincc
 			}
 		}
 
+		public void StoreObjectLanguages()
+		{
+			// inserts a default 'en' language record for each data object
+			LanguageDataHelper helper = new LanguageDataHelper(biolincc_connString);
+			helper.CreateDefaultLanguageData();
+		}
+
 		public void UpdateStudyIdentifierOrgs()
 		{
 			OrgHelper helper = new OrgHelper(biolincc_connString);
@@ -281,8 +290,9 @@ namespace DataHarvester.BioLincc
 			hashcreator.CreateObjectRecordHashes();
 			hashcreator.CreateRecordsetPropertiesHashes();
 			hashcreator.CreateObjectInstanceHashes();
-			hashcreator.CreateObjectTitledHashes();
+			hashcreator.CreateObjectTitleHashes();
 			hashcreator.CreateObjectDateHashes();
+			hashcreator.CreateObjectLanguageHashes();
 
 			ObjectHashInserters hashinserter = new ObjectHashInserters(biolincc_connString);
 			hashinserter.InsertStudyHashesIntoDataObjects();
@@ -290,6 +300,7 @@ namespace DataHarvester.BioLincc
 			hashinserter.InsertObjectHashesIntoObjectInstances();
 			hashinserter.InsertObjectHashesIntoObjectTitles();
 			hashinserter.InsertObjectHashesIntoObjectDates();
+			hashinserter.InsertObjectHashesIntoObjectLanguages();
 		}
 
 		public void CreateObjectCompositeHashes()
@@ -299,6 +310,7 @@ namespace DataHarvester.BioLincc
 			hashcreator.CreateCompositeObjectInstanceHashes();
 			hashcreator.CreateCompositeObjectTitlesHashes();
 			hashcreator.CreateCompositeObjectDatesHashes();
+			hashcreator.CreateCompositeObjectLanguagesHashes();
 
 			// objects must fully rolled up first..
 			hashcreator.CreateFullDataObjectHashes();

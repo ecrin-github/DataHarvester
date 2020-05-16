@@ -81,6 +81,9 @@ namespace DataHarvester.Yoda
 		{
 			repo.UpdateStudyIdentifierOrgs();
 			repo.UpdateDataObjectOrgs();
+
+			// also add in default language data
+			repo.StoreObjectLanguages();
 		}
 
 		public void InsertHashes()

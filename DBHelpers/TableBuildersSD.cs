@@ -435,6 +435,24 @@ namespace DataHarvester
 		}
 
 
+		public void create_table_object_languages()
+		{
+			string sql_string = @"CREATE TABLE sd.object_languages(
+				sd_id                  VARCHAR         NOT NULL
+			  , do_id                  INT             NOT NULL
+              , object_hash_id         CHAR(32)        NULL
+			  , lang_code              VARCHAR         NULL default 'en'
+              , record_hash            CHAR(32)        NULL
+			);
+            CREATE INDEX object_languages_sd_id_do_id ON sd.object_languages(sd_id, do_id);
+            CREATE INDEX object_languages_object_hash_id ON sd.object_languages(object_hash_id);";
+
+			using (var conn = new NpgsqlConnection(db_conn))
+			{
+				conn.Execute(sql_string);
+			}
+		}
+
 		public void create_table_object_hashes()
 		{
 			string sql_string = @"CREATE TABLE sd.object_hashes(

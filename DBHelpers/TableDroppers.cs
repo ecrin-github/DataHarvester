@@ -160,6 +160,15 @@ namespace DataHarvester.DBHelpers
 			}
 		}
 
+		public void drop_table_object_languages()
+		{
+			string sql_string = @"DROP TABLE IF EXISTS sd.object_languages;";
+			using (var conn = new NpgsqlConnection(db_conn))
+			{
+				conn.Execute(sql_string);
+			}
+		}
+
 		public void drop_table_object_hashes()
 		{
 			string sql_string = @"DROP TABLE IF EXISTS sd.object_hashes;";

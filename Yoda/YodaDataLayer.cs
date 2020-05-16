@@ -65,34 +65,6 @@ namespace DataHarvester.Yoda
 			// }
 		}
 
-
-		// get listing of local file paths
-		public IEnumerable<string> FetchFilePaths(int source_id)
-		{
-			using (NpgsqlConnection Conn = new NpgsqlConnection(_mon_connString))
-			{
-				string sql_string = "select local_path ";
-				sql_string += " from sf.source_data_studies ";
-				sql_string += " where source_id = " + source_id.ToString();
-				sql_string += " and local_path is not null";
-				sql_string += " order by local_path";
-				return Conn.Query<string>(sql_string);
-			}
-		}
-
-		// get record of interest
-		public FileRecord FetchFileRecord(string sd_id, int source_id)
-		{
-			using (NpgsqlConnection Conn = new NpgsqlConnection(_mon_connString))
-			{
-				string sql_string = "select id, source_id, sd_id, remote_url, last_sf_id, last_revised, ";
-				sql_string += " assume_complete, download_status, download_datetime, local_path ";
-				sql_string += " from sf.source_data_studies ";
-				sql_string += " where sd_id = '" + sd_id + "' and source_id = " + source_id.ToString();
-				return Conn.Query<FileRecord>(sql_string).FirstOrDefault();
-			}
-		}
-
 		public void DeleteSDStudyTables()
 		{
 			StudyTableDroppers dropper = new StudyTableDroppers(yoda_connString);
@@ -114,6 +86,7 @@ namespace DataHarvester.Yoda
 			dropper.drop_table_object_dates();
 			dropper.drop_table_object_instances();
 			dropper.drop_table_object_titles();
+			dropper.drop_table_object_languages();
 			dropper.drop_table_object_hashes();
 		}
 
@@ -139,6 +112,7 @@ namespace DataHarvester.Yoda
 			builder.create_table_object_dates();
 			builder.create_table_object_instances();
 			builder.create_table_object_titles();
+			builder.create_table_object_languages();
 			builder.create_table_object_hashes();
 		}
 
@@ -253,6 +227,13 @@ namespace DataHarvester.Yoda
 			}
 		}
 
+		public void StoreObjectLanguages()
+		{
+			// inserts a default 'en' language record for each data object
+			LanguageDataHelper helper = new LanguageDataHelper(yoda_connString);
+			helper.CreateDefaultLanguageData();
+		}
+
 		public void UpdateStudyIdentifierOrgs()
 		{
 			OrgHelper helper = new OrgHelper(yoda_connString);
@@ -305,16 +286,17 @@ namespace DataHarvester.Yoda
 			ObjectHashCreators hashcreator = new ObjectHashCreators(yoda_connString);
 			hashcreator.CreateObjectIdHashes();
 			hashcreator.CreateObjectRecordHashes();
-
 			hashcreator.CreateRecordsetPropertiesHashes();
 			hashcreator.CreateObjectInstanceHashes();
-			hashcreator.CreateObjectTitledHashes();
+			hashcreator.CreateObjectTitleHashes();
+			hashcreator.CreateObjectLanguageHashes();
 
 			ObjectHashInserters hashinserter = new ObjectHashInserters(yoda_connString);
 			hashinserter.InsertStudyHashesIntoDataObjects();
 			hashinserter.InsertObjectHashesIntoDatasetProperties();
 			hashinserter.InsertObjectHashesIntoObjectInstances();
 			hashinserter.InsertObjectHashesIntoObjectTitles();
+			hashinserter.InsertObjectHashesIntoObjectLanguages();
 		}
 
 		public void CreateObjectCompositeHashes()
@@ -324,6 +306,7 @@ namespace DataHarvester.Yoda
 			hashcreator.CreateCompositeObjectInstanceHashes();
 			hashcreator.CreateCompositeObjectTitlesHashes();
 			hashcreator.CreateCompositeObjectDatesHashes();
+			hashcreator.CreateCompositeObjectLanguagesHashes();
 
 			// objects must fully rolled up first..
 			hashcreator.CreateFullDataObjectHashes();

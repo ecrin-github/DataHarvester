@@ -390,7 +390,7 @@ namespace DataHarvester.DBHelpers
             }
         }
 
-        public void CreateObjectTitledHashes()
+        public void CreateObjectTitleHashes()
         {
             string sql_string = @"Update sd.object_titles
               set record_hash = md5(json_build_array(title_text, title_type_id, title_lang_code, lang_usage_id,
@@ -402,6 +402,16 @@ namespace DataHarvester.DBHelpers
             }
         }
 
+        public void CreateObjectLanguageHashes()
+        {
+            string sql_string = @"Update sd.object_languages
+              set record_hash = md5(json_build_array(lang_code)::varchar)::char(32);";
+
+            using (var conn = new NpgsqlConnection(db_conn))
+            {
+                conn.Execute(sql_string);
+            }
+        }
     }
 
     public class ObjectHashInserters
@@ -472,6 +482,20 @@ namespace DataHarvester.DBHelpers
         public void InsertObjectHashesIntoObjectDates()
         {
             string sql_string = @"Update sd.object_dates t
+              set object_hash_id = d.object_hash_id
+              from sd.data_objects d 
+              where t.sd_id = d.sd_id
+              and t.do_id = d.do_id;";
+
+            using (var conn = new NpgsqlConnection(db_conn))
+            {
+                conn.Execute(sql_string);
+            }
+        }
+
+        public void InsertObjectHashesIntoObjectLanguages()
+        {
+            string sql_string = @"Update sd.object_languages t
               set object_hash_id = d.object_hash_id
               from sd.data_objects d 
               where t.sd_id = d.sd_id
@@ -568,6 +592,26 @@ namespace DataHarvester.DBHelpers
                 conn.Execute(sql_string);
             }
         }
+
+
+        public void CreateCompositeObjectLanguagesHashes()
+        {
+            string sql_string = @"Insert into sd.object_hashes 
+              (sd_id, do_id, study_hash_id, object_hash_id, hash_type_id, hash_type, composite_hash)
+              select t.sd_id, t.do_id, d.study_hash_id, t.object_hash_id, 58, 'languages', 
+              md5(to_json(array_agg(t.record_hash))::varchar)::char(32)
+              from sd.object_languages t
+              inner join sd.data_objects d
+              on t.sd_id = d.sd_id
+              and t.do_id = d.do_id
+              group by t.sd_id, t.do_id, d.study_hash_id, t.object_hash_id;";
+
+            using (var conn = new NpgsqlConnection(db_conn))
+            {
+                conn.Execute(sql_string);
+            }
+        }
+
 
         public void CreateFullDataObjectHashes()
         {
