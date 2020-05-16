@@ -183,7 +183,7 @@ namespace DataHarvester
 			contrib_type = _contrib_type;
 			is_individual = (_person_full_name == null) ? false : true;
 			organisation_id = _organisation_id;
-			organisation_name = organisation_name;
+			organisation_name = _organisation_name;
 			person_full_name = _person_full_name;
 			person_affiliation = _person_affiliation;
 		}

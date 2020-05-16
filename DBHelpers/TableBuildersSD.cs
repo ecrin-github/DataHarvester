@@ -234,7 +234,7 @@ namespace DataHarvester
 			string sql_string = @"CREATE TABLE sd.data_objects(
 				sd_id                  VARCHAR         NOT NULL
 			  , do_id                  INT             NOT NULL
-              , hash_id                CHAR(32)        NULL
+              , object_hash_id         CHAR(32)        NULL
               , study_hash_id          CHAR(32)        NULL
 			  , display_title          VARCHAR         NULL
 			  , doi                    VARCHAR         NULL 
@@ -258,7 +258,7 @@ namespace DataHarvester
               , object_full_hash       CHAR(32)        NULL
 			);
             CREATE INDEX data_objects_study_sd_id_do_id ON sd.data_objects(sd_id, do_id);
-            CREATE INDEX data_objects_hash_id ON sd.data_objects(hash_id);
+            CREATE INDEX data_objects_object_hash_id ON sd.data_objects(object_hash_id);
             CREATE INDEX data_objects_study_hash_id ON sd.data_objects(study_hash_id);";
 
 			using (var conn = new NpgsqlConnection(db_conn))
@@ -273,7 +273,6 @@ namespace DataHarvester
 			string sql_string = @"CREATE TABLE sd.dataset_properties(
 				sd_id                  VARCHAR         NOT NULL
 			  , do_id                  INT             NOT NULL
-              , study_hash_id          CHAR(32)        NULL
               , object_hash_id         CHAR(32)        NULL
 			  , record_keys_type_id    INT             NULL 
 			  , record_keys_type       VARCHAR         NULL     	
@@ -287,8 +286,7 @@ namespace DataHarvester
               , record_hash            CHAR(32)        NULL
 			);
             CREATE INDEX dataset_properties_sd_id_do_id ON sd.dataset_properties(sd_id, do_id);
-            CREATE INDEX dataset_properties_object_hash_id ON sd.dataset_properties(object_hash_id);
-            CREATE INDEX dataset_properties_study_hash_id ON sd.dataset_properties(study_hash_id);";
+            CREATE INDEX dataset_properties_object_hash_id ON sd.dataset_properties(object_hash_id);";
 
 			using (var conn = new NpgsqlConnection(db_conn))
 			{
@@ -302,7 +300,6 @@ namespace DataHarvester
 			string sql_string = @"CREATE TABLE sd.object_dates(
 				sd_id                  VARCHAR         NOT NULL
 			  , do_id                  INT             NOT NULL
-              , study_hash_id          CHAR(32)        NULL
               , object_hash_id         CHAR(32)        NULL
 			  , date_type_id           INT             NULL
 			  , date_type              VARCHAR         NULL
@@ -318,8 +315,7 @@ namespace DataHarvester
               , record_hash            CHAR(32)        NULL
 			);
             CREATE INDEX object_dates_sd_id_do_id ON sd.object_dates(sd_id, do_id);
-            CREATE INDEX object_dates_object_hash_id ON sd.object_dates(object_hash_id);
-            CREATE INDEX object_dates_study_hash_id ON sd.object_dates(study_hash_id);";
+            CREATE INDEX object_dates_object_hash_id ON sd.object_dates(object_hash_id);";
 
 			using (var conn = new NpgsqlConnection(db_conn))
 			{
@@ -333,7 +329,6 @@ namespace DataHarvester
 			string sql_string = @"CREATE TABLE sd.object_instances(
 				sd_id                  VARCHAR         NOT NULL
 			  , do_id                  INT             NOT NULL
-              , study_hash_id          CHAR(32)        NULL
               , object_hash_id         CHAR(32)        NULL
 			  , instance_type_id       INT             NOT NULL  default 1
 			  , instance_type          VARCHAR         NULL default 'Full Resource'
@@ -349,8 +344,7 @@ namespace DataHarvester
               , record_hash            CHAR(32)        NULL
 			);
             CREATE INDEX object_instances_sd_id_do_id ON sd.object_instances(sd_id, do_id);
-            CREATE INDEX object_instances_object_hash_id ON sd.object_instances(object_hash_id);
-            CREATE INDEX object_instances_study_hash_id ON sd.object_instances(study_hash_id);";
+            CREATE INDEX object_instances_object_hash_id ON sd.object_instances(object_hash_id);";
 
 			using (var conn = new NpgsqlConnection(db_conn))
 			{
@@ -363,7 +357,8 @@ namespace DataHarvester
 		{
 			string sql_string = @"CREATE TABLE sd.object_contributors(
 				sd_id                  VARCHAR         NOT NULL
-              , study_hash_id          CHAR(32)        NULL
+			  , do_id                  INT             NOT NULL
+              , object_hash_id         CHAR(32)        NULL
 			  , contrib_type_id        INT             NULL
 			  , contrib_type           VARCHAR         NULL
 			  , is_individual          BOOLEAN         NULL
@@ -381,8 +376,7 @@ namespace DataHarvester
               , record_hash            CHAR(32)        NULL
 			);
             CREATE INDEX object_contributors_sd_id_do_id ON sd.object_contributors(sd_id, do_id);
-            CREATE INDEX object_contributors_object_hash_id ON sd.object_contributors(object_hash_id);
-            CREATE INDEX object_contributors_study_hash_id ON sd.object_contributors(study_hash_id);";
+            CREATE INDEX object_contributors_object_hash_id ON sd.object_contributors(object_hash_id);";
 
 			using (var conn = new NpgsqlConnection(db_conn))
 			{
@@ -396,7 +390,6 @@ namespace DataHarvester
 			string sql_string = @"CREATE TABLE sd.object_titles(
 				sd_id                  VARCHAR         NOT NULL
 			  , do_id                  INT             NOT NULL
-              , study_hash_id          CHAR(32)        NULL
               , object_hash_id         CHAR(32)        NULL
 			  , title_text             VARCHAR         NULL
 			  , title_type_id          INT             NULL
@@ -409,8 +402,7 @@ namespace DataHarvester
               , record_hash            CHAR(32)        NULL
 			);
             CREATE INDEX object_titles_sd_id_do_id ON sd.object_titles(sd_id, do_id);
-            CREATE INDEX object_titles_object_hash_id ON sd.object_titles(object_hash_id);
-            CREATE INDEX object_titles_study_hash_id ON sd.object_titles(study_hash_id);";
+            CREATE INDEX object_titles_object_hash_id ON sd.object_titles(object_hash_id);";
 
 			using (var conn = new NpgsqlConnection(db_conn))
 			{
@@ -422,7 +414,8 @@ namespace DataHarvester
 		{
 			string sql_string = @"CREATE TABLE sd.object_topics(
 				sd_id                  VARCHAR         NOT NULL
-              , study_hash_id          CHAR(32)        NULL
+			  , do_id                  INT             NOT NULL
+              , object_hash_id         CHAR(32)        NULL
 			  , topic_type_id          INT             NULL
 			  , topic_type             VARCHAR         NULL
 			  , topic_value            VARCHAR         NULL
@@ -433,8 +426,7 @@ namespace DataHarvester
               , record_hash            CHAR(32)        NULL
 			);
             CREATE INDEX object_topics_sd_id_do_id ON sd.object_topics(sd_id, do_id);
-            CREATE INDEX object_topics_object_hash_id ON sd.object_topics(object_hash_id);
-            CREATE INDEX object_topics_study_hash_id ON sd.object_topics(study_hash_id);";
+            CREATE INDEX object_topics_object_hash_id ON sd.object_topics(object_hash_id);";
 
 			using (var conn = new NpgsqlConnection(db_conn))
 			{

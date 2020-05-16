@@ -320,6 +320,7 @@ namespace DataHarvester.Yoda
 		public void CreateObjectCompositeHashes()
 		{
 			ObjectCompositeHashCreators hashcreator = new ObjectCompositeHashCreators(yoda_connString);
+			hashcreator.CreateCompositeDatasetPropertiesHashes();
 			hashcreator.CreateCompositeObjectInstanceHashes();
 			hashcreator.CreateCompositeObjectTitlesHashes();
 			hashcreator.CreateCompositeObjectDatesHashes();

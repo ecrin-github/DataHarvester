@@ -194,7 +194,7 @@ namespace DataHarvester.Yoda
 			}
 			if (!string.IsNullOrEmpty(st.conditions_studied))
 			{
-				study_topics.Add(new StudyTopic(s.sd_id, 13, "condition", st.compound_product_name, null, "Yoda"));
+				study_topics.Add(new StudyTopic(s.sd_id, 13, "condition", st.conditions_studied, null, "Yoda"));
 			}
 
 			// create study references (pmids)

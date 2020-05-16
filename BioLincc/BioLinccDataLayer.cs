@@ -295,6 +295,7 @@ namespace DataHarvester.BioLincc
 		public void CreateObjectCompositeHashes()
 		{
 			ObjectCompositeHashCreators hashcreator = new ObjectCompositeHashCreators(biolincc_connString);
+			hashcreator.CreateCompositeDatasetPropertiesHashes();
 			hashcreator.CreateCompositeObjectInstanceHashes();
 			hashcreator.CreateCompositeObjectTitlesHashes();
 			hashcreator.CreateCompositeObjectDatesHashes();

@@ -327,7 +327,7 @@ namespace DataHarvester.DBHelpers
         public void CreateObjectIdHashes()
         {
             string sql_string = @"Update sd.data_objects d
-              set hash_id = md5(json_build_array(s.hash_id, d.display_title)::varchar)::char(32)
+              set object_hash_id = md5(json_build_array(s.hash_id, d.display_title)::varchar)::char(32)
               from sd.studies s
               where d.sd_id = s.sd_id";
 
@@ -430,8 +430,7 @@ namespace DataHarvester.DBHelpers
         public void InsertObjectHashesIntoDatasetProperties()
         {
             string sql_string = @"Update sd.dataset_properties t
-              set study_hash_id = d.study_hash_id,
-              object_hash_id = d.hash_id
+              set object_hash_id = d.object_hash_id
               from sd.data_objects d 
               where t.sd_id = d.sd_id
               and t.do_id = d.do_id;";
@@ -445,8 +444,7 @@ namespace DataHarvester.DBHelpers
         public void InsertObjectHashesIntoObjectInstances()
         {
             string sql_string = @"Update sd.object_instances t
-              set study_hash_id = d.study_hash_id,
-              object_hash_id = d.hash_id
+              set object_hash_id = d.object_hash_id
               from sd.data_objects d 
               where t.sd_id = d.sd_id
               and t.do_id = d.do_id;";
@@ -460,8 +458,7 @@ namespace DataHarvester.DBHelpers
         public void InsertObjectHashesIntoObjectTitles()
         {
             string sql_string = @"Update sd.object_titles t
-              set study_hash_id = d.study_hash_id,
-              object_hash_id = d.hash_id
+              set object_hash_id = d.object_hash_id
               from sd.data_objects d
               where t.sd_id = d.sd_id
               and t.do_id = d.do_id;";
@@ -475,8 +472,7 @@ namespace DataHarvester.DBHelpers
         public void InsertObjectHashesIntoObjectDates()
         {
             string sql_string = @"Update sd.object_dates t
-              set study_hash_id = d.study_hash_id,
-              object_hash_id = d.hash_id
+              set object_hash_id = d.object_hash_id
               from sd.data_objects d 
               where t.sd_id = d.sd_id
               and t.do_id = d.do_id;";
@@ -498,15 +494,38 @@ namespace DataHarvester.DBHelpers
             db_conn = _db_conn;
         }
 
+        // sould only be 0 or 1 one per data object but it makes 
+        // further processing a little easier
+        public void CreateCompositeDatasetPropertiesHashes()
+        {
+            string sql_string = @"Insert into sd.object_hashes 
+              (sd_id, do_id, study_hash_id, object_hash_id, hash_type_id, hash_type, composite_hash)
+              select t.sd_id, t.do_id, d.study_hash_id, t.object_hash_id, 60, 'dataset properties', 
+              md5(to_json(array_agg(t.record_hash))::varchar)::char(32)
+              from sd.dataset_properties t
+              inner join sd.data_objects d
+              on t.sd_id = d.sd_id
+              and t.do_id = d.do_id
+              group by t.sd_id, t.do_id, d.study_hash_id, t.object_hash_id;";
+
+            using (var conn = new NpgsqlConnection(db_conn))
+            {
+                conn.Execute(sql_string);
+            }
+        }
+
 
         public void CreateCompositeObjectInstanceHashes()
         {
             string sql_string = @"Insert into sd.object_hashes 
               (sd_id, do_id, study_hash_id, object_hash_id, hash_type_id, hash_type, composite_hash)
-              select sd_id, do_id, study_hash_id, object_hash_id, 51, 'instances', 
-              md5(to_json(array_agg(record_hash))::varchar)::char(32)
-              from sd.object_instances
-              group by sd_id, do_id, study_hash_id, object_hash_id;";
+              select t.sd_id, t.do_id, d.study_hash_id, t.object_hash_id, 51, 'instances', 
+              md5(to_json(array_agg(t.record_hash))::varchar)::char(32)
+              from sd.object_instances t
+              inner join sd.data_objects d
+              on t.sd_id = d.sd_id
+              and t.do_id = d.do_id
+              group by t.sd_id, t.do_id, d.study_hash_id, t.object_hash_id;";
 
             using (var conn = new NpgsqlConnection(db_conn))
             {
@@ -518,10 +537,13 @@ namespace DataHarvester.DBHelpers
         {
             string sql_string = @"Insert into sd.object_hashes 
               (sd_id, do_id, study_hash_id, object_hash_id, hash_type_id, hash_type, composite_hash)
-              select sd_id, do_id, study_hash_id, object_hash_id, 52, 'titles', 
-              md5(to_json(array_agg(record_hash))::varchar)::char(32)
-              from sd.object_titles
-              group by sd_id, do_id, study_hash_id, object_hash_id;";
+              select t.sd_id, t.do_id, d.study_hash_id, t.object_hash_id, 52, 'titles', 
+              md5(to_json(array_agg(t.record_hash))::varchar)::char(32)
+              from sd.object_titles t
+              inner join sd.data_objects d
+              on t.sd_id = d.sd_id
+              and t.do_id = d.do_id
+              group by t.sd_id, t.do_id, d.study_hash_id, t.object_hash_id;";
 
             using (var conn = new NpgsqlConnection(db_conn))
             {
@@ -533,10 +555,13 @@ namespace DataHarvester.DBHelpers
         {
             string sql_string = @"Insert into sd.object_hashes 
               (sd_id, do_id, study_hash_id, object_hash_id, hash_type_id, hash_type, composite_hash)
-              select sd_id, do_id, study_hash_id, object_hash_id, 53, 'dates', 
-              md5(to_json(array_agg(record_hash))::varchar)::char(32)
-              from sd.object_dates
-              group by sd_id, do_id, study_hash_id, object_hash_id;";
+              select t.sd_id, t.do_id, d.study_hash_id, t.object_hash_id, 53, 'dates', 
+              md5(to_json(array_agg(t.record_hash))::varchar)::char(32)
+              from sd.object_dates t
+              inner join sd.data_objects d
+              on t.sd_id = d.sd_id
+              and t.do_id = d.do_id
+              group by t.sd_id, t.do_id, d.study_hash_id, t.object_hash_id;";
 
             using (var conn = new NpgsqlConnection(db_conn))
             {
@@ -558,15 +583,12 @@ namespace DataHarvester.DBHelpers
                 from sd.object_hashes
                 union
                 select sd_id, do_id, study_hash_id, object_hash_id, record_hash as hash
-                from sd.dataset_properties
-                union
-                select sd_id, do_id, study_hash_id, hash_id as object_hash_id, record_hash as hash
                 from sd.data_objects) h
              group by sd_id, do_id, study_hash_id, object_hash_id) b
              where d.sd_id = b.sd_id
              and d.do_id = b.do_id
              and d.study_hash_id = b.study_hash_id
-             and d.hash_id  = b.object_hash_id;";
+             and d.object_hash_id  = b.object_hash_id;";
 
             using (var conn = new NpgsqlConnection(db_conn))
             {
