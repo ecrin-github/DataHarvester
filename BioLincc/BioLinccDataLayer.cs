@@ -65,29 +65,6 @@ namespace DataHarvester.BioLincc
 			// }
 		}
 
-		public void DeleteSDStudyTables()
-		{
-			StudyTableDroppers dropper = new StudyTableDroppers(biolincc_connString);
-			dropper.drop_table_studies();
-			dropper.drop_table_study_identifiers();
-			dropper.drop_table_study_titles();
-			dropper.drop_table_study_relationships();
-			dropper.drop_table_study_references();
-			dropper.drop_table_study_hashes();
-		}
-
-		public void DeleteSDObjectTables()
-		{
-			ObjectTableDroppers dropper = new ObjectTableDroppers(biolincc_connString);
-			dropper.drop_table_data_objects();
-			dropper.drop_table_dataset_properties();
-			dropper.drop_table_object_dates();
-			dropper.drop_table_object_instances();
-			dropper.drop_table_object_titles();
-			dropper.drop_table_object_languages();
-			dropper.drop_table_object_hashes();
-		}
-
 		public void BuildNewSDStudyTables()
 		{
 			StudyTableBuildersSD builder = new StudyTableBuildersSD(biolincc_connString);

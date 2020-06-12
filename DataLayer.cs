@@ -11,7 +11,7 @@ namespace DataHarvester
 {
 	public class DataLayer
 	{
-		private string _connString;
+		private string connString;
 		private string _biolincc_pp_connString;
 		private string _ctg_connString;
 		private string _isrctn_connString;
@@ -26,7 +26,7 @@ namespace DataHarvester
 		/// The json file also includes the root folder path, which is
 		/// stored in the class's folder_base property.
 		/// </summary>
-		public DataLayer()
+		public DataLayer(string database_name)
 		{
 			IConfigurationRoot settings = new ConfigurationBuilder()
 				.SetBasePath(AppContext.BaseDirectory)
@@ -38,29 +38,9 @@ namespace DataHarvester
 			builder.Username = settings["user"];
 			builder.Password = settings["password"];
 
-			builder.Database = "mon";
-			builder.SearchPath = "sf";
-			_connString = builder.ConnectionString;
-
-			builder.Database = "biolincc";
-			builder.SearchPath = "pp";
-			_biolincc_pp_connString = builder.ConnectionString;
-
-			builder.Database = "ctg";
-			builder.SearchPath = "ad";
-			_ctg_connString = builder.ConnectionString;
-
-			builder.Database = "isrctn";
-			builder.SearchPath = "ad";
-			_isrctn_connString = builder.ConnectionString;
-
-			builder.Database = "yoda";
-			builder.SearchPath = "pp";
-			_yoda_pp_connString = builder.ConnectionString;
-
-			_biolincc_folder_base = settings["biolincc_folder_base"];
-			_yoda_folder_base = settings["yoda_folder_base"];
-
+			builder.Database = database_name;
+			connString = builder.ConnectionString;
+			
 			// example appsettings.json file...
 			// the only values required are for...
 			// {
@@ -71,9 +51,69 @@ namespace DataHarvester
 			// }
 		}
 
+
+		public void DeleteSDStudyTables()
+		{
+			StudyTableDroppers dropper = new StudyTableDroppers(connString);
+			dropper.drop_table_studies();
+			dropper.drop_table_study_identifiers();
+			dropper.drop_table_study_titles();
+			dropper.drop_table_study_contributors();
+			dropper.drop_table_study_topics();
+			dropper.drop_table_study_relationships();
+			dropper.drop_table_study_references();
+			dropper.drop_table_study_hashes();
+		}
+
+		public void DeleteSDObjectTables()
+		{
+			ObjectTableDroppers dropper = new ObjectTableDroppers(connString);
+			dropper.drop_table_data_objects();
+			dropper.drop_table_dataset_properties();
+			dropper.drop_table_object_dates();
+			dropper.drop_table_object_instances();
+			dropper.drop_table_object_titles();
+			dropper.drop_table_object_languages();
+			dropper.drop_table_object_hashes();
+		}
+
+		public void BuildNewSDStudyTables()
+		{
+			StudyTableBuildersSD builder = new StudyTableBuildersSD(connString);
+			builder.create_table_studies();
+			builder.create_table_study_identifiers();
+			builder.create_table_study_relationships();
+			builder.create_table_study_references();
+			builder.create_table_study_titles();
+			builder.create_table_study_hashes();
+		}
+
+
+		public void BuildNewSDObjectTables()
+		{
+			ObjectTableBuildersSD builder = new ObjectTableBuildersSD(connString);
+			builder.create_table_data_objects();
+			builder.create_table_dataset_properties();
+			builder.create_table_object_dates();
+			builder.create_table_object_instances();
+			builder.create_table_object_titles();
+			builder.create_table_object_languages();
+			builder.create_table_object_hashes();
+		}
+
+
+
+
+
+
+
+
 		public string GetBioLinccFolderBase() => _biolincc_folder_base;
 
 		public string GetYodaFolderBase() => _yoda_folder_base;
+
+
+
 
 		public IEnumerable<FileRecord> FetchStudyFileRecords(int source_id)
 		{
