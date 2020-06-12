@@ -56,60 +56,49 @@ namespace DataHarvester
 					}
 
 					// proceed with one or two valid aprameters
-    				int source_id = 0; string database_name = ""; string source_folder_name = "";
+    				int source_id = 0; 
 					switch (source)
 					{
 						case "b":
 							{
-								database_name = "biolincc";
 								source_id = 101900;
 								break;
 							}
 						case "y":
 							{
-								database_name = "yoda";
 								source_id = 101901;
 								break;
 							}
 						case "c":
 							{
-								database_name = "ctg";
 								source_id = 100120;
 								break;
 							}
 						case "e":
 							{
-								database_name = "euctr";
 								source_id = 100123;
 								break;
 							}
 						case "i":
 							{
-								database_name = "isrctn";
 								source_id = 100126;
 								break;
 							}
 						case "w":
 							{
-								database_name = "who";
 								source_id = 100115;
 								break;
 							}
 						case "p":
 							{
-								database_name = "pubmed";
 								source_id = 100135;
 								break;
 							}
 					}
-					DataLayer repo = new DataLayer(database_name);
-					source_folder_name = @"C\Data\" + database_name + @"\";
-
-					Controller harvest_controller = new Controller(repo, source_id, source_folder_name, harvest_type_id);
+					Controller harvest_controller = new Controller(source_id, harvest_type_id);
 					harvest_controller.EstablishNewSDTables();
 					harvest_controller.LoopThroughFiles();
-					harvest_controller.UpdateIds();
-					harvest_controller.InsertHashes();
+					harvest_controller.CompleteSDTables();
 				}
 			}
 		}

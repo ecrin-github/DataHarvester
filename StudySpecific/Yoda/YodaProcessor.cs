@@ -22,7 +22,7 @@ namespace DataHarvester.Yoda
 		}
 
 
-		public Study ProcessData(YodaDataLayer repo, YodaRecord st, DateTime? download_datetime)
+		public Study ProcessData(YodaRecord st, DateTime? download_datetime)
 		{
 			Study s = new Study();
 
@@ -354,7 +354,7 @@ namespace DataHarvester.Yoda
 		}
 
 
-		public void StoreData(YodaDataLayer repo, Study s)
+		public void StoreData(DataLayer repo, Study s)
 		{
 			// store study
 			StudyInDB st = new StudyInDB(s);

@@ -6,30 +6,20 @@ using System.Xml.Serialization;
 
 namespace DataHarvester.Yoda
 {
-    
 	class YodaController
 	{
-		DataLayer common_repo; 
-		YodaDataLayer repo;
+		DataLayer common_repo;
+		LoggingDataLayer logging_repo;
 		YodaProcessor processor;
-		int harvest_type_id;
 		int source_id;
 
-		public YodaController(DataLayer _common_repo, int _harvest_type_id, int _source_id)
+		public YodaController(int _source_id, DataLayer _common_repo, LoggingDataLayer _logging_repo)
 		{
 			source_id = _source_id;
-			repo = new YodaDataLayer(source_id);
+			//yoda_repo = new YodaDataLayer(source_id);
 			processor = new YodaProcessor();
 			common_repo = _common_repo;
-			harvest_type_id = _harvest_type_id;
-		}
-
-		public void EstablishNewSDTables()
-		{
-			repo.DeleteSDStudyTables();
-			repo.DeleteSDObjectTables();
-			repo.BuildNewSDStudyTables();
-			repo.BuildNewSDObjectTables();
+			logging_repo = _logging_repo;
 		}
 
 		public void LoopThroughFiles()
@@ -41,7 +31,7 @@ namespace DataHarvester.Yoda
 			// and construct a list of the files 
 			// N.B. (only one folder for all files) 
 
-			IEnumerable<FileRecord> file_list = common_repo.FetchStudyFileRecords(source_id);
+			IEnumerable<FileRecord> file_list = logging_repo.FetchStudyFileRecords(source_id);
 			int n = 0; string filePath = "";
 			foreach (FileRecord rec in file_list)
 			{
@@ -63,13 +53,13 @@ namespace DataHarvester.Yoda
 					YodaRecord studyRegEntry = (YodaRecord)serializer.Deserialize(rdr);
 
 					// break up the file into relevant data classes
-					Study s = processor.ProcessData(repo, studyRegEntry, rec.download_datetime);
+					Study s = processor.ProcessData(studyRegEntry, rec.download_datetime);
 
 					// store the data in the database			
-					processor.StoreData(repo, s);  // FOR NOW!!!!!
+					processor.StoreData(common_repo, s);  // FOR NOW!!!!!
 
 					// update file record with last processed datetime
-					common_repo.UpdateStudyFileRecLastProcessed(rec.id);
+					logging_repo.UpdateStudyFileRecLastProcessed(rec.id);
 
 				}
 
@@ -77,22 +67,7 @@ namespace DataHarvester.Yoda
 			}
 		}
 
-		public void UpdateIds()
-		{
-			repo.UpdateStudyIdentifierOrgs();
-			repo.UpdateDataObjectOrgs();
-
-			// also add in default language data
-			repo.StoreObjectLanguages();
-		}
-
-		public void InsertHashes()
-		{
-			repo.CreateStudyHashes();
-			repo.CreateStudyCompositeHashes();
-			repo.CreateDataObjectHashes();
-			repo.CreateObjectCompositeHashes();
-		}
+		
 	}
 
 }

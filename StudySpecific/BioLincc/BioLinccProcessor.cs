@@ -13,7 +13,7 @@ namespace DataHarvester.BioLincc
 			hp = new HelperFunctions();
 		}
 
-		public Study ProcessData(BioLinccDataLayer repo, BioLinccRecord st, DateTime? download_datetime)
+		public Study ProcessData(BioLinccRecord st, DateTime? download_datetime, DataLayer common_repo)
 		{
 			Study s = new Study();
 
@@ -132,7 +132,7 @@ namespace DataHarvester.BioLincc
 
 			// If there is a NCT ID (there usually is...).
 			// if multiple - different sort of relationship; also a group may share the same NCT id
-			// to be sorted out once all links aggregated - one to many relationships transfornmed into 'study relationships'
+			// to be sorted out once all links aggregated - one to many relationships transformed into 'study relationships'
 
 			if (st.registry_ids.Count > 0)
 			{
@@ -145,12 +145,12 @@ namespace DataHarvester.BioLincc
 					// get sponsor name and organisation using NCT Id using the first id
 					if (n == 1)
 					{
-						var sponsor_details = repo.FetchBioLINCCSponsorFromNCT(reg_id.nct_id);
+						var sponsor_details = common_repo.FetchBioLINCCSponsorFromNCT(common_repo.CTGConnString, reg_id.nct_id);
 						sponsor_org_id = sponsor_details.org_id;
 						sponsor_org = sponsor_details.org_name;
 
 						// also revise title using nct entry...
-						s.display_title = repo.FetchStudyTitle(reg_id.nct_id);
+						s.display_title = common_repo.FetchStudyTitle(common_repo.CTGConnString, reg_id.nct_id);
 					}
 				}
 			}
@@ -319,7 +319,7 @@ namespace DataHarvester.BioLincc
 		}
 
 
-		public void StoreData(BioLinccDataLayer repo, Study s)
+		public void StoreData(DataLayer repo, Study s)
 		{
 			// store study
 			StudyInDB st = new StudyInDB(s);

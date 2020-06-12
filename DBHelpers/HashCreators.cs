@@ -16,19 +16,6 @@ namespace DataHarvester.DBHelpers
         }
 
 
-        public void CreateStudyIdHashes(int source_id)
-        {
-            string sql_string = @"Update sd.studies
-              set hash_id = md5(json_build_array('" + source_id.ToString() +
-                                      "' || sd_id, display_title)::varchar)::char(32);";
-
-            using (var conn = new NpgsqlConnection(db_conn))
-            {
-                conn.Execute(sql_string);
-            }
-        }
-
-
         public void CreateStudyRecordHashes()
         {
             string sql_string = @"Update sd.studies

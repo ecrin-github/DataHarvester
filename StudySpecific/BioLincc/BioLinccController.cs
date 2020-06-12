@@ -9,33 +9,16 @@ namespace DataHarvester.BioLincc
     public class BioLinccController
 	{
 		DataLayer common_repo;
-		BioLinccDataLayer repo;
+		LoggingDataLayer logging_repo;
 		BioLinccProcessor processor;
-		int harvest_type_id;
 		int source_id;
 
-		public BioLinccController(DataLayer _common_repo, int _harvest_type_id, int _source_id)
+		public BioLinccController(int _source_id, DataLayer _common_repo, LoggingDataLayer _logging_repo)
 		{
 			source_id = _source_id;
-			repo = new BioLinccDataLayer(source_id);
 			processor = new BioLinccProcessor();
 			common_repo = _common_repo;
-			harvest_type_id = _harvest_type_id;
-		}
-
-		public void EstablishNewSDTables()
-		{
-			repo.DeleteSDStudyTables();
-			repo.DeleteSDObjectTables();
-			repo.BuildNewSDStudyTables();
-			repo.BuildNewSDObjectTables();
-		}
-
-
-		public void EstablishNewADTables()
-		{
-			//repo.BuildNewADStudyTables();
-			//repo.BuildNewADObjectTables();
+			logging_repo = _logging_repo;
 		}
 
 		public void LoopThroughFiles()
@@ -48,9 +31,10 @@ namespace DataHarvester.BioLincc
 			// N.B. (only one folder for all files) 
 
 			// Rather than using a file base, it is possible
-			// to use the sf records to get a list of files and
+			// to use the sf records to get a list of files
 			// and local paths...
-			IEnumerable<FileRecord> file_list = common_repo.FetchStudyFileRecords(source_id);
+
+			IEnumerable<FileRecord> file_list = logging_repo.FetchStudyFileRecords(source_id);
 			int n = 0; string filePath = "";
 			foreach (FileRecord rec in file_list)
 			{
@@ -72,13 +56,13 @@ namespace DataHarvester.BioLincc
 					BioLinccRecord studyRegEntry = (BioLinccRecord)serializer.Deserialize(rdr);
 
                     // break up the file into relevant data classes
-                    Study s = processor.ProcessData(repo, studyRegEntry, rec.download_datetime);
+                    Study s = processor.ProcessData(studyRegEntry, rec.download_datetime, common_repo);
 
                     // store the data in the database			
-                    processor.StoreData(repo, s);
+                    processor.StoreData(common_repo, s);
 
 					// update file record with last processed datetime
-					common_repo.UpdateStudyFileRecLastProcessed(rec.id);
+					logging_repo.UpdateStudyFileRecLastProcessed(rec.id);
 
 				}
 
@@ -86,24 +70,6 @@ namespace DataHarvester.BioLincc
 			}
 		}
 
-		public void UpdateIds()
-		{
-			repo.UpdateStudyIdentifierOrgs();
-			repo.UpdateDataObjectOrgs();
-
-			// also add in default language data
-			repo.StoreObjectLanguages();
-		}
-
-
-
-		public void InsertHashes()
-		{
-			repo.CreateStudyHashes();
-			repo.CreateStudyCompositeHashes();
-			repo.CreateDataObjectHashes();
-			repo.CreateObjectCompositeHashes();
-		}
 
 	}
 
