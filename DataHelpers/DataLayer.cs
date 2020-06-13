@@ -14,22 +14,16 @@ namespace DataHarvester
 	{
 		private string connString;
 		private string ctg_connString;
-		private int source_id;
-		private Source source;
 
 		/// <summary>
 		/// Parameterless constructor is used to automatically build
 		/// the connection string, using an appsettings.json file that 
 		/// has the relevant credentials (but which is not stored in GitHub).
-		/// The json file also includes the root folder path, which is
-		/// stored in the class's folder_base property.
 		/// </summary>
 		/// 
-		public DataLayer(int _source_id)
+		public DataLayer(string database_name)
 		{
-			source_id = _source_id;
-
-			IConfigurationRoot settings = new ConfigurationBuilder()
+				IConfigurationRoot settings = new ConfigurationBuilder()
 				.SetBasePath(AppContext.BaseDirectory)
 				.AddJsonFile("appsettings.json")
 				.Build();
@@ -38,40 +32,16 @@ namespace DataHarvester
 			builder.Host = settings["host"];
 			builder.Username = settings["user"];
 			builder.Password = settings["password"];
+			builder.Database = database_name;
 
-			source = FetchSourceDetails(source_id);
-
-			builder.Database = source.database_name;
 			connString = builder.ConnectionString;
 
 			builder.Database = "ctg";
 			ctg_connString = builder.ConnectionString;
-
-			// example appsettings.json file...
-			// the only values required are for...
-			// {
-			//	  "host": "host_name...",
-			//	  "user": "user_name...",
-			//    "password": "user_password...",
-			//	  "folder_base": "C:\\MDR JSON\\Object JSON... "
-			// }
 		}
-
 
 		public string ConnString => connString;
-
 		public string CTGConnString => ctg_connString;
-
-		public Source SourceParameters => source; 
-
-
-		public Source FetchSourceDetails(int source_id)
-		{
-			using (NpgsqlConnection Conn = new NpgsqlConnection(connString))
-			{
-				return Conn.Get<Source>(source_id);
-			}
-		}
 
 
 		public void StoreStudy(StudyInDB st_db)

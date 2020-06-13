@@ -79,11 +79,11 @@ namespace DataHarvester
 			    sd_sid                 VARCHAR         NOT NULL
 			  , relationship_type_id   INT             NULL
 			  , relationship_type      VARCHAR         NULL
-			  , target_sd_id           VARCHAR         NULL
+			  , target_sd_sid          VARCHAR         NULL
               , record_hash            CHAR(32)        NULL
 			);
             CREATE INDEX study_relationships_sd_sid ON sd.study_relationships(sd_sid);
-			CREATE INDEX study_relationships_target_sd_id ON sd.study_relationships(target_sd_id);"; 
+			CREATE INDEX study_relationships_target_sd_sid ON sd.study_relationships(target_sd_sid);"; 
 
 			using (var conn = new NpgsqlConnection(db_conn))
 			{

@@ -18,8 +18,8 @@ namespace DataHarvester
 			int source_id = GetFirstArg(args[0]);
 			if (source_id == 0) return;
 
-			DataLayer repo = new DataLayer(source_id);
-			Source source = repo.SourceParameters;
+			LoggingDataLayer logging_repo = new LoggingDataLayer();
+			Source source = logging_repo.FetchSourceParameters(source_id);
 			if (source == null)
 			{
 				WriteLine("Sorry - the first argument does not correspond to a known source");
@@ -28,11 +28,18 @@ namespace DataHarvester
 
 			int harvest_type_id = GetHarvestType(args, source);
 			DateTime? harvest_cutoff_revision_date = harvest_type_id == 2 ? GetHarvestCutOffDate(args) : null;
+			if (harvest_type_id == 2 && harvest_cutoff_revision_date == null)
+			{
+				WriteLine("Sorry - there must be a valid cutoff date for a harvest of type 2");
+				return;
+			}
+
+			DataLayer repo = new DataLayer(source.database_name);
 
 			// Create sd tables. 
 			// (Some sources may be data objects only.)
 
-			SDBuilder sdb = new SDBuilder(repo.ConnString, repo.SourceParameters);
+			SDBuilder sdb = new SDBuilder(repo.ConnString, source);
 			if (source.has_study_tables)
 			{
 				sdb.DeleteSDStudyTables();
@@ -40,8 +47,6 @@ namespace DataHarvester
 			}
 			sdb.DeleteSDObjectTables();
 			sdb.BuildNewSDObjectTables();
-
-			LoggingDataLayer logging_repo = new LoggingDataLayer();
 
 			switch (source.id)
 			{
@@ -99,9 +104,9 @@ namespace DataHarvester
 				WriteLine("or a time limited set of files (2) or ");
 				WriteLine("the files marked as non-complete (3) are to be imported");
 				WriteLine("if the second parameter is 2 a third parameter is required ");
-				WriteLine("which should be a date in YYY-MM-DD format - only files with");
+				WriteLine("which should be a date in YYYY-MM-DD format - only files with");
 				WriteLine("a revision date later than this date will be harvested.");
-				WriteLine("Any additional parameters will be ignored");
+				WriteLine("Any additional parameters will be ignored.");
 				return true;
 			}
 			else

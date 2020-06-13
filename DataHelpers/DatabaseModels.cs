@@ -7,7 +7,7 @@ namespace DataHarvester
 {
 	public class Study
 	{
-		public string sd_id { get; set; }
+		public string sd_sid { get; set; }
 		public string display_title { get; set; }
 		public string title_lang_code { get; set; }
 
@@ -54,7 +54,7 @@ namespace DataHarvester
 	[Table("sd.studies")]
 	public class StudyInDB
 	{
-		public string sd_id { get; set; }
+		public string sd_sid { get; set; }
 		public string display_title { get; set; }
 		public string title_lang_code { get; set; }
 
@@ -84,7 +84,7 @@ namespace DataHarvester
 
 		public StudyInDB(Study s)
 		{
-			sd_id = s.sd_id;
+			sd_sid = s.sd_sid;
 			display_title = s.display_title;
 			title_lang_code = s.title_lang_code ?? "en";
 			brief_description = s.brief_description;
@@ -113,7 +113,7 @@ namespace DataHarvester
 
 	public class StudyTitle
 	{
-		public string sd_id { get; set; }
+		public string sd_sid { get; set; }
 		public string title_text { get; set; }
 		public int? title_type_id { get; set; }
 		public string title_type { get; set; }
@@ -122,18 +122,18 @@ namespace DataHarvester
 	    public bool is_default { get; set; }
 		public string comments { get; set; }
 
-		public StudyTitle(string _sd_id, string _title_text, int? _title_type_id, string _title_type, bool _is_default)
+		public StudyTitle(string _sd_sid, string _title_text, int? _title_type_id, string _title_type, bool _is_default)
 		{
-			sd_id = _sd_id;
+			sd_sid = _sd_sid;
 			title_text = _title_text;
 			title_type_id = _title_type_id;
 			title_type = _title_type;
 			is_default = _is_default;
 		}
 
-		public StudyTitle(string _sd_id, string _title_text, int? _title_type_id, string _title_type, bool _is_default, string _comments)
+		public StudyTitle(string _sd_sid, string _title_text, int? _title_type_id, string _title_type, bool _is_default, string _comments)
 		{
-			sd_id = _sd_id;
+			sd_sid = _sd_sid;
 			title_text = _title_text;
 			title_type_id = _title_type_id;
 			title_type = _title_type;
@@ -141,10 +141,10 @@ namespace DataHarvester
 			comments = _comments;
 		}
 
-		public StudyTitle(string _sd_id, string _title_text, int? _title_type_id, string _title_type, string _title_lang_code, 
+		public StudyTitle(string _sd_sid, string _title_text, int? _title_type_id, string _title_type, string _title_lang_code, 
 			                   int _lang_usage_id, bool _is_default, string _comments)
 		{
-			sd_id = _sd_id;
+			sd_sid = _sd_sid;
 			title_text = _title_text;
 			title_type_id = _title_type_id;
 			title_type = _title_type;
@@ -158,7 +158,7 @@ namespace DataHarvester
 
 	public class StudyContributor
 	{
-		public string sd_id { get; set; }
+		public string sd_sid { get; set; }
 		public int? contrib_type_id { get; set; }
 		public string contrib_type { get; set; }
 		public bool is_individual { get; set; }
@@ -174,11 +174,11 @@ namespace DataHarvester
 		public string affil_org_id { get; set; }
 		public string affil_org_id_type { get; set; }
 
-		public StudyContributor(string _sd_id, int? _contrib_type_id, string _contrib_type,
+		public StudyContributor(string _sd_sid, int? _contrib_type_id, string _contrib_type,
 								int? _organisation_id, string _organisation_name, string _person_full_name,
 								string _person_affiliation)
 		{
-			sd_id = _sd_id;
+			sd_sid = _sd_sid;
 			contrib_type_id = _contrib_type_id;
 			contrib_type = _contrib_type;
 			is_individual = (_person_full_name == null) ? false : true;
@@ -194,32 +194,32 @@ namespace DataHarvester
 
 	public class StudyRelationship
 	{
-		public string sd_id { get; set; }
+		public string sd_sid { get; set; }
 		public int relationship_type_id { get; set; }
 		public string relationship_type { get; set; }
-		public string target_sd_id { get; set; }
+		public string target_sd_sid { get; set; }
 
-		public StudyRelationship(string _sd_id, int _relationship_type_id, string _relationship_type, string _target_sd_id)
+		public StudyRelationship(string _sd_sid, int _relationship_type_id, string _relationship_type, string _target_sd_sid)
 		{
-			sd_id = _sd_id;
+			sd_sid = _sd_sid;
 			relationship_type_id = _relationship_type_id;
 			relationship_type = _relationship_type;
-			target_sd_id = _target_sd_id;
+			target_sd_sid = _target_sd_sid;
 		}
 	}
 
 
 	public class StudyReference
 	{
-		public string sd_id { get; set; }
+		public string sd_sid { get; set; }
 		public string pmid { get; set; }
 		public string citation { get; set; }
 		public string doi { get; set; }
 		public string comments { get; set; }
 
-		public StudyReference(string _sd_id, string _pmid, string _citation, string _doi, string _comments)
+		public StudyReference(string _sd_sid, string _pmid, string _citation, string _doi, string _comments)
 		{
-			sd_id = _sd_id;
+			sd_sid = _sd_sid;
 			pmid = _pmid;
 			citation = _citation;
 			doi = _doi;
@@ -230,7 +230,7 @@ namespace DataHarvester
 
 	public class StudyIdentifier
 	{
-		public string sd_id { get; set; }
+		public string sd_sid { get; set; }
 		public string identifier_value { get; set; }
 		public int? identifier_type_id { get; set; }
 		public string identifier_type { get; set; }
@@ -241,11 +241,11 @@ namespace DataHarvester
 
 		public StudyIdentifier() { }
 
-		public StudyIdentifier(string _sd_id, string _identifier_value,
+		public StudyIdentifier(string _sd_sid, string _identifier_value,
 			int? _identifier_type_id, string _identifier_type,
 			int? _identifier_org_id, string _identifier_org)
 		{
-			sd_id = _sd_id;
+			sd_sid = _sd_sid;
 			identifier_value = _identifier_value;
 			identifier_type_id = _identifier_type_id;
 			identifier_type = _identifier_type;
@@ -253,11 +253,11 @@ namespace DataHarvester
 			identifier_org = _identifier_org;
 		}
 
-		public StudyIdentifier(string _sd_id, string _identifier_value,
+		public StudyIdentifier(string _sd_sid, string _identifier_value,
 			int? _identifier_type_id, string _identifier_type,
 			string _identifier_date, string _identifier_link)
 		{
-			sd_id = _sd_id;
+			sd_sid = _sd_sid;
 			identifier_value = _identifier_value;
 			identifier_type_id = _identifier_type_id;
 			identifier_type = _identifier_type;
@@ -265,12 +265,12 @@ namespace DataHarvester
 			identifier_link = _identifier_link;
 		}
 
-		public StudyIdentifier(string _sd_id, string _identifier_value,
+		public StudyIdentifier(string _sd_sid, string _identifier_value,
 			int? _identifier_type_id, string _identifier_type,
 			int? _identifier_org_id, string _identifier_org,
 			string _identifier_date, string _identifier_link)
 		{
-			sd_id = _sd_id;
+			sd_sid = _sd_sid;
 			identifier_value = _identifier_value;
 			identifier_type_id = _identifier_type_id;
 			identifier_type = _identifier_type;
@@ -284,7 +284,7 @@ namespace DataHarvester
 
 	public class StudyTopic
 	{
-		public string sd_id { get; set; }
+		public string sd_sid { get; set; }
 		public int topic_type_id { get; set; }
 		public string topic_type { get; set; }
 		public string topic_value { get; set; }
@@ -293,10 +293,10 @@ namespace DataHarvester
 		public string topic_ct_code { get; set; }
 		public string where_found { get; set; }
 
-		public StudyTopic(string _sd_id, int _topic_type_id, string _topic_type,
+		public StudyTopic(string _sd_sid, int _topic_type_id, string _topic_type,
 					 string _topic_value, string _topic_ct_code, string _where_found)
 		{
-			sd_id = _sd_id;
+			sd_sid = _sd_sid;
 			topic_type_id = _topic_type_id;
 			topic_type = _topic_type;
 			topic_value = _topic_value;
@@ -308,15 +308,15 @@ namespace DataHarvester
 
 	public class StudyFeature
 	{
-		public string sd_id { get; set; }
+		public string sd_sid { get; set; }
 		public int? feature_type_id { get; set; }
 		public string feature_type { get; set; }
 		public int? feature_value_id { get; set; }
 		public string feature_value { get; set; }
 
-		public StudyFeature(string _sd_id, int? _feature_type_id, string _feature_type, int? _feature_value_id, string _feature_value)
+		public StudyFeature(string _sd_sid, int? _feature_type_id, string _feature_type, int? _feature_value_id, string _feature_value)
 		{
-			sd_id = _sd_id;
+			sd_sid = _sd_sid;
 			feature_type_id = _feature_type_id;
 			feature_type = _feature_type;
 			feature_value_id = _feature_value_id;
@@ -327,8 +327,8 @@ namespace DataHarvester
 
 	public class DataObject
 	{
-		public string sd_id { get; set; }
-		public int do_id { get; set; }
+		public string sd_oid { get; set; }
+		public string sd_sid { get; set; }
 		public string display_name { get; set; }
 		public string doi { get; set; }
 		public int doi_status_id { get; set; }
@@ -348,13 +348,13 @@ namespace DataHarvester
 		public bool add_study_topics { get; set; }
 		public DateTime? datetime_of_data_fetch { get; set; }
 
-		public DataObject(string _sd_id, int _do_id, string _display_name, int? _publication_year, int _object_class_id,
+		public DataObject(string _sd_oid, string _sd_sid, string _display_name, int? _publication_year, int _object_class_id,
 							string _object_class, int? _object_type_id, string _object_type,
 							int? _managing_org_id, string _managing_org, int? _access_type_id, 
 							DateTime? _datetime_of_data_fetch)
 		{
-			sd_id = _sd_id;
-			do_id = _do_id;
+			sd_oid = _sd_oid;
+			sd_sid = _sd_sid;
 			display_name = _display_name;
 			doi_status_id = 9;
 			publication_year = _publication_year;
@@ -372,15 +372,15 @@ namespace DataHarvester
 			datetime_of_data_fetch = _datetime_of_data_fetch;
 		}
 
-		public DataObject(string _sd_id, int _do_id, string _display_name, int? _publication_year, int _object_class_id,
+		public DataObject(string _sd_oid, string _sd_sid, string _display_name, int? _publication_year, int _object_class_id,
 							string _object_class, int _object_type_id, string _object_type,
 							int? _managing_org_id, string _managing_org,
 							int? _access_type_id, string _access_type, string _access_details,
 							string _access_details_url, DateTime? _url_last_checked,
 							DateTime? _datetime_of_data_fetch)
 		{
-			sd_id = _sd_id;
-			do_id = _do_id;
+			sd_oid = _sd_oid;
+			sd_sid = _sd_sid;
 			display_name = _display_name;
 			doi_status_id = 9;
 			publication_year = _publication_year;
@@ -405,9 +405,7 @@ namespace DataHarvester
 
 	public class DataSetProperties
 	{
-		public string sd_id { get; set; }
-		public int do_id { get; set; }
-
+		public string sd_oid { get; set; }
 		public int? record_keys_type_id { get; set; }
 		public string record_keys_type { get; set; }
 		public string record_keys_details { get; set; }
@@ -419,13 +417,12 @@ namespace DataHarvester
 		public string consents_details { get; set; }
 
 
-		public DataSetProperties(string _sd_id, int _do_id,
+		public DataSetProperties(string _sd_oid, 
 							int? _record_keys_type_id, string _record_keys_type, string _record_keys_details,
 							int? _identifiers_type_id, string _identifiers_type, string _identifiers_details,
 							int? _consents_type_id, string _consents_type, string _consents_details)
 		{
-			sd_id = _sd_id;
-			do_id = _do_id;
+			sd_oid = _sd_oid;
 			record_keys_type_id = _record_keys_type_id;
 			record_keys_type = _record_keys_type;
 			record_keys_details = _record_keys_details;
@@ -441,8 +438,7 @@ namespace DataHarvester
 
 	public class DataObjectTitle
 	{
-		public string sd_id { get; set; }
-		public int do_id { get; set; }
+		public string sd_oid { get; set; }
 		public string title_text { get; set; }
 		public int? title_type_id { get; set; }
 		public string title_type { get; set; }
@@ -451,19 +447,18 @@ namespace DataHarvester
 		public bool is_default { get; set; }
 		public string comments { get; set; }
 
-		public DataObjectTitle(string _sd_id, int _do_id, string _title_text, 
+		public DataObjectTitle(string _sd_oid, string _title_text, 
 								int _title_type_id, string _title_type, bool _is_default)
 		{
-			sd_id = _sd_id;
-			do_id = _do_id;
+			sd_oid = _sd_oid;
 			title_text = _title_text;
 			title_type_id = _title_type_id;
 			title_type = _title_type;
     	}
 
-		public DataObjectTitle(string _sd_id, string _title_text, int? _title_type_id, string _title_type, bool _is_default, string _comments)
+		public DataObjectTitle(string _sd_oid, string _title_text, int? _title_type_id, string _title_type, bool _is_default, string _comments)
 		{
-			sd_id = _sd_id;
+			sd_oid = _sd_oid;
 			title_text = _title_text;
 			title_type_id = _title_type_id;
 			title_type = _title_type;
@@ -471,10 +466,10 @@ namespace DataHarvester
 			comments = _comments;
 		}
 
-		public DataObjectTitle(string _sd_id, string _title_text, int? _title_type_id, string _title_type, string _title_lang_code,
+		public DataObjectTitle(string _sd_oid, string _title_text, int? _title_type_id, string _title_type, string _title_lang_code,
 							   int _lang_usage_id, bool _is_default, string _comments)
 		{
-			sd_id = _sd_id;
+			sd_oid = _sd_oid;
 			title_text = _title_text;
 			title_type_id = _title_type_id;
 			title_type = _title_type;
@@ -488,8 +483,7 @@ namespace DataHarvester
 
 	public class DataObjectInstance
 	{
-		public string sd_id { get; set; }
-		public int do_id { get; set; }
+		public string sd_oid { get; set; }
 		public int? instance_type_id { get; set; }
 		public string instance_type { get; set; }
 		public int? repository_org_id { get; set; }
@@ -502,12 +496,11 @@ namespace DataHarvester
 		public string resource_size { get; set; }
 		public string resource_size_units { get; set; }
 
-		public DataObjectInstance(string _sd_id, int _do_id, int? _repository_org_id,
+		public DataObjectInstance(string _sd_oid, int? _repository_org_id,
 					string _repository_org, string _url, bool _url_accessible,
 					int? _resource_type_id, string _resource_type)
 		{
-			sd_id = _sd_id;
-			do_id = _do_id;
+			sd_oid = _sd_oid;
 			repository_org_id = _repository_org_id;
 			repository_org = _repository_org;
 			url = _url;
@@ -517,12 +510,11 @@ namespace DataHarvester
 		}
 
 
-		public DataObjectInstance(string _sd_id, int _do_id, int? _repository_org_id,
+		public DataObjectInstance(string _sd_oid, int? _repository_org_id,
 					string _repository_org, string _url, bool _url_accessible,
 					int? _resource_type_id, string _resource_type, string _resource_size, string _resource_size_units)
 		{
-			sd_id = _sd_id;
-			do_id = _do_id;
+			sd_oid = _sd_oid;
 			repository_org_id = _repository_org_id;
 			repository_org = _repository_org;
 			url = _url;
@@ -534,12 +526,11 @@ namespace DataHarvester
 		}
 
 
-		public DataObjectInstance(string _sd_id, int _do_id, int? _instance_type_id, string _instance_type, 
+		public DataObjectInstance(string _sd_oid, int? _instance_type_id, string _instance_type, 
 			        int? _repository_org_id, string _repository_org, string _url, bool _url_accessible,
 					int? _resource_type_id, string _resource_type, string _resource_size, string _resource_size_units)
 		{
-			sd_id = _sd_id;
-			do_id = _do_id;
+			sd_oid = _sd_oid;
 			instance_type_id = _instance_type_id;
 			instance_type = _instance_type;
 			repository_org_id = _repository_org_id;
@@ -556,8 +547,7 @@ namespace DataHarvester
 
 	public class DataObjectDate
 	{
-		public string sd_id { get; set; }
-		public int do_id { get; set; }
+		public string sd_oid { get; set; }
 		public int date_type_id { get; set; }
 		public string date_type { get; set; }
 		public string date_as_string { get; set; }
@@ -570,11 +560,10 @@ namespace DataHarvester
 		public int? end_day { get; set; }
 		public string details { get; set; }
 
-		public DataObjectDate(string _sd_id, int _do_id, int _date_type_id, string _date_type,
+		public DataObjectDate(string _sd_oid, int _date_type_id, string _date_type,
 									int? _start_year, int? _start_month, int? _start_day, string _date_as_string)
 		{
-			sd_id = _sd_id;
-			do_id = _do_id;
+			sd_oid = _sd_oid;
 			date_type_id = _date_type_id;
 			date_type = _date_type;
 			start_year = _start_year;
@@ -583,14 +572,13 @@ namespace DataHarvester
 			date_as_string = _date_as_string;
 		}
 
-		public DataObjectDate(string _sd_id, int _do_id, int _date_type_id, string _date_type,
+		public DataObjectDate(string _sd_oid, int _date_type_id, string _date_type,
 			                        string _date_as_string, bool _is_date_range,
 									int? _start_year, int? _start_month, int? _start_day,
 									int? _end_year, int? _end_month, int? _end_day,
 									string _details)
 		{
-			sd_id = _sd_id;
-			do_id = _do_id;
+			sd_oid = _sd_oid;
 			date_type_id = _date_type_id;
 			date_type = _date_type;
 			date_as_string = _date_as_string;

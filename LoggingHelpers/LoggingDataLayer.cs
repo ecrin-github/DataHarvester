@@ -12,13 +12,12 @@ namespace DataHarvester
 	public class LoggingDataLayer
 	{
 		private string mon_connString;
-		
+		private Source source;
+
 		/// <summary>
 		/// Parameterless constructor is used to automatically build
 		/// the connection string, using an appsettings.json file that 
 		/// has the relevant credentials (but which is not stored in GitHub).
-		/// The json file also includes the root folder path, which is
-		/// stored in the class's folder_base property.
 		/// </summary>
 		/// 
 		public LoggingDataLayer()
@@ -36,16 +35,18 @@ namespace DataHarvester
 			builder.Database = "mon";
 			mon_connString = builder.ConnectionString;
 
-			// example appsettings.json file...
-			// the only values required are for...
-			// {
-			//	  "host": "host_name...",
-			//	  "user": "user_name...",
-			//    "password": "user_password...",
-			//	  "folder_base": "C:\\MDR JSON\\Object JSON... "
-			// }
 		}
 
+		public Source SourceParameters => source;
+
+		public Source FetchSourceParameters(int source_id)
+		{
+			using (NpgsqlConnection Conn = new NpgsqlConnection(mon_connString))
+			{
+				source = Conn.Get<Source>(source_id);
+				return source;
+			}
+		}
 
 		public IEnumerable<FileRecord> FetchStudyFileRecords(int source_id)
 		{

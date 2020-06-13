@@ -6,10 +6,12 @@ namespace DataHarvester.Yoda
     public class YodaProcessor
 	{
 		HtmlHelperFunctions hhp;
+		HelperFunctions hf;
 
 		public YodaProcessor()
 		{
 			hhp = new HtmlHelperFunctions();
+			hf = new HelperFunctions();
 		}
 
 
@@ -41,8 +43,8 @@ namespace DataHarvester.Yoda
 
 			// transfer features of main study object
 			// In most cases study will have already been registered in CGT.
-
-			s.sd_id = st.sd_id;
+			string sid = st.sd_id;
+			s.sd_sid = sid;
 			s.datetime_of_data_fetch = download_datetime;
 
 			if (st.display_title.Contains("<"))
@@ -136,7 +138,7 @@ namespace DataHarvester.Yoda
 			{
 				foreach(Title t in st.study_titles)
 				{
-					study_titles.Add(new StudyTitle(s.sd_id, t.title_text, t.title_type_id, t.title_type, t.is_default, t.comments));
+					study_titles.Add(new StudyTitle(sid, t.title_text, t.title_type_id, t.title_type, t.is_default, t.comments));
 				}
 			}
 
@@ -146,7 +148,7 @@ namespace DataHarvester.Yoda
 			{
 				foreach(Identifier i in st.study_identifiers)
 				{
-					study_identifiers.Add(new StudyIdentifier(s.sd_id, i.identifier_value, i.identifier_type_id, i.identifier_type,
+					study_identifiers.Add(new StudyIdentifier(sid, i.identifier_value, i.identifier_type_id, i.identifier_type,
 													  i.identifier_org_id, i.identifier_org));
 				}
 			}
@@ -168,7 +170,7 @@ namespace DataHarvester.Yoda
 
 			if (st.is_yoda_only)
 			{
-				study_contributors.Add(new StudyContributor(s.sd_id, 54, "Study Sponsor", sponsor_org_id, sponsor_org, null, null));
+				study_contributors.Add(new StudyContributor(sid, 54, "Study Sponsor", sponsor_org_id, sponsor_org, null, null));
 			}
 
 			// study topics
@@ -177,15 +179,15 @@ namespace DataHarvester.Yoda
 
 			if (!string.IsNullOrEmpty(st.compound_generic_name))
 			{
-				study_topics.Add(new StudyTopic(s.sd_id, 12, "chemical / agent", st.compound_generic_name, null, "Yoda"));
+				study_topics.Add(new StudyTopic(sid, 12, "chemical / agent", st.compound_generic_name, null, "Yoda"));
 			}
 			if (!string.IsNullOrEmpty(st.compound_product_name))
 			{
-				study_topics.Add(new StudyTopic(s.sd_id, 12, "chemical / agent", st.compound_product_name, null, "Yoda"));
+				study_topics.Add(new StudyTopic(sid, 12, "chemical / agent", st.compound_product_name, null, "Yoda"));
 			}
 			if (!string.IsNullOrEmpty(st.conditions_studied))
 			{
-				study_topics.Add(new StudyTopic(s.sd_id, 13, "condition", st.conditions_studied, null, "Yoda"));
+				study_topics.Add(new StudyTopic(sid, 13, "condition", st.conditions_studied, null, "Yoda"));
 			}
 
 			// create study references (pmids)
@@ -194,7 +196,7 @@ namespace DataHarvester.Yoda
 				foreach (Reference r in st.study_references)
 				{
 					// normally only 1 if there is one there at all 
-					study_references.Add(new StudyReference(s.sd_id, r.pmid, st.primary_citation_link, "", ""));
+					study_references.Add(new StudyReference(sid, r.pmid, st.primary_citation_link, "", ""));
 				}
 			}
 
@@ -206,11 +208,15 @@ namespace DataHarvester.Yoda
 			
 			// do the yoda web page itself first...
 			string object_display_title = name_base + " :: " + "Yoda web page";
-			data_objects.Add(new DataObject(st.sd_id, do_id, object_display_title, null, 23, "Text", 38, "Study Overview",
+
+			// create hash Id for the data object
+			string sd_oid = hf.CreateMD5(sid + object_display_title);
+
+			data_objects.Add(new DataObject(sd_oid, sid, object_display_title, null, 23, "Text", 38, "Study Overview",
 			                  101901, "Yoda", 12, download_datetime));
-			data_object_titles.Add(new DataObjectTitle(st.sd_id, do_id, object_display_title, 22,
+			data_object_titles.Add(new DataObjectTitle(sd_oid, object_display_title, 22,
 							"Study short name :: object type", true));
-			data_object_instances.Add(new DataObjectInstance(st.sd_id, do_id, 101901, "Yoda",
+			data_object_instances.Add(new DataObjectInstance(sd_oid, 101901, "Yoda",
 								st.remote_url, true, 35, "Web text"));
 
 			// then for each supp doc...
@@ -284,11 +290,13 @@ namespace DataHarvester.Yoda
 					}
 
 					object_display_title = name_base + " :: " + object_type;
+					sd_oid = hf.CreateMD5(sid + object_display_title);
+
 					if (sd.comment == "Available now")
 					{
-						data_objects.Add(new DataObject(st.sd_id, do_id, object_display_title, null, object_class_id, object_class, object_type_id, object_type,
+						data_objects.Add(new DataObject(sd_oid, sid, object_display_title, null, object_class_id, object_class, object_type_id, object_type,
 										101901, "Yoda", 11, download_datetime));
-						data_object_titles.Add(new DataObjectTitle(st.sd_id, do_id, object_display_title, 22,"Study short name :: object type", true));
+						data_object_titles.Add(new DataObjectTitle(sd_oid, object_display_title, 22,"Study short name :: object type", true));
 
 						// create instance as resource exists
 						// get file type from link if possible
@@ -308,20 +316,20 @@ namespace DataHarvester.Yoda
 							resource_type_id = 0;
 							resource_type = "Not yet known";
 						}
-						data_object_instances.Add(new DataObjectInstance(st.sd_id, do_id, 101901, "Yoda", sd.url, true, resource_type_id, resource_type));
+						data_object_instances.Add(new DataObjectInstance(sd_oid, 101901, "Yoda", sd.url, true, resource_type_id, resource_type));
 					}
 					else
 					{
-						data_objects.Add(new DataObject(st.sd_id, do_id, object_display_title, null, object_class_id, object_class, object_type_id, object_type,
+						data_objects.Add(new DataObject(sd_oid, sid, object_display_title, null, object_class_id, object_class, object_type_id, object_type,
 										101901, "Yoda", 17, "Case by case download", access_details,
 										"https://yoda.yale.edu/how-request-data", new DateTime(2020, 05, 15), download_datetime));
-						data_object_titles.Add(new DataObjectTitle(st.sd_id, do_id, object_display_title, 22, "Study short name :: object type", true));
+						data_object_titles.Add(new DataObjectTitle(sd_oid, object_display_title, 22, "Study short name :: object type", true));
 					}
 
 					// for datasets also add dataset properties - even if they are largely unknown
 					if (object_type_id == 80)
 					{
-						dataset_properties.Add(new DataSetProperties(s.sd_id, do_id, 0, "Not yet known", "", 
+						dataset_properties.Add(new DataSetProperties(sd_oid, 0, "Not yet known", "", 
 							                      2 , "De-identified", 
 												  "Yoda states that '...researchers will be granted access to participant-level study data that are devoid of personally identifiable information; current best guidelines for de-identification of data will be used.'", 
 												  0, "Not yet known", ""));

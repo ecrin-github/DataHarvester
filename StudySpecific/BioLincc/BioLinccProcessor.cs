@@ -7,10 +7,12 @@ namespace DataHarvester.BioLincc
 	public class BioLinccProcessor
 	{
 		HtmlHelperFunctions hhp;
-			
+		HelperFunctions hf;
+
 		public BioLinccProcessor()
 		{
 			hhp = new HtmlHelperFunctions();
+			hf = new HelperFunctions();
 		}
 
 
@@ -49,7 +51,8 @@ namespace DataHarvester.BioLincc
 			// transfer features of main study object
 			// In most cases study will have already been registered in CGT
 
-			s.sd_id = st.sd_id;
+			string sid = st.sd_id;
+			s.sd_sid = sid;
 			s.datetime_of_data_fetch = download_datetime;
 
 			if (st.display_title.Contains("<"))
@@ -129,7 +132,7 @@ namespace DataHarvester.BioLincc
 			// For the study, set up new study identifier = sd_id
 			// identifier type = NHBLI ID, id = 42, org = National Heart, Lung, and Blood Institute, id = 100167.
 
-			study_identifiers.Add(new StudyIdentifier(st.sd_id, st.sd_id, 42, "NHLBI ID", 100167, "National Heart, Lung, and Blood Institute (US)"));
+			study_identifiers.Add(new StudyIdentifier(sid, st.sd_id, 42, "NHLBI ID", 100167, "National Heart, Lung, and Blood Institute (US)"));
 
 			// If there is a NCT ID (there usually is...).
 			// if multiple - different sort of relationship; also a group may share the same NCT id
@@ -141,7 +144,7 @@ namespace DataHarvester.BioLincc
 				foreach (RegistryId reg_id in st.registry_ids)
 				{
 					n++;
-					study_identifiers.Add(new StudyIdentifier(st.sd_id, reg_id.nct_id, 11, "Trial Registry ID", 100120, "ClinicalTrials.gov"));
+					study_identifiers.Add(new StudyIdentifier(sid, reg_id.nct_id, 11, "Trial Registry ID", 100120, "ClinicalTrials.gov"));
 
 					// get sponsor name and organisation using NCT Id using the first id
 					if (n == 1)
@@ -159,20 +162,16 @@ namespace DataHarvester.BioLincc
 			// For the study, set up two titles, acronym and display title
 			// NHLBI title not always exactly the same as the trial registry entry.
 
-			study_titles.Add(new StudyTitle(st.sd_id, st.display_title, 15, "Public Title", true, "From study page on BioLINCC web site"));
+			study_titles.Add(new StudyTitle(sid, st.display_title, 15, "Public Title", true, "From study page on BioLINCC web site"));
 			if (!string.IsNullOrEmpty(st.acronym))
 			{
-				study_titles.Add(new StudyTitle(st.sd_id, st.acronym, 14, "Acronym or Abbreviation", false,""));
+				study_titles.Add(new StudyTitle(sid, st.acronym, 14, "Acronym or Abbreviation", false,""));
 			}
 
 
 			// Create data object records.
 
-			int do_id = 0;
-
 			// For the BioLincc web page, set up new data object, object title, object_instance and object dates
-
-			do_id++;
 
 			// BioLINCC web page 
 
@@ -180,13 +179,16 @@ namespace DataHarvester.BioLincc
 			string name_base = string.IsNullOrEmpty(st.public_title) ? s.display_title : st.public_title;
 			string object_display_title = name_base + " :: " + "NHLBI web page";
 
-			data_objects.Add(new DataObject(st.sd_id, do_id, object_display_title, pub_year, 23, "Text", 38, "Study Overview",
+			// create hash Id for the data object
+			string sd_oid = hf.CreateMD5(sid + object_display_title);
+
+			data_objects.Add(new DataObject(sd_oid, sid, object_display_title, pub_year, 23, "Text", 38, "Study Overview",
 				100167, "National Heart, Lung, and Blood Institute (US)", 12, download_datetime));
 
-			data_object_titles.Add(new DataObjectTitle(st.sd_id, do_id, object_display_title, 22,
+			data_object_titles.Add(new DataObjectTitle(sd_oid, object_display_title, 22,
 								"Study short name :: object type", true));
 
-			data_object_instances.Add(new DataObjectInstance(st.sd_id, do_id, 101900, "BioLINCC",
+			data_object_instances.Add(new DataObjectInstance(sd_oid, 101900, "BioLINCC",
 								st.remote_url, true, 35, "Web text"));
 
 			// get date in required format
@@ -195,7 +197,7 @@ namespace DataHarvester.BioLincc
 			/*
 			if (split_date_prepared != null)
 			{
-				data_object_dates.Add(new DataObjectDate(st.sd_id, do_id, 15, "Created", split_date_prepared.year,
+				data_object_dates.Add(new DataObjectDate(sd_oid, 15, "Created", split_date_prepared.year,
 							split_date_prepared.month, split_date_prepared.day, split_date_prepared.date_string));
 			}
 			*/
@@ -205,7 +207,7 @@ namespace DataHarvester.BioLincc
 			if (st.last_revised_date != null)
 			{
 				DateTime last_revised = (DateTime)st.last_revised_date;
-				data_object_dates.Add(new DataObjectDate(st.sd_id, do_id, 18, "Updated", last_revised.Year,
+				data_object_dates.Add(new DataObjectDate(sd_oid, 18, "Updated", last_revised.Year,
 							last_revised.Month, last_revised.Day, last_revised.ToString("yyyy MMM dd")));
 			}
 
@@ -213,14 +215,14 @@ namespace DataHarvester.BioLincc
 
 			if (!string.IsNullOrEmpty(st.study_website))
 			{
-				do_id++;
 				object_display_title = s.display_title + " :: " + "Study web site";
+				sd_oid = hf.CreateMD5(sid + object_display_title);
 
-				data_objects.Add(new DataObject(st.sd_id, do_id, object_display_title, null, 23, "Text", 134, "Website",
+				data_objects.Add(new DataObject(sd_oid, sid, object_display_title, null, 23, "Text", 134, "Website",
 									sponsor_org_id, sponsor_org, 12, download_datetime));
-				data_object_titles.Add(new DataObjectTitle(st.sd_id, do_id, object_display_title, 22,
+				data_object_titles.Add(new DataObjectTitle(sd_oid, object_display_title, 22,
 									"Study short name :: object type", true));
-				data_object_instances.Add(new DataObjectInstance(st.sd_id, do_id, sponsor_org_id, sponsor_org,
+				data_object_instances.Add(new DataObjectInstance(sd_oid, sponsor_org_id, sponsor_org,
 									st.study_website, true, 35, "Web text"));
 			}
 
@@ -230,15 +232,16 @@ namespace DataHarvester.BioLincc
 			// if so add a data object description....with a data object title
 			if (st.resources_available.ToLower().Contains("datasets"))
 			{
-				do_id++;
 			    object_display_title = name_base + " :: " + "IPD Datasets";
-			    data_objects.Add(new DataObject(st.sd_id, do_id, object_display_title, null, 14, "Datasets",
+				sd_oid = hf.CreateMD5(sid + object_display_title);
+
+				data_objects.Add(new DataObject(sd_oid, sid, object_display_title, null, 14, "Datasets",
 						80, "Individual Participant Data", 100167, "National Heart, Lung, and Blood Institute (US)",
 						17, "Case by case download", access_details,
 						"https://biolincc.nhlbi.nih.gov/media/guidelines/handbook.pdf?link_time=2019-12-13_11:33:44.807479#page=15",
 						download_datetime, download_datetime));
 
-			    data_object_titles.Add(new DataObjectTitle(s.sd_id, do_id, object_display_title, 22, "Study short name :: object type", true));
+			    data_object_titles.Add(new DataObjectTitle(sd_oid, object_display_title, 22, "Study short name :: object type", true));
 
                 // Datasets and consent restrictions
 
@@ -265,7 +268,8 @@ namespace DataHarvester.BioLincc
 				}
 
 				// do dataset object separately
-				dataset_properties.Add(new DataSetProperties(s.sd_id, do_id, 
+
+				dataset_properties.Add(new DataSetProperties(sd_oid,  
 					                     3, "Pseudonymised", "",
 	                                     3, "Has Indirect Identifiers", de_identification, 
 					                     consent_type_id, consent_type, restrictions));
@@ -276,7 +280,7 @@ namespace DataHarvester.BioLincc
 			{
 				foreach (PrimaryDoc pd in st.primary_docs)
 				{
-					study_references.Add(new StudyReference(s.sd_id, pd.pubmed_id, "", "", "primary"));
+					study_references.Add(new StudyReference(s.sd_sid, pd.pubmed_id, "", "", "primary"));
 				}
 			}
 
@@ -286,12 +290,13 @@ namespace DataHarvester.BioLincc
 				foreach (Resource r in st.resources)
 				{
 					// for the resource, set up new data object, object title, object instance
-					do_id++;
 					object_display_title = name_base + " :: " + r.doc_name;
-					data_objects.Add(new DataObject(st.sd_id, do_id, object_display_title, pub_year, 23, "Text", r.object_type_id, r.object_type,
+					sd_oid = hf.CreateMD5(sid + object_display_title);
+
+					data_objects.Add(new DataObject(sd_oid, sid, object_display_title, pub_year, 23, "Text", r.object_type_id, r.object_type,
 										sponsor_org_id, sponsor_org, r.access_type_id, download_datetime));
-					data_object_titles.Add(new DataObjectTitle(st.sd_id, do_id, object_display_title, 21, "Study short name :: object name", true));
-					data_object_instances.Add(new DataObjectInstance(st.sd_id, do_id, 101900, "BioLINCC", r.url, true, r.doc_type_id, r.doc_type));
+					data_object_titles.Add(new DataObjectTitle(sd_oid, object_display_title, 21, "Study short name :: object name", true));
+					data_object_instances.Add(new DataObjectInstance(sd_oid, 101900, "BioLINCC", r.url, true, r.doc_type_id, r.doc_type));
 				}
 			}
 
@@ -300,7 +305,7 @@ namespace DataHarvester.BioLincc
 			{
 				foreach (AssocDoc r in st.assoc_docs)
 				{
-					study_references.Add(new StudyReference(s.sd_id, r.pubmed_id, r.display_title, r.link_id, "associated"));
+					study_references.Add(new StudyReference(s.sd_sid, r.pubmed_id, r.display_title, r.link_id, "associated"));
 				}
 			}
 
