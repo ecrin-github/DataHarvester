@@ -1,24 +1,15 @@
 ﻿using System;
-using System.Text.Json;
-using System.Text.Json.Serialization;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.IO;
-using System.Net;
-using System.Web;
-using System.Runtime.InteropServices.ComTypes;
 
 namespace DataHarvester.Yoda
 {
-	public class YodaProcessor
+    public class YodaProcessor
 	{
-		HelperFunctions hp;
-
+		HtmlHelperFunctions hhp;
 
 		public YodaProcessor()
 		{
-			hp = new HelperFunctions();
+			hhp = new HtmlHelperFunctions();
 		}
 
 
@@ -56,8 +47,8 @@ namespace DataHarvester.Yoda
 
 			if (st.display_title.Contains("<"))
 			{
-				s.display_title = hp.replace_tags(st.display_title);
-				s.display_title = hp.strip_tags(s.display_title);
+				s.display_title = hhp.replace_tags(st.display_title);
+				s.display_title = hhp.strip_tags(s.display_title);
 			}
 			else
 			{

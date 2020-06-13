@@ -6,12 +6,13 @@ namespace DataHarvester.BioLincc
 {
 	public class BioLinccProcessor
 	{
-		HelperFunctions hp;
+		HtmlHelperFunctions hhp;
 			
 		public BioLinccProcessor()
 		{
-			hp = new HelperFunctions();
+			hhp = new HtmlHelperFunctions();
 		}
+
 
 		public Study ProcessData(BioLinccRecord st, DateTime? download_datetime, DataLayer common_repo)
 		{
@@ -53,8 +54,8 @@ namespace DataHarvester.BioLincc
 
 			if (st.display_title.Contains("<"))
 			{
-				s.display_title = hp.replace_tags(st.display_title);
-				s.display_title = hp.strip_tags(s.display_title);
+				s.display_title = hhp.replace_tags(st.display_title);
+				s.display_title = hhp.strip_tags(s.display_title);
 			}
 			else
 			{
@@ -63,8 +64,8 @@ namespace DataHarvester.BioLincc
 			
 			if (st.brief_description.Contains("<"))
 			{
-				s.brief_description = hp.replace_tags(st.brief_description);
-				s.bd_contains_html = hp.check_for_tags(s.brief_description);
+				s.brief_description = hhp.replace_tags(st.brief_description);
+				s.bd_contains_html = hhp.check_for_tags(s.brief_description);
 			}
 			else
 			{

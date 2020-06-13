@@ -4,13 +4,13 @@ using System;
 using System.Collections.Generic;
 using System.Text;
 
-namespace DataHarvester.DBHelpers
+namespace DataHarvester
 {
-    public class OrgHelper
+    public class OrgIdHelper
     {
         string db_conn;
 
-        public OrgHelper(string _db_conn)
+        public OrgIdHelper(string _db_conn)
         {
             db_conn = _db_conn;
         }

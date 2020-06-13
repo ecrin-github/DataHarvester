@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.IO;
-using System.Linq;
 using System.Xml.Serialization;
 
 namespace DataHarvester.BioLincc
@@ -23,13 +22,7 @@ namespace DataHarvester.BioLincc
 
 		public void LoopThroughFiles()
 		{
-			// at the moment, for Yoda and BioLincc, harvest_type_id always 1
-			// i.e. examine all files and transfer them to the sd tables 
-
-			// Get the folder base from the appsettings file
-			// and construct a list of the files 
-			// N.B. (only one folder for all files) 
-
+			// Construct a list of the files 
 			// Rather than using a file base, it is possible
 			// to use the sf records to get a list of files
 			// and local paths...

@@ -5,7 +5,6 @@ using System;
 using Microsoft.Extensions.Configuration;
 using System.Linq;
 using System.Collections.Generic;
-using DataHarvester.DBHelpers;
 using PostgreSQLCopyHelper;
 
 namespace DataHarvester
@@ -20,7 +19,7 @@ namespace DataHarvester
 
 		public void UpdateStudyIdentifierOrgs()
 		{
-			OrgHelper helper = new OrgHelper(connString);
+			OrgIdHelper helper = new OrgIdHelper(connString);
 			helper.update_study_identifiers_using_default_name();
 			helper.update_study_identifiers_using_other_name();
 			helper.update_study_identifiers_insert_default_names();
@@ -28,7 +27,7 @@ namespace DataHarvester
 
 		public void UpdateDataObjectOrgs()
 		{
-			OrgHelper helper = new OrgHelper(connString);
+			OrgIdHelper helper = new OrgIdHelper(connString);
 			helper.update_data_objects_using_default_name();
 			helper.update_data_objects_using_other_name();
 			helper.update_data_objects_insert_default_names();

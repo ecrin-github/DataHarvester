@@ -5,7 +5,6 @@ using System;
 using Microsoft.Extensions.Configuration;
 using System.Linq;
 using System.Collections.Generic;
-using DataHarvester.DBHelpers;
 using PostgreSQLCopyHelper;
 
 namespace DataHarvester

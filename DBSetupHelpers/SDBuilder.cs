@@ -5,7 +5,6 @@ using System;
 using Microsoft.Extensions.Configuration;
 using System.Linq;
 using System.Collections.Generic;
-using DataHarvester.DBHelpers;
 using PostgreSQLCopyHelper;
 
 namespace DataHarvester
@@ -71,13 +70,13 @@ namespace DataHarvester
 			builder.create_table_study_hashes();
 
 			// these are database dependent
-			if (source.has_study_topics ?? false) builder.create_table_study_topics();
-			if (source.has_study_features ?? false) builder.create_table_study_features();
-			if (source.has_study_contributors ?? false) builder.create_table_study_contributors();
-			if (source.has_study_references ?? false) builder.create_table_study_references();
-			if (source.has_study_relationships ?? false) builder.create_table_study_relationships();
-			if (source.has_study_links ?? false) builder.create_table_study_links();
-			if (source.has_study_ipd_available ?? false) builder.create_table_ipd_available();
+			if (source.has_study_topics) builder.create_table_study_topics();
+			if (source.has_study_features) builder.create_table_study_features();
+			if (source.has_study_contributors) builder.create_table_study_contributors();
+			if (source.has_study_references) builder.create_table_study_references();
+			if (source.has_study_relationships) builder.create_table_study_relationships();
+			if (source.has_study_links) builder.create_table_study_links();
+			if (source.has_study_ipd_available) builder.create_table_ipd_available();
 
 		}
 
@@ -95,10 +94,10 @@ namespace DataHarvester
 
 			// these are database dependent		
 
-			if (source.has_dataset_properties ?? false) builder.create_table_dataset_properties();
-			if (source.has_object_dates ?? false) builder.create_table_object_dates();
-			if (source.has_object_languages ?? false) builder.create_table_object_languages();
-			if (source.has_object_pubmed_set ?? false)
+			if (source.has_dataset_properties) builder.create_table_dataset_properties();
+			if (source.has_object_dates) builder.create_table_object_dates();
+			if (source.has_object_languages) builder.create_table_object_languages();
+			if (source.has_object_pubmed_set)
 			{
 				builder.create_table_object_contributors();
 				builder.create_table_object_topics();

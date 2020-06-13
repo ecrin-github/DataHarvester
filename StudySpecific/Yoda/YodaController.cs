@@ -16,7 +16,6 @@ namespace DataHarvester.Yoda
 		public YodaController(int _source_id, DataLayer _common_repo, LoggingDataLayer _logging_repo)
 		{
 			source_id = _source_id;
-			//yoda_repo = new YodaDataLayer(source_id);
 			processor = new YodaProcessor();
 			common_repo = _common_repo;
 			logging_repo = _logging_repo;
@@ -24,12 +23,9 @@ namespace DataHarvester.Yoda
 
 		public void LoopThroughFiles()
 		{
-			// at the moment, for Yoda and BioLincc, harvest_type_id always 1
-			// i.e. examine all files and transfer them to the sd tables 
-
-			// Get the folder base from the appsettings file
-			// and construct a list of the files 
-			// N.B. (only one folder for all files) 
+			// Rather than using a file base, it is possible
+			// to use the sf records to get a list of files
+			// and local paths...
 
 			IEnumerable<FileRecord> file_list = logging_repo.FetchStudyFileRecords(source_id);
 			int n = 0; string filePath = "";
@@ -56,7 +52,7 @@ namespace DataHarvester.Yoda
 					Study s = processor.ProcessData(studyRegEntry, rec.download_datetime);
 
 					// store the data in the database			
-					processor.StoreData(common_repo, s);  // FOR NOW!!!!!
+					processor.StoreData(common_repo, s);  
 
 					// update file record with last processed datetime
 					logging_repo.UpdateStudyFileRecLastProcessed(rec.id);

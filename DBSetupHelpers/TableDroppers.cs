@@ -4,7 +4,7 @@ using System;
 using System.Collections.Generic;
 using System.Text;
 
-namespace DataHarvester.DBHelpers
+namespace DataHarvester
 {
     public class StudyTableDroppers
     {
