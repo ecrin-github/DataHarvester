@@ -137,6 +137,8 @@ namespace DataHarvester.BioLincc
 			// If there is a NCT ID (there usually is...).
 			// if multiple - different sort of relationship; also a group may share the same NCT id
 			// to be sorted out once all links aggregated - one to many relationships transformed into 'study relationships'
+			// but these are ACROSS different sources, therefore need to be done at the end
+			// study relationships table therefore not required...
 
 			if (st.registry_ids.Count > 0)
 			{

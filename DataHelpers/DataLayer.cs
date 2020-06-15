@@ -14,6 +14,8 @@ namespace DataHarvester
 	{
 		private string connString;
 		private string ctg_connString;
+		private string username;
+		private string password;
 
 		/// <summary>
 		/// Parameterless constructor is used to automatically build
@@ -38,11 +40,17 @@ namespace DataHarvester
 
 			builder.Database = "ctg";
 			ctg_connString = builder.ConnectionString;
+
+			username = builder.Username;
+			password = builder.Password;
 		}
 
 		public string ConnString => connString;
 		public string CTGConnString => ctg_connString;
 
+
+		public string Username => username;
+		public string Password => password;
 
 		public void StoreStudy(StudyInDB st_db)
 		{

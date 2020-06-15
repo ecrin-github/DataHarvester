@@ -85,11 +85,15 @@ namespace DataHarvester
 			}
 
 			HashBuilder hb = new HashBuilder(repo.ConnString, source);
+			hb.EstablishContextForeignTables(repo.Username, repo.Password);
 			hb.UpdateStudyIdentifierOrgs();
 			hb.UpdateDataObjectOrgs();
+			hb.DropContextForeignTables();
+
 			hb.CreateStudyHashes();
 			hb.CreateStudyCompositeHashes();
 			hb.CreateDataObjectHashes();
+			hb.CreateObjectCompositeHashes();
 		}
 
 

@@ -429,9 +429,7 @@ namespace DataHarvester
 		public void create_table_object_topics()
 		{
 			string sql_string = @"CREATE TABLE sd.object_topics(
-				sd_id                  VARCHAR         NOT NULL
-			  , do_id                  INT             NOT NULL
-              , object_sd_id           CHAR(32)        NULL
+				sd_oid                 VARCHAR         NOT NULL
 			  , topic_type_id          INT             NULL
 			  , topic_type             VARCHAR         NULL
 			  , topic_value            VARCHAR         NULL

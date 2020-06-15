@@ -16,7 +16,7 @@ namespace DataHarvester
         }
 
 
-        public void CreateStudyRecordHashes()
+        public void create_study_record_hashes()
         {
             string sql_string = @"Update sd.studies
               set record_hash = md5(json_build_array(display_title, brief_description, bd_contains_html,
@@ -31,7 +31,7 @@ namespace DataHarvester
         }
 
 
-        public void CreateStudyIdentifierHashes()
+        public void create_study_identifier_hashes()
         {
             string sql_string = @"Update sd.study_identifiers
               set record_hash = md5(json_build_array(identifier_value, identifier_type_id, identifier_org_id,
@@ -44,7 +44,7 @@ namespace DataHarvester
         }
 
 
-        public void CreateStudyTitleHashes()
+        public void create_study_title_hashes()
         {
             string sql_string = @"Update sd.study_titles
               set record_hash = md5(json_build_array(title_text, title_type_id, title_lang_code,
@@ -57,7 +57,7 @@ namespace DataHarvester
         }
 
 
-        public void CreateStudyContributorHashes()
+        public void create_study_contributor_hashes()
         {
             string sql_string = @"Update sd.study_contributors
               set record_hash = md5(json_build_array(contrib_type_id, is_individual, organisation_id,
@@ -72,7 +72,7 @@ namespace DataHarvester
         }
 
 
-        public void CreateStudyTopicHashes()
+        public void create_study_topic_hashes()
         {
             string sql_string = @"Update sd.study_topics
               set record_hash = md5(json_build_array(topic_type_id, topic_value, topic_ct_id,
@@ -85,8 +85,19 @@ namespace DataHarvester
         }
 
 
+        public void create_study_feature_hashes()
+        {
+            string sql_string = @"Update sd.study_features
+              set record_hash = md5(json_build_array(feature_type_id, fgeature_value_id)::varchar)::char(32);";
 
-        public void CreateStudyReferenceHashes()
+            using (var conn = new NpgsqlConnection(db_conn))
+            {
+                conn.Execute(sql_string);
+            }
+        }
+
+
+        public void create_study_reference_hashes()
         {
             string sql_string = @"Update sd.study_references
               set record_hash = md5(json_build_array(pmid, citation, doi, comments)::varchar)::char(32);";
@@ -96,86 +107,47 @@ namespace DataHarvester
                 conn.Execute(sql_string);
             }
         }
+
+
+        public void create_study_relationship_hashes()
+        {
+            string sql_string = @"Update sd.study_relationships
+              set record_hash = md5(json_build_array(relationship_type_id, target_sd_sid)::varchar)::char(32);";
+
+            using (var conn = new NpgsqlConnection(db_conn))
+            {
+                conn.Execute(sql_string);
+            }
+        }
+
+
+        public void create_study_link_hashes()
+        {
+            string sql_string = @"Update sd.study_links
+              set record_hash = md5(json_build_array(link_label, link_url)::varchar)::char(32);";
+
+            using (var conn = new NpgsqlConnection(db_conn))
+            {
+                conn.Execute(sql_string);
+            }
+        }
+
+
+        public void create_ipd_available_hashes()
+        {
+            string sql_string = @"Update sd.study_ipd_available
+              set record_hash = md5(json_build_array(ipd_id, ipd_type, ipd_url, ipd_comment)::varchar)::char(32);";
+
+            using (var conn = new NpgsqlConnection(db_conn))
+            {
+                conn.Execute(sql_string);
+            }
+        }
+
     }
 
 
-    public class StudyHashInserters
-    {
-        string db_conn;
-
-        public StudyHashInserters(string _db_conn)
-        {
-            db_conn = _db_conn;
-        }
-
-
-        public void InsertStudyHashesIntoStudyIdentifiers()
-        {
-            string sql_string = @"Update sd.study_identifiers t
-              set study_hash_id = s.hash_id 
-              from sd.studies s 
-              where t.sd_id = s.sd_id;";
-
-            using (var conn = new NpgsqlConnection(db_conn))
-            {
-                conn.Execute(sql_string);
-            }
-        }
-
-        public void InsertStudyHashesIntoStudyTitles()
-        {
-            string sql_string = @"Update sd.study_titles t
-              set study_hash_id = s.hash_id 
-              from sd.studies s 
-              where t.sd_id = s.sd_id;";
-
-            using (var conn = new NpgsqlConnection(db_conn))
-            {
-                conn.Execute(sql_string);
-            }
-        }
-
-        public void InsertStudyHashesIntoStudyContributors()
-        {
-            string sql_string = @"Update sd.study_contributors t
-              set study_hash_id = s.hash_id 
-              from sd.studies s 
-              where t.sd_id = s.sd_id;";
-
-            using (var conn = new NpgsqlConnection(db_conn))
-            {
-                conn.Execute(sql_string);
-            }
-        }
-
-        public void InsertStudyHashesIntoStudyTopics()
-        {
-            string sql_string = @"Update sd.study_topics t
-              set study_hash_id = s.hash_id 
-              from sd.studies s 
-              where t.sd_id = s.sd_id;";
-
-            using (var conn = new NpgsqlConnection(db_conn))
-            {
-                conn.Execute(sql_string);
-            }
-        }
-
-        public void InsertStudyHashesIntoStudyReferences()
-        {
-            string sql_string = @"Update sd.study_references t
-              set study_hash_id = s.hash_id 
-              from sd.studies s 
-              where t.sd_id = s.sd_id;";
-
-            using (var conn = new NpgsqlConnection(db_conn))
-            {
-                conn.Execute(sql_string);
-            }
-        }
-    }
-
-
+  
     public class StudyCompositeHashCreators
     {
         string db_conn;
@@ -185,15 +157,13 @@ namespace DataHarvester
             db_conn = _db_conn;
         }
 
-
-        public void CreateCompositeStudyIdentifierHashes()
+        public void create_composite_study_hashes(int hash_type_id, string hash_type, string table_name)
         {
-            string sql_string = @"Insert into sd.study_hashes 
-              (sd_id, study_hash_id, hash_type_id, hash_type, composite_hash)
-              select sd_id, study_hash_id, 11, 'identifiers', 
-              md5(to_json(array_agg(record_hash))::varchar)::char(32)
-              from sd.study_identifiers
-              group by sd_id, study_hash_id;";
+              string sql_string = @"Insert into sd.study_hashes 
+              (sd_sid, hash_type_id, hash_type, composite_hash)
+              select sd_sid, " + hash_type_id.ToString() + ", '" + hash_type + @"',  
+              md5(to_json(array_agg(record_hash ORDER BY record_hash))::varchar)::char(32)
+              from sd." + table_name + " group by sd_sid;";
 
             using (var conn = new NpgsqlConnection(db_conn))
             {
@@ -201,75 +171,14 @@ namespace DataHarvester
             }
         }
 
-        public void CreateCompositeStudyTitleHashes()
+        public void create_composite_dataobject_hashes()
         {
             string sql_string = @"Insert into sd.study_hashes 
-              (sd_id, study_hash_id, hash_type_id, hash_type, composite_hash)
-              select sd_id, study_hash_id, 12, 'titles', 
-              md5(to_json(array_agg(record_hash))::varchar)::char(32)
-              from sd.study_titles
-              group by sd_id, study_hash_id;";
-
-            using (var conn = new NpgsqlConnection(db_conn))
-            {
-                conn.Execute(sql_string);
-            }
-        }
-
-        public void CreateCompositeStudyContributorHashes()
-        {
-            string sql_string = @"Insert into sd.study_hashes 
-              (sd_id, study_hash_id, hash_type_id, hash_type, composite_hash)
-              select sd_id, study_hash_id, 15, 'contributors',
-              md5(to_json(array_agg(record_hash))::varchar)::char(32)
-              from sd.study_contributors
-              group by sd_id, study_hash_id;";
-
-            using (var conn = new NpgsqlConnection(db_conn))
-            {
-                conn.Execute(sql_string);
-            }
-        }
-
-        public void CreateCompositeStudyTopicHashes()
-        {
-            string sql_string = @"Insert into sd.study_hashes 
-              (sd_id, study_hash_id, hash_type_id, hash_type, composite_hash)
-              select sd_id, study_hash_id, 14, 'topics',
-              md5(to_json(array_agg(record_hash))::varchar)::char(32)
-              from sd.study_topics
-              group by sd_id, study_hash_id;";
-
-            using (var conn = new NpgsqlConnection(db_conn))
-            {
-                 conn.Execute(sql_string);
-            }
-        }
-
-
-        public void CreateCompositeStudyReferenceHashes()
-        {
-            string sql_string = @"Insert into sd.study_hashes 
-              (sd_id, study_hash_id, hash_type_id, hash_type, composite_hash)
-              select sd_id, study_hash_id, 17, 'references',
-              md5(to_json(array_agg(record_hash))::varchar)::char(32)
-              from sd.study_references
-              group by sd_id, study_hash_id;";
-
-            using (var conn = new NpgsqlConnection(db_conn))
-            {
-                conn.Execute(sql_string);
-            }
-        }
-
-        public void CreateCompositeDataObjectHashes()
-        {
-            string sql_string = @"Insert into sd.study_hashes 
-              (sd_id, study_hash_id, hash_type_id, hash_type, composite_hash)
-              select sd_id, study_hash_id, 10, 'data objects', 
-              md5(to_json(array_agg(object_full_hash))::varchar)::char(32)
+              (sd_sid, hash_type_id, hash_type, composite_hash)
+              select sd_sid, 10, 'data objects', 
+              md5(to_json(array_agg(object_full_hash ORDER BY object_full_hash))::varchar)::char(32)
               from sd.data_objects
-              group by sd_id, study_hash_id;";
+              group by sd_sid;";
 
             using (var conn = new NpgsqlConnection(db_conn))
             {
@@ -277,21 +186,21 @@ namespace DataHarvester
             }
         }
 
-        public void CreateFullStudyHashes()
+
+        public void create_full_study_hashes()
         {
             string sql_string = @"update sd.studies s
             set study_full_hash = b.rollup
-            from (select sd_id, study_hash_id, md5(to_json(array_agg(h.hash))::varchar)::char(32) as rollup
+            from (select sd_sid, md5(to_json(array_agg(hash ORDER BY hash))::varchar)::char(32) as rollup
                   from 
-                     (select sd_id, study_hash_id, composite_hash as hash 
+                     (select sd_sid, composite_hash as hash 
                       from sd.study_hashes
                       union
-                      select sd_id, hash_id as study_hash_id, record_hash as hash
+                      select sd_sid, record_hash as hash
                       from sd.studies) h
-	              group by sd_id, study_hash_id) b
+	              group by sd_sid) b
             where 
-            s.sd_id = b.sd_id
-            and s.hash_id = b.study_hash_id";
+            s.sd_sid = b.sd_sid";
 
             using (var conn = new NpgsqlConnection(db_conn))
             {
@@ -310,21 +219,7 @@ namespace DataHarvester
             db_conn = _db_conn;
         }
 
-
-        public void CreateObjectIdHashes()
-        {
-            string sql_string = @"Update sd.data_objects d
-              set object_hash_id = md5(json_build_array(s.hash_id, d.display_title)::varchar)::char(32)
-              from sd.studies s
-              where d.sd_id = s.sd_id";
-
-            using (var conn = new NpgsqlConnection(db_conn))
-            {
-                conn.Execute(sql_string);
-            }
-        }
-
-        public void CreateObjectRecordHashes()
+        public void create_object_record_hashes()
         {
             string sql_string = @"Update sd.data_objects
               set record_hash = md5(json_build_array(display_title, doi, doi_status_id, publication_year,
@@ -339,7 +234,7 @@ namespace DataHarvester
         }
 
 
-        public void CreateRecordsetPropertiesHashes()
+        public void create_recordset_properties_hashes()
         {
             string sql_string = @"Update sd.dataset_properties
               set record_hash = md5(json_build_array(record_keys_type_id, record_keys_details, 
@@ -352,7 +247,7 @@ namespace DataHarvester
             }
         }
 
-        public void CreateObjectDateHashes()
+        public void create_object_date_hashes()
         {
             string sql_string = @"Update sd.object_dates
               set record_hash = md5(json_build_array(date_type_id, is_date_range, date_as_string, 
@@ -365,11 +260,12 @@ namespace DataHarvester
             }
         }
 
-        public void CreateObjectInstanceHashes()
+        public void create_object_instance_hashes()
         {
             string sql_string = @"Update sd.object_instances
-              set record_hash = md5(json_build_array(instance_type_id, repository_org_id, repository_org, url, url_accessible,
-              url_last_checked, resource_type_id, resource_size, resource_size_units)::varchar)::char(32);";
+              set record_hash = md5(json_build_array(instance_type_id, repository_org_id, 
+              repository_org, url, url_accessible, url_last_checked, 
+              resource_type_id, resource_size, resource_size_units)::varchar)::char(32);";
 
             using (var conn = new NpgsqlConnection(db_conn))
             {
@@ -377,11 +273,11 @@ namespace DataHarvester
             }
         }
 
-        public void CreateObjectTitleHashes()
+        public void create_object_title_hashes()
         {
             string sql_string = @"Update sd.object_titles
-              set record_hash = md5(json_build_array(title_text, title_type_id, title_lang_code, lang_usage_id,
-              is_default, comments)::varchar)::char(32);";
+              set record_hash = md5(json_build_array(title_text, title_type_id, title_lang_code, 
+              lang_usage_id, is_default, comments)::varchar)::char(32);";
 
             using (var conn = new NpgsqlConnection(db_conn))
             {
@@ -389,7 +285,7 @@ namespace DataHarvester
             }
         }
 
-        public void CreateObjectLanguageHashes()
+        public void create_object_language_hashes()
         {
             string sql_string = @"Update sd.object_languages
               set record_hash = md5(json_build_array(lang_code)::varchar)::char(32);";
@@ -399,24 +295,15 @@ namespace DataHarvester
                 conn.Execute(sql_string);
             }
         }
-    }
 
-    public class ObjectHashInserters
-    {
-        string db_conn;
 
-        public ObjectHashInserters(string _db_conn)
+        public void create_object_contributor_hashes()
         {
-            db_conn = _db_conn;
-        }
-
-
-        public void InsertStudyHashesIntoDataObjects()
-        {
-            string sql_string = @"Update sd.data_objects t
-              set study_hash_id = s.hash_id 
-              from sd.studies s 
-              where t.sd_id = s.sd_id;";
+            string sql_string = @"Update sd.object_contributors
+              set record_hash = md5(json_build_array(contrib_type_id, is_individual, organisation_id,
+              organisation_name, person_id, person_given_name, person_family_name, person_full_name,
+              person_identifier, identifier_type, person_affiliation, 
+              affil_org_id, affil_org_id_type)::varchar)::char(32);";
 
             using (var conn = new NpgsqlConnection(db_conn))
             {
@@ -424,13 +311,11 @@ namespace DataHarvester
             }
         }
 
-        public void InsertObjectHashesIntoDatasetProperties()
+        public void create_object_topic_hashes()
         {
-            string sql_string = @"Update sd.dataset_properties t
-              set object_hash_id = d.object_hash_id
-              from sd.data_objects d 
-              where t.sd_id = d.sd_id
-              and t.do_id = d.do_id;";
+            string sql_string = @"Update sd.object_topics
+              set record_hash = md5(json_build_array(topic_type_id, topic_value, topic_ct_id,
+              topic_ct_code, where_found)::varchar)::char(32);";
 
             using (var conn = new NpgsqlConnection(db_conn))
             {
@@ -438,13 +323,11 @@ namespace DataHarvester
             }
         }
 
-        public void InsertObjectHashesIntoObjectInstances()
+        public void create_object_correction_hashes()
         {
-            string sql_string = @"Update sd.object_instances t
-              set object_hash_id = d.object_hash_id
-              from sd.data_objects d 
-              where t.sd_id = d.sd_id
-              and t.do_id = d.do_id;";
+            string sql_string = @"Update sd.object_corrections
+              set record_hash = md5(json_build_array(ref_type, ref_source, pmid, pmid_version,
+              notes)::varchar)::char(32);";
 
             using (var conn = new NpgsqlConnection(db_conn))
             {
@@ -452,13 +335,11 @@ namespace DataHarvester
             }
         }
 
-        public void InsertObjectHashesIntoObjectTitles()
+        public void create_object_description_hashes()
         {
-            string sql_string = @"Update sd.object_titles t
-              set object_hash_id = d.object_hash_id
-              from sd.data_objects d
-              where t.sd_id = d.sd_id
-              and t.do_id = d.do_id;";
+            string sql_string = @"Update sd.object_descriptions
+              set record_hash = md5(json_build_array(description_type_id, label, description_text, lang_code,
+              contains_html)::varchar)::char(32);";
 
             using (var conn = new NpgsqlConnection(db_conn))
             {
@@ -466,13 +347,11 @@ namespace DataHarvester
             }
         }
 
-        public void InsertObjectHashesIntoObjectDates()
+        public void create_object_identifier_hashes()
         {
-            string sql_string = @"Update sd.object_dates t
-              set object_hash_id = d.object_hash_id
-              from sd.data_objects d 
-              where t.sd_id = d.sd_id
-              and t.do_id = d.do_id;";
+            string sql_string = @"Update sd.object_identifiers
+              set record_hash = md5(json_build_array(identifier_value, identifier_type_id, identifier_org_id,
+              identifier_org, identifier_date)::varchar)::char(32);";
 
             using (var conn = new NpgsqlConnection(db_conn))
             {
@@ -480,22 +359,34 @@ namespace DataHarvester
             }
         }
 
-        public void InsertObjectHashesIntoObjectLanguages()
+        public void create_object_link_hashes()
         {
-            string sql_string = @"Update sd.object_languages t
-              set object_hash_id = d.object_hash_id
-              from sd.data_objects d 
-              where t.sd_id = d.sd_id
-              and t.do_id = d.do_id;";
+            string sql_string = @"Update sd.object_links
+              set record_hash = md5(json_build_array(bank_sequence, bank_name, 
+              accession_number)::varchar)::char(32);";
 
             using (var conn = new NpgsqlConnection(db_conn))
             {
                 conn.Execute(sql_string);
             }
         }
+
+        public void create_object_public_type_hashes()
+        {
+            string sql_string = @"Update sd.object_public_types
+              set record_hash = md5(json_build_array(type_name)::varchar)::char(32);";
+
+            using (var conn = new NpgsqlConnection(db_conn))
+            {
+                conn.Execute(sql_string);
+            }
+        }
+
+
 
     }
 
+ 
     public class ObjectCompositeHashCreators
     {
         string db_conn;
@@ -505,19 +396,13 @@ namespace DataHarvester
             db_conn = _db_conn;
         }
 
-        // sould only be 0 or 1 one per data object but it makes 
-        // further processing a little easier
-        public void CreateCompositeDatasetPropertiesHashes()
+        public void create_composite_object_hashes(int hash_type_id, string hash_type, string table_name)
         {
             string sql_string = @"Insert into sd.object_hashes 
-              (sd_id, do_id, study_hash_id, object_hash_id, hash_type_id, hash_type, composite_hash)
-              select t.sd_id, t.do_id, d.study_hash_id, t.object_hash_id, 60, 'dataset properties', 
-              md5(to_json(array_agg(t.record_hash))::varchar)::char(32)
-              from sd.dataset_properties t
-              inner join sd.data_objects d
-              on t.sd_id = d.sd_id
-              and t.do_id = d.do_id
-              group by t.sd_id, t.do_id, d.study_hash_id, t.object_hash_id;";
+              (sd_oid, hash_type_id, hash_type, composite_hash)
+              select sd_oid, " + hash_type_id.ToString() + ", '" + hash_type + @"',  
+              md5(to_json(array_agg(record_hash ORDER BY record_hash))::varchar)::char(32)
+              from sd." + table_name + " group by sd_oid;";
 
             using (var conn = new NpgsqlConnection(db_conn))
             {
@@ -526,100 +411,23 @@ namespace DataHarvester
         }
 
 
-        public void CreateCompositeObjectInstanceHashes()
-        {
-            string sql_string = @"Insert into sd.object_hashes 
-              (sd_id, do_id, study_hash_id, object_hash_id, hash_type_id, hash_type, composite_hash)
-              select t.sd_id, t.do_id, d.study_hash_id, t.object_hash_id, 51, 'instances', 
-              md5(to_json(array_agg(t.record_hash))::varchar)::char(32)
-              from sd.object_instances t
-              inner join sd.data_objects d
-              on t.sd_id = d.sd_id
-              and t.do_id = d.do_id
-              group by t.sd_id, t.do_id, d.study_hash_id, t.object_hash_id;";
-
-            using (var conn = new NpgsqlConnection(db_conn))
-            {
-                conn.Execute(sql_string);
-            }
-        }
-
-        public void CreateCompositeObjectTitlesHashes()
-        {
-            string sql_string = @"Insert into sd.object_hashes 
-              (sd_id, do_id, study_hash_id, object_hash_id, hash_type_id, hash_type, composite_hash)
-              select t.sd_id, t.do_id, d.study_hash_id, t.object_hash_id, 52, 'titles', 
-              md5(to_json(array_agg(t.record_hash))::varchar)::char(32)
-              from sd.object_titles t
-              inner join sd.data_objects d
-              on t.sd_id = d.sd_id
-              and t.do_id = d.do_id
-              group by t.sd_id, t.do_id, d.study_hash_id, t.object_hash_id;";
-
-            using (var conn = new NpgsqlConnection(db_conn))
-            {
-                conn.Execute(sql_string);
-            }
-        }
-
-        public void CreateCompositeObjectDatesHashes()
-        {
-            string sql_string = @"Insert into sd.object_hashes 
-              (sd_id, do_id, study_hash_id, object_hash_id, hash_type_id, hash_type, composite_hash)
-              select t.sd_id, t.do_id, d.study_hash_id, t.object_hash_id, 53, 'dates', 
-              md5(to_json(array_agg(t.record_hash))::varchar)::char(32)
-              from sd.object_dates t
-              inner join sd.data_objects d
-              on t.sd_id = d.sd_id
-              and t.do_id = d.do_id
-              group by t.sd_id, t.do_id, d.study_hash_id, t.object_hash_id;";
-
-            using (var conn = new NpgsqlConnection(db_conn))
-            {
-                conn.Execute(sql_string);
-            }
-        }
-
-
-        public void CreateCompositeObjectLanguagesHashes()
-        {
-            string sql_string = @"Insert into sd.object_hashes 
-              (sd_id, do_id, study_hash_id, object_hash_id, hash_type_id, hash_type, composite_hash)
-              select t.sd_id, t.do_id, d.study_hash_id, t.object_hash_id, 58, 'languages', 
-              md5(to_json(array_agg(t.record_hash))::varchar)::char(32)
-              from sd.object_languages t
-              inner join sd.data_objects d
-              on t.sd_id = d.sd_id
-              and t.do_id = d.do_id
-              group by t.sd_id, t.do_id, d.study_hash_id, t.object_hash_id;";
-
-            using (var conn = new NpgsqlConnection(db_conn))
-            {
-                conn.Execute(sql_string);
-            }
-        }
-
-
-        public void CreateFullDataObjectHashes()
+        public void create_full_data_object_hashes()
         {
             // needs to roll up, for any particular data object
             // all of the composite hashes plus any hash for a dataset property record,
             // plus the data object record itself
             string sql_string = @"update sd.data_objects d
             set object_full_hash = b.roll_up from
-            (select sd_id, do_id, study_hash_id, object_hash_id, 
-             md5(to_json(array_agg(h.hash))::varchar)::char(32) as roll_up
+            (select sd_oid, 
+             md5(to_json(array_agg(hash ORDER BY hash))::varchar)::char(32) as roll_up
               from 
-                (select sd_id, do_id, study_hash_id, object_hash_id, composite_hash as hash  
+                (select sd_oid, composite_hash as hash   
                 from sd.object_hashes
                 union
-                select sd_id, do_id, study_hash_id, object_hash_id, record_hash as hash
+                select sd_oid, record_hash as hash
                 from sd.data_objects) h
-             group by sd_id, do_id, study_hash_id, object_hash_id) b
-             where d.sd_id = b.sd_id
-             and d.do_id = b.do_id
-             and d.study_hash_id = b.study_hash_id
-             and d.object_hash_id  = b.object_hash_id;";
+             group by sd_oid) b
+             where d.sd_oid = b.sd_oid;";
 
             using (var conn = new NpgsqlConnection(db_conn))
             {

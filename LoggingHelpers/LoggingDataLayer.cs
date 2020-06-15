@@ -14,6 +14,7 @@ namespace DataHarvester
 		private string mon_connString;
 		private Source source;
 
+
 		/// <summary>
 		/// Parameterless constructor is used to automatically build
 		/// the connection string, using an appsettings.json file that 

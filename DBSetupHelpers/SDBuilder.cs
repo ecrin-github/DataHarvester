@@ -89,7 +89,6 @@ namespace DataHarvester
 			builder.create_table_data_objects();
 			builder.create_table_object_instances();
 			builder.create_table_object_titles();	
-			builder.create_table_object_languages();
 			builder.create_table_object_hashes();
 
 			// these are database dependent		
