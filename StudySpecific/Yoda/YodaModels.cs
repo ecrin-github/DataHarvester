@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using Dapper.Contrib.Extensions;
 
 
-namespace DataHarvester.Yoda
+namespace DataHarvester.yoda
 {
 
 	public class YodaRecord

@@ -1,27 +1,35 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Threading.Tasks;
 using System.Xml.Serialization;
 
-namespace DataHarvester.yoda
+namespace DataHarvester.isrctn
 {
-	class YodaController
+	class ISRCTNController
 	{
 		DataLayer common_repo;
 		LoggingDataLayer logging_repo;
-		YodaProcessor processor;
+		ISRCTNProcessor processor;
 		int source_id;
 
-		public YodaController(int _source_id, DataLayer _common_repo, LoggingDataLayer _logging_repo)
+		public ISRCTNController(int _source_id, DataLayer _common_repo, LoggingDataLayer _logging_repo)
 		{
 			source_id = _source_id;
-			processor = new YodaProcessor();
+			processor = new ISRCTNProcessor();
 			common_repo = _common_repo;
 			logging_repo = _logging_repo;
 		}
 
-		public void LoopThroughFiles()
+		public async Task LoopThroughFilesAsync()
 		{
+			URLChecker checker = new URLChecker();
+
+			// Get the folder base from the appsettings file
+			// and construct a list of the files 
+			// N.B. (only one folder for all files) 
+
+			// Construct a list of the files 
 			// Rather than using a file base, it is possible
 			// to use the sf records to get a list of files
 			// and local paths...
@@ -32,7 +40,7 @@ namespace DataHarvester.yoda
 			{
 				n++;
 				// for testing...
-				//if (n == 50) break;
+				//if (f == 5) break;
 
 				filePath = rec.local_path;
 				if (File.Exists(filePath))
@@ -43,26 +51,19 @@ namespace DataHarvester.yoda
 						inputString += streamReader.ReadToEnd();
 					}
 
-					XmlSerializer serializer = new XmlSerializer(typeof(YodaRecord));
+					XmlSerializer serializer = new XmlSerializer(typeof(ISCTRN_Record));
 					StringReader rdr = new StringReader(inputString);
-					YodaRecord studyRegEntry = (YodaRecord)serializer.Deserialize(rdr);
+					ISCTRN_Record studyRegEntry = (ISCTRN_Record)serializer.Deserialize(rdr);
 
 					// break up the file into relevant data classes
-					Study s = processor.ProcessData(studyRegEntry, rec.download_datetime);
+					Study s = await processor.ProcessDataAsync(studyRegEntry, rec.download_datetime, common_repo);
 
-					// store the data in the database			
-					processor.StoreData(common_repo, s);  
-
-					// update file record with last processed datetime
-					logging_repo.UpdateStudyFileRecLastProcessed(rec.id);
-
+					// store the data in the database
+					processor.StoreData(common_repo, s); 
 				}
 
-				if (n % 10 == 0) Console.WriteLine(n.ToString());
+				if (n % 100 == 0) Console.WriteLine(n.ToString());
 			}
 		}
-
-		
 	}
-
 }

@@ -6,7 +6,7 @@ using Microsoft.Extensions.Configuration;
 using System.Linq;
 using System.Collections.Generic;
 using PostgreSQLCopyHelper;
-using DataHarvester.BioLincc;
+using DataHarvester.biolincc;
 
 namespace DataHarvester
 {
@@ -121,6 +121,24 @@ namespace DataHarvester
 			}
 		}
 
+		public ulong StoreStudyFeatures(PostgreSQLCopyHelper<StudyFeature> copyHelper, IEnumerable<StudyFeature> entities)
+		{
+			using (var conn = new NpgsqlConnection(connString))
+			{
+				conn.Open();
+				return copyHelper.SaveAll(conn, entities);
+			}
+		}
+
+
+		public ulong StoreStudyLinks(PostgreSQLCopyHelper<StudyLink> copyHelper, IEnumerable<StudyLink> entities)
+		{
+			using (var conn = new NpgsqlConnection(connString))
+			{
+				conn.Open();
+				return copyHelper.SaveAll(conn, entities);
+			}
+		}
 
 		public ulong StoreDataObjects(PostgreSQLCopyHelper<DataObject> copyHelper, IEnumerable<DataObject> entities)
 		{

@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 
-namespace DataHarvester.Yoda
+namespace DataHarvester.yoda
 {
     public class YodaProcessor
 	{
@@ -204,7 +204,6 @@ namespace DataHarvester.Yoda
 			// data objects...
 
 			string name_base = string.IsNullOrEmpty(st.public_title) ? s.display_title : st.public_title;
-			int do_id = 1;
 			
 			// do the yoda web page itself first...
 			string object_display_title = name_base + " :: " + "Yoda web page";
@@ -224,7 +223,6 @@ namespace DataHarvester.Yoda
 			{
 				foreach (SuppDoc sd in st.supp_docs)
 				{
-					do_id++;
 					// get object_type
 					int object_class_id = 0; string object_class = "";
 					int object_type_id = 0; string object_type = "";

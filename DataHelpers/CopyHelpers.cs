@@ -65,6 +65,20 @@ namespace DataHarvester
 				.MapVarchar("target_sd_sid", x => x.target_sd_sid);
 
 
+		public static PostgreSQLCopyHelper<StudyLink> study_links_helper =
+			new PostgreSQLCopyHelper<StudyLink>("sd", "study_links")
+				.MapVarchar("sd_sid", x => x.sd_sid)
+				.MapVarchar("link_label", x => x.link_label)
+				.MapVarchar("link_url", x => x.link_url);
+
+		public static PostgreSQLCopyHelper<StudyFeature> study_features_helper =
+			new PostgreSQLCopyHelper<StudyFeature>("sd", "study_features")
+				.MapVarchar("sd_sid", x => x.sd_sid)
+				.MapInteger("feature_type_id", x => x.feature_type_id)
+				.MapVarchar("feature_type", x => x.feature_type)
+				.MapInteger("feature_value_id", x => x.feature_value_id)
+				.MapVarchar("feature_value", x => x.feature_value);
+
 		public static PostgreSQLCopyHelper<StudyReference> study_references_helper =
 			new PostgreSQLCopyHelper<StudyReference>("sd", "study_references")
 				.MapVarchar("sd_sid", x => x.sd_sid)

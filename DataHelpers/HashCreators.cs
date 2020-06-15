@@ -88,7 +88,7 @@ namespace DataHarvester
         public void create_study_feature_hashes()
         {
             string sql_string = @"Update sd.study_features
-              set record_hash = md5(json_build_array(feature_type_id, fgeature_value_id)::varchar)::char(32);";
+              set record_hash = md5(json_build_array(feature_type_id, feature_value_id)::varchar)::char(32);";
 
             using (var conn = new NpgsqlConnection(db_conn))
             {

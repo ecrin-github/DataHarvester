@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Xml.Serialization;
 
-namespace DataHarvester.BioLincc
+namespace DataHarvester.biolincc
 {
     public class BioLinccController
 	{

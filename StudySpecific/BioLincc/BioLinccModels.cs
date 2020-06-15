@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 
-namespace DataHarvester.BioLincc
+namespace DataHarvester.biolincc
 {
 	public class BioLinccRecord
 	{

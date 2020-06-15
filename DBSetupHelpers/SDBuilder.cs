@@ -31,6 +31,7 @@ namespace DataHarvester
 			dropper.drop_table_study_titles();
 			dropper.drop_table_study_contributors();
 			dropper.drop_table_study_topics();
+			dropper.drop_table_study_features();
 			dropper.drop_table_study_relationships();
 			dropper.drop_table_study_references();
 			dropper.drop_table_study_hashes();

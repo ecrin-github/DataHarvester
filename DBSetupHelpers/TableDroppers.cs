@@ -60,6 +60,15 @@ namespace DataHarvester
 			}
 		}
 
+		public void drop_table_study_features()
+		{
+			string sql_string = @"DROP TABLE IF EXISTS sd.study_features;";
+			using (var conn = new NpgsqlConnection(db_conn))
+			{
+				conn.Execute(sql_string);
+			}
+		}
+
 		public void drop_table_study_relationships()
 		{
 			string sql_string = @"DROP TABLE IF EXISTS sd.study_relationships;";

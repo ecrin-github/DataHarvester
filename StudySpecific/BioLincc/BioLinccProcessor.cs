@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 
-namespace DataHarvester.BioLincc
+namespace DataHarvester.biolincc
 {
 	public class BioLinccProcessor
 	{

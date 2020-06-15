@@ -1,8 +1,7 @@
 ﻿using System;
 using static System.Console;
-using DataHarvester.BioLincc;
-using DataHarvester.Yoda;
-using System.Xml.Serialization;
+using DataHarvester.biolincc;
+using DataHarvester.yoda;
 using System.Text.RegularExpressions;
 
 namespace DataHarvester
