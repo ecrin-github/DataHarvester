@@ -52,6 +52,7 @@ namespace DataHarvester
 				case 101900:
 					{
 						BioLinccController c = new BioLinccController(source.id, repo, logging_repo);
+						c.GetInitialIDData();
 						c.LoopThroughFiles();
 						break;
 					}

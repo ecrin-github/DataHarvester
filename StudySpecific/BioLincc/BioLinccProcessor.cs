@@ -16,7 +16,7 @@ namespace DataHarvester.biolincc
 		}
 
 
-		public Study ProcessData(BioLinccRecord st, DateTime? download_datetime, DataLayer common_repo)
+		public Study ProcessData(BioLinccRecord st, DateTime? download_datetime, DataLayer common_repo, BioLinccDataLayer biolincc_repo)
 		{
 			Study s = new Study();
 
@@ -129,37 +129,25 @@ namespace DataHarvester.biolincc
 
 			// Add study attribute records.
 
-			// For the study, set up new study identifier = sd_id
-			// identifier type = NHBLI ID, id = 42, org = National Heart, Lung, and Blood Institute, id = 100167.
-
-			study_identifiers.Add(new StudyIdentifier(sid, st.sd_id, 42, "NHLBI ID", 100167, "National Heart, Lung, and Blood Institute (US)"));
-
+			// HBLI identifier already added
 			// If there is a NCT ID (there usually is...).
-			// if multiple - different sort of relationship; also a group may share the same NCT id
-			// to be sorted out once all links aggregated - one to many relationships transformed into 'study relationships'
-			// but these are ACROSS different sources, therefore need to be done at the end
-			// study relationships table therefore not required...
+			// that has been added as well but the first can be used to obtain further details
 
 			if (st.registry_ids.Count > 0)
 			{
-				int n = 0;
-				foreach (RegistryId reg_id in st.registry_ids)
+				RegistryId reg_id = st.registry_ids[0];
+			
+				var sponsor_details = biolincc_repo.FetchBioLINCCSponsorFromNCT(common_repo.CTGConnString, reg_id.nct_id);
+				sponsor_org_id = sponsor_details.org_id;
+				sponsor_org = sponsor_details.org_name;
+
+				// also revise title using nct entry... but only if the study is not one of those
+				// that are in a group, corresponding to a single NCT entry and public title
+				if (!biolincc_repo.InMultipleHBLIGroup(sid))
 				{
-					n++;
-					study_identifiers.Add(new StudyIdentifier(sid, reg_id.nct_id, 11, "Trial Registry ID", 100120, "ClinicalTrials.gov"));
-
-					// get sponsor name and organisation using NCT Id using the first id
-					if (n == 1)
-					{
-						var sponsor_details = common_repo.FetchBioLINCCSponsorFromNCT(common_repo.CTGConnString, reg_id.nct_id);
-						sponsor_org_id = sponsor_details.org_id;
-						sponsor_org = sponsor_details.org_name;
-
-						// also revise title using nct entry...
-						s.display_title = common_repo.FetchStudyTitle(common_repo.CTGConnString, reg_id.nct_id);
-					}
+					s.display_title = biolincc_repo.FetchStudyTitle(common_repo.CTGConnString, reg_id.nct_id);
 				}
-			}
+    		}
 
 			// For the study, set up two titles, acronym and display title
 			// NHLBI title not always exactly the same as the trial registry entry.
@@ -174,11 +162,8 @@ namespace DataHarvester.biolincc
 			// Create data object records.
 
 			// For the BioLincc web page, set up new data object, object title, object_instance and object dates
-
-			// BioLINCC web page 
-
 			int? pub_year = st.publication_year;
-			string name_base = string.IsNullOrEmpty(st.public_title) ? s.display_title : st.public_title;
+			string name_base = s.display_title;
 			string object_display_title = name_base + " :: " + "NHLBI web page";
 
 			// create hash Id for the data object
@@ -217,7 +202,7 @@ namespace DataHarvester.biolincc
 
 			if (!string.IsNullOrEmpty(st.study_website))
 			{
-				object_display_title = s.display_title + " :: " + "Study web site";
+				object_display_title = name_base + " :: " + "Study web site";
 				sd_oid = hf.CreateMD5(sid + object_display_title);
 
 				data_objects.Add(new DataObject(sd_oid, sid, object_display_title, null, 23, "Text", 134, "Website",
@@ -312,10 +297,42 @@ namespace DataHarvester.biolincc
 			}
 
 
+			// check that the primary doc is not duplicated in the associated docs (it sometimes is)
+			if (study_references.Count > 0)
+			{
+				foreach (StudyReference p in study_references)
+				{
+					if (p.comments == "primary")
+					{
+						foreach (StudyReference a in study_references)
+						{
+							if (a.comments == "associated" && p.pmid == a.pmid)
+                            {
+								// update the primary link
+								p.citation = a.citation;
+								p.doi = a.doi;
+								// drop the redundant associated link
+								a.comments = "to go";
+								break;
+                            }
+						}
+					}
+				}
+			}
+			
+			List<StudyReference> study_references2 = new List<StudyReference>();
+			foreach (StudyReference a in study_references)
+			{
+				if (a.comments != "to go")
+				{
+					study_references2.Add(a);
+				}
+			}
+
 			// add in the study properties
 			s.identifiers = study_identifiers;
 			s.titles = study_titles;
-			s.references = study_references;
+			s.references = study_references2;
 
 			s.data_objects = data_objects;
 			s.dataset_properties = dataset_properties;

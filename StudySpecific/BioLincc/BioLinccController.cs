@@ -9,16 +9,55 @@ namespace DataHarvester.biolincc
 	{
 		DataLayer common_repo;
 		LoggingDataLayer logging_repo;
+		BioLinccDataLayer biolincc_repo;
 		BioLinccProcessor processor;
+		BioLinccIdentifierProcessor identity_processor;
 		int source_id;
 
 		public BioLinccController(int _source_id, DataLayer _common_repo, LoggingDataLayer _logging_repo)
 		{
 			source_id = _source_id;
 			processor = new BioLinccProcessor();
+			identity_processor = new BioLinccIdentifierProcessor();
 			common_repo = _common_repo;
 			logging_repo = _logging_repo;
+			biolincc_repo = new BioLinccDataLayer();
 		}
+
+		public void GetInitialIDData()
+		{
+			// Construct a list of the files 
+			// Rather than using a file base, it is possible
+			// to use the sf records to get a list of files
+			// and local paths...
+
+			IEnumerable<FileRecord> file_list = logging_repo.FetchStudyFileRecords(source_id);
+			int n = 0; string filePath = "";
+			foreach (FileRecord rec in file_list)
+			{
+				n++;
+				filePath = rec.local_path;
+				if (File.Exists(filePath))
+				{
+					string inputString = "";
+					using (var streamReader = new StreamReader(filePath, System.Text.Encoding.UTF8))
+					{
+						inputString += streamReader.ReadToEnd();
+					}
+
+					XmlSerializer serializer = new XmlSerializer(typeof(BioLinccRecord));
+					StringReader rdr = new StringReader(inputString);
+					BioLinccRecord studyRegEntry = (BioLinccRecord)serializer.Deserialize(rdr);
+					identity_processor.ProcessData(studyRegEntry, common_repo);
+				}
+
+				if (n % 10 == 0) Console.WriteLine(n.ToString());
+			}
+
+			identity_processor.CreateMultNCTsTable(biolincc_repo);
+			identity_processor.CreateMultHBLIsTable(biolincc_repo);
+		}
+
 
 		public void LoopThroughFiles()
 		{
@@ -49,7 +88,7 @@ namespace DataHarvester.biolincc
 					BioLinccRecord studyRegEntry = (BioLinccRecord)serializer.Deserialize(rdr);
 
                     // break up the file into relevant data classes
-                    Study s = processor.ProcessData(studyRegEntry, rec.download_datetime, common_repo);
+                    Study s = processor.ProcessData(studyRegEntry, rec.download_datetime, common_repo, biolincc_repo);
 
                     // store the data in the database			
                     processor.StoreData(common_repo, s);

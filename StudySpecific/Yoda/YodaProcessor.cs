@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Globalization;
 
 namespace DataHarvester.yoda
 {
@@ -174,17 +175,32 @@ namespace DataHarvester.yoda
 			}
 
 			// study topics
-			// create a list for all studies as maty be merged with pre-existing entries for the same study
-			// (if not already present)
-
 			if (!string.IsNullOrEmpty(st.compound_generic_name))
 			{
 				study_topics.Add(new StudyTopic(sid, 12, "chemical / agent", st.compound_generic_name, null, "Yoda"));
 			}
+
 			if (!string.IsNullOrEmpty(st.compound_product_name))
 			{
-				study_topics.Add(new StudyTopic(sid, 12, "chemical / agent", st.compound_product_name, null, "Yoda"));
+				string product_name = st.compound_product_name.Replace((char)174, (char)32).Trim();    // drop reg mark
+				// see if already exists
+				bool add_product = true;
+				foreach(StudyTopic t in study_topics)
+                {
+					if (product_name.ToLower() == t.topic_value.ToLower())
+                    {
+						add_product = false;
+						break;
+					}
+                }
+				if (add_product)
+				{
+					product_name = CultureInfo.CurrentCulture.TextInfo.ToTitleCase(product_name.ToLower());
+					study_topics.Add(new StudyTopic(sid, 12, "chemical / agent", product_name, null, "Yoda"));
+				}
 			}
+
+
 			if (!string.IsNullOrEmpty(st.conditions_studied))
 			{
 				study_topics.Add(new StudyTopic(sid, 13, "condition", st.conditions_studied, null, "Yoda"));
