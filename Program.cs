@@ -1,17 +1,20 @@
 ﻿using System;
 using static System.Console;
+using System.Text.RegularExpressions;
 using DataHarvester.biolincc;
 using DataHarvester.yoda;
-using System.Text.RegularExpressions;
+using DataHarvester.euctr;
+using DataHarvester.isrctn;
+using System.Threading.Tasks;
 
 namespace DataHarvester
 {
 	class Program
 	{
-		static void Main(string[] args)
+		static async Task Main(string[] args)
 		{
 			// Identify source folder, destination database, harvest type and 
-			// any cutoff date from the areguments provided.
+			// any cutoff date from the arguments provided.
 
 			if (NoArgsProvided(args)) return;
 			int source_id = GetFirstArg(args[0]);
@@ -68,10 +71,14 @@ namespace DataHarvester
 					}
 				case 100123:
 					{
+						EUCTRController c = new EUCTRController(source.id, repo, logging_repo);
+						await c.LoopThroughFilesAsync();
 						break;
 					}
 				case 100126:
 					{
+						ISRCTNController c = new ISRCTNController(source.id, repo, logging_repo);
+						await c.LoopThroughFilesAsync();
 						break;
 					}
 				case 100115:

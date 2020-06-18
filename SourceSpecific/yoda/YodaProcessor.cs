@@ -6,13 +6,13 @@ namespace DataHarvester.yoda
 {
     public class YodaProcessor
 	{
-		HtmlHelperFunctions hhp;
-		HelperFunctions hf;
+		HtmlHelpers hhp;
+		HashHelpers hf;
 
 		public YodaProcessor()
 		{
-			hhp = new HtmlHelperFunctions();
-			hf = new HelperFunctions();
+			hhp = new HtmlHelpers();
+			hf = new HashHelpers();
 		}
 
 
@@ -33,7 +33,6 @@ namespace DataHarvester.yoda
 			List<DataObject> data_objects = new List<DataObject>();
 			List<DataSetProperties> dataset_properties = new List<DataSetProperties>();
 			List<DataObjectTitle> data_object_titles = new List<DataObjectTitle>();
-			List<DataObjectDate> data_object_dates = new List<DataObjectDate>();
 			List<DataObjectInstance> data_object_instances = new List<DataObjectInstance>();
 
 			string access_details = "The YODA Project will require that requestors provide basic information about the Principal Investigator, Key Personnel, and the ";
@@ -182,7 +181,8 @@ namespace DataHarvester.yoda
 
 			if (!string.IsNullOrEmpty(st.compound_product_name))
 			{
-				string product_name = st.compound_product_name.Replace((char)174, (char)32).Trim();    // drop reg mark
+				string product_name = st.compound_product_name.Replace(((char)174).ToString(), "");    // drop reg mark
+				product_name = product_name.Replace("   ", " ").Replace("  ", " ").Trim();
 				// see if already exists
 				bool add_product = true;
 				foreach(StudyTopic t in study_topics)

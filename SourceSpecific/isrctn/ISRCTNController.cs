@@ -4,20 +4,19 @@ using System.IO;
 using System.Threading.Tasks;
 using System.Xml.Serialization;
 
-namespace DataHarvester.euctr
+namespace DataHarvester.isrctn
 {
-	class EUCTRController
+	class ISRCTNController
 	{
-
 		DataLayer common_repo;
 		LoggingDataLayer logging_repo;
-		EUCTRProcessor processor;
+		ISRCTNProcessor processor;
 		int source_id;
 
-		public EUCTRController(int _source_id, DataLayer _common_repo, LoggingDataLayer _logging_repo)
+		public ISRCTNController(int _source_id, DataLayer _common_repo, LoggingDataLayer _logging_repo)
 		{
 			source_id = _source_id;
-			processor = new EUCTRProcessor();
+			processor = new ISRCTNProcessor();
 			common_repo = _common_repo;
 			logging_repo = _logging_repo;
 		}
@@ -41,7 +40,7 @@ namespace DataHarvester.euctr
 			{
 				n++;
 				// for testing...
-				//if (f == 500) break;
+				//if (n == 100) break;
 
 				filePath = rec.local_path;
 				if (File.Exists(filePath))
@@ -52,23 +51,18 @@ namespace DataHarvester.euctr
 						inputString += streamReader.ReadToEnd();
 					}
 
-					XmlSerializer serializer = new XmlSerializer(typeof(EUCTR_Record));
+					XmlSerializer serializer = new XmlSerializer(typeof(ISCTRN_Record));
 					StringReader rdr = new StringReader(inputString);
-					EUCTR_Record studyRegEntry = (EUCTR_Record)serializer.Deserialize(rdr);
+					ISCTRN_Record studyRegEntry = (ISCTRN_Record)serializer.Deserialize(rdr);
 
 					// break up the file into relevant data classes
 					Study s = await processor.ProcessDataAsync(studyRegEntry, rec.download_datetime, common_repo);
 
-					// check and store data object links - just pdfs for now
-					// (commented out for the moment to save time during extraction).
-					//await checker.CheckURLsAsync(s.object_instances);
-
 					// store the data in the database
 					processor.StoreData(common_repo, s); 
-
 				}
 
-				if (n % 100 == 0) Console.WriteLine(n.ToString());
+				if (n % 10 == 0) Console.WriteLine(n.ToString());
 			}
 		}
 	}

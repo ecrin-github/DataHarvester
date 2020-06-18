@@ -93,6 +93,7 @@ namespace DataHarvester
 				.MapVarchar("sd_oid", x => x.sd_oid)
 				.MapVarchar("sd_sid", x => x.sd_sid)
 				.MapVarchar("display_title", x => x.display_name)
+			    .MapVarchar("doi", x => x.doi)
 				.MapInteger("doi_status_id", x => x.doi_status_id)
 				.MapInteger("publication_year ", x => x.publication_year)
 				.MapInteger("object_class_id", x => x.object_class_id)

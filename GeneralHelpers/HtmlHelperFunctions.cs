@@ -9,7 +9,7 @@ using System.Text.Json;
 
 namespace DataHarvester
 {
-	public class HtmlHelperFunctions
+	public class HtmlHelpers
 	{
 		public string replace_tags(string input_string)
 		{

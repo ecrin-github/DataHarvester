@@ -6,13 +6,13 @@ namespace DataHarvester.biolincc
 {
 	public class BioLinccProcessor
 	{
-		HtmlHelperFunctions hhp;
-		HelperFunctions hf;
+		HtmlHelpers hhp;
+		HashHelpers hf;
 
 		public BioLinccProcessor()
 		{
-			hhp = new HtmlHelperFunctions();
-			hf = new HelperFunctions();
+			hhp = new HtmlHelpers();
+			hf = new HashHelpers();
 		}
 
 

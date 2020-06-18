@@ -9,7 +9,7 @@ using System.Text.Json;
 
 namespace DataHarvester
 {
-	public class HelperFunctions
+	public class HashHelpers
 	{
 		
 		public string CreateMD5(string input)
