@@ -53,6 +53,7 @@ namespace DataHarvester
 			datetime_of_data_fetch = _datetime_of_data_fetch;
 		}
 
+
 		public DataObject(string _sd_oid, string _sd_sid, string _display_name, int? _publication_year, int _object_class_id,
 							string _object_class, int _object_type_id, string _object_type,
 							int? _managing_org_id, string _managing_org,
@@ -114,6 +115,37 @@ namespace DataHarvester
 			consents_type = _consents_type;
 			consents_details = _consents_details;
 		}
+	}
+
+	public class CitationObject
+	{
+		public int sd_id { get; set; }
+		public int? sd_id_version { get; set; }
+		public string display_title { get; set; }
+		public string doi { get; set; }
+		public string status { get; set; }
+		public string pub_model { get; set; }
+		public int? publication_year { get; set; }
+		public string publication_status { get; set; }
+		public string journal_title { get; set; }
+		public string pissn { get; set; }
+		public string eissn { get; set; }
+		public DateTime? datetime_of_data_fetch { get; set; }
+
+		public List<string> languages { get; set; }
+		public List<DataObjectTitle> object_titles { get; set; }
+		public List<DataObjectDescription> object_descriptions { get; set; }
+		public List<DataObjectLanguage> object_languages { get; set; }
+		public List<ObjectContributor> object_contributors { get; set; }
+		//public List<Person_Identifier> contrib_identifiers { get; set; }
+		//public List<Person_Affiliation> contrib_affiliations { get; set; }
+		public List<DataObjectInstance> object_instances { get; set; }
+		public List<DB_Accession_Number> accession_numbers { get; set; }
+		public List<ObjectTopic> object_topics { get; set; }
+		public List<DataObjectIdentifier> object_identifiers { get; set; }
+		public List<DataObjectDate> object_dates { get; set; }
+		public List<Publication_Type> publication_types { get; set; }
+		public List<DataObjectCommentCorrection> comments { get; set; }
 	}
 
 
@@ -277,6 +309,83 @@ namespace DataHarvester
 			end_day = _end_day;
 			details = _details;
 		}
+
+
+		public class DataObjectPublication_Type
+		{
+			public int sd_id { get; set; }
+			public string type_name { get; set; }
+			public DataObjectPublication_Type(int _sd_id, string _type_name)
+			{
+				sd_id = _sd_id;
+				type_name = _type_name;
+			}
+		}
+
+
+		// (Object) Comment Correction class, a Data Object component
+
+		public class DataObjectCommentCorrection
+		{
+			public int sd_id { get; set; }
+			public string ref_type { get; set; }
+			public string ref_source { get; set; }
+			public string pmid { get; set; }
+			public string pmid_version { get; set; }
+			public string note { get; set; }
+		}
+
+
+		[Table("sd.object_topics")]
+		public class Topic
+		{
+			public int sd_id { get; set; }
+			public string topic { get; set; }
+			public int topic_type_id { get; set; }
+			public string topic_type { get; set; }
+			public int? ct_scheme_id { get; set; }
+			public string ct_scheme { get; set; }
+			public string ct_scheme_code { get; set; }
+			public string where_found { get; set; }
+
+		}
+
+
+		// The Object language class, essentkially just
+		// a string language code attached to the source data Id
+
+		public class DataObjectLanguage
+		{
+			public int sd_id { get; set; }
+			public string lang_code { get; set; }
+			public DataObjectLanguage(int _sd_id, string _lang_code)
+			{
+				sd_id = _sd_id;
+				lang_code = _lang_code;
+			}
+		}
+
+		// The class used to store data in the Data_objects table -
+		// essentially the Data Object without its repeating components.
+
+		[Table("sd.Data_objects")]
+		public class DataObject_in_DB
+		{
+			[ExplicitKey]
+			public int sd_id { get; set; }
+			public int? sd_id_version { get; set; }
+			public string display_title { get; set; }
+			public string doi { get; set; }
+			public string status { get; set; }
+			public string pub_model { get; set; }
+			public int? publication_year { get; set; }
+			public string publication_status { get; set; }
+			public string journal_title { get; set; }
+			public string pissn { get; set; }
+			public string eissn { get; set; }
+			public DateTime? datetime_of_data_fetch { get; set; }
+		}
+
 	}
 
 

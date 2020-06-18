@@ -2,10 +2,13 @@
 using static System.Console;
 using System.Text.RegularExpressions;
 using DataHarvester.biolincc;
+using System.Threading.Tasks;
 using DataHarvester.yoda;
 using DataHarvester.euctr;
 using DataHarvester.isrctn;
-using System.Threading.Tasks;
+using DataHarvester.ctg;
+using DataHarvester.pubmed;
+using DataHarvester.who;
 
 namespace DataHarvester
 {
@@ -54,40 +57,46 @@ namespace DataHarvester
 			{
 				case 101900:
 					{
-						BioLinccController c = new BioLinccController(source.id, repo, logging_repo);
+						BioLinccController c = new BioLinccController(source, repo, logging_repo);
 						c.GetInitialIDData();
 						c.LoopThroughFiles();
 						break;
 					}
 				case 101901:
 					{
-						YodaController c = new YodaController(source.id, repo, logging_repo);
+						YodaController c = new YodaController(source, repo, logging_repo);
 						c.LoopThroughFiles();
 						break;
 					}
 				case 100120:
 					{
+						CTGController c = new CTGController(source, repo, logging_repo);
+						await c.LoopThroughFilesAsync();
 						break;
 					}
 				case 100123:
 					{
-						EUCTRController c = new EUCTRController(source.id, repo, logging_repo);
+						EUCTRController c = new EUCTRController(source, repo, logging_repo);
 						await c.LoopThroughFilesAsync();
 						break;
 					}
 				case 100126:
 					{
-						ISRCTNController c = new ISRCTNController(source.id, repo, logging_repo);
+						ISRCTNController c = new ISRCTNController(source, repo, logging_repo);
 						await c.LoopThroughFilesAsync();
 						break;
 					}
 				case 100115:
 					{
+						WHOController c = new WHOController(source, repo, logging_repo);
+						await c.LoopThroughFilesAsync();
 						break;
 					}
 				case 100135:
 					{
-						break;
+						PubmedController c = new PubmedController(source, repo, logging_repo);
+						await c.LoopThroughFilesAsync();
+						break;;
 					}
 			}
 

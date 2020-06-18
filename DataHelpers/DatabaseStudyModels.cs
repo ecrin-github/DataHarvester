@@ -43,6 +43,7 @@ namespace DataHarvester
 		public List<StudyFeature> features { get; set; }
 		public List<StudyRelationship> relationships { get; set; }
 		public List<StudyLink> studylinks { get; set; }
+		public List<AvailableIPD> ipd_info { get; set; }
 
 		public List<DataObject> data_objects { get; set; }
 		public List<DataSetProperties> dataset_properties { get; set; }
@@ -343,7 +344,42 @@ namespace DataHarvester
 
 
 
+	public class AvailableIPD
+	{
+		public string sd_id { get; set; }
+		public string ipd_id { get; set; }
+		public string ipd_type { get; set; }
+		public string ipd_url { get; set; }
+		public string ipd_comment { get; set; }
+
+		public AvailableIPD(string _sd_id, string _ipd_id, string _ipd_type,
+								string _ipd_url, string _ipd_comment)
+		{
+			sd_id = _sd_id;
+			ipd_id = _ipd_id;
+			ipd_type = _ipd_type;
+			ipd_url = _ipd_url;
+			ipd_comment = _ipd_comment;
+		}
+	}
 
 
+	// Used during the extraction process, to log any odd or error condition.
+	// The data are transfered directly to the database as required using Dapper.
+
+	[Table("pp.extraction_notes")]
+	public class ExtractionNote
+	{
+		public int id { get; set; }
+		public int? sd_id { get; set; }
+		public int note_type { get; set; }
+		public string note { get; set; }
+		public ExtractionNote(int? _sd_id, int _note_type, string _note)
+		{
+			sd_id = _sd_id;
+			note_type = _note_type;
+			note = _note;
+		}
+	}
 
 }

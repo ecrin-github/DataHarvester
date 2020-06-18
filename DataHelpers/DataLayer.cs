@@ -140,6 +140,21 @@ namespace DataHarvester
 			}
 		}
 
+		public ulong StoreStudyIpdInfo(PostgreSQLCopyHelper<AvailableIPD> copyHelper, IEnumerable<AvailableIPD> entities)
+		{
+			using (var conn = new NpgsqlConnection(connString))
+			{
+				conn.Open();
+				return copyHelper.SaveAll(conn, entities);
+			}
+		}
+
+
+
+
+
+
+
 		public ulong StoreDataObjects(PostgreSQLCopyHelper<DataObject> copyHelper, IEnumerable<DataObject> entities)
 		{
 			using (var conn = new NpgsqlConnection(connString))
@@ -191,6 +206,21 @@ namespace DataHarvester
 				return copyHelper.SaveAll(conn, entities);
 			}
 		}
+
+
+
+		// Stores an 'extraction note', e.g. an unusual occurence found and
+		// logged during the extraction, in the associated table.
+
+		public void StoreExtractionNote(int? pmid, int note_type, string note)
+		{
+			ExtractionNote en = new ExtractionNote(pmid, note_type, note);
+			using (var conn = new NpgsqlConnection(connString))
+			{
+				conn.Insert<ExtractionNote>(en);
+			}
+		}
+
 
 	}
 }

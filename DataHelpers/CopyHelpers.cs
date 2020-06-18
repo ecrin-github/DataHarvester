@@ -5,7 +5,7 @@ using PostgreSQLCopyHelper;
 
 namespace DataHarvester
 {
-	public static class CopyHelpers
+	public static class StudyCopyHelpers
 	{
 		public static PostgreSQLCopyHelper<StudyIdentifier> study_ids_helper =
 			new PostgreSQLCopyHelper<StudyIdentifier>("sd", "study_identifiers")
@@ -54,7 +54,7 @@ namespace DataHarvester
 				.MapVarchar("identifier_type", x => x.identifier_type)
 				.MapVarchar("person_affiliation", x => x.person_affiliation)
 				.MapVarchar("affil_org_id", x => x.affil_org_id)
-		    	.MapVarchar("affil_org_id_type", x => x.affil_org_id_type);
+				.MapVarchar("affil_org_id_type", x => x.affil_org_id_type);
 
 
 		public static PostgreSQLCopyHelper<StudyRelationship> study_relationship_helper =
@@ -71,6 +71,7 @@ namespace DataHarvester
 				.MapVarchar("link_label", x => x.link_label)
 				.MapVarchar("link_url", x => x.link_url);
 
+
 		public static PostgreSQLCopyHelper<StudyFeature> study_features_helper =
 			new PostgreSQLCopyHelper<StudyFeature>("sd", "study_features")
 				.MapVarchar("sd_sid", x => x.sd_sid)
@@ -78,6 +79,7 @@ namespace DataHarvester
 				.MapVarchar("feature_type", x => x.feature_type)
 				.MapInteger("feature_value_id", x => x.feature_value_id)
 				.MapVarchar("feature_value", x => x.feature_value);
+
 
 		public static PostgreSQLCopyHelper<StudyReference> study_references_helper =
 			new PostgreSQLCopyHelper<StudyReference>("sd", "study_references")
@@ -88,6 +90,19 @@ namespace DataHarvester
 				.MapVarchar("comments", x => x.comments);
 
 
+		public static PostgreSQLCopyHelper<AvailableIPD> study_ipd_copyhelper =
+			new PostgreSQLCopyHelper<AvailableIPD>("sd", "study_ipd_available")
+				.MapVarchar("sd_id", x => x.sd_id)
+				.MapVarchar("ipd_id", x => x.ipd_id)
+				.MapVarchar("ipd_type", x => x.ipd_type)
+				.MapVarchar("ipd_url", x => x.ipd_url)
+				.MapVarchar("ipd_comment", x => x.ipd_comment);
+
+	}
+
+
+	public static class ObjectCopyHelpers
+	{
 		public static PostgreSQLCopyHelper<DataObject> data_objects_helper =
 			new PostgreSQLCopyHelper<DataObject>("sd", "data_objects")
 				.MapVarchar("sd_oid", x => x.sd_oid)
@@ -156,5 +171,101 @@ namespace DataHarvester
 				.MapInteger("start_month", x => x.start_month)
 				.MapInteger("start_day", x => x.start_day)
 				.MapVarchar("date_as_string", x => x.date_as_string);
+
+
+		public static PostgreSQLCopyHelper<ObjectContributor> contributor_copyhelper =
+			new PostgreSQLCopyHelper<ObjectContributor>("sd", "object_contributors")
+				.MapInteger("sd_id", x => x.sd_id)
+				.MapInteger("person_id", x => x.person_id)
+				.MapInteger("contributor_type_id", x => x.contributor_type_id)
+				.MapVarchar("contributor_type", x => x.contributor_type)
+				.MapVarchar("family_name", x => x.family_name)
+				.MapVarchar("given_name", x => x.given_name)
+				.MapVarchar("suffix", x => x.suffix)
+				.MapVarchar("initials", x => x.initials)
+				.MapVarchar("collective_name", x => x.collective_name);
+
+		/*
+		public PostgreSQLCopyHelper<Person_Identifier> persid_copyhelper =
+			new PostgreSQLCopyHelper<Person_Identifier>("sd", "people_identifiers")
+				.MapInteger("sd_id", x => x.sd_id)
+				.MapInteger("person_id", x => x.person_id)
+				.MapVarchar("identifier", x => x.identifier)
+				.MapVarchar("identifier_source", x => x.identifier_source);
+
+
+		public PostgreSQLCopyHelper<Person_Affiliation> persaff_copyhelper =
+			new PostgreSQLCopyHelper<Person_Affiliation>("sd", "people_affiliations")
+				.MapInteger("sd_id", x => x.sd_id)
+				.MapInteger("person_id", x => x.person_id)
+				.MapVarchar("affiliation", x => x.affiliation)
+				.MapVarchar("affil_identifier", x => x.affil_identifier)
+				.MapVarchar("affil_ident_source", x => x.affil_ident_source);
+		*/
+
+
+		public static PostgreSQLCopyHelper<DataObjectIdentifier> identifier_copyhelper =
+			new PostgreSQLCopyHelper<DataObjectIdentifier>("sd", "object_identifiers")
+				.MapInteger("sd_id", x => x.sd_id)
+				.MapInteger("identifier_type_id", x => x.identifier_type_id)
+				.MapVarchar("identifier_type", x => x.identifier_type)
+				.MapVarchar("identifier_value", x => x.identifier_value)
+				.MapInteger("identifier_org_id", x => x.identifier_org_id)
+				.MapVarchar("identifier_org", x => x.identifier_org)
+				.MapVarchar("date_applied", x => x.date_applied);
+
+
+		public static PostgreSQLCopyHelper<DataObjectDescription> description_copyhelper =
+			new PostgreSQLCopyHelper<DataObjectDescription>("sd", "object_descriptions")
+				.MapInteger("sd_id", x => x.sd_id)
+				.MapInteger("description_type_id", x => x.description_type_id)
+				.MapVarchar("description_type", x => x.description_type)
+				.MapVarchar("label", x => x.label)
+				.MapVarchar("description_text", x => x.description_text)
+				.MapVarchar("lang_code", x => x.lang_code)
+				.MapBoolean("contains_html", x => x.contains_html);
+
+
+		public static PostgreSQLCopyHelper<DB_Accession_Number> db_acc_number_copyhelper =
+			new PostgreSQLCopyHelper<DB_Accession_Number>("sd", "object_links")
+				.MapInteger("sd_id", x => x.sd_id)
+				.MapInteger("bank_id", x => x.bank_id)
+				.MapVarchar("bank_name", x => x.bank_name)
+				.MapVarchar("accession_number", x => x.accession_number);
+
+
+		public static PostgreSQLCopyHelper<DataObjectPublication_Type> pub_type_copyhelper =
+			new PostgreSQLCopyHelper<DataObjectPublication_Type>("sd", "object_public_types")
+				.MapInteger("sd_id", x => x.sd_id)
+				.MapVarchar("type_name", x => x.type_name);
+
+
+		public static PostgreSQLCopyHelper<DataObjectCommentCorrection> comment_correction_copyhelper =
+			new PostgreSQLCopyHelper<DataObjectCommentCorrection>("sd", "object_corrections")
+				.MapInteger("sd_id", x => x.sd_id)
+				.MapVarchar("ref_type", x => x.ref_type)
+				.MapVarchar("ref_source", x => x.ref_source)
+				.MapVarchar("pmid", x => x.pmid)
+				.MapVarchar("pmid_version", x => x.pmid_version)
+				.MapVarchar("note", x => x.note);
+
+
+		public static PostgreSQLCopyHelper<ObjectTopic> keyword_copyhelper =
+			new PostgreSQLCopyHelper<ObjectTopic>("sd", "object_topics")
+				.MapInteger("sd_id", x => x.sd_id)
+				.MapVarchar("topic", x => x.topic)
+				.MapInteger("topic_type_id", x => x.topic_type_id)
+				.MapVarchar("topic_type", x => x.topic_type)
+				.MapInteger("ct_scheme_id", x => x.ct_scheme_id)
+				.MapVarchar("ct_scheme", x => x.ct_scheme)
+				.MapVarchar("ct_scheme_code", x => x.ct_scheme_code)
+				.MapVarchar("where_found", x => x.where_found);
+
+
+		public static PostgreSQLCopyHelper<ObjectLanguage> object_language_copyhelper =
+			new PostgreSQLCopyHelper<ObjectLanguage>("sd", "object_languages")
+				.MapInteger("sd_id", x => x.sd_id)
+				.MapVarchar("lang_code", x => x.lang_code);
+
 	}
 }

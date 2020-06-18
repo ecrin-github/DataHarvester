@@ -1,27 +1,26 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Threading.Tasks;
 using System.Xml.Serialization;
 
-namespace DataHarvester.biolincc
+namespace DataHarvester.who
 {
-    public class BioLinccController
+    public class WHOController
 	{
 		DataLayer common_repo;
 		LoggingDataLayer logging_repo;
-		BioLinccDataLayer biolincc_repo;
-		BioLinccProcessor processor;
-		BioLinccIdentifierProcessor identity_processor;
+		WHODataLayer biolincc_repo;
+		WHOProcessor processor;
 		Source source;
 
-		public BioLinccController(Source _source, DataLayer _common_repo, LoggingDataLayer _logging_repo)
+		public WHOController(Source _source, DataLayer _common_repo, LoggingDataLayer _logging_repo)
 		{
 			source = _source;
-			processor = new BioLinccProcessor();
-			identity_processor = new BioLinccIdentifierProcessor();
+			processor = new WHOProcessor();
 			common_repo = _common_repo;
 			logging_repo = _logging_repo;
-			biolincc_repo = new BioLinccDataLayer();
+			biolincc_repo = new WHODataLayer();
 		}
 
 		public void GetInitialIDData()
@@ -45,21 +44,18 @@ namespace DataHarvester.biolincc
 						inputString += streamReader.ReadToEnd();
 					}
 
-					XmlSerializer serializer = new XmlSerializer(typeof(BioLinccRecord));
+					XmlSerializer serializer = new XmlSerializer(typeof(WHORecord));
 					StringReader rdr = new StringReader(inputString);
-					BioLinccRecord studyRegEntry = (BioLinccRecord)serializer.Deserialize(rdr);
-					identity_processor.ProcessData(studyRegEntry, common_repo);
+					WHORecord studyRegEntry = (WHORecord)serializer.Deserialize(rdr);
 				}
 
 				if (n % 10 == 0) Console.WriteLine(n.ToString());
 			}
 
-			identity_processor.CreateMultNCTsTable(biolincc_repo);
-			identity_processor.CreateMultHBLIsTable(biolincc_repo);
 		}
 
 
-		public void LoopThroughFiles()
+		async public Task LoopThroughFilesAsync()
 		{
 			// Construct a list of the files 
 			// Rather than using a file base, it is possible
@@ -83,9 +79,9 @@ namespace DataHarvester.biolincc
 						inputString += streamReader.ReadToEnd();
 					}
 
-                    XmlSerializer serializer = new XmlSerializer(typeof(BioLinccRecord));
+                    XmlSerializer serializer = new XmlSerializer(typeof(WHORecord));
                     StringReader rdr = new StringReader(inputString);
-					BioLinccRecord studyRegEntry = (BioLinccRecord)serializer.Deserialize(rdr);
+					WHORecord studyRegEntry = (WHORecord)serializer.Deserialize(rdr);
 
                     // break up the file into relevant data classes
                     Study s = processor.ProcessData(studyRegEntry, rec.download_datetime, common_repo, biolincc_repo);

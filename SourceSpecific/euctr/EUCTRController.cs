@@ -12,11 +12,11 @@ namespace DataHarvester.euctr
 		DataLayer common_repo;
 		LoggingDataLayer logging_repo;
 		EUCTRProcessor processor;
-		int source_id;
+		Source source;
 
-		public EUCTRController(int _source_id, DataLayer _common_repo, LoggingDataLayer _logging_repo)
+		public EUCTRController(Source _source, DataLayer _common_repo, LoggingDataLayer _logging_repo)
 		{
-			source_id = _source_id;
+			source = _source;
 			processor = new EUCTRProcessor();
 			common_repo = _common_repo;
 			logging_repo = _logging_repo;
@@ -26,16 +26,12 @@ namespace DataHarvester.euctr
 		{
 			URLChecker checker = new URLChecker();
 
-			// Get the folder base from the appsettings file
-			// and construct a list of the files 
-			// N.B. (only one folder for all files) 
-
-			// Construct a list of the files 
+     		// Construct a list of the files 
 			// Rather than using a file base, it is possible
 			// to use the sf records to get a list of files
 			// and local paths...
 
-			IEnumerable<FileRecord> file_list = logging_repo.FetchStudyFileRecords(source_id);
+			IEnumerable<FileRecord> file_list = logging_repo.FetchStudyFileRecords(source.id);
 			int n = 0; string filePath = "";
 			foreach (FileRecord rec in file_list)
 			{

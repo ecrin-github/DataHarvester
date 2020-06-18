@@ -10,11 +10,11 @@ namespace DataHarvester.yoda
 		DataLayer common_repo;
 		LoggingDataLayer logging_repo;
 		YodaProcessor processor;
-		int source_id;
+		Source source;
 
-		public YodaController(int _source_id, DataLayer _common_repo, LoggingDataLayer _logging_repo)
+		public YodaController(Source _source, DataLayer _common_repo, LoggingDataLayer _logging_repo)
 		{
-			source_id = _source_id;
+			source = _source;
 			processor = new YodaProcessor();
 			common_repo = _common_repo;
 			logging_repo = _logging_repo;
@@ -26,7 +26,7 @@ namespace DataHarvester.yoda
 			// to use the sf records to get a list of files
 			// and local paths...
 
-			IEnumerable<FileRecord> file_list = logging_repo.FetchStudyFileRecords(source_id);
+			IEnumerable<FileRecord> file_list = logging_repo.FetchStudyFileRecords(source.id);
 			int n = 0; string filePath = "";
 			foreach (FileRecord rec in file_list)
 			{
