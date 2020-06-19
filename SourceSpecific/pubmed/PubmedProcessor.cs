@@ -547,7 +547,7 @@ namespace DataHarvester.pubmed
                     // split any range.
 
                     string date_string = pub_date.Element("MedlineDate").Value;
-                    publication_date = ProcessMedlineDate(sd_oid, date_string, 12, "Available");
+                    publication_date = DateHelpers.ProcessMedlineDate(sd_oid, date_string, 12, "Available");
                 }
                 else
                 {
@@ -555,7 +555,7 @@ namespace DataHarvester.pubmed
                     // ProcessDate is a helper function that splits the date components, 
                     //  identifies partial dates, and creates the date as a string.
 
-                    publication_date = ProcessDate(c.sd_oid, pub_date, 12, "Available");
+                    publication_date = DateHelpers.ProcessDate(c.sd_oid, pub_date, 12, "Available");
                 }
                 dates.Add(publication_date);
                 c.publication_year = publication_date.start_year;
@@ -567,19 +567,19 @@ namespace DataHarvester.pubmed
             var date_citation_created = citation.Element("DateCreated");
             if (date_citation_created != null)
             {
-                dates.Add(ProcessDate(sd_oid, date_citation_created, 52, "Pubmed citation created"));
+                dates.Add(DateHelpers.ProcessDate(sd_oid, date_citation_created, 52, "Pubmed citation created"));
             }
 
             var date_citation_revised = citation.Element("DateRevised");
             if (date_citation_revised != null)
             {
-                dates.Add(ProcessDate(sd_oid, date_citation_revised, 53, "Pubmed citation revised"));
+                dates.Add(DateHelpers.ProcessDate(sd_oid, date_citation_revised, 53, "Pubmed citation revised"));
             }
 
             var date_citation_completed = citation.Element("DateCompleted");
             if (date_citation_completed != null)
             {
-                dates.Add(ProcessDate(sd_oid, date_citation_completed, 54, "Pubmed citation completed"));
+                dates.Add(DateHelpers.ProcessDate(sd_oid, date_citation_completed, 54, "Pubmed citation completed"));
             }
 
 
@@ -600,7 +600,7 @@ namespace DataHarvester.pubmed
                         if (date_type.ToLower() == "electronic")
                         {
                             // = epublish, type id 55
-                            ObjectDate electronic_date = ProcessDate(sd_oid, e, 55, "Epublish");
+                            ObjectDate electronic_date = DateHelpers.ProcessDate(sd_oid, e, 55, "Epublish");
                             dates.Add(electronic_date);
                             electronic_date_string = electronic_date.date_as_string;
                         }
@@ -645,7 +645,7 @@ namespace DataHarvester.pubmed
                                         int? year = GetElementAsInt(e.Element("Year"));
                                         int? month = GetElementAsInt(e.Element("Month"));
                                         int? day = GetElementAsInt(e.Element("Day"));
-                                        if (DateNotPresent(dates, 55, year, month, day))
+                                        if (IdentifierHelpers.DateNotPresent(dates, 55, year, month, day))
                                         {
                                             date_type = 55;
                                             date_type_name = "Epublish";
@@ -673,7 +673,7 @@ namespace DataHarvester.pubmed
 
                             if (date_type != 0)
                             {
-                                dates.Add(ProcessDate(sd_oid, e, date_type, date_type_name));
+                                dates.Add(DateHelpers.ProcessDate(sd_oid, e, date_type, date_type_name));
                             }
                         }
                     }
@@ -980,7 +980,7 @@ namespace DataHarvester.pubmed
                                     }
                                 case "pii":
                                     {
-                                        if (IdNotPresent(ids, 34, other_id))
+                                        if (IdentifierHelpers.IdNotPresent(ids, 34, other_id))
                                         {
                                             ids.Add(new ObjectIdentifier(sd_oid, 34, "Publisher article ID", other_id, null, null));
                                         }
@@ -997,7 +997,7 @@ namespace DataHarvester.pubmed
 
                                 case "pubmed":
                                     {
-                                        if (IdNotPresent(ids, 16, other_id))
+                                        if (IdentifierHelpers.IdNotPresent(ids, 16, other_id))
                                         {
                                             // should be present already! - if a different value log it a a query
                                             string qText = "Two different values for pmid found: record pmiod is " + sd_oid + ", but in article ids the value " + other_id + " is listed";
@@ -1008,7 +1008,7 @@ namespace DataHarvester.pubmed
                                     }
                                 case "mid":
                                     {
-                                        if (IdNotPresent(ids, 32, other_id))
+                                        if (IdentifierHelpers.IdNotPresent(ids, 32, other_id))
                                         {
                                             ids.Add(new ObjectIdentifier(sd_oid, 32, "NIH Manuscript ID", other_id, 100134, "National Institutes of Health"));
                                         }
@@ -1017,7 +1017,7 @@ namespace DataHarvester.pubmed
 
                                 case "pmc":
                                     {
-                                        if (IdNotPresent(ids, 31, other_id))
+                                        if (IdentifierHelpers.IdNotPresent(ids, 31, other_id))
                                         {
                                             ids.Add(new ObjectIdentifier(c.sd_oid, 31, "PMCID", other_id, 100133, "National Library of Medicine"));
                                             ObjectInstance objinst = new ObjectInstance
@@ -1039,7 +1039,7 @@ namespace DataHarvester.pubmed
 
                                 case "pmcid":
                                     {
-                                        if (IdNotPresent(ids, 31, other_id))
+                                        if (IdentifierHelpers.IdNotPresent(ids, 31, other_id))
                                         {
                                             ids.Add(new ObjectIdentifier(c.sd_oid, 31, "PMCID", other_id, 100133, "National Library of Medicine"));
                                             ObjectInstance objinst = new ObjectInstance
@@ -1681,329 +1681,7 @@ namespace DataHarvester.pubmed
                 return false;
             }
         }
-
-
-        // ProcessDate takes the standard composite date element as an input, extracts the various constituent
-        // parts, and returns an ObjectDate classs, which also indicates if the date was partial, and which includes
-        // a standardised string repreesentation as well as Y, M, D integer components.
-
-        public ObjectDate ProcessDate(string sd_oid, XElement composite_date, int date_type_id, string date_type)
-        {
-            //composite_date should normnally have year, month and day entries but these may not all be present
-            int? year = GetElementAsInt(composite_date.Element("Year"));
-            int? day = GetElementAsInt(composite_date.Element("Day"));
-
-            // month may ne a number or a 3 letter month abbreviation
-            int? month = null;
-            string monthas3 = GetElementAsString(composite_date.Element("Month"));
-            if (monthas3 != null)
-            {
-                if (Int32.TryParse(monthas3, out int mn))
-                {
-                    // already an integer
-                    month = mn;
-                    // change the monthAs3 to the expected string
-                    monthas3 = ((Months3)mn).ToString();
-                }
-                else
-                {
-                    // derive month using the enumeration
-                    // monthAs3 stays the same
-                    month = GetMonthAsInt(monthas3);
-                }
-            }
-
-            string date_as_string = "";
-            if (year != null && month != null && day != null)
-            {
-                date_as_string = year.ToString() + " " + monthas3 + " " + day.ToString();
-            }
-            else
-            {
-                if (year != null && monthas3 != null && day == null)
-                {
-                    date_as_string = year.ToString() + ' ' + monthas3;
-                }
-                else if (year != null && monthas3 == null && day == null)
-                {
-                    date_as_string = year.ToString();
-                }
-                else
-                {
-                    date_as_string = null;
-                }
-            }
-
-            ObjectDate dt = new ObjectDate(sd_oid, date_type_id, date_type, year, month, day, date_as_string);
-            dt.date_is_range = false;
-
-            return dt;
-        }
-
-
-        // ProcessMedlineDate tries to extractr as much information as possible from 
-        // a non-standard 'Medline' date entry. 
-
-        public ObjectDate ProcessMedlineDate(string sd_oid, string date_string, int date_type_id, string date_type)
-        {
-
-            int? pub_year = null;
-            bool year_at_start = false, year_at_end = false;
-            date_string = date_string.Trim();
-            string orig_date_string = date_string;
-
-            // A 4 digit year is sought at either the beginning or end of the string.
-            // An end year is moved to the beginning.
-
-            if (date_string.Length == 4)
-            {
-                if (int.TryParse(date_string, out int pub_year_try))
-                {
-                    pub_year = pub_year_try;
-                }
-            }
-            else if (date_string.Length >= 4)
-            {
-                if (int.TryParse(date_string.Substring(0, 4), out int pub_year_stry))
-                {
-                    pub_year = pub_year_stry;
-                    year_at_start = true;
-                }
-                if (int.TryParse(date_string.Substring(date_string.Length - 4, 4), out int pub_year_etry))
-                {
-                    pub_year = pub_year_etry;
-                    year_at_end = true;
-                }
-                if (year_at_start && year_at_end && date_string.Length >= 4)
-                {
-                    // very occasionally happens - remove last year
-                    date_string = date_string.Substring(date_string.Length - 4, 4).Trim();
-                }
-                else if (!year_at_start && year_at_end)
-                {
-                    // very occasionally happens - switch year to beginning
-                    date_string = pub_year.ToString() + " " + date_string.Substring(date_string.Length - 4, 4).Trim();
-                }
-            }
-
-            // Create a 'default' date object, with as much as possible of the details to 
-            // be completed using the string parsing below, which tries to identify start and end single dates.
-
-            ObjectDate dt = new ObjectDate(sd_oid, date_type_id, date_type, orig_date_string, pub_year);
-
-            if (pub_year != null)
-            {
-                string non_year_date = date_string.Substring(4).Trim();
-                if (non_year_date.Length > 3)
-                {
-                    // try to regularise separators
-                    non_year_date = non_year_date.Replace(" - ", "-");
-                    non_year_date = non_year_date.Replace("/", "-");
-
-                    // replace seasonal references
-                    non_year_date = non_year_date.Replace("Spring", "Apr-Jun");
-                    non_year_date = non_year_date.Replace("Summer", "Jul-Sep");
-                    non_year_date = non_year_date.Replace("Autumn", "Oct-Dec");
-                    non_year_date = non_year_date.Replace("Fall", "Oct-Dec");
-                    non_year_date = non_year_date.Replace("Winter", "Jan-Mar");
-
-                    if (non_year_date[3] == ' ')
-                    {
-                        // May be a month followed by two dates, e.g. "Jun 12-21".
-
-                        string month_abbrev = non_year_date.Substring(0, 3);
-                        int? month = GetMonthAsInt(month_abbrev);
-                        if (month != null)
-                        {
-                            dt.start_year = pub_year;
-                            dt.end_year = pub_year;
-                            dt.start_month = month;
-                            dt.end_month = month;
-                            dt.date_is_range = true;
-
-                            string rest = non_year_date.Substring(3).Trim();
-
-                            if (rest.IndexOf("-") != -1)
-                            {
-                                int hyphen_pos = rest.IndexOf("-");
-                                string s_day = rest.Substring(0, hyphen_pos);
-                                string e_day = rest.Substring(hyphen_pos + 1);
-                                if (Int32.TryParse(s_day, out int s_day_int) && (Int32.TryParse(e_day, out int e_day_int)))
-                                {
-                                    if ((s_day_int > 0 && s_day_int < 32) && (e_day_int > 0 && e_day_int < 32))
-                                    {
-                                        dt.start_day = s_day_int;
-                                        dt.end_day = e_day_int;
-                                    }
-                                }
-                            }
-                        }
-
-                        dt.date_is_range = true;
-                    }
-
-                    if (non_year_date[3] == '-')
-                    {
-                        // May be two months separated by a hyphen, e.g."May-Jul".
-
-                        int hyphen_pos = non_year_date.IndexOf("-");
-                        string s_month = non_year_date.Substring(0, hyphen_pos).Trim();
-                        string e_month = non_year_date.Substring(hyphen_pos + 1).Trim();
-                        s_month = s_month.Substring(0, 3);  // just get first 3 characters
-                        e_month = e_month.Substring(0, 3);
-                        int? smonth = GetMonthAsInt(s_month);
-                        int? emonth = GetMonthAsInt(e_month);
-                        if (smonth != null && emonth != null)
-                        {
-                            dt.start_year = pub_year;
-                            dt.end_year = pub_year;
-                            dt.start_month = smonth;
-                            dt.end_month = emonth;
-                            dt.date_is_range = true;
-                        }
-                    }
-                }
-                else
-                {
-                    dt.end_year = dt.start_year;
-                    dt.date_is_range = true;
-                }
-            }
-
-            return dt;
-        }
-
-
-
-        enum Months3
-        {
-            Jan = 1, Feb, Mar, Apr, May, Jun,
-            Jul, Aug, Sep, Oct, Nov, Dec
-        };
-
-
-        public int? GetMonthAsInt(string monthas3)
-        {
-            int? monthNum = null;
-            switch (monthas3)
-            {
-                case "Jan": { monthNum = 1; break; }
-                case "Feb": { monthNum = 2; break; }
-                case "Mar": { monthNum = 3; break; }
-                case "Apr": { monthNum = 4; break; }
-                case "May": { monthNum = 5; break; }
-                case "Jun": { monthNum = 6; break; }
-                case "Jul": { monthNum = 7; break; }
-                case "Aug": { monthNum = 8; break; }
-                case "Sep": { monthNum = 9; break; }
-                case "Oct": { monthNum = 10; break; }
-                case "Nov": { monthNum = 11; break; }
-                case "Dec": { monthNum = 12; break; }
-            }
-            return monthNum;
-        }
-
-
-        // Two check routines that scan previously extracted Identifiers or Dates, to 
-        // indicate if the input Id / Date type has already beenm extracted.
-
-        public bool IdNotPresent(List<ObjectIdentifier> ids, int id_type, string id_value)
-        {
-            bool to_add = true;
-            if (ids.Count > 0)
-            {
-                foreach (ObjectIdentifier id in ids)
-                {
-                    if (id.identifier_type_id == id_type && id.identifier_value == id_value)
-                    {
-                        to_add = false;
-                        break;
-                    }
-                }
-            }
-            return to_add;
-        }
-
-        public bool DateNotPresent(List<ObjectDate> dates, int datetype_id, int? year, int? month, int? day)
-        {
-            bool to_add = true;
-            if (dates.Count > 0)
-            {
-                foreach (ObjectDate d in dates)
-                {
-                    if (d.date_type_id == datetype_id
-                        && d.start_year == year && d.start_month == month && d.start_day == day)
-                    {
-                        to_add = false;
-                        break;
-                    }
-                }
-            }
-            return to_add;
-        }
-
-        // Helper functions to tidy up names - not curretnly used.
-        // Usage may need to be added...Regularises organisation and people names for
-        // insertion and comparison withkin the database.
-
-        string TidyPunctuation(string in_name)
-        {
-            string name = in_name;
-            if (name != null)
-            {
-                if (name.Contains("."))
-                {
-                    // protect these exceptions to the remove full stop rule
-                    name = name.Replace(".com", "|com");
-                    name = name.Replace(".gov", "|gov");
-                    name = name.Replace(".org", "|org");
-
-                    name = name.Replace(".", "");
-
-                    name = name.Replace("|com", ".com");
-                    name = name.Replace("|gov", ".gov");
-                    name = name.Replace("|org", ".org");
-                }
-
-                // do this as a loop as there may be several apostrophes that
-                // need replacing to different types of quote
-                while (name.Contains("'"))
-                {
-                    name = ReplaceApos(name);
-                }
-            }
-            return name;
-        }
-
-        string ReplaceApos(string apos_name)
-        {
-            int apos_pos = apos_name.IndexOf("'");
-            int alen = apos_name.Length;
-            if (apos_pos != -1)
-            {
-                if (apos_pos == 0)
-                {
-                    apos_name = "‘" + apos_name.Substring(1);
-                }
-                else if (apos_pos == alen - 1)
-                {
-                    apos_name = apos_name.Substring(0, alen - 1) + "’";
-                }
-                {
-                    if (apos_name[apos_pos - 1] == ' ' || apos_name[apos_pos - 1] == '(')
-                    {
-                        apos_name = apos_name.Substring(0, apos_pos) + "‘" + apos_name.Substring(apos_pos + 1, alen - apos_pos - 1);
-
-                    }
-                    else
-                    {
-                        apos_name = apos_name.Substring(0, apos_pos) + "’" + apos_name.Substring(apos_pos + 1, alen - apos_pos - 1);
-                    }
-                }
-            }
-            return apos_name;
-        }
-
+       
         #endregion
     }
 }

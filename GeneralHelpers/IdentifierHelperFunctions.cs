@@ -6,6 +6,47 @@ namespace DataHarvester
 {
     public static class IdentifierHelpers
     {
+
+		// Two check routines that scan previously extracted Identifiers or Dates, to 
+		// indicate if the input Id / Date type has already beenm extracted.
+
+		public static bool IdNotPresent(List<ObjectIdentifier> ids, int id_type, string id_value)
+		{
+			bool to_add = true;
+			if (ids.Count > 0)
+			{
+				foreach (ObjectIdentifier id in ids)
+				{
+					if (id.identifier_type_id == id_type && id.identifier_value == id_value)
+					{
+						to_add = false;
+						break;
+					}
+				}
+			}
+			return to_add;
+		}
+
+		public static bool DateNotPresent(List<ObjectDate> dates, int datetype_id, int? year, int? month, int? day)
+		{
+			bool to_add = true;
+			if (dates.Count > 0)
+			{
+				foreach (ObjectDate d in dates)
+				{
+					if (d.date_type_id == datetype_id
+						&& d.start_year == year && d.start_month == month && d.start_day == day)
+					{
+						to_add = false;
+						break;
+					}
+				}
+			}
+			return to_add;
+		}
+
+				
+
 		// A helper function called from the loop that goes through the secondary Id data
 		// It tries to make the data as complete as possible, depending on the typem of 
 		// secondary id that is being processed
@@ -107,21 +148,21 @@ namespace DataHarvester
 
 				else if (id_org.Contains("isrctn"))
 				{
-					// japanese registry
+					// isrctn registry
 					id_org_id = 100126;
 					id_org = "ISRCTN";
 				}
 
 				else if (id_org.Contains("india") || id_org.Contains("ctri"))
 				{
-					// japanese registry
+					// indian registry
 					id_org_id = 100121;
 					id_org = "Clinical Trials Registry - India";
 				}
 
 				else if (id_org.Contains("eudract"))
 				{
-					// japanese registry
+					// EU CTR
 					id_org_id = 100123;
 					id_org = "EU Clinical Trials Register";
 				}
@@ -135,14 +176,14 @@ namespace DataHarvester
 
 				else if (id_org.Contains("nederlands") || id_org.Contains("dutch"))
 				{
-					// japanese registry
+					// Dutch registry
 					id_org_id = 100132;
 					id_org = "The Netherlands National Trial Register";
 				}
 
 				else if (id_org.Contains("ansm") || id_org.Contains("agence") || id_org.Contains("rcb"))
 				{
-					// french asnsm number=
+					// french asnsm number
 					id_org_id = 101408;
 					id_org = "Agence Nationale de Sécurité du Médicament";
 					id_type_id = 41;
@@ -203,7 +244,7 @@ namespace DataHarvester
 
 				if (id_org == "UTN")
 				{
-					// NCI CTRP programme
+					// WHO universal tril number
 					id_org_id = 100115;
 					id_org = "International Clinical Trials Registry Platform";
 					id_type_id = 11;
@@ -212,7 +253,7 @@ namespace DataHarvester
 
 				if (id_org.ToLower().Contains("ansm") || id_org.ToLower().Contains("rcb"))
 				{
-					// NCI CTRP programme
+					// French ANSM number
 					id_org_id = 101408;
 					id_org = "Agence Nationale de Sécurité du Médicament";
 					id_type_id = 41;

@@ -22,8 +22,6 @@ namespace DataHarvester.ctg
 
 		public async Task LoopThroughFilesAsync()
 		{
-			URLChecker checker = new URLChecker();
-
 			// Get the folder base from the appsettings file
 			// and construct a list of the folders of CGT XML files
 
@@ -62,7 +60,7 @@ namespace DataHarvester.ctg
 
 						// check and store data object links - just pdfs for now
 						// (commented out for the moment to save time during extraction).
-						await checker.CheckURLsAsync(s.object_instances);
+						await HtmlHelpers.CheckURLsAsync(s.object_instances);
 
 						// store the data in the database
 						processor.StoreData(common_repo, s);

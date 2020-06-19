@@ -703,8 +703,7 @@ namespace DataHarvester.euctr
 
 		}
 
-
-		
+			
 		public void StoreData(DataLayer repo, Study s)
 		{
 			// construct database study instance
@@ -795,56 +794,6 @@ namespace DataHarvester.euctr
 
 		}
 
-	}
-
-	
-	public class URLChecker
-	{
-		HttpClient Client = new HttpClient();
-		DateTime today = DateTime.Today;
-
-		public async Task CheckURLsAsync(List<ObjectInstance> web_resources)
-		{
-			foreach (ObjectInstance i in web_resources)
-			{
-				if (i.resource_type_id == 11)  // just do the study docs for now (pdfs)
-				{
-					string url_to_check = i.url;
-					if (url_to_check != null && url_to_check != "")
-					{
-                        HttpRequestMessage http_request = new HttpRequestMessage(HttpMethod.Head, url_to_check);
-                        var result = await Client.SendAsync(http_request);
-                        if ((int)result.StatusCode == 200)
-                        {
-                            i.url_last_checked = today;
-                        }
-                    }
-				}
-			}
-		}
-
-
-		public async Task<bool> CheckURLAsync(string url_to_check)
-		{
-			if (!string.IsNullOrEmpty(url_to_check))
-			{
-				try
-				{
-					HttpRequestMessage http_request = new HttpRequestMessage(HttpMethod.Head, url_to_check);
-					var result = await Client.SendAsync(http_request);
-					return ((int)result.StatusCode == 200);
-				}
-				catch (Exception e)
-				{
-					string message = e.Message;
-					return false;
-				}
-			}
-			else
-			{
-				return false;
-			}
-		}
 	}
 
 }

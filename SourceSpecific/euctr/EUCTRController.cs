@@ -24,8 +24,6 @@ namespace DataHarvester.euctr
 
 		public async Task LoopThroughFilesAsync()
 		{
-			URLChecker checker = new URLChecker();
-
      		// Construct a list of the files 
 			// Rather than using a file base, it is possible
 			// to use the sf records to get a list of files
@@ -57,7 +55,7 @@ namespace DataHarvester.euctr
 
 					// check and store data object links - just pdfs for now
 					// (commented out for the moment to save time during extraction).
-					await checker.CheckURLsAsync(s.object_instances);
+					await HtmlHelpers.CheckURLsAsync(s.object_instances);
 
 					// store the data in the database
 					processor.StoreData(common_repo, s); 

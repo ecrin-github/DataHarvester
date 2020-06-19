@@ -114,13 +114,13 @@ namespace DataHarvester.ctg
 				s.datetime_of_data_fetch = download_datetime;
 
 				s.study_status = FieldValue(status_items, "OverallStatus");
-				s.study_status_id = GetStatusId(s.study_status);
+				s.study_status_id = TypeHelpers.GetStatusId(s.study_status);
 				status_verified_date = FieldValue(status_items, "StatusVerifiedDate");
 
 				submissionDate = FieldValue(status_items, "StudyFirstSubmitDate");
 
 				// add the NCT identifier record - 100120 is the id of ClinicalTrials.gov
-				submissionDate = StandardiseDateFormat(submissionDate);
+				submissionDate = DateHelpers.StandardiseDateFormat(submissionDate);
 				identifiers.Add(new StudyIdentifier(sid, sid, 11, "Trial Registry ID", 100120,
 													"ClinicalTrials.gov", submissionDate, null));
 
@@ -154,10 +154,10 @@ namespace DataHarvester.ctg
 				s.display_title = (brief_title != null) ? brief_title : official_title;
 
 				// get the sponsor id information
-				string org = TidyPunctuation(StructFieldValue(id_items, "Organization", "OrgFullName"));
+				string org = StringHelpers.TidyPunctuation(StructFieldValue(id_items, "Organization", "OrgFullName"));
 				string org_study_id = StructFieldValue(id_items, "OrgStudyIdInfo", "OrgStudyId");
 				string org_id_type = StructFieldValue(id_items, "OrgStudyIdInfo", "OrgStudyIdType");
-				string org_id_domain = TidyPunctuation(StructFieldValue(id_items, "OrgStudyIdInfo", "OrgStudyIdDomain"));
+				string org_id_domain = StringHelpers.TidyPunctuation(StructFieldValue(id_items, "OrgStudyIdInfo", "OrgStudyIdDomain"));
 				string org_id_link = StructFieldValue(id_items, "OrgStudyIdInfo", "OrgStudyIdLink");
 
 				// add the sponsor's identifier
@@ -197,7 +197,7 @@ namespace DataHarvester.ctg
 							string id_link = FieldValue(sec_items, "SecondaryIdLink");
 							if (org_study_id == null || id_value.Trim().ToLower() != org_study_id.Trim().ToLower())
 							{
-								GetIdentifierProps(sec_items, out string id_type, out string id_org,
+								IdentifierHelpers.GetIdentifierProps(sec_items, out string id_type, out string id_org,
 											out int? id_type_id, out int? id_org_id);
 
 								// add the secondary identifier
@@ -216,7 +216,7 @@ namespace DataHarvester.ctg
 					if (firstpost_type != "Anticipated")
 					{
 						string firstpost_date = FieldValue(FirstPostDate.Items, "StudyFirstPostDate");
-						firstpost = GetDateParts(firstpost_date);
+						firstpost = DateHelpers.GetDateParts(firstpost_date);
 						if (firstpost_type.ToLower() == "estimate") firstpost.date_string += " (est.)";
 					}
 				}
@@ -228,7 +228,7 @@ namespace DataHarvester.ctg
 					if (results_type != "Anticipated")
 					{
 						string resultspost_date = FieldValue(ResultsPostDate.Items, "ResultsFirstPostDate");
-						resultspost = GetDateParts(resultspost_date);
+						resultspost = DateHelpers.GetDateParts(resultspost_date);
 						if (results_type.ToLower() == "estimate") resultspost.date_string += " (est.)";
 					}
 				}
@@ -240,7 +240,7 @@ namespace DataHarvester.ctg
 					if (update_type != "Anticipated")
 					{
 						string updatepost_date = FieldValue(LastUpdateDate.Items, "LastUpdatePostDate");
-						updatepost = GetDateParts(updatepost_date);
+						updatepost = DateHelpers.GetDateParts(updatepost_date);
 						if (update_type.ToLower() == "estimate") updatepost.date_string += " (est.)";
 					}
 				}
@@ -259,7 +259,7 @@ namespace DataHarvester.ctg
 				if (StudyStartDate != null)
 				{
 					string studystart_date = FieldValue(StudyStartDate.Items, "StartDate");
-					startdate = GetDateParts(studystart_date);
+					startdate = DateHelpers.GetDateParts(studystart_date);
 					s.study_start_year = startdate.year;
 					s.study_start_month = startdate.month;
 				}
@@ -280,7 +280,7 @@ namespace DataHarvester.ctg
 				StructType sponsor = FindStruct(items, "LeadSponsor");
 				if (sponsor != null)
 				{
-					sponsor_name = TidyPunctuation(FieldValue(sponsor.Items, "LeadSponsorName"));
+					sponsor_name = StringHelpers.TidyPunctuation(FieldValue(sponsor.Items, "LeadSponsorName"));
 
 					if (sponsor_name == "[Redacted]") sponsor_name = "(sponsor name redacted in registry record)";
 					contributors.Add(new StudyContributor(sid, 54, "Trial Sponsor", null, sponsor_name, 
@@ -306,7 +306,7 @@ namespace DataHarvester.ctg
 
 						if (rp_name != null && rp_name != "[Redacted]")
 						{
-							rp_name = TidyName(rp_name);
+							rp_name = StringHelpers.TidyName(rp_name);
 
 							if (rp_type == "Principal Investigator")
 							{
@@ -332,7 +332,7 @@ namespace DataHarvester.ctg
 						for (int i = 0; i < collabs.Length; i++)
 						{
 							StructType collab = collabs[i] as StructType;
-							string collab_name = TidyPunctuation(FieldValue(collab.Items, "CollaboratorName"));
+							string collab_name = StringHelpers.TidyPunctuation(FieldValue(collab.Items, "CollaboratorName"));
 							contributors.Add(new StudyContributor(sid, 69, "Collaborating organisation", null, collab_name, 
 												null, null));
 						}
@@ -469,7 +469,7 @@ namespace DataHarvester.ctg
 				if (items != null)
 				{
 					s.study_type = FieldValue(items, "StudyType");
-					s.study_type_id = GetTypeId(s.study_type);
+					s.study_type_id = TypeHelpers.GetTypeId(s.study_type);
 
 					if (s.study_type == "Interventional")
 					{
@@ -484,13 +484,13 @@ namespace DataHarvester.ctg
 								for (int p = 0; p < phases.Length; p++)
 								{
 									this_phase = (phases[p] as FieldType).Value;
-									features.Add(new StudyFeature(sid, 20, "phase", GetPhaseId(this_phase), this_phase));
+									features.Add(new StudyFeature(sid, 20, "phase", TypeHelpers.GetPhaseId(this_phase), this_phase));
 								}
 							}
 						}
 						else
 						{
-							features.Add(new StudyFeature(sid, 20, "phase", GetPhaseId("Not provided"), "Not provided"));
+							features.Add(new StudyFeature(sid, 20, "phase", TypeHelpers.GetPhaseId("Not provided"), "Not provided"));
 						}
 
 
@@ -500,24 +500,24 @@ namespace DataHarvester.ctg
 							var design_items = design_info.Items;
 
 							string design_allocation = FieldValue(design_items, "DesignAllocation") ?? "Not provided";
-							features.Add(new StudyFeature(sid, 22, "allocation type", GetAllocationTypeId(design_allocation), design_allocation));
+							features.Add(new StudyFeature(sid, 22, "allocation type", TypeHelpers.GetAllocationTypeId(design_allocation), design_allocation));
 
 							string design_intervention_model = FieldValue(design_items, "DesignInterventionModel") ?? "Not provided";
-							features.Add(new StudyFeature(sid, 23, "intervention model", GetDesignTypeId(design_intervention_model), design_intervention_model));
+							features.Add(new StudyFeature(sid, 23, "intervention model", TypeHelpers.GetDesignTypeId(design_intervention_model), design_intervention_model));
 
 							string design_primary_purpose = FieldValue(design_items, "DesignPrimaryPurpose") ?? "Not provided";
-							features.Add(new StudyFeature(sid, 21, "primary purpose", GetPrimaryPurposeId(design_primary_purpose), design_primary_purpose));
+							features.Add(new StudyFeature(sid, 21, "primary purpose", TypeHelpers.GetPrimaryPurposeId(design_primary_purpose), design_primary_purpose));
 
 							StructType masking_details = FindStruct(design_items, "DesignMaskingInfo");
 							if (masking_details != null)
 							{
 								var masking_items = masking_details.Items;
 								string design_masking = FieldValue(masking_items, "DesignMasking") ?? "Not provided";
-								features.Add(new StudyFeature(sid, 24, "masking", GetMaskingTypeId(design_masking), design_masking));
+								features.Add(new StudyFeature(sid, 24, "masking", TypeHelpers.GetMaskingTypeId(design_masking), design_masking));
 							}
 							else
 							{
-								features.Add(new StudyFeature(sid, 24, "masking", GetMaskingTypeId("Not provided"), "Not provided"));
+								features.Add(new StudyFeature(sid, 24, "masking", TypeHelpers.GetMaskingTypeId("Not provided"), "Not provided"));
 							}
 						}
 					}
@@ -547,13 +547,13 @@ namespace DataHarvester.ctg
 									for (int p = 0; p < obsmodels.Length; p++)
 									{
 										this_obsmodel = (obsmodels[p] as FieldType).Value;
-										features.Add(new StudyFeature(sid, 30, "observational model", GetObsModelTypeId(this_obsmodel), this_obsmodel));
+										features.Add(new StudyFeature(sid, 30, "observational model", TypeHelpers.GetObsModelTypeId(this_obsmodel), this_obsmodel));
 									}
 								}
 							}
 							else
 							{
-								features.Add(new StudyFeature(sid, 30, "observational model", GetObsModelTypeId("Not provided"), "Not provided"));
+								features.Add(new StudyFeature(sid, 30, "observational model", TypeHelpers.GetObsModelTypeId("Not provided"), "Not provided"));
 							}
 
 
@@ -567,13 +567,13 @@ namespace DataHarvester.ctg
 									for (int p = 0; p < timepersps.Length; p++)
 									{
 										this_persp = (timepersps[p] as FieldType).Value;
-										features.Add(new StudyFeature(sid, 31, "time perspective", GetTimePerspectiveId(this_persp), this_persp));
+										features.Add(new StudyFeature(sid, 31, "time perspective", TypeHelpers.GetTimePerspectiveId(this_persp), this_persp));
 									}
 								}
 							}
 							else
 							{
-								features.Add(new StudyFeature(sid, 31, "time perspective", GetTimePerspectiveId("Not provided"), "Not provided"));
+								features.Add(new StudyFeature(sid, 31, "time perspective", TypeHelpers.GetTimePerspectiveId("Not provided"), "Not provided"));
 							}
 						}
 
@@ -582,7 +582,7 @@ namespace DataHarvester.ctg
 						{
 							var biospec_items = biospec_details.Items;
 							string biospec_retention = FieldValue(biospec_items, "BioSpecRetention") ?? "Not provided";
-							features.Add(new StudyFeature(sid, 32, "biospecimens retained", GetSpecimentRetentionId(biospec_retention), biospec_retention));
+							features.Add(new StudyFeature(sid, 32, "biospecimens retained", TypeHelpers.GetSpecimentRetentionId(biospec_retention), biospec_retention));
 						}
 
 					}
@@ -622,7 +622,7 @@ namespace DataHarvester.ctg
 				if (items != null)
 				{
 					s.study_gender_elig = FieldValue(items, "Gender") ?? "Not provided";
-					s.study_gender_elig_id = GetGenderEligId(s.study_gender_elig);
+					s.study_gender_elig_id = TypeHelpers.GetGenderEligId(s.study_gender_elig);
 
 					string min_age = FieldValue(items, "MinimumAge");
 					if (min_age != null)
@@ -635,7 +635,7 @@ namespace DataHarvester.ctg
 							s.min_age = minage;
 							if (!RHS.EndsWith("s")) RHS += "s";
 							s.min_age_units = RHS;
-							s.min_age_units_id = GetTimeUnitsId(RHS);
+							s.min_age_units_id = TypeHelpers.GetTimeUnitsId(RHS);
 						}
 					}
 
@@ -649,7 +649,7 @@ namespace DataHarvester.ctg
 							s.max_age = maxage;
 							if (!RHS.EndsWith("s")) RHS += "s";
 							s.max_age_units = RHS;
-							s.max_age_units_id = GetTimeUnitsId(RHS);
+							s.max_age_units_id = TypeHelpers.GetTimeUnitsId(RHS);
 						}
 					}
 				}
@@ -673,7 +673,7 @@ namespace DataHarvester.ctg
 								string official_name = FieldValue(collab.Items, "OverallOfficialName");
 								if (official_name != null)
 								{
-									official_name = TidyName(official_name);
+									official_name = StringHelpers.TidyName(official_name);
 									string official_affiliation = FieldValue(collab.Items, "OverallOfficialAffiliation");
 									contributors.Add(new StudyContributor(sid, 51, "Study Lead", null, 
 															null, official_name, official_affiliation));
@@ -870,7 +870,7 @@ namespace DataHarvester.ctg
 								SplitDate docdate = null;
 								if (doc_date != null)
 								{
-									docdate = GetDateParts(doc_date);
+									docdate = DateHelpers.GetDateParts(doc_date);
 								}
 
 								switch (type_abbrev)
@@ -1409,734 +1409,7 @@ namespace DataHarvester.ctg
 
 			return s;
 
-		}
-
-
-
-		// Helper functions
-		StructType FindModule(StructType[] items, string nameToMatch)
-		{
-			StructType a = null;
-			foreach (StructType s in items)
-			{
-				if (s.Name == nameToMatch)
-				{
-					a = s;
-					break;
-				}
-			}
-			return a;
-		}
-
-
-		bool CheckModuleExists(StructType[] items, string nameToMatch)
-		{
-			bool a = false;
-			foreach (StructType s in items)
-			{
-				if (s.Name == nameToMatch)
-				{
-					a = true;
-					break;
-				}
-			}
-			return a;
-		}
-
-
-		ListType FindList(object[] items, string nameToMatch)
-		{
-			ListType a = null;
-			foreach (object b in items)
-			{
-				if (b is ListType lb)
-				{
-					if (lb.Name == nameToMatch)
-					{
-						a = lb;
-						break;
-					}
-				}
-			}
-			return a;
-		}
-
-
-		StructType FindStruct(object[] items, string nameToMatch)
-		{
-			StructType a = null;
-			foreach (object b in items)
-			{
-				if (b is StructType sb)
-				{
-					if (sb.Name == nameToMatch)
-					{
-						a = sb;
-						break;
-					}
-				}
-			}
-			return a;
-		}
-
-
-		string FieldValue(object[] items, string nameToMatch)
-		{
-			string a = null;
-			foreach (object b in items)
-			{
-				if (b is FieldType fb)
-				{
-					if (fb.Name == nameToMatch)
-					{
-						a = fb.Value;
-						break;
-					}
-				}
-			}
-			return a;
-		}
-
-
-		string StructFieldValue(object[] items, string structToMatch, string fieldToMatch)
-		{
-			string a = null;
-			foreach (object b in items)
-			{
-				if (b is StructType sb)
-				{
-					if (sb.Name == structToMatch)
-					{
-						object[] structItems = sb.Items;
-						foreach (object c in structItems)
-						{
-							if (c is FieldType fc)
-							{
-								if (fc.Name == fieldToMatch)
-								{
-									a = fc.Value;
-									break;
-								}
-
-							}
-						}
-					}
-				}
-			}
-			return a;
-		}
-
-
-		StructType[] ListStructs(object[] items, string listToMatch)
-		{
-			StructType[] a = null;
-			foreach (object b in items)
-			{
-				if (b is ListType lb)
-				{
-					if (lb.Name == listToMatch)
-					{
-						a = Array.ConvertAll(lb.Items, item => (StructType)item);
-						break;
-					}
-				}
-			}
-			return a;
-		}
-
-		// A helper function called from the loop that goes through the secondary Id data
-		// It tries to make the data as complete as possible, depending on the typem of 
-		// secondary id that is being processed
-		void GetIdentifierProps(object[] items, out string id_type, out string id_org,
-								out int? id_type_id, out int? id_org_id)
-		{
-			//default values
-			id_type = FieldValue(items, "SecondaryIdType");
-			id_org = TidyPunctuation(FieldValue(items, "SecondaryIdDomain"));
-
-			id_type_id = null;
-			id_org_id = null;
-
-			if (id_org == null)
-			{
-				id_org = "No organisation name provided in source data";
-				id_org_id = 12;
-			}
-
-			if (id_type == null)
-			{
-				id_type_id = 1;
-				id_type = "No type given in source data";
-			}
-
-			if (id_type == "Other Identifier")
-			{
-				id_type_id = 90;
-				id_type = "Other";
-			}
-
-			if (id_type == "U.S. NIH Grant/Contract")
-			{
-				id_org_id = 100134;
-				id_org = "National Institutes of Health";
-				id_type_id = 13;
-				id_type = "Funder’s ID";
-			}
-
-			if (id_type == "Other Grant/Funding Number")
-			{
-				id_type_id = 13;
-				id_type = "Funder’s ID";
-			}
-
-			if (id_type == "EudraCT Number")
-			{
-				id_org_id = 100123;
-				id_org = "EU Clinical Trials Register";
-				id_type_id = 11;
-				id_type = "Trial Registry ID";
-			}
-
-			if (id_type == "Registry Identifier")
-			{
-				id_type_id = 11;
-				id_type = "Trial Registry ID";
-				id_org = id_org.ToLower();
-
-				if (id_org.Contains("ctrp") || id_org.Contains("pdq") || id_org.Contains("nci"))
-				{
-					// NCI CTRP programme
-					id_org_id = 100162;
-					id_org = "National Cancer Institute";
-					id_type_id = 39;
-					id_type = "NIH CTRP ID";
-				}
-
-				else if (id_org.Contains("daids"))
-				{
-					// NCI CTRP programme
-					id_org_id = 100168;
-					id_org = "National Institute of Allergy and Infectious Diseases";
-					id_type_id = 40;
-					id_type = "DAIDS ID";
-				}
-
-				else if (id_org.Contains("who") || id_org.Contains("utn") || id_org.Contains("universal"))
-				{
-					// NCI CTRP programme
-					id_org_id = 100115;
-					id_org = "International Clinical Trials Registry Platform";
-				}
-
-				else if (id_org.Contains("japic") || id_org.Contains("cti"))
-				{
-					// japanese registry
-					id_org_id = 100157;
-					id_org = "Japan Pharmaceutical Information Center";
-				}
-
-				else if (id_org.Contains("umin"))
-				{
-					// japanese registry
-					id_org_id = 100156;
-					id_org = "University Hospital Medical Information Network CTR";
-				}
-
-				else if (id_org.Contains("isrctn"))
-				{
-					// japanese registry
-					id_org_id = 100126;
-					id_org = "ISRCTN";
-				}
-
-				else if (id_org.Contains("india") || id_org.Contains("ctri"))
-				{
-					// japanese registry
-					id_org_id = 100121;
-					id_org = "Clinical Trials Registry - India";
-				}
-
-				else if (id_org.Contains("eudract"))
-				{
-					// japanese registry
-					id_org_id = 100123;
-					id_org = "EU Clinical Trials Register";
-				}
-
-				else if (id_org.Contains("drks") || id_org.Contains("german") || id_org.Contains("deutsch"))
-				{
-					// japanese registry
-					id_org_id = 100124;
-					id_org = "Deutschen Register Klinischer Studien";
-				}
-
-				else if (id_org.Contains("nederlands") || id_org.Contains("dutch"))
-				{
-					// japanese registry
-					id_org_id = 100132;
-					id_org = "The Netherlands National Trial Register";
-				}
-
-				else if (id_org.Contains("ansm") || id_org.Contains("agence") || id_org.Contains("rcb"))
-				{
-					// french asnsm number=
-					id_org_id = 101408;
-					id_org = "Agence Nationale de Sécurité du Médicament";
-					id_type_id = 41;
-					id_type = "Regulatory Body ID";
-				}
-
-
-				else if (id_org.Contains("iras") || id_org.Contains("hra"))
-				{
-					// uk IRAS number
-					id_org_id = 101409;
-					id_org = "Health Research Authority";
-					id_type_id = 41;
-					id_type = "Regulatory Body ID";
-				}
-
-				else if (id_org.Contains("anzctr") || id_org.Contains("australian"))
-				{
-					// australian registry
-					id_org_id = 100116;
-					id_org = "Australian New Zealand Clinical Trials Registry";
-				}
-
-				else if (id_org.Contains("chinese"))
-				{
-					// chinese registry
-					id_org_id = 100118;
-					id_org = "Chinese Clinical Trial Register";
-				}
-
-				else if (id_org.Contains("thai"))
-				{
-					// thai registry
-					id_org_id = 100131;
-					id_org = "Thai Clinical Trials Register";
-				}
-
-				if (id_org == "JHMIRB" || id_org == "JHM IRB")
-				{
-					// ethics approval number
-					id_org_id = 100190;
-					id_org = "Johns Hopkins University";
-					id_type_id = 12;
-					id_type = "Ethics Review ID";
-				}
-
-				if (id_org.ToLower().Contains("ethics") || id_org == "Independent Review Board" || id_org.Contains("IRB"))
-				{
-					// ethics approval number
-					id_type_id = 12;
-					id_type = "Ethics Review ID";
-				}
-			}
-
-			if (id_type_id == 1 || id_type_id == 90)
-			{
-				string id_value = FieldValue(items, "SecondaryId");
-
-				if (id_org == "UTN")
-				{
-					// NCI CTRP programme
-					id_org_id = 100115;
-					id_org = "International Clinical Trials Registry Platform";
-					id_type_id = 11;
-					id_type = "Trial Registry ID";
-				}
-
-				if (id_org.ToLower().Contains("ansm") || id_org.ToLower().Contains("rcb"))
-				{
-					// NCI CTRP programme
-					id_org_id = 101408;
-					id_org = "Agence Nationale de Sécurité du Médicament";
-					id_type_id = 41;
-					id_type = "Regulatory Body ID";
-				}
-
-				if (id_org == "JHMIRB" || id_org == "JHM IRB")
-				{
-					// ethics approval number
-					id_org_id = 100190;
-					id_org = "Johns Hopkins University"; 
-					id_type_id = 12;
-					id_type = "Ethics Review ID";
-				}
-
-				if (id_org.ToLower().Contains("ethics") || id_org == "Independent Review Board" || id_org.Contains("IRB"))
-				{
-					// ethics approval number
-					id_type_id = 12;
-					id_type = "Ethics Review ID";
-				}
-
-				if (id_value.Length > 4 && id_value.Substring(0, 4) == "NCI-")
-				{
-					// ethics approval number
-					id_org_id = 100162;
-					id_org = "National Cancer Institute";
-				}
-
-				// need a mechanism here to find the org id and system name for the organisation as given
-				// probably better to do it in a bulk operation on transfer of the data to the ad tables
-			}
-		}
-
-
-		SplitDate GetDateParts(string dateString)
-		{
-			// input date string is in the form of "<month name> day, year"
-			// or in some cases in the form "<month name> year"
-			// split the string on the comma
-			string year_string, month_name, day_string;
-			int? year_num, month_num, day_num;
-
-			int comma_pos = dateString.IndexOf(',');
-			if (comma_pos > 0)
-			{
-				year_string = dateString.Substring(comma_pos + 1).Trim();
-				string first_part = dateString.Substring(0, comma_pos).Trim();
-
-				// first part should split on the space
-				int space_pos = first_part.IndexOf(' ');
-				day_string = first_part.Substring(space_pos + 1).Trim();
-				month_name = first_part.Substring(0, space_pos).Trim();
-			}
-			else
-			{
-				int space_pos = dateString.IndexOf(' ');
-				year_string = dateString.Substring(space_pos + 1).Trim();
-				month_name = dateString.Substring(0, space_pos).Trim();
-				day_string = "";
-			}
-
-			// convert strings into integers
-			if (int.TryParse(year_string, out int y)) year_num = y; else year_num = null;
-			month_num = GetMonthAsInt(month_name);
-			if (int.TryParse(day_string, out int d)) day_num = d; else day_num = null;
-			string month_as3 = ((Months3)month_num).ToString();
-
-			// get date as string
-			string date_as_string;
-			if (year_num != null && month_num != null && day_num != null)
-			{
-				date_as_string = year_num.ToString() + " " + month_as3 + " " + day_num.ToString();
-			}
-			else if (year_num != null && month_num != null && day_num == null)
-			{
-				date_as_string = year_num.ToString() + ' ' + month_as3;
-			}
-			else if (year_num != null && month_num == null && day_num == null)
-			{
-				date_as_string = year_num.ToString();
-			}
-			else
-			{
-				date_as_string = null;
-			}
-
-			return new SplitDate(year_num, month_num, day_num, date_as_string);
-		}
-
-		string StandardiseDateFormat(string inputDate)
-		{
-			SplitDate SD = GetDateParts(inputDate);
-			return SD.date_string;
-		}
-
-
-		int? GetMonthAsInt(string month_name)
-		{
-			return (int)(Enum.Parse<MonthsFull>(month_name));
-		}
-
-
-		int? GetStatusId(string study_status)
-		{
-			int? type_id = null;
-			switch (study_status.ToLower())
-			{
-				case "completed": type_id = 21; break;
-				case "recruiting": type_id = 14; break;
-				case "active, not recruiting": type_id = 15; break;
-				case "not yet recruiting": type_id = 16; break;
-				case "unknown status": type_id = 0; break;
-				case "withdrawn": type_id = 11; break;
-				case "available": type_id = 12; break;
-				case "withheld": type_id = 13; break;
-				case "no longer available": type_id = 17; break;
-				case "suspended": type_id = 18; break;
-				case "enrolling by invitation": type_id = 19; break;
-				case "approved for marketing": type_id = 20; break;
-				case "terminated": type_id = 22; break;
-			}
-			return type_id;
-		}
-
-		int? GetTypeId(string study_type)
-		{
-			int? type_id = null;
-			switch (study_type.ToLower())
-			{
-				case "interventional": type_id = 11; break;
-				case "observational": type_id = 12; break;
-				case "observational patient registry": type_id = 13; break;
-				case "expanded access": type_id = 14; break;
-				case "funded programme": type_id = 15; break;
-				case "not yet known": type_id = 0; break;
-			}
-			return type_id;
-		}
-
-		int? GetGenderEligId(string gender_elig)
-		{
-			int? type_id = null;
-			switch (gender_elig.ToLower())
-			{
-				case "all": type_id = 900; break;
-				case "female": type_id = 905; break;
-				case "male": type_id = 910; break;
-				case "not provided": type_id = 915; break;
-			}
-			return type_id;
-		}
-
-		int? GetTimeUnitsId(string time_units)
-		{
-			int? type_id = null;
-			switch (time_units.ToLower())
-			{
-				case "seconds": type_id = 11; break;
-				case "minutes": type_id = 12; break;
-				case "hours": type_id = 13; break;
-				case "days": type_id = 14; break;
-				case "weeks": type_id = 15; break;
-				case "months": type_id = 16; break;
-				case "years": type_id = 17; break;
-				case "not provided": type_id = 0; break;
-			}
-			return type_id;
-		}
-
-		int? GetPhaseId(string phase)
-		{
-			int? type_id = null;
-			switch (phase.ToLower())
-			{
-				case "n/a": type_id = 100; break;
-				case "not applicable": type_id = 100; break;
-				case "early phase 1": type_id = 105; break;
-				case "phase 1": type_id = 110; break;
-				case "phase 1/phase 2": type_id = 115; break;
-				case "phase 2": type_id = 120; break;
-				case "phase 2/phase 3": type_id = 125; break;
-				case "phase 3": type_id = 130; break;
-				case "phase 4": type_id = 135; break;
-				case "not provided": type_id = 140; break;
-			}
-			return type_id;
-		}
-
-		int? GetPrimaryPurposeId(string primary_purpose)
-		{
-			int? type_id = null;
-			switch (primary_purpose.ToLower())
-			{
-				case "treatment": type_id = 400; break;
-				case "prevention": type_id = 405; break;
-				case "diagnostic": type_id = 410; break;
-				case "supportive care": type_id = 415; break;
-				case "screening": type_id = 420; break;
-				case "health services research": type_id = 425; break;
-				case "basic science": type_id = 430; break;
-				case "device feasibility": type_id = 435; break;
-				case "other": type_id = 440; break;
-				case "not provided": type_id = 445; break;
-				case "educational/counseling/training": type_id = 450; break;
-			}
-			return type_id;
-		}
-
-		int? GetAllocationTypeId(string allocation_type)
-		{
-			int? type_id = null;
-			switch (allocation_type.ToLower())
-			{
-				case "n/a": type_id = 200; break;
-				case "randomized": type_id = 205; break;
-				case "non-randomized": type_id = 210; break;
-				case "not provided": type_id = 215; break;
-			}
-			return type_id;
-		}
-
-		int? GetDesignTypeId(string design_type)
-		{
-			int? type_id = null;
-			switch (design_type.ToLower())
-			{
-				case "single group assignment": type_id = 300; break;
-				case "parallel assignment": type_id = 305; break;
-				case "crossover assignment": type_id = 310; break;
-				case "factorial assignment": type_id = 315; break;
-				case "sequential assignment": type_id = 320; break;
-				case "not provided": type_id = 325; break;
-			}
-			return type_id;
-		}
-
-		int? GetMaskingTypeId(string masking_type)
-		{
-			int? type_id = null;
-			switch (masking_type.ToLower())
-			{
-				case "none (open label)": type_id = 500; break;
-				case "single": type_id = 505; break;
-				case "double": type_id = 510; break;
-				case "triple": type_id = 515; break;
-				case "quadruple": type_id = 520; break;
-				case "not provided": type_id = 525; break;
-			}
-			return type_id;
-		}
-
-		int? GetObsModelTypeId(string obsmodel_type)
-		{
-			int? type_id = null;
-			switch (obsmodel_type.ToLower())
-			{
-				case "cohort": type_id = 600; break;
-				case "case control": type_id = 605; break;
-				case "case-control": type_id = 605; break;
-				case "case-only": type_id = 610; break;
-				case "case-crossover": type_id = 615; break;
-				case "ecologic or community": type_id = 620; break;
-				case "family-based": type_id = 625; break;
-				case "other": type_id = 630; break;
-				case "not provided": type_id = 635; break;
-				case "defined population": type_id = 640; break;
-				case "natural history": type_id = 645; break;
-			}
-			return type_id;
-		}
-
-		int? GetTimePerspectiveId(string time_perspective)
-		{
-			int? type_id = null;
-			switch (time_perspective.ToLower())
-			{
-				case "retrospective": type_id = 700; break;
-				case "prospective": type_id = 705; break;
-				case "cross-sectional": type_id = 710; break;
-				case "other": type_id = 715; break;
-				case "not provided": type_id = 720; break;
-				case "retrospective/prospective": type_id = 725; break;
-				case "longitudinal": type_id = 730; break;
-			}
-			return type_id;
-		}
-
-		int? GetSpecimentRetentionId(string specimen_retention)
-		{
-			int? type_id = null;
-			switch (specimen_retention.ToLower())
-			{
-				case "none retained": type_id = 800; break;
-				case "samples with dna": type_id = 805; break;
-				case "samples without dna": type_id = 810; break;
-				case "not provided": type_id = 815; break;
-			}
-			return type_id;
-		}
-
-
-		string TidyPunctuation(string in_name)
-		{
-			string name = in_name;
-			if (name != null)
-			{
-				if (name.Contains("."))
-				{
-					// protect these exceptions to the remove full stop rule
-					name = name.Replace(".com", "|com");
-					name = name.Replace(".gov", "|gov");
-					name = name.Replace(".org", "|org");
-
-					name = name.Replace(".", "");
-
-					name = name.Replace("|com", ".com");
-					name = name.Replace("|gov", ".gov");
-					name = name.Replace("|org", ".org");
-				}
-
-				// do this as a loop as there may be several apostrophes that
-				// need replacing to different types of quote
-				while (name.Contains("'"))
-				{
-					name = ReplaceApos(name);
-				}
-			}
-			return name;
-		}
-
-		string ReplaceApos(string apos_name)
-		{
-			int apos_pos = apos_name.IndexOf("'");
-			int alen = apos_name.Length;
-			if (apos_pos != -1)
-			{ 
-				if (apos_pos == 0)
-				{
-					apos_name = "‘" + apos_name.Substring(1);
-				}
-				else if (apos_pos == alen - 1)
-				{
-					apos_name = apos_name.Substring(0, alen - 1) + "’";
-				}
-				{
-					if (apos_name[apos_pos - 1] == ' ' || apos_name[apos_pos - 1] == '(')
-					{
-						apos_name = apos_name.Substring(0, apos_pos) + "‘" + apos_name.Substring(apos_pos + 1, alen - apos_pos - 1);
-
-					}
-					else
-					{
-						apos_name = apos_name.Substring(0, apos_pos) + "’" + apos_name.Substring(apos_pos + 1, alen - apos_pos - 1);
-					}
-				}
-			}
-			return apos_name;
-		}
-
-
-		string TidyName(string in_name)
-		{
-
-			string name = in_name.Replace(".", "");
-			string low_name = name.ToLower();
-
-			if (low_name.StartsWith("professor "))
-			{
-				name = name.Substring(4, name.Length - 10);
-				low_name = name.ToLower();
-			}
-			else if (low_name.StartsWith("prof "))
-			{
-				name = name.Substring(5, name.Length - 5);
-				low_name = name.ToLower();
-			}
-
-			if (low_name.StartsWith("dr ")) { name = name.Substring(3, name.Length - 3); }
-			else if (low_name.StartsWith("dr med ")) { name = name.Substring(7, name.Length - 7); }
-
-			int comma_pos = name.IndexOf(',');
-			if (comma_pos > -1) { name = name.Substring(0, comma_pos); }
-
-			return name;
-		}
-
+        }
 
 
 		public void StoreData(DataLayer repo, Study s)
@@ -2238,64 +1511,135 @@ namespace DataHarvester.ctg
 
 		}
 
-	}
 
+		#region Helper Functions
 
-	public class SplitDate
-	{
-		public int? year;
-		public int? month;
-		public int? day;
-		public string date_string;
-
-		public SplitDate(int? _year, int? _month, int? _day, string _date_string)
+		StructType FindModule(StructType[] items, string nameToMatch)
 		{
-			year = _year;
-			month = _month;
-			day = _day;
-			date_string = _date_string;
-		}
-	}
-
-
-	public enum MonthsFull
-	{
-		January = 1, February, March, April, May, June,
-		July, August, September, October, November, December
-	};
-
-
-	public enum Months3
-	{
-		Jan = 1, Feb, Mar, Apr, May, Jun,
-		Jul, Aug, Sep, Oct, Nov, Dec
-	};
-
-
-	public class URLChecker
-	{
-		HttpClient Client = new HttpClient();
-		DateTime today = DateTime.Today;
-
-		public async Task CheckURLsAsync(List<ObjectInstance> web_resources)
-		{
-			foreach (ObjectInstance i in web_resources)
+			StructType a = null;
+			foreach (StructType s in items)
 			{
-				if (i.resource_type_id == 11)  // just do the study docs for now
+				if (s.Name == nameToMatch)
 				{
-					string url_to_check = i.url;
-					if (url_to_check != null && url_to_check != "")
+					a = s;
+					break;
+				}
+			}
+			return a;
+		}
+
+		bool CheckModuleExists(StructType[] items, string nameToMatch)
+		{
+			bool a = false;
+			foreach (StructType s in items)
+			{
+				if (s.Name == nameToMatch)
+				{
+					a = true;
+					break;
+				}
+			}
+			return a;
+		}
+
+		ListType FindList(object[] items, string nameToMatch)
+		{
+			ListType a = null;
+			foreach (object b in items)
+			{
+				if (b is ListType lb)
+				{
+					if (lb.Name == nameToMatch)
 					{
-						//HttpRequestMessage http_request = new HttpRequestMessage(HttpMethod.Head, url_to_check);
-						//var result = await Client.SendAsync(http_request);
-						//if ((int)result.StatusCode == 200)
-						//{
-						//	i.url_last_checked = today;
-						//}
+						a = lb;
+						break;
 					}
 				}
 			}
+			return a;
 		}
+
+		StructType FindStruct(object[] items, string nameToMatch)
+		{
+			StructType a = null;
+			foreach (object b in items)
+			{
+				if (b is StructType sb)
+				{
+					if (sb.Name == nameToMatch)
+					{
+						a = sb;
+						break;
+					}
+				}
+			}
+			return a;
+		}
+
+		string FieldValue(object[] items, string nameToMatch)
+		{
+			string a = null;
+			foreach (object b in items)
+			{
+				if (b is FieldType fb)
+				{
+					if (fb.Name == nameToMatch)
+					{
+						a = fb.Value;
+						break;
+					}
+				}
+			}
+			return a;
+		}
+
+		string StructFieldValue(object[] items, string structToMatch, string fieldToMatch)
+		{
+			string a = null;
+			foreach (object b in items)
+			{
+				if (b is StructType sb)
+				{
+					if (sb.Name == structToMatch)
+					{
+						object[] structItems = sb.Items;
+						foreach (object c in structItems)
+						{
+							if (c is FieldType fc)
+							{
+								if (fc.Name == fieldToMatch)
+								{
+									a = fc.Value;
+									break;
+								}
+
+							}
+						}
+					}
+				}
+			}
+			return a;
+		}
+
+		StructType[] ListStructs(object[] items, string listToMatch)
+		{
+			StructType[] a = null;
+			foreach (object b in items)
+			{
+				if (b is ListType lb)
+				{
+					if (lb.Name == listToMatch)
+					{
+						a = Array.ConvertAll(lb.Items, item => (StructType)item);
+						break;
+					}
+				}
+			}
+			return a;
+		}
+
+		#endregion
+
 	}
 
 }

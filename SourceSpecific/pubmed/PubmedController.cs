@@ -26,7 +26,6 @@ namespace DataHarvester.pubmed
 
         async public Task LoopThroughFilesAsync()
         {
-            CopyHelpers helpers = new CopyHelpers();
             string fileBase = source.local_folder;
             
             // Put all the PMIDs of interest in memory and use to find the source 

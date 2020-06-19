@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using System.Text;
 
-namespace DataHarvester.GeneralHelpers
+namespace DataHarvester
 {
 	public static class TypeHelpers
 	{
