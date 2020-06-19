@@ -6,15 +6,6 @@ namespace DataHarvester.biolincc
 {
 	public class BioLinccProcessor
 	{
-		HtmlHelpers hhp;
-		HashHelpers hf;
-
-		public BioLinccProcessor()
-		{
-			hhp = new HtmlHelpers();
-			hf = new HashHelpers();
-		}
-
 
 		public Study ProcessData(BioLinccRecord st, DateTime? download_datetime, DataLayer common_repo, BioLinccDataLayer biolincc_repo)
 		{
@@ -29,9 +20,9 @@ namespace DataHarvester.biolincc
 
 			List<DataObject> data_objects = new List<DataObject>();
 			List<DataSetProperties> dataset_properties = new List<DataSetProperties>();
-			List<DataObjectTitle> data_object_titles = new List<DataObjectTitle>();
-			List<DataObjectDate> data_object_dates = new List<DataObjectDate>();
-			List<DataObjectInstance> data_object_instances = new List<DataObjectInstance>();
+			List<ObjectTitle> data_object_titles = new List<ObjectTitle>();
+			List<ObjectDate> data_object_dates = new List<ObjectDate>();
+			List<ObjectInstance> data_object_instances = new List<ObjectInstance>();
 
 			// need study relationships... possibly not at this stage but after links have been examined...
 
@@ -57,8 +48,8 @@ namespace DataHarvester.biolincc
 
 			if (st.display_title.Contains("<"))
 			{
-				s.display_title = hhp.replace_tags(st.display_title);
-				s.display_title = hhp.strip_tags(s.display_title);
+				s.display_title = HtmlHelpers.replace_tags(st.display_title);
+				s.display_title = HtmlHelpers.strip_tags(s.display_title);
 			}
 			else
 			{
@@ -67,8 +58,8 @@ namespace DataHarvester.biolincc
 			
 			if (st.brief_description.Contains("<"))
 			{
-				s.brief_description = hhp.replace_tags(st.brief_description);
-				s.bd_contains_html = hhp.check_for_tags(s.brief_description);
+				s.brief_description = HtmlHelpers.replace_tags(st.brief_description);
+				s.bd_contains_html = HtmlHelpers.check_for_tags(s.brief_description);
 			}
 			else
 			{
@@ -167,15 +158,15 @@ namespace DataHarvester.biolincc
 			string object_display_title = name_base + " :: " + "NHLBI web page";
 
 			// create hash Id for the data object
-			string sd_oid = hf.CreateMD5(sid + object_display_title);
+			string sd_oid = HashHelpers.CreateMD5(sid + object_display_title);
 
 			data_objects.Add(new DataObject(sd_oid, sid, object_display_title, pub_year, 23, "Text", 38, "Study Overview",
 				100167, "National Heart, Lung, and Blood Institute (US)", 12, download_datetime));
 
-			data_object_titles.Add(new DataObjectTitle(sd_oid, object_display_title, 22,
+			data_object_titles.Add(new ObjectTitle(sd_oid, object_display_title, 22,
 								"Study short name :: object type", true));
 
-			data_object_instances.Add(new DataObjectInstance(sd_oid, 101900, "BioLINCC",
+			data_object_instances.Add(new ObjectInstance(sd_oid, 101900, "BioLINCC",
 								st.remote_url, true, 35, "Web text"));
 
 			// get date in required format
@@ -194,7 +185,7 @@ namespace DataHarvester.biolincc
 			if (st.last_revised_date != null)
 			{
 				DateTime last_revised = (DateTime)st.last_revised_date;
-				data_object_dates.Add(new DataObjectDate(sd_oid, 18, "Updated", last_revised.Year,
+				data_object_dates.Add(new ObjectDate(sd_oid, 18, "Updated", last_revised.Year,
 							last_revised.Month, last_revised.Day, last_revised.ToString("yyyy MMM dd")));
 			}
 
@@ -203,13 +194,13 @@ namespace DataHarvester.biolincc
 			if (!string.IsNullOrEmpty(st.study_website))
 			{
 				object_display_title = name_base + " :: " + "Study web site";
-				sd_oid = hf.CreateMD5(sid + object_display_title);
+				sd_oid = HashHelpers.CreateMD5(sid + object_display_title);
 
 				data_objects.Add(new DataObject(sd_oid, sid, object_display_title, null, 23, "Text", 134, "Website",
 									sponsor_org_id, sponsor_org, 12, download_datetime));
-				data_object_titles.Add(new DataObjectTitle(sd_oid, object_display_title, 22,
+				data_object_titles.Add(new ObjectTitle(sd_oid, object_display_title, 22,
 									"Study short name :: object type", true));
-				data_object_instances.Add(new DataObjectInstance(sd_oid, sponsor_org_id, sponsor_org,
+				data_object_instances.Add(new ObjectInstance(sd_oid, sponsor_org_id, sponsor_org,
 									st.study_website, true, 35, "Web text"));
 			}
 
@@ -220,7 +211,7 @@ namespace DataHarvester.biolincc
 			if (st.resources_available.ToLower().Contains("datasets"))
 			{
 			    object_display_title = name_base + " :: " + "IPD Datasets";
-				sd_oid = hf.CreateMD5(sid + object_display_title);
+				sd_oid = HashHelpers.CreateMD5(sid + object_display_title);
 
 				data_objects.Add(new DataObject(sd_oid, sid, object_display_title, null, 14, "Datasets",
 						80, "Individual Participant Data", 100167, "National Heart, Lung, and Blood Institute (US)",
@@ -228,7 +219,7 @@ namespace DataHarvester.biolincc
 						"https://biolincc.nhlbi.nih.gov/media/guidelines/handbook.pdf?link_time=2019-12-13_11:33:44.807479#page=15",
 						download_datetime, download_datetime));
 
-			    data_object_titles.Add(new DataObjectTitle(sd_oid, object_display_title, 22, "Study short name :: object type", true));
+			    data_object_titles.Add(new ObjectTitle(sd_oid, object_display_title, 22, "Study short name :: object type", true));
 
                 // Datasets and consent restrictions
 
@@ -278,12 +269,12 @@ namespace DataHarvester.biolincc
 				{
 					// for the resource, set up new data object, object title, object instance
 					object_display_title = name_base + " :: " + r.doc_name;
-					sd_oid = hf.CreateMD5(sid + object_display_title);
+					sd_oid = HashHelpers.CreateMD5(sid + object_display_title);
 
 					data_objects.Add(new DataObject(sd_oid, sid, object_display_title, pub_year, 23, "Text", r.object_type_id, r.object_type,
 										sponsor_org_id, sponsor_org, r.access_type_id, download_datetime));
-					data_object_titles.Add(new DataObjectTitle(sd_oid, object_display_title, 21, "Study short name :: object name", true));
-					data_object_instances.Add(new DataObjectInstance(sd_oid, 101900, "BioLINCC", r.url, true, r.doc_type_id, r.doc_type));
+					data_object_titles.Add(new ObjectTitle(sd_oid, object_display_title, 21, "Study short name :: object name", true));
+					data_object_instances.Add(new ObjectInstance(sd_oid, 101900, "BioLINCC", r.url, true, r.doc_type_id, r.doc_type));
 				}
 			}
 
@@ -354,20 +345,20 @@ namespace DataHarvester.biolincc
 			// store study attributes
 			if (s.identifiers.Count > 0)
 			{
-				repo.StoreStudyIdentifiers(CopyHelpers.study_ids_helper,
+				repo.StoreStudyIdentifiers(StudyCopyHelpers.study_ids_helper,
 										  s.identifiers);
 			}
 
 			if (s.titles.Count > 0)
 			{
-				repo.StoreStudyTitles(CopyHelpers.study_titles_helper,
+				repo.StoreStudyTitles(StudyCopyHelpers.study_titles_helper,
 										  s.titles);
 			}
 
 
 			if (s.references.Count > 0)
 			{
-				repo.StoreStudyReferences(CopyHelpers.study_references_helper, 
+				repo.StoreStudyReferences(StudyCopyHelpers.study_references_helper, 
 					                      s.references);
 			}
 
@@ -375,32 +366,32 @@ namespace DataHarvester.biolincc
 			// store data objects and dataset properties
 			if (s.data_objects.Count > 0)
 			{
-				repo.StoreDataObjects(CopyHelpers.data_objects_helper,
+				repo.StoreDataObjects(ObjectCopyHelpers.data_objects_helper,
 										 s.data_objects);
 			}
 
 			if (s.dataset_properties.Count > 0)
 			{
-				repo.StoreDatasetProperties(CopyHelpers.dataset_properties_helper,
+				repo.StoreDatasetProperties(ObjectCopyHelpers.dataset_properties_helper,
 										 s.dataset_properties);
 			}
 
 			// store data object attributes
 			if (s.object_dates.Count > 0)
 			{
-				repo.StoreObjectDates(CopyHelpers.object_dates_helper,
+				repo.StoreObjectDates(ObjectCopyHelpers.object_dates_helper,
 										 s.object_dates);
 			}
 
 			if (s.object_instances.Count > 0)
 			{
-				repo.StoreObjectInstances(CopyHelpers.object_instances_helper,
+				repo.StoreObjectInstances(ObjectCopyHelpers.object_instances_helper,
 										 s.object_instances);
 			}
 
 			if (s.object_titles.Count > 0)
 			{
-				repo.StoreObjectTitles(CopyHelpers.object_titles_helper,
+				repo.StoreObjectTitles(ObjectCopyHelpers.object_titles_helper,
 										 s.object_titles);
 			}
 		}

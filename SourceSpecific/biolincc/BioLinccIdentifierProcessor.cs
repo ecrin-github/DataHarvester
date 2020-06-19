@@ -30,7 +30,7 @@ namespace DataHarvester.biolincc
 			// store study identifiers
 			if (study_identifiers.Count > 0)
 			{
-				common_repo.StoreStudyIdentifiers(CopyHelpers.study_ids_helper, study_identifiers);
+				common_repo.StoreStudyIdentifiers(StudyCopyHelpers.study_ids_helper, study_identifiers);
 			}
 
 		}

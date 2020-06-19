@@ -85,13 +85,13 @@ namespace DataHarvester.pubmed
         // Brings back the integer IDs (pmids) and file paths of the records of interest
         // 10,000 at a time
 
-        public IEnumerable<FileEntry> Get_pmid_records(int skip)
+        public IEnumerable<ObjectFileRecord> Get_pmid_records(int skip)
         {
             using (IDbConnection Conn = new NpgsqlConnection(mon_sf_connString))
             {
                 string sql_string = "select id, sd_id, local_path from sf.source_data_objects ";
                 sql_string += " where last_processed is null order by sd_id limit 10000 offset " + (skip * 10000).ToString();
-                return Conn.Query<FileEntry>(sql_string);
+                return Conn.Query<ObjectFileRecord>(sql_string);
             }
         }
 
@@ -112,9 +112,9 @@ namespace DataHarvester.pubmed
         // Stores an 'extraction note', e.g. an unusual occurence found and
         // logged during the extraction, in the associated table.
 
-        public void StoreExtractionNote(int? pmid, int note_type, string note)
+        public void StoreExtractionNote(string id, int note_type, string note)
         {
-            ExtractionNote en = new ExtractionNote(pmid, note_type, note);
+            ExtractionNote en = new ExtractionNote(id, note_type, note);
             using (IDbConnection Conn = new NpgsqlConnection(pubmed_pp_connString))
             {
                 Conn.Insert<ExtractionNote>(en);
@@ -122,10 +122,10 @@ namespace DataHarvester.pubmed
         }
 
 
-        public bool FileInDatabase(int pmid)
+        public bool FileInDatabase(string sd_oid)
         {
             string sql_string = "SELECT count(*) FROM sd.data_objects";
-            sql_string += " where sd_id = " + pmid.ToString();
+            sql_string += " where sd_oid = " + sd_oid;
             using (IDbConnection Conn = new NpgsqlConnection(pubmed_sd_connString))
             {
                 long res = (long)Conn.ExecuteScalar(sql_string);
@@ -137,18 +137,18 @@ namespace DataHarvester.pubmed
         // Inserts the base Data object, i.e. with all the  
         // singleton properties, in the database.
 
-        public void StoreDataObject(Data_in_DB cdb)
+        public void StoreDataObject(CitationObject_in_DB cdb)
         {
             using (IDbConnection Conn = new NpgsqlConnection(pubmed_sd_connString))
             {
-                Conn.Insert<Data_in_DB>(cdb);
+                Conn.Insert<CitationObject_in_DB>(cdb);
             }
         }
 
 
         // Inserts the contributor (person or organisation) records for each Data.
 
-        public ulong StoreContributors(PostgreSQLCopyHelper<Contributor> copyHelper, IEnumerable<Contributor> entities)
+        public ulong StoreContributors(PostgreSQLCopyHelper<ObjectContributor> copyHelper, IEnumerable<ObjectContributor> entities)
         {
             using (var conn = new NpgsqlConnection(pubmed_sd_connString))
             {
@@ -160,7 +160,7 @@ namespace DataHarvester.pubmed
 
         // Inserts the set of contributor identifier records (usually ORCIDs) for each Data.
 
-        public ulong StoreContribIdentifiers(PostgreSQLCopyHelper<Person_Identifier> copyHelper, IEnumerable<Person_Identifier> entities)
+        public ulong StoreContribIdentifiers(PostgreSQLCopyHelper<PersonIdentifier> copyHelper, IEnumerable<PersonIdentifier> entities)
         {
             using (var conn = new NpgsqlConnection(pubmed_sd_connString))
             {
@@ -172,7 +172,7 @@ namespace DataHarvester.pubmed
 
         // Inserts the set of contributor affiliation records for each Data.
 
-        public ulong StoreContribAffiliations(PostgreSQLCopyHelper<Person_Affiliation> copyHelper, IEnumerable<Person_Affiliation> entities)
+        public ulong StoreContribAffiliations(PostgreSQLCopyHelper<PersonAffiliation> copyHelper, IEnumerable<PersonAffiliation> entities)
         {
             using (var conn = new NpgsqlConnection(pubmed_sd_connString))
             {
@@ -184,7 +184,7 @@ namespace DataHarvester.pubmed
 
         // Inserts the set of identifiers records associated with each Data.
 
-        public ulong StoreIdentifiers(PostgreSQLCopyHelper<Identifier> copyHelper, IEnumerable<Identifier> entities)
+        public ulong StoreObjectIdentifiers(PostgreSQLCopyHelper<ObjectIdentifier> copyHelper, IEnumerable<ObjectIdentifier> entities)
         {
             using (var conn = new NpgsqlConnection(pubmed_sd_connString))
             {
@@ -208,7 +208,7 @@ namespace DataHarvester.pubmed
 
         // Inserts the set of language records associated with each Data.
 
-        public ulong StoreLanguages(PostgreSQLCopyHelper<ObjectLanguage> copyHelper, IEnumerable<ObjectLanguage> entities)
+        public ulong StoreObjectLanguages(PostgreSQLCopyHelper<ObjectLanguage> copyHelper, IEnumerable<ObjectLanguage> entities)
         {
             using (var conn = new NpgsqlConnection(pubmed_sd_connString))
             {
@@ -220,7 +220,7 @@ namespace DataHarvester.pubmed
 
         // Inserts the set of description records associated with each Data.
 
-        public ulong StoreDescriptions(PostgreSQLCopyHelper<Description> copyHelper, IEnumerable<Description> entities)
+        public ulong StoreDescriptions(PostgreSQLCopyHelper<ObjectDescription> copyHelper, IEnumerable<ObjectDescription> entities)
         {
             using (var conn = new NpgsqlConnection(pubmed_sd_connString))
             {
@@ -232,7 +232,7 @@ namespace DataHarvester.pubmed
 
         // Inserts the set of instance records associated with each Data.
 
-        public ulong StoreInstances(PostgreSQLCopyHelper<Instance> copyHelper, IEnumerable<Instance> entities)
+        public ulong StoreInstances(PostgreSQLCopyHelper<ObjectInstance> copyHelper, IEnumerable<ObjectInstance> entities)
         {
             using (var conn = new NpgsqlConnection(pubmed_sd_connString))
             {
@@ -245,7 +245,7 @@ namespace DataHarvester.pubmed
         // Inserts the set of 'databank' accession records associated with each Data,
         // including any linked ClinicalTrials.gov NCT numbers.
 
-        public ulong StoreAcessionNumbers(PostgreSQLCopyHelper<DB_Accession_Number> copyHelper, IEnumerable<DB_Accession_Number> entities)
+        public ulong StoreAcessionNumbers(PostgreSQLCopyHelper<ObjectDBAccessionNumber> copyHelper, IEnumerable<ObjectDBAccessionNumber> entities)
         {
             using (var conn = new NpgsqlConnection(pubmed_sd_connString))
             {
@@ -257,7 +257,7 @@ namespace DataHarvester.pubmed
 
         // Inserts the set of publication type records associated with each Data.
 
-        public ulong StorePublicationTypes(PostgreSQLCopyHelper<Publication_Type> copyHelper, IEnumerable<Publication_Type> entities)
+        public ulong StorePublicationTypes(PostgreSQLCopyHelper<ObjectPublicationType> copyHelper, IEnumerable<ObjectPublicationType> entities)
         {
             using (var conn = new NpgsqlConnection(pubmed_sd_connString))
             {
@@ -281,7 +281,7 @@ namespace DataHarvester.pubmed
 
         // Inserts the set of any comments records associated with each Data.
 
-        public ulong StoreComments(PostgreSQLCopyHelper<CommentCorrection> copyHelper, IEnumerable<CommentCorrection> entities)
+        public ulong StoreComments(PostgreSQLCopyHelper<ObjectCommentCorrection> copyHelper, IEnumerable<ObjectCommentCorrection> entities)
         {
             using (var conn = new NpgsqlConnection(pubmed_sd_connString))
             {
@@ -294,7 +294,7 @@ namespace DataHarvester.pubmed
         // Should inserts the set of keyword records associated with each Data.
         // Not used at the moment - see below.
 
-        public ulong StoreKeywords(PostgreSQLCopyHelper<Topic> copyHelper, IEnumerable<Topic> entities)
+        public ulong StoreObjectTopics(PostgreSQLCopyHelper<ObjectTopic> copyHelper, IEnumerable<ObjectTopic> entities)
         {
             using (var conn = new NpgsqlConnection(pubmed_sd_connString))
             {
@@ -307,11 +307,11 @@ namespace DataHarvester.pubmed
         // Because the copyhelper mechanism does not work with the topic (not clear why), 
         // topic records are inserted indidually using this procedure.
 
-        public void StoreTopic(Topic t)
+        public void StoreTopic(ObjectTopic t)
         { 
             using (var conn = new NpgsqlConnection(pubmed_sd_connString))
             {
-                conn.Insert<Topic>(t);
+                conn.Insert<ObjectTopic>(t);
                 
             }
         }

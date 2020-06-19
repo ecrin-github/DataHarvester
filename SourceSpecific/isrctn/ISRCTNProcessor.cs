@@ -10,16 +10,11 @@ namespace DataHarvester.isrctn
 	public class ISRCTNProcessor
 	{
 		URLChecker checker;
-		HtmlHelpers hhp;
-		HashHelpers hf;
 
 		public ISRCTNProcessor()
 		{
 			checker = new URLChecker(); 
-			hhp = new HtmlHelpers();
-			hf = new HashHelpers();
 		}
-
 
 		public async Task<Study> ProcessDataAsync(ISCTRN_Record fs, DateTime? download_datetime, DataLayer common_repo)
 		{
@@ -32,9 +27,9 @@ namespace DataHarvester.isrctn
 			List<StudyTopic> topics = new List<StudyTopic>();
 			List<StudyFeature> features = new List<StudyFeature>();
 			List<DataObject> data_objects = new List<DataObject>();
-			List<DataObjectTitle> object_titles = new List<DataObjectTitle>();
-			List<DataObjectDate> object_dates = new List<DataObjectDate>();
-			List<DataObjectInstance> object_instances = new List<DataObjectInstance>();
+			List<ObjectTitle> object_titles = new List<ObjectTitle>();
+			List<ObjectDate> object_dates = new List<ObjectDate>();
+			List<ObjectInstance> object_instances = new List<ObjectInstance>();
 			List<StudyLink> studylinks = new List<StudyLink>();
 
 			//List<AvailableIPD> ipd_info = new List<AvailableIPD>();
@@ -797,7 +792,7 @@ namespace DataHarvester.isrctn
 			string object_display_title = s.display_title + " :: ISRCTN registry entry";
 
 			// create hash Id for the data object
-			string sd_oid = hf.CreateMD5(sid + object_display_title);
+			string sd_oid = HashHelpers.CreateMD5(sid + object_display_title);
 
 			DataObject d = new DataObject(sd_oid, sid, object_display_title, pub_year,
 				  23, "Text", 13, "Trial Registry entry", 100126, "ISRCTN", 12, download_datetime);
@@ -806,24 +801,24 @@ namespace DataHarvester.isrctn
 			data_objects.Add(d);
 
 			// data object title is the single display title...
-			object_titles.Add(new DataObjectTitle(sd_oid, object_display_title, 
+			object_titles.Add(new ObjectTitle(sd_oid, object_display_title, 
 				                                     22, "Study short name :: object type", true));
 			if (fs.last_edited != null)
 			{
 				DateTime last_edit = (DateTime)fs.last_edited;
-				object_dates.Add(new DataObjectDate(sd_oid, 18, "Updated", 
+				object_dates.Add(new ObjectDate(sd_oid, 18, "Updated", 
 					              last_edit.Year, last_edit.Month, last_edit.Day, date_last_edited_as_string));
 			}
 
 			if (fs.date_assigned != null)
 			{
 				DateTime date_assigned = (DateTime)fs.date_assigned;
-				object_dates.Add(new DataObjectDate(sd_oid, 15, "Created",
+				object_dates.Add(new ObjectDate(sd_oid, 15, "Created",
 								  date_assigned.Year, date_assigned.Month, date_assigned.Day, date_assigned_as_string));
 			}
 
 			// instance url can be derived from the ISRCTN number
-			object_instances.Add(new DataObjectInstance(sd_oid, 100126, "ISRCTN", 
+			object_instances.Add(new ObjectInstance(sd_oid, 100126, "ISRCTN", 
 						"https://www.isrctn.com/" + sid, true, 35, "Web text"));
 
 			// is there a PIS available
@@ -851,13 +846,13 @@ namespace DataHarvester.isrctn
 					}
 
 					object_display_title = s.display_title + " :: patient information sheet";
-					sd_oid = hf.CreateMD5(sid + object_display_title);
+					sd_oid = HashHelpers.CreateMD5(sid + object_display_title);
 
 					data_objects.Add(new DataObject(sd_oid, sid, object_display_title, s.study_start_year,
 					  23, "Text", 19, "Patient information sheets", null, study_sponsor, 12, download_datetime));
-					object_titles.Add(new DataObjectTitle(sd_oid, object_display_title,
+					object_titles.Add(new ObjectTitle(sd_oid, object_display_title,
 														 22, "Study short name :: object type", true));
-					DataObjectInstance instance = new DataObjectInstance(sd_oid, null, "",
+					ObjectInstance instance = new ObjectInstance(sd_oid, null, "",
 							href, true, res_type_id, res_type);
 					instance.url_last_checked = DateTime.Today;
     				object_instances.Add(instance);
@@ -1010,14 +1005,14 @@ namespace DataHarvester.isrctn
 											}
 
 											object_display_title = s.display_title + " :: " + object_type;
-											sd_oid = hf.CreateMD5(sid + object_display_title);
+											sd_oid = HashHelpers.CreateMD5(sid + object_display_title);
 
 											data_objects.Add(new DataObject(sd_oid, sid, s.display_title + " :: " + object_type, s.study_start_year, 
 														23, "Text", object_type_id, object_type, 
 														101418, "Servier", 11, download_datetime));
-											object_titles.Add(new DataObjectTitle(sd_oid, s.display_title + " :: " + object_type,
+											object_titles.Add(new ObjectTitle(sd_oid, s.display_title + " :: " + object_type,
 														22, "Study short name :: object type", true));
-											object_instances.Add(new DataObjectInstance(sd_oid,  101418, "Servier",
+											object_instances.Add(new ObjectInstance(sd_oid,  101418, "Servier",
 													ref_item, true, res_type_id, res_type));
 
 										}
@@ -1109,13 +1104,13 @@ namespace DataHarvester.isrctn
 					}
 
 					object_display_title = i.item_name;
-					sd_oid = hf.CreateMD5(sid + object_display_title);
+					sd_oid = HashHelpers.CreateMD5(sid + object_display_title);
 
 					data_objects.Add(new DataObject(sd_oid, sid, object_display_title, s.study_start_year,
 								23, "Text", object_type_id, object_type, 100126, "ISRCTN", 11, download_datetime));
-					object_titles.Add(new DataObjectTitle(sd_oid, object_display_title,
+					object_titles.Add(new ObjectTitle(sd_oid, object_display_title,
 								20, "Unique data object title", true));
-					object_instances.Add(new DataObjectInstance(sd_oid, 100126, "ISRCTN",
+					object_instances.Add(new ObjectInstance(sd_oid, 100126, "ISRCTN",
 							link, true, res_type_id, res_type));
 					break;
 
@@ -1130,13 +1125,13 @@ namespace DataHarvester.isrctn
 				if (await checker.CheckURLAsync(fs.trial_website))
 				{
 					object_display_title = s.display_title + " :: website";
-					sd_oid = hf.CreateMD5(sid + object_display_title);
+					sd_oid = HashHelpers.CreateMD5(sid + object_display_title);
 
 					data_objects.Add(new DataObject(sd_oid, sid, object_display_title, s.study_start_year,
 							23, "Text", 134, "Website", null, study_sponsor, 12, download_datetime));
-					object_titles.Add(new DataObjectTitle(sd_oid, object_display_title, 
+					object_titles.Add(new ObjectTitle(sd_oid, object_display_title, 
 														 22, "Study short name :: object type", true));
-					DataObjectInstance instance = new DataObjectInstance(sd_oid, null, study_sponsor,
+					ObjectInstance instance = new ObjectInstance(sd_oid, null, study_sponsor,
 							fs.trial_website, true, 35, "Web text");
 					instance.url_last_checked = DateTime.Today;
 					object_instances.Add(instance);
@@ -1184,44 +1179,44 @@ namespace DataHarvester.isrctn
 
 			if (s.identifiers.Count > 0)
 			{
-				repo.StoreStudyIdentifiers(CopyHelpers.study_ids_helper,
+				repo.StoreStudyIdentifiers(StudyCopyHelpers.study_ids_helper,
 										  s.identifiers);
 			}
 
 			if (s.titles.Count > 0)
 			{
-				repo.StoreStudyTitles(CopyHelpers.study_titles_helper,
+				repo.StoreStudyTitles(StudyCopyHelpers.study_titles_helper,
 										  s.titles);
 			}
 
 			if (s.references.Count > 0)
 			{
-				repo.StoreStudyReferences(CopyHelpers.study_references_helper,
+				repo.StoreStudyReferences(StudyCopyHelpers.study_references_helper,
 										  s.references);
 			}
 
 
 			if (s.contributors.Count > 0)
 			{
-				repo.StoreStudyContributors(CopyHelpers.study_contributors_helper,
+				repo.StoreStudyContributors(StudyCopyHelpers.study_contributors_helper,
 										  s.contributors);
 			}
 
 			if (s.studylinks.Count > 0)
 			{
-				repo.StoreStudyLinks(CopyHelpers.study_links_helper,
+				repo.StoreStudyLinks(StudyCopyHelpers.study_links_helper,
 										  s.studylinks);
 			}
 
 			if (s.topics.Count > 0)
 			{
-				repo.StoreStudyTopics(CopyHelpers.study_topics_helper,
+				repo.StoreStudyTopics(StudyCopyHelpers.study_topics_helper,
 										  s.topics);
 			}
 
 			if (s.features.Count > 0)
 			{
-				repo.StoreStudyFeatures(CopyHelpers.study_features_helper,
+				repo.StoreStudyFeatures(StudyCopyHelpers.study_features_helper,
 										  s.features);
 			}
 
@@ -1231,25 +1226,25 @@ namespace DataHarvester.isrctn
 
 			if (s.data_objects.Count > 0)
 			{
-				repo.StoreDataObjects(CopyHelpers.data_objects_helper,
+				repo.StoreDataObjects(ObjectCopyHelpers.data_objects_helper,
 										  s.data_objects);
 			}
 
 			if (s.object_instances.Count > 0)
 			{
-				repo.StoreObjectInstances(CopyHelpers.object_instances_helper,
+				repo.StoreObjectInstances(ObjectCopyHelpers.object_instances_helper,
 										  s.object_instances);
 			}
 
 			if (s.object_titles.Count > 0)
 			{
-				repo.StoreObjectTitles(CopyHelpers.object_titles_helper,
+				repo.StoreObjectTitles(ObjectCopyHelpers.object_titles_helper,
 										  s.object_titles);
 			}
 
 			if (s.object_dates.Count > 0)
 			{
-				repo.StoreObjectDates(CopyHelpers.object_dates_helper,
+				repo.StoreObjectDates(ObjectCopyHelpers.object_dates_helper,
 										  s.object_dates);
 			}
 
@@ -1264,9 +1259,9 @@ namespace DataHarvester.isrctn
 		HttpClient Client = new HttpClient();
 		DateTime today = DateTime.Today;
 
-		public async Task CheckURLsAsync(List<DataObjectInstance> web_resources)
+		public async Task CheckURLsAsync(List<ObjectInstance> web_resources)
 		{
-			foreach (DataObjectInstance i in web_resources)
+			foreach (ObjectInstance i in web_resources)
 			{
 				if (i.resource_type_id == 11)  // just do the study docs for now
 				{

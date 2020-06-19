@@ -9,10 +9,10 @@ using System.Text.Json;
 
 namespace DataHarvester
 {
-	public class DateHelperFunctions
+	public static class DateHelperFunctions
 	{
 
-		SplitDate GetDateParts(string dateString)
+		public static SplitDate GetDateParts(string dateString)
 		{
 			// input date string is in the form of "<month name> day, year"
 			// or in some cases in the form "<month name> year"
@@ -68,7 +68,7 @@ namespace DataHarvester
 		}
 
 
-		string StandardiseDateFormat(string inputDate)
+		public static string StandardiseDateFormat(string inputDate)
 		{
 			SplitDate SD = GetDateParts(inputDate);
 			return SD.date_string;
@@ -76,7 +76,7 @@ namespace DataHarvester
 
 
 
-		public int GetMonthAsInt(string month_name)
+		public static int GetMonthAsInt(string month_name)
 		{
 			try
 			{

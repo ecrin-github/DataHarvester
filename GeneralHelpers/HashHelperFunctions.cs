@@ -9,10 +9,10 @@ using System.Text.Json;
 
 namespace DataHarvester
 {
-	public class HashHelpers
+	public static class HashHelpers
 	{
 		
-		public string CreateMD5(string input)
+		public static string CreateMD5(string input)
 		{
 			// Use input string to calculate MD5 hash
 			using (MD5 md5 = MD5.Create())

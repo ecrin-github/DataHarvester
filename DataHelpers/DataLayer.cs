@@ -52,11 +52,25 @@ namespace DataHarvester
 		public string Username => username;
 		public string Password => password;
 
+
+		// Inserts the base Studyobject, i.e. with all the  
+		// singleton properties, in the database.
 		public void StoreStudy(StudyInDB st_db)
 		{
 			using (var conn = new NpgsqlConnection(connString))
 			{
 				conn.Insert<StudyInDB>(st_db);
+			}
+		}
+
+
+		// Inserts the base Data object, i.e. with all the  
+		// singleton properties, in the database.
+		public void StoreDataObject(CitationObject_in_DB cdb)
+		{
+			using (var conn = new NpgsqlConnection(connString))
+			{
+				conn.Insert<CitationObject_in_DB>(cdb);
 			}
 		}
 
@@ -175,8 +189,8 @@ namespace DataHarvester
 		}
 
 
-		public ulong StoreObjectTitles(PostgreSQLCopyHelper<DataObjectTitle> copyHelper,
-						IEnumerable<DataObjectTitle> entities)
+		public ulong StoreObjectTitles(PostgreSQLCopyHelper<ObjectTitle> copyHelper,
+						IEnumerable<ObjectTitle> entities)
 		{
 			using (var conn = new NpgsqlConnection(connString))
 			{
@@ -186,8 +200,8 @@ namespace DataHarvester
 		}
 
 
-		public ulong StoreObjectDates(PostgreSQLCopyHelper<DataObjectDate> copyHelper,
-						IEnumerable<DataObjectDate> entities)
+		public ulong StoreObjectDates(PostgreSQLCopyHelper<ObjectDate> copyHelper,
+						IEnumerable<ObjectDate> entities)
 		{
 			using (var conn = new NpgsqlConnection(connString))
 			{
@@ -197,8 +211,8 @@ namespace DataHarvester
 		}
 
 
-		public ulong StoreObjectInstances(PostgreSQLCopyHelper<DataObjectInstance> copyHelper,
-						IEnumerable<DataObjectInstance> entities)
+		public ulong StoreObjectInstances(PostgreSQLCopyHelper<ObjectInstance> copyHelper,
+						IEnumerable<ObjectInstance> entities)
 		{
 			using (var conn = new NpgsqlConnection(connString))
 			{
@@ -207,12 +221,110 @@ namespace DataHarvester
 			}
 		}
 
+
+		// Inserts the set of language records associated with each Data.
+
+		public ulong StoreObjectLanguages(PostgreSQLCopyHelper<ObjectLanguage> copyHelper, IEnumerable<ObjectLanguage> entities)
+		{
+			using (var conn = new NpgsqlConnection(connString))
+			{
+				conn.Open();
+				return copyHelper.SaveAll(conn, entities);
+			}
+		}
+
+
+		// Inserts the set of description records associated with each Data.
+
+		public ulong StoreObjectDescriptions(PostgreSQLCopyHelper<ObjectDescription> copyHelper, IEnumerable<ObjectDescription> entities)
+		{
+			using (var conn = new NpgsqlConnection(connString))
+			{
+				conn.Open();
+				return copyHelper.SaveAll(conn, entities);
+			}
+		}
+
+
+
+		// Inserts the set of 'databank' accession records associated with each Data,
+		// including any linked ClinicalTrials.gov NCT numbers.
+
+		public ulong StoreObjectAcessionNumbers(PostgreSQLCopyHelper<ObjectDBAccessionNumber> copyHelper, IEnumerable<ObjectDBAccessionNumber> entities)
+		{
+			using (var conn = new NpgsqlConnection(connString))
+			{
+				conn.Open();
+				return copyHelper.SaveAll(conn, entities);
+			}
+		}
+
+
+		// Inserts the set of publication type records associated with each Data.
+
+		public ulong StorePublicationTypes(PostgreSQLCopyHelper<ObjectPublicationType> copyHelper, IEnumerable<ObjectPublicationType> entities)
+		{
+			using (var conn = new NpgsqlConnection(connString))
+			{
+				conn.Open();
+				return copyHelper.SaveAll(conn, entities);
+			}
+		}
+
+
+
+		// Inserts the set of any comments records associated with each Data.
+
+		public ulong StoreObjectComments(PostgreSQLCopyHelper<ObjectCommentCorrection> copyHelper, IEnumerable<ObjectCommentCorrection> entities)
+		{
+			using (var conn = new NpgsqlConnection(connString))
+			{
+				conn.Open();
+				return copyHelper.SaveAll(conn, entities);
+			}
+		}
+
+
+		// Inserts the set of identifiers records associated with each Data.
+
+		public ulong StoreObjectIdentifiers(PostgreSQLCopyHelper<ObjectIdentifier> copyHelper, IEnumerable<ObjectIdentifier> entities)
+		{
+			using (var conn = new NpgsqlConnection(connString))
+			{
+				conn.Open();
+				return copyHelper.SaveAll(conn, entities);
+			}
+		}
+
+
+		// Inserts the contributor (person or organisation) records for each Data.
+
+		public ulong StoreObjectContributors(PostgreSQLCopyHelper<ObjectContributor> copyHelper, IEnumerable<ObjectContributor> entities)
+		{
+			using (var conn = new NpgsqlConnection(connString))
+			{
+				conn.Open();
+				return copyHelper.SaveAll(conn, entities);
+			}
+		}
+
+		// Should inserts the set of keyword records associated with each Data.
+		// Not used at the moment - see below.
+
+		public ulong StoreObjectTopics(PostgreSQLCopyHelper<ObjectTopic> copyHelper, IEnumerable<ObjectTopic> entities)
+		{
+			using (var conn = new NpgsqlConnection(connString))
+			{
+				conn.Open();
+				return copyHelper.SaveAll(conn, entities);
+			}
+		}
 
 
 		// Stores an 'extraction note', e.g. an unusual occurence found and
 		// logged during the extraction, in the associated table.
 
-		public void StoreExtractionNote(int? pmid, int note_type, string note)
+		public void StoreExtractionNote(string pmid, int note_type, string note)
 		{
 			ExtractionNote en = new ExtractionNote(pmid, note_type, note);
 			using (var conn = new NpgsqlConnection(connString))

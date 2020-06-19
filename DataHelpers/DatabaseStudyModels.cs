@@ -47,9 +47,9 @@ namespace DataHarvester
 
 		public List<DataObject> data_objects { get; set; }
 		public List<DataSetProperties> dataset_properties { get; set; }
-		public List<DataObjectTitle> object_titles { get; set; }
-		public List<DataObjectDate> object_dates { get; set; }
-		public List<DataObjectInstance> object_instances { get; set; }
+		public List<ObjectTitle> object_titles { get; set; }
+		public List<ObjectDate> object_dates { get; set; }
+		public List<ObjectInstance> object_instances { get; set; }
 
 	}
 
@@ -172,14 +172,14 @@ namespace DataHarvester
 		public string person_family_name { get; set; }
 		public string person_full_name { get; set; }
 		public string person_identifier { get; set; }
-		public string identifier_type { get; set; }
-		public string person_affiliation { get; set; }
-		public string affil_org_id { get; set; }
-		public string affil_org_id_type { get; set; }
+		public string person_ident_srce { get; set; }
+		public string person_aff_org { get; set; }
+		public string person_aff_org_id { get; set; }
+		public string person_aff_org_id_srce { get; set; }
 
 		public StudyContributor(string _sd_sid, int? _contrib_type_id, string _contrib_type,
 								int? _organisation_id, string _organisation_name, string _person_full_name,
-								string _person_affiliation)
+								string _person_aff_org)
 		{
 			sd_sid = _sd_sid;
 			contrib_type_id = _contrib_type_id;
@@ -188,7 +188,7 @@ namespace DataHarvester
 			organisation_id = _organisation_id;
 			organisation_name = _organisation_name;
 			person_full_name = _person_full_name;
-			person_affiliation = _person_affiliation;
+			person_aff_org = _person_aff_org;
 		}
 
 		// more constructors needed here
@@ -371,12 +371,12 @@ namespace DataHarvester
 	public class ExtractionNote
 	{
 		public int id { get; set; }
-		public int? sd_id { get; set; }
+		public string sd_oid { get; set; }
 		public int note_type { get; set; }
 		public string note { get; set; }
-		public ExtractionNote(int? _sd_id, int _note_type, string _note)
+		public ExtractionNote(string _sd_oid, int _note_type, string _note)
 		{
-			sd_id = _sd_id;
+			sd_oid = _sd_oid;
 			note_type = _note_type;
 			note = _note;
 		}

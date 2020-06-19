@@ -180,7 +180,7 @@ namespace DataHarvester.ctg
 		}
 
 
-		public ulong StoreObjectTitles(PostgreSQLCopyHelper<DataObjectTitle> copyHelper, IEnumerable<DataObjectTitle> entities)
+		public ulong StoreObjectTitles(PostgreSQLCopyHelper<ObjectTitle> copyHelper, IEnumerable<ObjectTitle> entities)
 		{
 			using (var conn = new NpgsqlConnection(_connString))
 			{
@@ -191,7 +191,7 @@ namespace DataHarvester.ctg
 		}
 
 
-		public ulong StoreObjectDates(PostgreSQLCopyHelper<DataObjectDate> copyHelper, IEnumerable<DataObjectDate> entities)
+		public ulong StoreObjectDates(PostgreSQLCopyHelper<ObjectDate> copyHelper, IEnumerable<ObjectDate> entities)
 		{
 			using (var conn = new NpgsqlConnection(_connString))
 			{
@@ -202,7 +202,7 @@ namespace DataHarvester.ctg
 		}
 
 
-		public ulong StoreObjectInstances(PostgreSQLCopyHelper<DataObjectInstance> copyHelper, IEnumerable<DataObjectInstance> entities)
+		public ulong StoreObjectInstances(PostgreSQLCopyHelper<ObjectInstance> copyHelper, IEnumerable<ObjectInstance> entities)
 		{
 			using (var conn = new NpgsqlConnection(_connString))
 			{

@@ -4,19 +4,18 @@ using System.Text;
 
 namespace DataHarvester
 {
-    class IdentifierHelpers
+    public static class IdentifierHelpers
     {
 		// A helper function called from the loop that goes through the secondary Id data
 		// It tries to make the data as complete as possible, depending on the typem of 
 		// secondary id that is being processed
-		void GetIdentifierProps(object[] items, out string id_type, out string id_org,
+		public static void GetIdentifierProps(object[] items, out string id_type, out string id_org,
 								out int? id_type_id, out int? id_org_id)
 		{
 			//default values
-			StringHelpers sh = new StringHelpers();
 
 			id_type = "SecondaryIdType";
-			id_org = sh.TidyPunctuation("SecondaryIdDomain");
+			id_org = StringHelpers.TidyPunctuation("SecondaryIdDomain");
 
 			id_type_id = null;
 			id_org_id = null;

@@ -1,13 +1,14 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Reflection.Metadata.Ecma335;
 using System.Text;
 
 namespace DataHarvester
 {
-	public class StringHelpers
+	public static class StringHelpers
 	{
 
-		public string TidyName(string in_name)
+		public static string TidyName(string in_name)
 		{
 
 			string name = in_name.Replace(".", "");
@@ -34,7 +35,7 @@ namespace DataHarvester
 		}
 
 
-		public string ReplaceApos(string apos_name)
+		public static string ReplaceApos(string apos_name)
 		{
 			int apos_pos = apos_name.IndexOf("'");
 			int alen = apos_name.Length;
@@ -64,7 +65,7 @@ namespace DataHarvester
 		}
 
 
-		public string TidyPunctuation(string in_name)
+		public static string TidyPunctuation(string in_name)
 		{
 			string name = in_name;
 			if (name != null)
@@ -91,6 +92,28 @@ namespace DataHarvester
 				}
 			}
 			return name;
+		}
+
+
+		public static string TidyORCIDIdentifier(string input_identifier, string sd_oid, DataLayer repo)
+		{
+			string identifier = input_identifier.Replace("https://orcid.org/", "");
+			identifier = identifier.Replace("http://orcid.org/", "");
+			identifier = identifier.Replace("/", "-");
+			identifier = identifier.Replace(" ", "-");
+			if (identifier.Length != 19)
+			{
+				string qText = "ORCID identifier for person " + sd_oid + " is " + identifier + " and has non standard length'";
+				repo.StoreExtractionNote(sd_oid, 24, qText);
+				if (identifier.Length == 16)
+				{
+					identifier = identifier.Substring(0, 4) + "-" + identifier.Substring(4, 4) +
+								"-" + identifier.Substring(8, 4) + "-" + identifier.Substring(12, 4);
+				}
+				if (identifier.Length == 15) identifier = "0000" + identifier;
+				if (identifier.Length == 14) identifier = "0000-" + identifier;
+			}
+			return identifier;
 		}
 
 	}

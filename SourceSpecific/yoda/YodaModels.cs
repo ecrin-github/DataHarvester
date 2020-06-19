@@ -182,8 +182,8 @@ namespace DataHarvester.yoda
 		[Write(false)]
 		public List<DataObject> data_objects { get; set; }
 		[Write(false)]
-		public List<DataObjectTitle> data_object_titles { get; set; }
+		public List<ObjectTitle> data_object_titles { get; set; }
 		[Write(false)]
-		public List<DataObjectInstance> data_object_instances { get; set; }
+		public List<ObjectInstance> data_object_instances { get; set; }
 	}
 }

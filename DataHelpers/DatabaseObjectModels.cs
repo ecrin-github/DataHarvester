@@ -119,8 +119,8 @@ namespace DataHarvester
 
 	public class CitationObject
 	{
-		public int sd_id { get; set; }
-		public int? sd_id_version { get; set; }
+		public string sd_oid { get; set; }
+		public int? sd_oid_version { get; set; }
 		public string display_title { get; set; }
 		public string doi { get; set; }
 		public string status { get; set; }
@@ -132,24 +132,24 @@ namespace DataHarvester
 		public string eissn { get; set; }
 		public DateTime? datetime_of_data_fetch { get; set; }
 
-		public List<string> languages { get; set; }
-		public List<DataObjectTitle> object_titles { get; set; }
-		public List<DataObjectDescription> object_descriptions { get; set; }
-		public List<DataObjectLanguage> object_languages { get; set; }
+		public List<string> LanguageList { get; set; }
+		public List<ObjectTitle> object_titles { get; set; }
+		public List<ObjectDescription> object_descriptions { get; set; }
+		public List<ObjectLanguage> object_languages { get; set; }
 		public List<ObjectContributor> object_contributors { get; set; }
 		//public List<Person_Identifier> contrib_identifiers { get; set; }
 		//public List<Person_Affiliation> contrib_affiliations { get; set; }
-		public List<DataObjectInstance> object_instances { get; set; }
-		public List<DB_Accession_Number> accession_numbers { get; set; }
+		public List<ObjectInstance> object_instances { get; set; }
+		public List<ObjectDBAccessionNumber> accession_numbers { get; set; }
 		public List<ObjectTopic> object_topics { get; set; }
-		public List<DataObjectIdentifier> object_identifiers { get; set; }
-		public List<DataObjectDate> object_dates { get; set; }
-		public List<Publication_Type> publication_types { get; set; }
-		public List<DataObjectCommentCorrection> comments { get; set; }
+		public List<ObjectIdentifier> object_identifiers { get; set; }
+		public List<ObjectDate> object_dates { get; set; }
+		public List<ObjectPublicationType> publication_types { get; set; }
+		public List<ObjectCommentCorrection> comments { get; set; }
 	}
 
 
-	public class DataObjectTitle
+	public class ObjectTitle
 	{
 		public string sd_oid { get; set; }
 		public string title_text { get; set; }
@@ -160,7 +160,7 @@ namespace DataHarvester
 		public bool is_default { get; set; }
 		public string comments { get; set; }
 
-		public DataObjectTitle(string _sd_oid, string _title_text, 
+		public ObjectTitle(string _sd_oid, string _title_text, 
 								int _title_type_id, string _title_type, bool _is_default)
 		{
 			sd_oid = _sd_oid;
@@ -169,7 +169,7 @@ namespace DataHarvester
 			title_type = _title_type;
     	}
 
-		public DataObjectTitle(string _sd_oid, string _title_text, int? _title_type_id, string _title_type, bool _is_default, string _comments)
+		public ObjectTitle(string _sd_oid, string _title_text, int? _title_type_id, string _title_type, bool _is_default, string _comments)
 		{
 			sd_oid = _sd_oid;
 			title_text = _title_text;
@@ -179,7 +179,7 @@ namespace DataHarvester
 			comments = _comments;
 		}
 
-		public DataObjectTitle(string _sd_oid, string _title_text, int? _title_type_id, string _title_type, string _title_lang_code,
+		public ObjectTitle(string _sd_oid, string _title_text, int? _title_type_id, string _title_type, string _title_lang_code,
 							   int _lang_usage_id, bool _is_default, string _comments)
 		{
 			sd_oid = _sd_oid;
@@ -194,7 +194,7 @@ namespace DataHarvester
 	}
 
 
-	public class DataObjectInstance
+	public class ObjectInstance
 	{
 		public string sd_oid { get; set; }
 		public int? instance_type_id { get; set; }
@@ -209,7 +209,7 @@ namespace DataHarvester
 		public string resource_size { get; set; }
 		public string resource_size_units { get; set; }
 
-		public DataObjectInstance(string _sd_oid, int? _repository_org_id,
+		public ObjectInstance(string _sd_oid, int? _repository_org_id,
 					string _repository_org, string _url, bool _url_accessible,
 					int? _resource_type_id, string _resource_type)
 		{
@@ -225,7 +225,7 @@ namespace DataHarvester
 		}
 
 
-		public DataObjectInstance(string _sd_oid, int? _repository_org_id,
+		public ObjectInstance(string _sd_oid, int? _repository_org_id,
 					string _repository_org, string _url, bool _url_accessible,
 					int? _resource_type_id, string _resource_type, 
 					string _resource_size, string _resource_size_units)
@@ -244,7 +244,7 @@ namespace DataHarvester
 		}
 
 
-		public DataObjectInstance(string _sd_oid, int? _instance_type_id, string _instance_type, 
+		public ObjectInstance(string _sd_oid, int? _instance_type_id, string _instance_type, 
 			        int? _repository_org_id, string _repository_org, string _url, bool _url_accessible,
 					int? _resource_type_id, string _resource_type, string _resource_size, string _resource_size_units)
 		{
@@ -260,16 +260,43 @@ namespace DataHarvester
 			resource_size = _resource_size;
 			resource_size_units = _resource_size_units;
 		}
+
+		public ObjectInstance()
+		{ }
+	}
+
+	// (Object) Identifier class, a Data Object component
+
+	public class ObjectIdentifier
+	{
+		public string sd_oid { get; set; }
+		public int identifier_type_id { get; set; }
+		public string identifier_type { get; set; }
+		public string identifier_value { get; set; }
+		public int? identifier_org_id { get; set; }
+		public string identifier_org { get; set; }
+		public string date_applied { get; set; }
+
+		public ObjectIdentifier(string _sd_oid, int _type_id, string _type_name,
+				string _id_value, int? _org_id, string _org_name)
+		{
+			sd_oid = _sd_oid;
+			identifier_type_id = _type_id;
+			identifier_type = _type_name;
+			identifier_value = _id_value;
+			identifier_org_id = _org_id;
+			identifier_org = _org_name;
+		}
 	}
 
 
-	public class DataObjectDate
+	public class ObjectDate
 	{
 		public string sd_oid { get; set; }
 		public int date_type_id { get; set; }
 		public string date_type { get; set; }
 		public string date_as_string { get; set; }
-		public bool is_date_range { get; set; }
+		public bool date_is_range { get; set; }
 		public int? start_year { get; set; }
 		public int? start_month { get; set; }
 		public int? start_day { get; set; }
@@ -278,7 +305,17 @@ namespace DataHarvester
 		public int? end_day { get; set; }
 		public string details { get; set; }
 
-		public DataObjectDate(string _sd_oid, int _date_type_id, string _date_type,
+		public ObjectDate(string _sd_oid, int _date_type_id, string _date_type,
+									string _date_as_string, int? _start_year)
+		{
+			sd_oid = _sd_oid;
+			date_type_id = _date_type_id;
+			date_type = _date_type;
+			date_as_string = _date_as_string;
+			start_year = _start_year;
+		}
+
+		public ObjectDate(string _sd_oid, int _date_type_id, string _date_type,
 									int? _start_year, int? _start_month, int? _start_day, string _date_as_string)
 		{
 			sd_oid = _sd_oid;
@@ -290,8 +327,8 @@ namespace DataHarvester
 			date_as_string = _date_as_string;
 		}
 
-		public DataObjectDate(string _sd_oid, int _date_type_id, string _date_type,
-			                        string _date_as_string, bool _is_date_range,
+		public ObjectDate(string _sd_oid, int _date_type_id, string _date_type,
+									string _date_as_string, bool _is_date_range,
 									int? _start_year, int? _start_month, int? _start_day,
 									int? _end_year, int? _end_month, int? _end_day,
 									string _details)
@@ -300,7 +337,7 @@ namespace DataHarvester
 			date_type_id = _date_type_id;
 			date_type = _date_type;
 			date_as_string = _date_as_string;
-			is_date_range = _is_date_range;
+			date_is_range = _is_date_range;
 			start_year = _start_year;
 			start_month = _start_month;
 			start_day = _start_day;
@@ -309,84 +346,184 @@ namespace DataHarvester
 			end_day = _end_day;
 			details = _details;
 		}
+	}
 
 
-		public class DataObjectPublication_Type
+	public class ObjectPublicationType
+	{
+		public string sd_oid { get; set; }
+		public string type_name { get; set; }
+		
+		public ObjectPublicationType(string _sd_oid, string _type_name)
 		{
-			public int sd_id { get; set; }
-			public string type_name { get; set; }
-			public DataObjectPublication_Type(int _sd_id, string _type_name)
-			{
-				sd_id = _sd_id;
-				type_name = _type_name;
-			}
+			sd_oid = _sd_oid;
+			type_name = _type_name;
 		}
+	}
 
 
-		// (Object) Comment Correction class, a Data Object component
-
-		public class DataObjectCommentCorrection
-		{
-			public int sd_id { get; set; }
-			public string ref_type { get; set; }
-			public string ref_source { get; set; }
-			public string pmid { get; set; }
-			public string pmid_version { get; set; }
-			public string note { get; set; }
-		}
-
-
-		[Table("sd.object_topics")]
-		public class Topic
-		{
-			public int sd_id { get; set; }
-			public string topic { get; set; }
-			public int topic_type_id { get; set; }
-			public string topic_type { get; set; }
-			public int? ct_scheme_id { get; set; }
-			public string ct_scheme { get; set; }
-			public string ct_scheme_code { get; set; }
-			public string where_found { get; set; }
-
-		}
+	public class ObjectDescription
+	{
+		public string sd_oid { get; set; }
+		public int description_type_id { get; set; }
+		public string description_type { get; set; }
+		public string label { get; set; }
+		public string description_text { get; set; }
+		public string lang_code { get; set; }
+		public bool? contains_html { get; set; }
+	}
 
 
-		// The Object language class, essentkially just
-		// a string language code attached to the source data Id
+	// (Object) Database Accession Number class, a Data Object component
 
-		public class DataObjectLanguage
-		{
-			public int sd_id { get; set; }
-			public string lang_code { get; set; }
-			public DataObjectLanguage(int _sd_id, string _lang_code)
-			{
-				sd_id = _sd_id;
-				lang_code = _lang_code;
-			}
-		}
+	public class ObjectDBAccessionNumber
+	{
+		public string sd_oid { get; set; }
+		public int bank_id { get; set; }
+		public string bank_name { get; set; }
+		public string accession_number { get; set; }
+	}
 
-		// The class used to store data in the Data_objects table -
-		// essentially the Data Object without its repeating components.
 
-		[Table("sd.Data_objects")]
-		public class DataObject_in_DB
-		{
-			[ExplicitKey]
-			public int sd_id { get; set; }
-			public int? sd_id_version { get; set; }
-			public string display_title { get; set; }
-			public string doi { get; set; }
-			public string status { get; set; }
-			public string pub_model { get; set; }
-			public int? publication_year { get; set; }
-			public string publication_status { get; set; }
-			public string journal_title { get; set; }
-			public string pissn { get; set; }
-			public string eissn { get; set; }
-			public DateTime? datetime_of_data_fetch { get; set; }
-		}
+
+	// (Object) Comment Correction class, a Data Object component
+
+	public class ObjectCommentCorrection
+	{
+		public string sd_oid { get; set; }
+		public string ref_type { get; set; }
+		public string ref_source { get; set; }
+		public string pmid { get; set; }
+		public string pmid_version { get; set; }
+		public string note { get; set; }
+	}
+
+
+	[Table("sd.object_topics")]
+	public class ObjectTopic
+	{
+		public string sd_oid { get; set; }
+		public string topic { get; set; }
+		public int topic_type_id { get; set; }
+		public string topic_type { get; set; }
+		public int? ct_scheme_id { get; set; }
+		public string ct_scheme { get; set; }
+		public string ct_scheme_code { get; set; }
+		public string where_found { get; set; }
 
 	}
 
+	public class ObjectContributor
+	{
+		public string sd_oid { get; set; }
+		public int? contrib_type_id { get; set; }
+		public string contrib_type { get; set; }
+		public bool is_individual { get; set; }
+		public int? organisation_id { get; set; }
+		public string organisation_name { get; set; }
+		public int? person_id { get; set; }
+		public string person_given_name { get; set; }
+		public string person_family_name { get; set; }
+		public string person_full_name { get; set; }
+		public string person_identifier { get; set; }
+		public string person_ident_srce { get; set; }
+		public string person_aff_org { get; set; }
+		public string person_aff_org_id { get; set; }
+		public string person_aff_org_id_srce { get; set; }
+
+		public ObjectContributor(string _sd_oid, int? _contrib_type_id, string _contrib_type,
+								int? _organisation_id, string _organisation_name, string _person_full_name,
+								string _person_aff_org)
+		{
+			sd_oid = _sd_oid;
+			contrib_type_id = _contrib_type_id;
+			contrib_type = _contrib_type;
+			is_individual = (_person_full_name == null) ? false : true;
+			organisation_id = _organisation_id;
+			organisation_name = _organisation_name;
+			person_full_name = _person_full_name;
+			person_aff_org = _person_aff_org;
+		}
+
+		public ObjectContributor(string _sd_oid, int? _contrib_type_id, string _contrib_type,
+								string _person_given_name, string _person_family_name, string _person_full_name,
+								string _person_identifier, string _person_ident_srce,
+								string _person_aff_org, string _person_aff_org_id, string _person_aff_org_id_srce)
+		{
+			sd_oid = _sd_oid;
+			contrib_type_id = _contrib_type_id;
+			contrib_type = _contrib_type;
+			is_individual = (_person_full_name == null) ? false : true;
+			person_given_name = _person_given_name;
+			person_family_name = _person_family_name;
+			person_full_name = _person_full_name;
+			person_identifier = _person_identifier;
+			person_ident_srce = _person_ident_srce;
+			person_aff_org = _person_aff_org;
+			person_aff_org_id = _person_aff_org_id;
+			person_aff_org_id_srce = _person_aff_org_id_srce;
+		}
+	}
+
+	
+	// Person Identifier class, a Data Object component,
+	// Stored as part of the contributor record, linked by the person id
+
+	public class PersonIdentifier
+	{
+		public string sd_oid { get; set; }
+		public int person_id { get; set; }
+		public string identifier { get; set; }
+		public string identifier_source { get; set; }
+	}
+
+	// Person affiliation class, a Data Object component,
+	// Stored as part of the contributor record, linked by the person id
+
+	public class PersonAffiliation
+	{
+		public string sd_oid { get; set; }
+		public int person_id { get; set; }
+		public string affiliation { get; set; }
+		public string affil_identifier { get; set; }
+		public string affil_ident_source { get; set; }
+	}
+
+
+	// The Object language class, essentially just
+	// a string language code attached to the source data Id
+
+	public class ObjectLanguage
+	{
+		public string sd_oid { get; set; }
+		public string lang_code { get; set; }
+
+		public ObjectLanguage(string _sd_oid, string _lang_code)
+		{
+			sd_oid = _sd_oid;
+			lang_code = _lang_code;
+		}
+	}
+
+	// The class used to store data in the Data_objects table -
+	// essentially the Data Object without its repeating components.
+
+	[Table("sd.Data_objects")]
+	public class CitationObject_in_DB
+	{
+		[ExplicitKey]
+		public string sd_oid { get; set; }
+		public int? sd_id_version { get; set; }
+		public string display_title { get; set; }
+		public string doi { get; set; }
+		public string status { get; set; }
+		public string pub_model { get; set; }
+		public int? publication_year { get; set; }
+		public string publication_status { get; set; }
+		public string journal_title { get; set; }
+		public string pissn { get; set; }
+		public string eissn { get; set; }
+		public DateTime? datetime_of_data_fetch { get; set; }
+	}
 
 }

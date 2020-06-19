@@ -8,14 +8,6 @@ namespace DataHarvester.ctg
 {
 	public class CTGProcessor
 	{
-		HtmlHelpers hhp;
-		HashHelpers hf;
-
-		public CTGProcessor()
-		{
-			hhp = new HtmlHelpers();
-			hf = new HashHelpers();
-		}
 
 		public Study ProcessData(FullStudy fs, DateTime? download_datetime, DataLayer common_repo)
 		{
@@ -31,9 +23,9 @@ namespace DataHarvester.ctg
 			List<StudyRelationship> relationships = new List<StudyRelationship>();
 
 			List<DataObject> data_objects = new List<DataObject>();
-			List<DataObjectTitle> object_titles = new List<DataObjectTitle>();
-			List<DataObjectDate> object_dates = new List<DataObjectDate>();
-			List<DataObjectInstance> object_instances = new List<DataObjectInstance>();
+			List<ObjectTitle> object_titles = new List<ObjectTitle>();
+			List<ObjectDate> object_dates = new List<ObjectDate>();
+			List<ObjectInstance> object_instances = new List<ObjectInstance>();
 
 			string sid = null;
 			string submissionDate = null;
@@ -785,7 +777,7 @@ namespace DataHarvester.ctg
 			string object_display_title = title_base + " :: CTG Registry entry";
 
 			// create hash Id for the data object
-			string sd_oid = hf.CreateMD5(sid + object_display_title);
+			string sd_oid = HashHelpers.CreateMD5(sid + object_display_title);
 
 			int object_type_id = 13, object_class_id = 23;
 
@@ -794,23 +786,23 @@ namespace DataHarvester.ctg
 								"ClinicalTrials.gov", 12, download_datetime));
 
 			// add in title
-			object_titles.Add(new DataObjectTitle(sd_oid, object_display_title, title_type_id, title_type, true));
+			object_titles.Add(new ObjectTitle(sd_oid, object_display_title, title_type_id, title_type, true));
 
 			// add in dates
 			if (firstpost != null)
 			{
-				object_dates.Add(new DataObjectDate(sd_oid, 12, "Available",
+				object_dates.Add(new ObjectDate(sd_oid, 12, "Available",
 										firstpost.year, firstpost.month, firstpost.day, firstpost.date_string));
 			}
 			if (updatepost != null)
 			{
-				object_dates.Add(new DataObjectDate(sd_oid, 18, "Updated",
+				object_dates.Add(new ObjectDate(sd_oid, 18, "Updated",
 										updatepost.year, updatepost.month, updatepost.day, updatepost.date_string));
 			}
 
 			// add in instance
 			url = "https://clinicaltrials.gov/ct2/show/study/" + sid;
-			object_instances.Add(new DataObjectInstance(sd_oid, 100120, "ClinicalTrials.gov", url, true, 
+			object_instances.Add(new ObjectInstance(sd_oid, 100120, "ClinicalTrials.gov", url, true, 
 				                      39, "Web text with XML or JSON via API"));
 
 
@@ -818,31 +810,31 @@ namespace DataHarvester.ctg
 			if (resultspost != null && results_data_present)
 			{
 				object_display_title = title_base + " :: CTG Results entry";
-				sd_oid = hf.CreateMD5(sid + object_display_title);
+				sd_oid = HashHelpers.CreateMD5(sid + object_display_title);
 
 				data_objects.Add(new DataObject(sd_oid, sid, object_display_title, resultspost.year,
 									23, "Text", 28, "Trial registry results summary", 100120, 
 									"ClinicalTrials.gov", 12, download_datetime));
 
 				// add in title
-				object_titles.Add(new DataObjectTitle(sid, object_display_title,
+				object_titles.Add(new ObjectTitle(sid, object_display_title,
 								title_type_id, title_type, true));
 
 				// add in dates
 				if (resultspost != null)
 				{
-					object_dates.Add(new DataObjectDate(sd_oid, 12, "Available",
+					object_dates.Add(new ObjectDate(sd_oid, 12, "Available",
 											resultspost.year, resultspost.month, resultspost.day, resultspost.date_string));
 				}
 				if (updatepost != null)
 				{
-					object_dates.Add(new DataObjectDate(sd_oid, 18, "Updated",
+					object_dates.Add(new ObjectDate(sd_oid, 18, "Updated",
 											updatepost.year, updatepost.month, updatepost.day, updatepost.date_string));
 				}
 
 				// add in instance
 				url = "https://clinicaltrials.gov/ct2/show/results/" + sid;
-				object_instances.Add(new DataObjectInstance(sd_oid, 100120, "ClinicalTrials.gov", url, true, 
+				object_instances.Add(new ObjectInstance(sd_oid, 100120, "ClinicalTrials.gov", url, true, 
 					                               39, "Web text with XML or JSON via API"));
 
 			}
@@ -921,20 +913,20 @@ namespace DataHarvester.ctg
 								}
 
 								object_display_title = title_base + " :: " + object_type;
-								sd_oid = hf.CreateMD5(sid + object_display_title);
+								sd_oid = HashHelpers.CreateMD5(sid + object_display_title);
 
 								data_objects.Add(new DataObject(sd_oid, sid, object_display_title, docdate.year,
 								23, "Text", object_type_id, object_type, 100120,
 								"ClinicalTrials.gov", 11, download_datetime));
 
 								// add in title
-								object_titles.Add(new DataObjectTitle(sd_oid, object_display_title,
+								object_titles.Add(new ObjectTitle(sd_oid, object_display_title,
 								title_type_id, title_type, true));
 
 								// add in dates
 								if (docdate != null)
 								{
-									object_dates.Add(new DataObjectDate(sd_oid, 15, "Created",
+									object_dates.Add(new ObjectDate(sd_oid, 15, "Created",
 										docdate.year, docdate.month, docdate.day, docdate.date_string));
 								}
 
@@ -942,14 +934,14 @@ namespace DataHarvester.ctg
 								{
 									if (DateTime.TryParseExact(upload_date, "MM/dd/yyyy HH:mm", null, DateTimeStyles.None, out DateTime uploaddate))
 									{
-										object_dates.Add(new DataObjectDate(sd_oid, 12, "Available",
+										object_dates.Add(new ObjectDate(sd_oid, 12, "Available",
 																uploaddate.Year, uploaddate.Month, uploaddate.Day, uploaddate.ToString("yyyy MMM dd")));
 									}
 								}
 
 								// add in instance
 								url = "https://clinicaltrials.gov/ProvidedDocs/" + sid.Substring(sid.Length - 2, 2) + "/" + sid + "/" + file_name;
-								object_instances.Add(new DataObjectInstance(sd_oid, 100120, "ClinicalTrials.gov", url, true, 11, "PDF"));
+								object_instances.Add(new ObjectInstance(sd_oid, 100120, "ClinicalTrials.gov", url, true, 11, "PDF"));
 
 							}
 						}
@@ -1092,7 +1084,7 @@ namespace DataHarvester.ctg
 									}
 
 									object_display_title = t_base + " :: " + object_type;
-									sd_oid = hf.CreateMD5(sid + object_display_title);
+									sd_oid = HashHelpers.CreateMD5(sid + object_display_title);
 
 									// add data object
 									data_objects.Add(new DataObject(sd_oid, sid, object_display_title, null,
@@ -1102,7 +1094,7 @@ namespace DataHarvester.ctg
 									null, download_datetime));
 
 									// add in title
-									object_titles.Add(new DataObjectTitle(sd_oid, object_display_title,
+									object_titles.Add(new ObjectTitle(sd_oid, object_display_title,
 									title_type_id, title_type, true));
 								}
 
@@ -1148,7 +1140,7 @@ namespace DataHarvester.ctg
 
 									// no name provided (in general)
 									object_display_title = title_base + " :: " + object_type;
-  						     		sd_oid = hf.CreateMD5(sid + object_display_title);
+  						     		sd_oid = HashHelpers.CreateMD5(sid + object_display_title);
 
 									data_objects.Add(new DataObject(sd_oid, sid, object_display_title, null,
 									object_class_id, object_class, object_type_id, object_type, 101418, "Servier",
@@ -1157,7 +1149,7 @@ namespace DataHarvester.ctg
 
 									// add in title
    								    title_type_id = 22; title_type = "Study short name :: object type";
-									object_titles.Add(new DataObjectTitle(sd_oid, object_display_title,
+									object_titles.Add(new ObjectTitle(sd_oid, object_display_title,
 									title_type_id, title_type, true));
 
 								}
@@ -1178,7 +1170,7 @@ namespace DataHarvester.ctg
 
 										// disregard the other entries - as they lead nowhere
 										object_display_title = title_base + " :: " + object_type;
-										sd_oid = hf.CreateMD5(sid + object_display_title);
+										sd_oid = HashHelpers.CreateMD5(sid + object_display_title);
 
 										data_objects.Add(new DataObject(sd_oid, sid, object_display_title, null,
 										object_class_id, object_class, object_type_id, object_type, 
@@ -1186,11 +1178,11 @@ namespace DataHarvester.ctg
 
 										// add in title
 										title_type_id = 22; title_type = "Study short name :: object type";
-										object_titles.Add(new DataObjectTitle(sd_oid, object_display_title,
+										object_titles.Add(new ObjectTitle(sd_oid, object_display_title,
 										title_type_id, title_type, true));
 										
 										// add in instance
-										object_instances.Add(new DataObjectInstance(sd_oid, 4, "Summary version", 100165, 
+										object_instances.Add(new ObjectInstance(sd_oid, 4, "Summary version", 100165, 
 													"Merck Sharp & Dohme Corp.", ipd_url, true, 11, "PDF", null, null));
 
 									}
@@ -1251,7 +1243,7 @@ namespace DataHarvester.ctg
 
 										// disregard the other entries - as they lead nowhere
 										object_display_title = title_base + " :: " + object_type;
-										sd_oid = hf.CreateMD5(sid + object_display_title);
+										sd_oid = HashHelpers.CreateMD5(sid + object_display_title);
 
 										data_objects.Add(new DataObject(sid, sd_oid, object_display_title, null,
 										object_class_id, object_class, object_type_id, object_type, 100360, 
@@ -1259,11 +1251,11 @@ namespace DataHarvester.ctg
 
 										// add in title
 										title_type_id = 22; title_type = "Study short name :: object type";
-										object_titles.Add(new DataObjectTitle(sd_oid, object_display_title,
+										object_titles.Add(new ObjectTitle(sd_oid, object_display_title,
 										title_type_id, title_type, true));
 
 										// add in instance
-										object_instances.Add(new DataObjectInstance(sd_oid, 100360, "National Institutes of Health Clinical Center",
+										object_instances.Add(new ObjectInstance(sd_oid, 100360, "National Institutes of Health Clinical Center",
 													link_url, true, 35, "Web text"));
 
 										add_to_db = false;
@@ -1338,7 +1330,7 @@ namespace DataHarvester.ctg
 										{
 											object_class_id = 23; object_class = "Text";
 											object_display_title = title_base + " :: " + object_type;
-											sd_oid = hf.CreateMD5(sid + object_display_title);
+											sd_oid = HashHelpers.CreateMD5(sid + object_display_title);
 
 											DataObject doc_object = new DataObject(sid, sd_oid, object_display_title, null,
 											23, "Text", object_type_id, object_type, null, sponsor_name, 11, download_datetime);
@@ -1348,11 +1340,11 @@ namespace DataHarvester.ctg
 
 											// add in title
 											title_type_id = 22; title_type = "Study short name :: object type";
-											object_titles.Add(new DataObjectTitle(sd_oid, object_display_title,
+											object_titles.Add(new ObjectTitle(sd_oid, object_display_title,
 											title_type_id, title_type, true));
 
 											// add in instance
-											object_instances.Add(new DataObjectInstance(sd_oid, instance_type_id, instance_type, 
+											object_instances.Add(new ObjectInstance(sd_oid, instance_type_id, instance_type, 
 												101419, "TrialScope Disclose", link_url, true, 11, "PDF", null, null));
 
 											add_to_db = false;
@@ -2285,9 +2277,9 @@ namespace DataHarvester.ctg
 		HttpClient Client = new HttpClient();
 		DateTime today = DateTime.Today;
 
-		public async Task CheckURLsAsync(List<DataObjectInstance> web_resources)
+		public async Task CheckURLsAsync(List<ObjectInstance> web_resources)
 		{
-			foreach (DataObjectInstance i in web_resources)
+			foreach (ObjectInstance i in web_resources)
 			{
 				if (i.resource_type_id == 11)  // just do the study docs for now
 				{

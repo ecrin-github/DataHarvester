@@ -9,9 +9,9 @@ using System.Text.Json;
 
 namespace DataHarvester
 {
-	public class HtmlHelpers
+	public static class HtmlHelpers
 	{
-		public string replace_tags(string input_string)
+		public static string replace_tags(string input_string)
 		{
 			string output_string = input_string;
 			while (output_string.Contains("<div"))
@@ -84,7 +84,7 @@ namespace DataHarvester
 		}
 
 
-		private char ChangeToSupUnicode(char a)
+		private static char ChangeToSupUnicode(char a)
 		{
 			char unicode = a;
 			switch (a)
@@ -110,7 +110,7 @@ namespace DataHarvester
 			return unicode;
 		}
 
-		private char ChangeToSubUnicode(char a)
+		private static char ChangeToSubUnicode(char a)
 		{
 			char unicode = a;
 			switch (a)
@@ -147,7 +147,7 @@ namespace DataHarvester
 			return unicode;
 		}
 
-		public bool check_for_tags(string input_string)
+		public static bool check_for_tags(string input_string)
 		{
 			if (input_string.Contains("<b>") || input_string.Contains("<i>") || input_string.Contains("<em>") ||
 				input_string.Contains("<u>") || input_string.Contains("<b>") || input_string.Contains("<b>") ||
@@ -163,7 +163,7 @@ namespace DataHarvester
 		}
 
 
-		public string strip_tags(string input_string)
+		public static string strip_tags(string input_string)
 		{
 			string output_string = input_string.Replace("<ol>", "").Replace("<ul>", "").Replace("</ol>", "").Replace("</ul>", "");
 			output_string = output_string.Replace("<li>", "* ").Replace("</li>", "");

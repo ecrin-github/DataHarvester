@@ -35,20 +35,20 @@ namespace DataHarvester.pubmed
 
             int total_number = (int)pubmed_repo.Get_pmid_record_count();
             int i = 0;
-            int number_of_loops_needed = (total_number / 10000) + 1;
+            int number_of_loops_needed = (total_number / ((int) source.grouping_range_by_id)) + 1;
 
 
             for (int loop = 0; loop < number_of_loops_needed; loop++)
             {
                 //if (loop > 1) break; // when testing...
 
-                IEnumerable<FileEntry> file_records = pubmed_repo.Get_pmid_records(loop);
+                IEnumerable<ObjectFileRecord> file_records = pubmed_repo.Get_pmid_records(loop);
 
-                foreach (FileEntry fe in file_records)
+                foreach (ObjectFileRecord fe in file_records)
                 {
                     //if (i > 1000) break; // when testing...
 
-                    int pmid = fe.sd_id;
+                    string pmid = fe.sd_id;
                     string fileName = fe.local_path; 
 
                     if (File.Exists(fileName))
@@ -63,8 +63,8 @@ namespace DataHarvester.pubmed
                             XmlDocument xdoc = new XmlDocument();
                             xdoc.Load(fileName);
 
-                            DataObject c = processor.ProcessData(common_repo, pmid, xdoc);
-                            processor.StoreData(helpers, common_repo, c);
+                            CitationObject c = processor.ProcessData(common_repo, pmid, xdoc);
+                            processor.StoreData(common_repo, c);
                             i++;
 
                             pubmed_repo.UpdateFileRecord(fe.id);

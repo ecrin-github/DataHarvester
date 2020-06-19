@@ -4,10 +4,10 @@ using System.Text;
 
 namespace DataHarvester.GeneralHelpers
 {
-	public class TypeHelpers
+	public static class TypeHelpers
 	{
 
-		int? GetStatusId(string study_status)
+		public static int? GetStatusId(string study_status)
 		{
 			int? type_id = null;
 			switch (study_status.ToLower())
@@ -29,7 +29,7 @@ namespace DataHarvester.GeneralHelpers
 			return type_id;
 		}
 
-		int? GetTypeId(string study_type)
+		public static int? GetTypeId(string study_type)
 		{
 			int? type_id = null;
 			switch (study_type.ToLower())
@@ -44,7 +44,7 @@ namespace DataHarvester.GeneralHelpers
 			return type_id;
 		}
 
-		int? GetGenderEligId(string gender_elig)
+		public static int? GetGenderEligId(string gender_elig)
 		{
 			int? type_id = null;
 			switch (gender_elig.ToLower())
@@ -57,7 +57,7 @@ namespace DataHarvester.GeneralHelpers
 			return type_id;
 		}
 
-		int? GetTimeUnitsId(string time_units)
+		public static int? GetTimeUnitsId(string time_units)
 		{
 			int? type_id = null;
 			switch (time_units.ToLower())
@@ -74,7 +74,7 @@ namespace DataHarvester.GeneralHelpers
 			return type_id;
 		}
 
-		int? GetPhaseId(string phase)
+		public static int? GetPhaseId(string phase)
 		{
 			int? type_id = null;
 			switch (phase.ToLower())
@@ -93,7 +93,7 @@ namespace DataHarvester.GeneralHelpers
 			return type_id;
 		}
 
-		int? GetPrimaryPurposeId(string primary_purpose)
+		public static int? GetPrimaryPurposeId(string primary_purpose)
 		{
 			int? type_id = null;
 			switch (primary_purpose.ToLower())
@@ -113,7 +113,7 @@ namespace DataHarvester.GeneralHelpers
 			return type_id;
 		}
 
-		int? GetAllocationTypeId(string allocation_type)
+		public static int? GetAllocationTypeId(string allocation_type)
 		{
 			int? type_id = null;
 			switch (allocation_type.ToLower())
@@ -126,7 +126,7 @@ namespace DataHarvester.GeneralHelpers
 			return type_id;
 		}
 
-		int? GetDesignTypeId(string design_type)
+		public static int? GetDesignTypeId(string design_type)
 		{
 			int? type_id = null;
 			switch (design_type.ToLower())
@@ -141,7 +141,7 @@ namespace DataHarvester.GeneralHelpers
 			return type_id;
 		}
 
-		int? GetMaskingTypeId(string masking_type)
+		public static int? GetMaskingTypeId(string masking_type)
 		{
 			int? type_id = null;
 			switch (masking_type.ToLower())
@@ -156,7 +156,7 @@ namespace DataHarvester.GeneralHelpers
 			return type_id;
 		}
 
-		int? GetObsModelTypeId(string obsmodel_type)
+		public static int? GetObsModelTypeId(string obsmodel_type)
 		{
 			int? type_id = null;
 			switch (obsmodel_type.ToLower())
@@ -176,7 +176,7 @@ namespace DataHarvester.GeneralHelpers
 			return type_id;
 		}
 
-		int? GetTimePerspectiveId(string time_perspective)
+		public static int? GetTimePerspectiveId(string time_perspective)
 		{
 			int? type_id = null;
 			switch (time_perspective.ToLower())
@@ -192,7 +192,7 @@ namespace DataHarvester.GeneralHelpers
 			return type_id;
 		}
 
-		int? GetSpecimentRetentionId(string specimen_retention)
+		public static int? GetSpecimentRetentionId(string specimen_retention)
 		{
 			int? type_id = null;
 			switch (specimen_retention.ToLower())

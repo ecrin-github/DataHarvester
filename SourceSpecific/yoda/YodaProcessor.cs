@@ -6,15 +6,6 @@ namespace DataHarvester.yoda
 {
     public class YodaProcessor
 	{
-		HtmlHelpers hhp;
-		HashHelpers hf;
-
-		public YodaProcessor()
-		{
-			hhp = new HtmlHelpers();
-			hf = new HashHelpers();
-		}
-
 
 		public Study ProcessData(YodaRecord st, DateTime? download_datetime)
 		{
@@ -32,8 +23,8 @@ namespace DataHarvester.yoda
 
 			List<DataObject> data_objects = new List<DataObject>();
 			List<DataSetProperties> dataset_properties = new List<DataSetProperties>();
-			List<DataObjectTitle> data_object_titles = new List<DataObjectTitle>();
-			List<DataObjectInstance> data_object_instances = new List<DataObjectInstance>();
+			List<ObjectTitle> data_object_titles = new List<ObjectTitle>();
+			List<ObjectInstance> data_object_instances = new List<ObjectInstance>();
 
 			string access_details = "The YODA Project will require that requestors provide basic information about the Principal Investigator, Key Personnel, and the ";
 			access_details += "project Research Proposal, including a scientific abstract and research methods.The YODA Project will review proposals to ensure that: ";
@@ -49,8 +40,8 @@ namespace DataHarvester.yoda
 
 			if (st.display_title.Contains("<"))
 			{
-				s.display_title = hhp.replace_tags(st.display_title);
-				s.display_title = hhp.strip_tags(s.display_title);
+				s.display_title = HtmlHelpers.replace_tags(st.display_title);
+				s.display_title = HtmlHelpers.strip_tags(s.display_title);
 			}
 			else
 			{
@@ -225,13 +216,13 @@ namespace DataHarvester.yoda
 			string object_display_title = name_base + " :: " + "Yoda web page";
 
 			// create hash Id for the data object
-			string sd_oid = hf.CreateMD5(sid + object_display_title);
+			string sd_oid = HashHelpers.CreateMD5(sid + object_display_title);
 
 			data_objects.Add(new DataObject(sd_oid, sid, object_display_title, null, 23, "Text", 38, "Study Overview",
 			                  101901, "Yoda", 12, download_datetime));
-			data_object_titles.Add(new DataObjectTitle(sd_oid, object_display_title, 22,
+			data_object_titles.Add(new ObjectTitle(sd_oid, object_display_title, 22,
 							"Study short name :: object type", true));
-			data_object_instances.Add(new DataObjectInstance(sd_oid, 101901, "Yoda",
+			data_object_instances.Add(new ObjectInstance(sd_oid, 101901, "Yoda",
 								st.remote_url, true, 35, "Web text"));
 
 			// then for each supp doc...
@@ -304,13 +295,13 @@ namespace DataHarvester.yoda
 					}
 
 					object_display_title = name_base + " :: " + object_type;
-					sd_oid = hf.CreateMD5(sid + object_display_title);
+					sd_oid = HashHelpers.CreateMD5(sid + object_display_title);
 
 					if (sd.comment == "Available now")
 					{
 						data_objects.Add(new DataObject(sd_oid, sid, object_display_title, null, object_class_id, object_class, object_type_id, object_type,
 										101901, "Yoda", 11, download_datetime));
-						data_object_titles.Add(new DataObjectTitle(sd_oid, object_display_title, 22,"Study short name :: object type", true));
+						data_object_titles.Add(new ObjectTitle(sd_oid, object_display_title, 22,"Study short name :: object type", true));
 
 						// create instance as resource exists
 						// get file type from link if possible
@@ -330,14 +321,14 @@ namespace DataHarvester.yoda
 							resource_type_id = 0;
 							resource_type = "Not yet known";
 						}
-						data_object_instances.Add(new DataObjectInstance(sd_oid, 101901, "Yoda", sd.url, true, resource_type_id, resource_type));
+						data_object_instances.Add(new ObjectInstance(sd_oid, 101901, "Yoda", sd.url, true, resource_type_id, resource_type));
 					}
 					else
 					{
 						data_objects.Add(new DataObject(sd_oid, sid, object_display_title, null, object_class_id, object_class, object_type_id, object_type,
 										101901, "Yoda", 17, "Case by case download", access_details,
 										"https://yoda.yale.edu/how-request-data", new DateTime(2020, 05, 15), download_datetime));
-						data_object_titles.Add(new DataObjectTitle(sd_oid, object_display_title, 22, "Study short name :: object type", true));
+						data_object_titles.Add(new ObjectTitle(sd_oid, object_display_title, 22, "Study short name :: object type", true));
 					}
 
 					// for datasets also add dataset properties - even if they are largely unknown
@@ -376,31 +367,31 @@ namespace DataHarvester.yoda
 			// store study attributes
 			if (s.identifiers.Count > 0)
 			{
-				repo.StoreStudyIdentifiers(CopyHelpers.study_ids_helper,
+				repo.StoreStudyIdentifiers(StudyCopyHelpers.study_ids_helper,
 										  s.identifiers);
 			}
 
 			if (s.titles.Count > 0)
 			{
-				repo.StoreStudyTitles(CopyHelpers.study_titles_helper,
+				repo.StoreStudyTitles(StudyCopyHelpers.study_titles_helper,
 										  s.titles);
 			}
 
 			if (s.references.Count > 0)
 			{
-				repo.StoreStudyReferences(CopyHelpers.study_references_helper,
+				repo.StoreStudyReferences(StudyCopyHelpers.study_references_helper,
 										  s.references);
 			}
 
 			if (s.contributors.Count > 0)
 			{
-				repo.StoreStudyContributors(CopyHelpers.study_contributors_helper, 
+				repo.StoreStudyContributors(StudyCopyHelpers.study_contributors_helper, 
 										  s.contributors);
 			}
 
 			if (s.topics.Count > 0)
 			{
-				repo.StoreStudyTopics(CopyHelpers.study_topics_helper,
+				repo.StoreStudyTopics(StudyCopyHelpers.study_topics_helper,
 										  s.topics);
 			}
 
@@ -408,26 +399,26 @@ namespace DataHarvester.yoda
 			// store data objects and dataset properties
 			if (s.data_objects.Count > 0)
 			{
-				repo.StoreDataObjects(CopyHelpers.data_objects_helper,
+				repo.StoreDataObjects(ObjectCopyHelpers.data_objects_helper,
 										 s.data_objects);
 			}
 
 			if (s.dataset_properties.Count > 0)
 			{
-				repo.StoreDatasetProperties(CopyHelpers.dataset_properties_helper,
+				repo.StoreDatasetProperties(ObjectCopyHelpers.dataset_properties_helper,
 										 s.dataset_properties);
 			}
 
 			// store data object attributes
 			if (s.object_instances.Count > 0)
 			{
-				repo.StoreObjectInstances(CopyHelpers.object_instances_helper,
+				repo.StoreObjectInstances(ObjectCopyHelpers.object_instances_helper,
 										 s.object_instances);
 			}
 
 			if (s.object_titles.Count > 0)
 			{
-				repo.StoreObjectTitles(CopyHelpers.object_titles_helper,
+				repo.StoreObjectTitles(ObjectCopyHelpers.object_titles_helper,
 										 s.object_titles);
 			}
 		}
