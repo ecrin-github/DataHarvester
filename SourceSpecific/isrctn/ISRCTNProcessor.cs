@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Globalization;
+using System.Linq;
 using System.Net.Http;
 using System.Runtime.Serialization;
 using System.Threading.Tasks;
@@ -9,11 +10,11 @@ namespace DataHarvester.isrctn
 {
 	public class ISRCTNProcessor
 	{
-		URLChecker checker;
+		//URLChecker checker;
 
 		public ISRCTNProcessor()
 		{
-			checker = new URLChecker(); 
+			//checker = new URLChecker(); 
 		}
 
 		public async Task<Study> ProcessDataAsync(ISCTRN_Record fs, DateTime? download_datetime, DataLayer common_repo)
@@ -26,11 +27,13 @@ namespace DataHarvester.isrctn
 			List<StudyReference> references = new List<StudyReference>();
 			List<StudyTopic> topics = new List<StudyTopic>();
 			List<StudyFeature> features = new List<StudyFeature>();
+			List<StudyLink> studylinks = new List<StudyLink>();
+
 			List<DataObject> data_objects = new List<DataObject>();
 			List<ObjectTitle> object_titles = new List<ObjectTitle>();
 			List<ObjectDate> object_dates = new List<ObjectDate>();
 			List<ObjectInstance> object_instances = new List<ObjectInstance>();
-			List<StudyLink> studylinks = new List<StudyLink>();
+			
 
 			//List<AvailableIPD> ipd_info = new List<AvailableIPD>();
 			//List<StudyRelationship> relationships = new List<StudyRelationship>();
@@ -334,7 +337,45 @@ namespace DataHarvester.isrctn
 					{
 						case "Protocol/serial number":
 							{
-								identifiers.Add(new StudyIdentifier(sid, i.item_value, 14, "Sponsor ID", 0, study_sponsor, null, null));
+								IdentifierDetails idd;
+								if (i.item_value.Contains(";"))
+								{
+									string[] items = i.item_value.Split(";");
+									foreach (string item in items)
+									{
+										string item2 = item.Trim();
+										idd = IdentifierHelpers.GetISRCTNIdentifierProps(item2, study_sponsor);
+										if (idd.id_type != "Protocol version")
+										{
+											identifiers.Add(new StudyIdentifier(sid, idd.id_value, idd.id_type_id, idd.id_type, 
+												                                   idd.id_org_id, idd.id_org, null, null));
+										}
+									}
+								}
+								else if(i.item_value.Contains(",") && 
+									(i.item_value.ToLower().Contains("iras") || i.item_value.ToLower().Contains("hta")))
+								{
+									string[] items = i.item_value.Split(",");
+									foreach (string item in items)
+									{
+										string item2 = item.Trim();
+										idd = IdentifierHelpers.GetISRCTNIdentifierProps(item2, study_sponsor);
+										if (idd.id_type != "Protocol version")
+										{
+											identifiers.Add(new StudyIdentifier(sid, idd.id_value, idd.id_type_id, idd.id_type,
+																				   idd.id_org_id, idd.id_org, null, null));
+										}
+									}
+								}
+								else
+								{
+									idd = IdentifierHelpers.GetISRCTNIdentifierProps(i.item_value, study_sponsor);
+									if (idd.id_type != "Protocol version")
+									{
+										identifiers.Add(new StudyIdentifier(sid, idd.id_value, idd.id_type_id, idd.id_type, 
+											                                idd.id_org_id, idd.id_org, null, null));
+									}
+								}
 								break;
 							}
 						case "ClinicalTrials.gov number":
@@ -830,7 +871,7 @@ namespace DataHarvester.isrctn
 				string href = PIS_details.Substring(ref_start, ref_end - ref_start);
 
 				// first check link does not provide a 404
-				if (await checker.CheckURLAsync(href))
+				if (await HtmlHelpers.CheckURLAsync(href))
 				{
 					int res_type_id = 35;
 					string res_type = "Web text";
@@ -1122,7 +1163,7 @@ namespace DataHarvester.isrctn
 			if (!string.IsNullOrEmpty(fs.trial_website))
 			{
 				// first check website link does not provide a 404
-				if (await checker.CheckURLAsync(fs.trial_website))
+				if (await HtmlHelpers.CheckURLAsync(fs.trial_website))
 				{
 					object_display_title = s.display_title + " :: website";
 					sd_oid = HashHelpers.CreateMD5(sid + object_display_title);
@@ -1139,14 +1180,23 @@ namespace DataHarvester.isrctn
 			}
 
 
+			// Check brief description and 
+			// data sharing statement for html
+			// after getting rid of any sup / subs, divs and spans.
+
+			s.brief_description = HtmlHelpers.replace_tags(s.brief_description);
+			s.bd_contains_html = HtmlHelpers.check_for_tags(s.brief_description);
+
+			s.data_sharing_statement = HtmlHelpers.replace_tags(s.data_sharing_statement);
+			s.dss_contains_html = HtmlHelpers.check_for_tags(s.data_sharing_statement);
+
+
 			s.identifiers = identifiers;
 			s.titles = titles;
 			s.contributors = contributors;
 			s.references = references;
-			//s.ipd_info = ipd_info;
 			s.topics = topics;
 			s.features = features;
-			//s.relationships = relationships;
 			s.studylinks = studylinks;
 
 			s.data_objects = data_objects;
@@ -1253,7 +1303,7 @@ namespace DataHarvester.isrctn
 	}
 
 
-	
+	/*
 	public class URLChecker
 	{
 		HttpClient Client = new HttpClient();
@@ -1302,5 +1352,6 @@ namespace DataHarvester.isrctn
 			}
 		}
 	}
+	*/
 
 }

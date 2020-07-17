@@ -23,8 +23,6 @@ namespace DataHarvester.isrctn
 
 		public async Task LoopThroughFilesAsync()
 		{
-			URLChecker checker = new URLChecker();
-
 			// Get the folder base from the appsettings file
 			// and construct a list of the files 
 			// N.B. (only one folder for all files) 
@@ -40,7 +38,7 @@ namespace DataHarvester.isrctn
 			{
 				n++;
 				// for testing...
-				//if (n == 100) break;
+				// if (n == 100) break;
 
 				filePath = rec.local_path;
 				if (File.Exists(filePath))

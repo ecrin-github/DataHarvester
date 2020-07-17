@@ -15,6 +15,11 @@ namespace DataHarvester
 	{
 		public static string replace_tags(string input_string)
 		{
+			if (input_string == null)
+            {
+				return null;
+            }
+
 			string output_string = input_string;
 			while (output_string.Contains("<div"))
 			{
@@ -151,10 +156,17 @@ namespace DataHarvester
 
 		public static bool check_for_tags(string input_string)
 		{
-			if (input_string.Contains("<b>") || input_string.Contains("<i>") || input_string.Contains("<em>") ||
-				input_string.Contains("<u>") || input_string.Contains("<b>") || input_string.Contains("<b>") ||
-				input_string.Contains("<p>") || input_string.Contains("<li>") || input_string.Contains("<strong>")
-				|| input_string.Contains("<a>"))
+			if (input_string == null)
+			{
+				return false;
+			}
+			
+			// Check for exit tags as initial tags may have additional attributes.
+
+			if (input_string.Contains("</b>") || input_string.Contains("</i>") || input_string.Contains("</em>") ||
+				input_string.Contains("</u>") || input_string.Contains("<br>") || input_string.Contains("<br/>") ||
+				input_string.Contains("</p>") || input_string.Contains("</li>") || input_string.Contains("</strong>")
+				|| input_string.Contains("</a>") )
 			{
 				return true;
 			}
@@ -174,6 +186,7 @@ namespace DataHarvester
 			output_string = output_string.Replace("<p>", "").Replace("</p>", "");
 			return output_string;
 		}
+
 
 		public static async Task CheckURLsAsync(List<ObjectInstance> web_resources)
 		{

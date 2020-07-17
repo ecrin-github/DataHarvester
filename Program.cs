@@ -43,66 +43,72 @@ namespace DataHarvester
 
 			// Create sd tables. 
 			// (Some sources may be data objects only.)
-
-			SDBuilder sdb = new SDBuilder(repo.ConnString, source);
-			if (source.has_study_tables)
+			if (harvest_type_id != 0)
 			{
-				sdb.DeleteSDStudyTables();
-				sdb.BuildNewSDStudyTables();
-			}
-			sdb.DeleteSDObjectTables();
-			sdb.BuildNewSDObjectTables();
+				// harvest_type_id = 0 means do not change the tables or data
+				// simply update the org ids in some tables and redo the hashes
 
-			switch (source.id)
-			{
-				case 101900:
-					{
-						BioLinccController c = new BioLinccController(source, repo, logging_repo);
-						c.GetInitialIDData();
-						c.LoopThroughFiles();
-						break;
-					}
-				case 101901:
-					{
-						YodaController c = new YodaController(source, repo, logging_repo);
-						c.LoopThroughFiles();
-						break;
-					}
-				case 100120:
-					{
-						CTGController c = new CTGController(source, repo, logging_repo);
-						await c.LoopThroughFilesAsync();
-						break;
-					}
-				case 100123:
-					{
-						EUCTRController c = new EUCTRController(source, repo, logging_repo);
-						await c.LoopThroughFilesAsync();
-						break;
-					}
-				case 100126:
-					{
-						ISRCTNController c = new ISRCTNController(source, repo, logging_repo);
-						await c.LoopThroughFilesAsync();
-						break;
-					}
-				case 100115:
-					{
-						WHOController c = new WHOController(source, repo, logging_repo);
-						await c.LoopThroughFilesAsync();
-						break;
-					}
-				case 100135:
-					{
-						PubmedController c = new PubmedController(source, repo, logging_repo);
-						await c.LoopThroughFilesAsync();
-						break;;
-					}
+				SDBuilder sdb = new SDBuilder(repo.ConnString, source);
+				if (source.has_study_tables)
+				{
+					sdb.DeleteSDStudyTables();
+					sdb.BuildNewSDStudyTables();
+				}
+				sdb.DeleteSDObjectTables();
+				sdb.BuildNewSDObjectTables();
+
+				switch (source.id)
+				{
+					case 101900:
+						{
+							BioLinccController c = new BioLinccController(source, repo, logging_repo);
+							c.GetInitialIDData();
+							c.LoopThroughFiles();
+							break;
+						}
+					case 101901:
+						{
+							YodaController c = new YodaController(source, repo, logging_repo);
+							c.LoopThroughFiles();
+							break;
+						}
+					case 100120:
+						{
+							CTGController c = new CTGController(source, repo, logging_repo);
+							await c.LoopThroughFilesAsync();
+							break;
+						}
+					case 100123:
+						{
+							EUCTRController c = new EUCTRController(source, repo, logging_repo);
+							await c.LoopThroughFilesAsync();
+							break;
+						}
+					case 100126:
+						{
+							ISRCTNController c = new ISRCTNController(source, repo, logging_repo);
+							await c.LoopThroughFilesAsync();
+							break;
+						}
+					case 100115:
+						{
+							WHOController c = new WHOController(source, repo, logging_repo);
+							await c.LoopThroughFilesAsync();
+							break;
+						}
+					case 100135:
+						{
+							PubmedController c = new PubmedController(source, repo, logging_repo);
+							await c.LoopThroughFilesAsync();
+							break; ;
+						}
+				}
 			}
 
 			HashBuilder hb = new HashBuilder(repo.ConnString, source);
 			hb.EstablishContextForeignTables(repo.Username, repo.Password);
 			hb.UpdateStudyIdentifierOrgs();
+			hb.UpdateStudyContributorOrgs();
 			hb.UpdateDataObjectOrgs();
 			hb.DropContextForeignTables();
 
@@ -157,9 +163,10 @@ namespace DataHarvester
 					WriteLine("The second argument, if present, must be an integer (default settinmg will be used)");
 					harvest_type_arg = source_parameters.default_harvest_type_id;
 				}
-				if (harvest_type_arg != 1 && harvest_type_arg != 2 && harvest_type_arg != 3)
+				if (harvest_type_arg != 0 && harvest_type_arg != 1 
+					&& harvest_type_arg != 2 && harvest_type_arg != 3)
 				{
-					WriteLine("Sorry - the second argument, if present, must be 1, 2, or 3 (default settinmg will be used)");
+					WriteLine("Sorry - the second argument, if present, must be 0, 1, 2, or 3 (default setting will be used)");
 					harvest_type_arg = source_parameters.default_harvest_type_id;
 				}
 				return harvest_type_arg;

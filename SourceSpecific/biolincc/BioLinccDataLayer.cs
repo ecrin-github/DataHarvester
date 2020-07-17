@@ -13,8 +13,6 @@ namespace DataHarvester.biolincc
 	{
 		private string bio_connString;
 		private string ctg_connString;
-		private Source source;
-
 
 		/// <summary>
 		/// Parameterless constructor is used to automatically build

@@ -197,12 +197,13 @@ namespace DataHarvester.ctg
 							string id_link = FieldValue(sec_items, "SecondaryIdLink");
 							if (org_study_id == null || id_value.Trim().ToLower() != org_study_id.Trim().ToLower())
 							{
-								IdentifierHelpers.GetIdentifierProps(sec_items, out string id_type, out string id_org,
-											out int? id_type_id, out int? id_org_id);
+								string identifier_type = FieldValue(sec_items, "SecondaryIdType");
+								string identifier_org = FieldValue(sec_items, "SecondaryIdDomain");
+								IdentifierDetails idd = IdentifierHelpers.GetIdentifierProps(identifier_type, identifier_org, id_value);
 
 								// add the secondary identifier
-								identifiers.Add(new StudyIdentifier(sid, id_value, id_type_id, id_type,
-																id_org_id, id_org, null, id_link));
+								identifiers.Add(new StudyIdentifier(sid, idd.id_value, idd.id_type_id, idd.id_type,
+																idd.id_org_id, idd.id_org, null, id_link));
 							}
 						}
 					}

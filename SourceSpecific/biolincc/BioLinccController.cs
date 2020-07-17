@@ -26,10 +26,12 @@ namespace DataHarvester.biolincc
 
 		public void GetInitialIDData()
 		{
-			// Construct a list of the files 
-			// Rather than using a file base, it is possible
-			// to use the sf records to get a list of files
-			// and local paths...
+			// Preliminary processing of data
+			// Allows trials that equate to more than one NCT registry tro be identified
+			// Allows groups of Biolinnc trials that equate to a single NCT registry to be identified
+
+			// Construct a list of the files using the sf records to get a list of files
+			// the sf records to get a list of files and local paths...
 
 			IEnumerable<FileRecord> file_list = logging_repo.FetchStudyFileRecords(source.id);
 			int n = 0; string filePath = "";
@@ -48,6 +50,8 @@ namespace DataHarvester.biolincc
 					XmlSerializer serializer = new XmlSerializer(typeof(BioLinccRecord));
 					StringReader rdr = new StringReader(inputString);
 					BioLinccRecord studyRegEntry = (BioLinccRecord)serializer.Deserialize(rdr);
+
+					// processing here focuses on the listed secondary identifiers...
 					identity_processor.ProcessData(studyRegEntry, common_repo);
 				}
 
@@ -61,10 +65,8 @@ namespace DataHarvester.biolincc
 
 		public void LoopThroughFiles()
 		{
-			// Construct a list of the files 
-			// Rather than using a file base, it is possible
-			// to use the sf records to get a list of files
-			// and local paths...
+			// Construct a list of the files using the sf records to get a list of files
+			// the sf records to get a list of files and local paths...
 
 			IEnumerable<FileRecord> file_list = logging_repo.FetchStudyFileRecords(source.id);
 			int n = 0; string filePath = "";

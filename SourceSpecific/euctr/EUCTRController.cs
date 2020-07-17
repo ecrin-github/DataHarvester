@@ -44,26 +44,39 @@ namespace DataHarvester.euctr
 					using (var streamReader = new StreamReader(filePath, System.Text.Encoding.UTF8))
 					{
 						inputString += streamReader.ReadToEnd();
+
+						// at least one file has this odd ('start of text') character, 
+						// which throws an error in the deserialisation process
+						inputString = inputString.Replace("&#x2;", "");
 					}
 
-					XmlSerializer serializer = new XmlSerializer(typeof(EUCTR_Record));
-					StringReader rdr = new StringReader(inputString);
-					EUCTR_Record studyRegEntry = (EUCTR_Record)serializer.Deserialize(rdr);
+					try
+					{
+						XmlSerializer serializer = new XmlSerializer(typeof(EUCTR_Record));
+						StringReader rdr = new StringReader(inputString);
+						EUCTR_Record studyRegEntry = (EUCTR_Record)serializer.Deserialize(rdr);
 
-					// break up the file into relevant data classes
-					Study s = await processor.ProcessDataAsync(studyRegEntry, rec.download_datetime, common_repo);
+						// break up the file into relevant data classes
+						Study s = await processor.ProcessDataAsync(studyRegEntry, rec.download_datetime, common_repo);
 
-					// check and store data object links - just pdfs for now
-					// (commented out for the moment to save time during extraction).
-					await HtmlHelpers.CheckURLsAsync(s.object_instances);
+						// check and store data object links - just pdfs for now
+						// (commented out for the moment to save time during extraction).
+						await HtmlHelpers.CheckURLsAsync(s.object_instances);
 
-					// store the data in the database
-					processor.StoreData(common_repo, s); 
+						// store the data in the database
+						processor.StoreData(common_repo, s);
+					}
+
+					catch (Exception e)
+					{
+						Console.WriteLine(n.ToString() + ": " + e.Message);
+					}
 
 				}
 
 				if (n % 10 == 0) Console.WriteLine(n.ToString());
 			}
+
 		}
 	}
 }

@@ -87,7 +87,13 @@ namespace DataHarvester.euctr
 
 			// contributor - sponsor
 			string study_sponsor = fs.sponsor_name;
-			contributors.Add(new StudyContributor(sid, 54, "Trial Sponsor", null, study_sponsor, null, null));
+			string sponsor = study_sponsor.ToLower();
+			if (!string.IsNullOrEmpty(sponsor) && sponsor.Length > 1
+				&& sponsor != "na" && sponsor != "n/a" && sponsor != "no" && sponsor != "dr"
+				&& sponsor != "none" && sponsor != "no profit" && sponsor != "no sponsor" && !sponsor.StartsWith("no fund"))
+			{
+				contributors.Add(new StudyContributor(sid, 54, "Trial Sponsor", null, study_sponsor, null, null));
+			}
 			
 			// may get funders or other supporting orgs
 			if (fs.sponsors.Count > 0)
@@ -103,7 +109,13 @@ namespace DataHarvester.euctr
 								if (i.item_values[0].value != study_sponsor)
 								{
 									string funder = i.item_values[0].value;
-									contributors.Add(new StudyContributor(sid, 58, "Study Funder", null, funder, null, null));
+									string fund = funder.ToLower();
+									if (!string.IsNullOrEmpty(fund) && fund.Length > 1
+				                    && fund != "na" && fund != "n/a" && fund != "no" && fund != "dr"
+				                    && fund != "none" && fund != "no profit" && fund != "no sponsor" && !fund.StartsWith("no fund"))
+									{
+										contributors.Add(new StudyContributor(sid, 58, "Study Funder", null, funder, null, null));
+									}
 								}
 								break;
 							}
@@ -123,7 +135,17 @@ namespace DataHarvester.euctr
 			identifiers.Add(new StudyIdentifier(sid, fs.eudract_id, 11, "Trial Registry ID", 100123, "EU Clinical Trials Register", null, null));
 
 			// do the sponsor's id
-			identifiers.Add(new StudyIdentifier(sid, fs.sponsor_id, 14, "Sponsor ID", null, study_sponsor, null, null));
+			if (!string.IsNullOrEmpty(fs.sponsor_id))
+			{
+				if (!string.IsNullOrEmpty(study_sponsor))
+				{
+					identifiers.Add(new StudyIdentifier(sid, fs.sponsor_id, 14, "Sponsor ID", null, study_sponsor, null, null));
+				}
+				else
+				{
+					identifiers.Add(new StudyIdentifier(sid, fs.sponsor_id, 14, "Sponsor ID", 12, "No organisation name provided in source data" , null, null));
+				}
+			}
 
 
 			// identifier section actually seems to have titles
@@ -136,27 +158,45 @@ namespace DataHarvester.euctr
 						case "A.3":
 							{
 								// may be multiple
-								foreach(item_value n in i.item_values)
+								string st_name = "";
+								foreach (item_value n in i.item_values)
 								{
-									titles.Add(new StudyTitle(sid, n.value, 16, "Trial Registry title", false));
+									st_name = n.value.Trim().ToLower();
+									if (st_name != null && st_name.Length >= 4 && st_name != "n.a." && st_name != "none" &&
+										!st_name.StartsWith("see ") && !st_name.StartsWith("not avail") &&
+										!st_name.StartsWith("not applic") && !st_name.StartsWith("non applic") && !st_name.StartsWith("non aplic") &&
+										!st_name.StartsWith("no applic") && !st_name.StartsWith("no aplic") && !st_name.StartsWith("not aplic") &&
+										st_name != "not done" && st_name != "same as above" && st_name != "in preparation" &&
+										!st_name.StartsWith("non dispo") && st_name != "non fornito")
+									{
+										titles.Add(new StudyTitle(sid, n.value, 16, "Trial Registry title", false));
+									}
 								}
 								break;
 							}
 						case "A.3.1":
 							{
 								// may be multiple
-								int k = 0;
+								int k = 0; string st_name = "";
 								foreach (item_value n in i.item_values)
 								{
-									k++;
-									if (k==1)
+									st_name = n.value.Trim().ToLower();
+									if (st_name != null && st_name.Length >= 4 && st_name != "n.a." && st_name != "none" &&
+										!st_name.StartsWith("see ") && !st_name.StartsWith("not avail") &&
+										!st_name.StartsWith("not applic") && !st_name.StartsWith("non applic") && !st_name.StartsWith("non aplic") &&
+										!st_name.StartsWith("no applic") && !st_name.StartsWith("no aplic") && !st_name.StartsWith("not aplic") &&
+										st_name != "not done" && st_name != "same as above" && st_name != "in preparation" &&
+										!st_name.StartsWith("non dispo") && st_name != "non fornito")
 									{
-										titles.Add(new StudyTitle(sid, n.value, 15, "Public title", true));
-										s.display_title = n.value;
-									}
-									else
-									{
-										titles.Add(new StudyTitle(sid, n.value, 15, "Public title", false));
+										k++;
+										if (k == 1)
+										{
+											titles.Add(new StudyTitle(sid, n.value, 15, "Public title", true));
+										}
+										else
+										{
+											titles.Add(new StudyTitle(sid, n.value, 15, "Public title", false));
+										}
 									}
 								}
 								break;
@@ -164,8 +204,10 @@ namespace DataHarvester.euctr
 						case "A.3.2":
 							{
 								string topic_name = i.item_values[0].value;
-								string name = topic_name.ToLower();
-								if (!name.StartsWith("not ") && name != "n/a" && name != "na" && name != "-" && name != "--")
+								string name = topic_name.Trim().ToLower();
+								if (!name.StartsWith("not ") && !name.StartsWith("non ") && name.Length > 2 &&
+									name != "n/a" && name != "n.a." && name != "none" && !name.StartsWith("no ap")
+									&& !name.StartsWith("no av"))
 								{
 									titles.Add(new StudyTitle(sid, topic_name, 14, "Acronym or Abbreviation", false));
 								}
@@ -206,6 +248,16 @@ namespace DataHarvester.euctr
 								}
 								break;
 							}
+						case "A.5.3":
+							{
+								// identifier: WHO UTN Number
+								if (i.item_values[0].value.ToLower().StartsWith("u1111"))
+								{
+									identifiers.Add(new StudyIdentifier(sid, i.item_values[0].value, 11, "Trial Registry ID",
+										100115, "International Clinical Trials Registry Platform", null, null));
+								}
+								break;
+							}
 						default:
 							{
 								studylinks.Add(new
@@ -217,17 +269,18 @@ namespace DataHarvester.euctr
 			}
 
 			// ensure a default and display title
-			bool default_title_exists = false;
+			bool display_title_exists = false;
 			for (int k = 0; k < titles.Count; k++)
 			{
 				if (titles[k].is_default)
 				{
-					default_title_exists = true;
+					s.display_title = titles[k].title_text;
+					display_title_exists = true;
 					break;
 				}
 			}
 
-			if (!default_title_exists)
+			if (!display_title_exists)
 			{
 				// use a scientific title - should always be one
 				for (int k = 0; k < titles.Count; k++)
@@ -236,13 +289,32 @@ namespace DataHarvester.euctr
 					{
 						titles[k].is_default = true;
 						s.display_title = titles[k].title_text;
+						display_title_exists = true;
+						break;
+					}
+				}
+			}
+
+			if (!display_title_exists)
+			{
+				// use an acronym
+				for (int k = 0; k < titles.Count; k++)
+				{
+					if (titles[k].title_type_id == 14)
+					{
+						titles[k].is_default = true;
+						s.display_title = titles[k].title_text;
+						display_title_exists = true;
 						break;
 					}
 				}
 			}
 
 			// add in an explanatory message... if no title
-			
+			if (!display_title_exists)
+			{
+				s.display_title = sid + " (No meaningful title provided)";
+			}
 
 			// study design info
 			if (fs.features.Count > 0)
@@ -263,43 +335,55 @@ namespace DataHarvester.euctr
 						case "E.2.1":
 							{
 								// primary objectives
-								string objectives;
-								if (i.item_values[0].value.StartsWith("Primary"))
+								string objectives = "";
+								string obs = i.item_values[0].value;
+								if (obs != null && obs.Length >= 4 &&
+									!obs.StartsWith("see ") && !obs.StartsWith("not ") )
 								{
-									objectives = i.item_values[0].value;
-								}
-								else
-								{
-									objectives = "Primary objectives: " + i.item_values[0].value;
+									char[] charsToLose = {'\n', '\r', ' '};
+									obs.Trim(charsToLose);
+									if (obs.StartsWith("Primary") && obs.Length > 16)
+									{
+										objectives = obs;
+									}
+									else
+									{
+										objectives = "Primary objectives: " + obs;
+									}
 								}
 								s.brief_description = objectives;
 								break;
 							}
-						//case "E.5.1":
-						//	{
-						//		// primary end points
+                        case "E.5.1":
+                            {
+                                // primary end points
+                                string end_points = "";
+								string points = i.item_values[0].value;
+								if (points != null && points.Length >= 4 &&
+									!points.StartsWith("see ") && !points.StartsWith("not "))
+								{
+									if (points.StartsWith("Primary") && points.Length > 16)
+									{
+										end_points = points;
+									}
+									else
+									{
+										end_points = "Primary endpoints: " + points;
+									}
+								}
 
-						//		string end_points;
-						//		if (i.item_values[0].value.StartsWith("Primary"))
-						//		{
-						//			end_points = i.item_values[0].value;
-						//		}
-						//		else
-						//		{
-						//			end_points = "Primary endpoints: " + i.item_values[0].value;
-						//		}
-						//		if (string.IsNullOrEmpty(s.brief_description))
-						//		{
-						//			s.brief_description = end_points;
-						//		}
-						//		else
-						//		{
-						//			s.brief_description += " ";
-						//			s.brief_description += end_points;
-						//		}
-						//		break;
-						//	}
-						case "E.7.1":
+                                if (string.IsNullOrEmpty(s.brief_description))
+                                {
+                                    s.brief_description = end_points;
+                                }
+                                else
+                                {
+                                    s.brief_description += " " + end_points;
+                                }
+                                break;
+
+                            }
+                        case "E.7.1":
 							{
 								// Phase 1
 								features.Add(new StudyFeature(sid, 20, "phase", 110, "Phase 1"));
@@ -685,6 +769,13 @@ namespace DataHarvester.euctr
 				object_instances.Add(new ObjectInstance(sd_oid,  100123, "EU Clinical Trials Register",
 							fs.results_url, true, 36, "Web text with download"));
 			}
+
+
+			// Check brief description for html
+			// after getting rid of any sup / subs, divs and spans.
+
+			s.brief_description = HtmlHelpers.replace_tags(s.brief_description);
+			s.bd_contains_html = HtmlHelpers.check_for_tags(s.brief_description);
 
 			s.identifiers = identifiers;
 			s.titles = titles;
