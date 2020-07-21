@@ -57,51 +57,56 @@ namespace DataHarvester
 				sdb.DeleteSDObjectTables();
 				sdb.BuildNewSDObjectTables();
 
-				switch (source.id)
+				if (source.id < 100120 || (source.id > 100120 && source.id < 100123)
+					|| (source.id > 100123 && source.id < 100126)
+					|| (source.id > 100126 && source.id < 100133)
+					|| (source.id == 101989))
 				{
-					case 101900:
-						{
-							BioLinccController c = new BioLinccController(source, repo, logging_repo);
-							c.GetInitialIDData();
-							c.LoopThroughFiles();
-							break;
-						}
-					case 101901:
-						{
-							YodaController c = new YodaController(source, repo, logging_repo);
-							c.LoopThroughFiles();
-							break;
-						}
-					case 100120:
-						{
-							CTGController c = new CTGController(source, repo, logging_repo);
-							await c.LoopThroughFilesAsync();
-							break;
-						}
-					case 100123:
-						{
-							EUCTRController c = new EUCTRController(source, repo, logging_repo);
-							await c.LoopThroughFilesAsync();
-							break;
-						}
-					case 100126:
-						{
-							ISRCTNController c = new ISRCTNController(source, repo, logging_repo);
-							await c.LoopThroughFilesAsync();
-							break;
-						}
-					case 100115:
-						{
-							WHOController c = new WHOController(source, repo, logging_repo);
-							await c.LoopThroughFilesAsync();
-							break;
-						}
-					case 100135:
-						{
-							PubmedController c = new PubmedController(source, repo, logging_repo);
-							await c.LoopThroughFilesAsync();
-							break; ;
-						}
+					WHOController c = new WHOController(source, repo, logging_repo);
+					await c.LoopThroughFilesAsync();
+				}
+				else
+				{
+					switch (source.id)
+					{
+						case 101900:
+							{
+								BioLinccController c = new BioLinccController(source, repo, logging_repo);
+								c.GetInitialIDData();
+								c.LoopThroughFiles();
+								break;
+							}
+						case 101901:
+							{
+								YodaController c = new YodaController(source, repo, logging_repo);
+								c.LoopThroughFiles();
+								break;
+							}
+						case 100120:
+							{
+								CTGController c = new CTGController(source, repo, logging_repo);
+								await c.LoopThroughFilesAsync();
+								break;
+							}
+						case 100123:
+							{
+								EUCTRController c = new EUCTRController(source, repo, logging_repo);
+								await c.LoopThroughFilesAsync();
+								break;
+							}
+						case 100126:
+							{
+								ISRCTNController c = new ISRCTNController(source, repo, logging_repo);
+								await c.LoopThroughFilesAsync();
+								break;
+							}
+						case 100135:
+							{
+								PubmedController c = new PubmedController(source, repo, logging_repo);
+								await c.LoopThroughFilesAsync();
+								break; ;
+							}
+					}
 				}
 			}
 

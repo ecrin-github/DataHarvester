@@ -6,140 +6,128 @@ namespace DataHarvester.who
 {
 	public class WHORecord
 	{
-		public int id { get; set; }
-		public string sd_id { get; set; }
+		public int source_id { get; set; }
+		public string record_date { get; set; }
+		public string sd_sid { get; set; }
+		public string public_title { get; set; }
+		public string scientific_title { get; set; }
 		public string remote_url { get; set; }
-		public string display_title { get; set; }
-		public string acronym { get; set; }
-		public int? study_type_id { get; set; }
+		public string public_contact_givenname { get; set; }
+		public string public_contact_familyname { get; set; }
+		public string public_contact_email { get; set; }
+		public string public_contact_affiliation { get; set; }
+		public string scientific_contact_givenname { get; set; }
+		public string scientific_contact_familyname { get; set; }
+		public string scientific_contact_email { get; set; }
+		public string scientific_contact_affiliation { get; set; }
 		public string study_type { get; set; }
-		public string brief_description { get; set; }
-		public string study_period { get; set; }
-		public string date_prepared { get; set; }
-		public DateTime? page_prepared_date { get; set; }
-		public string last_updated { get; set; }
-		public DateTime? last_revised_date { get; set; }
-		public int publication_year { get; set; }
-		public string study_website { get; set; }
-		public int num_clinical_trial_urls { get; set; }
-		public int num_primary_pub_urls { get; set; }
-		public int num_associated_papers { get; set; }
-		public string resources_available { get; set; }
-		public int dataset_consent_type_id { get; set; }
-		public string dataset_consent_type { get; set; }
-		public string dataset_consent_restrictions { get; set; }
+		public string date_registration { get; set; }
+		public string date_enrollement { get; set; }
+		public string target_size { get; set; }
+		public string study_status { get; set; }
+		public string primary_sponsor { get; set; }
+		public string secondary_sponsors { get; set; }
+		public string source_support { get; set; }
+		public string interventions { get; set; }
+		public string agemin { get; set; }
+		public string agemin_units { get; set; }
+		public string agemax { get; set; }
+		public string agemax_units { get; set; }
+		public string gender { get; set; }
+		public string inclusion_criteria { get; set; }
+		public string exclusion_criteria { get; set; }
+		public string primary_outcome { get; set; }
+		public string secondary_outcomes { get; set; }
+		public string bridging_flag { get; set; }
+		public string bridged_type { get; set; }
+		public string childs { get; set; }
+		public string type_enrolment { get; set; }
+		public string retrospective_flag { get; set; }
+		public string results_actual_enrollment { get; set; }
+		public string results_url_link { get; set; }
+		public string results_summary { get; set; }
+		public string results_date_posted { get; set; }
+		public string results_date_first_publication { get; set; }
+		public string results_url_protocol { get; set; }
+		public string ipd_plan { get; set; }
+		public string ipd_description { get; set; }
+		public string results_date_completed { get; set; }
+		public string results_yes_no { get; set; }
+		public string folder_name { get; set; }
 
-		public List<StudyPrimaryDoc> primary_docs { get; set; }
-		public List<RegistryId> registry_ids { get; set; }
-		public List<StudyAssocDoc> assoc_docs { get; set; }
+		public string design_string { get; set; }
+		public string phase_string { get; set; }
 
+		public List<string> country_list { get; set; }
+		public List<Secondary_Id> secondary_ids { get; set; }
+		public List<StudyFeature> study_features { get; set; }
+		public List<StudyCondition> condition_list { get; set; }
+	}
 
-		public WHORecord(int _id)
+	public class Secondary_Id
+	{
+		public string source_field { get; set; }
+		public string sec_id { get; set; }
+		public string processed_id { get; set; }
+		public int? sec_id_source { get; set; }
+		public bool ShouldSerializesec_id_source()
 		{
-			id = _id;
+			return sec_id_source.HasValue;
 		}
 
-		public WHORecord()
-		{ }
-
-	}
-
-
-
-	public class Link
-	{
-		public string attribute { get; set; }
-		public string url { get; set; }
-
-		public Link(string _attribute, string _url)
+		public Secondary_Id(string _source_field, string _sec_id,
+							string _processed_id, int? _sec_id_source)
 		{
-			attribute = _attribute;
-			url = _url;
-		}
-	}
-
-	public class DataRestrictDetails
-	{
-		public int? org_id { get; set; }
-		public string org_name { get; set; }
-	}
-
-	public class ObjectTypeDetails
-	{
-		public int? type_id { get; set; }
-		public string type_name { get; set; }
-	}
-
-
-	public class SponsorDetails
-	{
-		public int? org_id { get; set; }
-		public string org_name { get; set; }
-	}
-
-	public class RegistryId
-	{
-		public string url { get; set; }
-		public string nct_id { get; set; }
-		public string comment { get; set; }
-
-		public RegistryId(string _url, string _nctid, string _comment)
-		{
-			url = _url;
-			nct_id = _nctid;
-			comment = _comment;
+			source_field = _source_field;
+			sec_id = _sec_id;
+			processed_id = _processed_id;
+			sec_id_source = _sec_id_source;
 		}
 
-		public RegistryId()
+		public Secondary_Id()
 		{ }
 	}
 
-	public class StudyPrimaryDoc
+	public class StudyFeature
 	{
-		public int study_id { get; set; }
-		public string sd_id { get; set; }
-		public string acronym { get; set; }
-		public string url { get; set; }
-		public string pubmed_id { get; set; }
-		public string comment { get; set; }
+		public int ftype_id { get; set; }
+		public string ftype { get; set; }
+		public int fvalue_id { get; set; }
+		public string fvalue { get; set; }
 
-		public StudyPrimaryDoc(int _study_id, string _sd_id, string _acronym,
-								string _url, string _pubmed_id, string _comment)
+		public StudyFeature(int _ftype_id, string _ftype,
+							int _fvalue_id, string _fvalue)
 		{
-			study_id = _study_id;
-			sd_id = _sd_id;
-			acronym = _acronym;
-			url = _url;
-			pubmed_id = _pubmed_id;
-			comment = _comment;
+			ftype_id = _ftype_id;
+			ftype = _ftype;
+			fvalue_id = _fvalue_id;
+			fvalue = _fvalue;
 		}
 
-		public StudyPrimaryDoc()
+		public StudyFeature()
 		{ }
 	}
 
-	public class StudyAssocDoc
+	public class StudyCondition
 	{
-		public int study_id { get; set; }
-		public string sd_id { get; set; }
-		public string acronym { get; set; }
-		public string link_id { get; set; }
-		public string pubmed_id { get; set; }
-		public string pmc_id { get; set; }
-		public string title { get; set; }
-		public string display_title { get; set; }
-		public string journal { get; set; }
-		public string pub_date { get; set; }
+		public string condition { get; set; }
+		public string code { get; set; }
+		public string code_system { get; set; }
 
-		public StudyAssocDoc(int _study_id, string _sd_id, string _acronym, string _link_id)
+		public StudyCondition(string _condition)
 		{
-			study_id = _study_id;
-			sd_id = _sd_id;
-			acronym = _acronym;
-			link_id = _link_id;
+			condition = _condition;
 		}
 
-		public StudyAssocDoc()
+		public StudyCondition(string _condition,
+							   string _code, string _code_system)
+		{
+			condition = _condition;
+			code = _code;
+			code_system = _code_system;
+		}
+
+		public StudyCondition()
 		{ }
 	}
 

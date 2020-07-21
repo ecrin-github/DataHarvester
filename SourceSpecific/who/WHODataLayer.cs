@@ -54,48 +54,6 @@ namespace DataHarvester.who
 		}
 
 
-		public void CreateMultNCTsTable()
-		{
-			string sql_string = @"Drop table if exists pp.multiple_ncts;
-             create table pp.multiple_ncts as 
-			select si.sd_sid, si.identifier_value
-			from sd.study_identifiers si inner join
-			    (select sd_sid, count(identifier_value)
-			     from sd.study_identifiers
-			     where identifier_org_id = 100120
-			     group by sd_sid
-			     having count(identifier_value) > 1) mults
-             on si.sd_sid = mults.sd_sid
-			 where si.identifier_org_id = 100120;";
-
-			using (var conn = new NpgsqlConnection(bio_connString))
-			{
-				conn.Execute(sql_string);
-			}
-		}
-
-
-		public void CreateMultHBLIsTable()
-		{
-
-			string sql_string = @"Drop table if exists pp.multiple_hlbis;
-            create table pp.multiple_hlbis as
-			select si.sd_sid, si.identifier_value 
-			from sd.study_identifiers si inner join
-			   (select identifier_value, count(sd_sid)
-			    from sd.study_identifiers
-			    where identifier_org_id = 100120
-			    group by identifier_value
-			    having count(sd_sid) > 1) ncts
-			on si.identifier_value = ncts.identifier_value;";
-
-			using (var conn = new NpgsqlConnection(bio_connString))
-			{
-				conn.Execute(sql_string);
-			}
-		}
-
-
 		public bool InMultipleHBLIGroup(string sid)
         {
 			string sql_string = @"select sd_sid from pp.multiple_hlbis 
