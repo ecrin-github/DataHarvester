@@ -69,6 +69,48 @@ namespace DataHarvester
 		}
 
 
+        public static SplitDate GetDatePartsFromISOString(string dateString)
+        {
+            // input date string, if present, is in the form of "yyyy-mm-dd"
+            if (dateString == null) return null;
+
+            string year_string, month_string, day_string;
+            int? year_num, month_num, day_num;
+
+            year_string = dateString.Substring(0, 4);
+            month_string = dateString.Substring(5, 2);
+            day_string = dateString.Substring(8, 2);
+
+            // convert strings into integers
+            if (int.TryParse(year_string, out int y)) year_num = y; else year_num = null;
+            if (int.TryParse(month_string, out int m)) month_num = m; else month_num = null;
+            if (int.TryParse(day_string, out int d)) day_num = d; else day_num = null;
+            string month_as3 = ((Months3)month_num).ToString();
+
+            // get date as string
+            string date_as_string;
+            if (year_num != null && month_num != null && day_num != null)
+            {
+                date_as_string = year_num.ToString() + " " + month_as3 + " " + day_num.ToString();
+            }
+            else if (year_num != null && month_num != null && day_num == null)
+            {
+                date_as_string = year_num.ToString() + ' ' + month_as3;
+            }
+            else if (year_num != null && month_num == null && day_num == null)
+            {
+                date_as_string = year_num.ToString();
+            }
+            else
+            {
+                date_as_string = null;
+            }
+
+            return new SplitDate(year_num, month_num, day_num, date_as_string);
+        }
+
+
+
         // ProcessDate takes the standard composite date element as an input, extracts the various constituent
         // parts, and returns an ObjectDate classs, which also indicates if the date was partial, and which includes
         // a standardised string repreesentation as well as Y, M, D integer components.

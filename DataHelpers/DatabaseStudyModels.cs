@@ -255,7 +255,7 @@ namespace DataHarvester
 			identifier_org_id = _identifier_org_id;
 			identifier_org = _identifier_org;
 		}
-
+		/*
 		public StudyIdentifier(string _sd_sid, string _identifier_value,
 			int? _identifier_type_id, string _identifier_type,
 			string _identifier_date, string _identifier_link)
@@ -267,7 +267,7 @@ namespace DataHarvester
 			identifier_date = _identifier_date;
 			identifier_link = _identifier_link;
 		}
-
+		*/
 		public StudyIdentifier(string _sd_sid, string _identifier_value,
 			int? _identifier_type_id, string _identifier_type,
 			int? _identifier_org_id, string _identifier_org,
@@ -291,7 +291,7 @@ namespace DataHarvester
 		public int topic_type_id { get; set; }
 		public string topic_type { get; set; }
 		public string topic_value { get; set; }
-		public int topic_ct_id { get; set; }
+		public int? topic_ct_id { get; set; }
 		public string topic_ct { get; set; }
 		public string topic_ct_code { get; set; }
 		public string where_found { get; set; }
@@ -305,6 +305,19 @@ namespace DataHarvester
 			topic_value = _topic_value;
 			topic_ct_code = _topic_ct_code;
 			where_found = _where_found;
+		}
+
+		public StudyTopic(string _sd_sid, int _topic_type_id, string _topic_type,
+					 string _topic_value, int? _topic_ct_id, string _topic_ct, 
+					 string _topic_ct_code)
+		{
+			sd_sid = _sd_sid;
+			topic_type_id = _topic_type_id;
+			topic_type = _topic_type;
+			topic_value = _topic_value;
+			topic_ct_id = _topic_ct_id;
+			topic_ct = _topic_ct;
+			topic_ct_code = _topic_ct_code;
 		}
 	}
 
