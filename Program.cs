@@ -1,212 +1,116 @@
 ﻿using System;
 using static System.Console;
 using System.Text.RegularExpressions;
-using DataHarvester.biolincc;
+using CommandLine;
+using System.Collections.Generic;
 using System.Threading.Tasks;
-using DataHarvester.yoda;
-using DataHarvester.euctr;
-using DataHarvester.isrctn;
-using DataHarvester.ctg;
-using DataHarvester.pubmed;
-using DataHarvester.who;
+using System.Runtime.CompilerServices;
+using System.Linq;
 
 namespace DataHarvester
 {
 	class Program
 	{
+
 		static async Task Main(string[] args)
 		{
-			// Identify source folder, destination database, harvest type and 
-			// any cutoff date from the arguments provided.
+			var parsedArguments = Parser.Default.ParseArguments<Options>(args);
+			await parsedArguments.WithParsedAsync(opts => RunOptionsAndReturnExitCodeAsync(opts));
+			await parsedArguments.WithNotParsedAsync((errs) => HandleParseErrorAsync(errs));
+		}
 
-			if (NoArgsProvided(args)) return;
-			int source_id = GetFirstArg(args[0]);
-			if (source_id == 0) return;
+		static async Task<int> RunOptionsAndReturnExitCodeAsync(Options opts)
+		{
+
+			// Check harvest type id is valid. 
+
+			int harvest_type_id = opts.harvest_type_id;
+			if (harvest_type_id != 1 && harvest_type_id != 2 && harvest_type_id != 3)
+			{
+				WriteLine("Sorry - the harvest type argument does not correspond to 1, 2 or 3");
+				return -1;
+			}
+
+
+			// If a date is required check one is present and is valid. 
+			// It should be in the ISO YYYY-MM-DD format.
+			DateTime? cutoff_date = null;
+			if (harvest_type_id == 2)
+			{
+				string cutoff_string = opts.cutoff_date;
+				if (!string.IsNullOrEmpty(cutoff_string))
+				{
+					if (Regex.Match(cutoff_string, @"^20\d{2}-[0,1]\d{1}-[0, 1, 2, 3]\d{1}$").Success)
+					{
+						cutoff_date = new DateTime(
+									Int32.Parse(cutoff_string.Substring(0, 4)),
+									Int32.Parse(cutoff_string.Substring(5, 2)),
+									Int32.Parse(cutoff_string.Substring(8, 2)));
+					}
+
+				}
+
+				if (cutoff_date == null)
+				{
+					WriteLine("Sorry - this harvest type requires a date"); ;
+					WriteLine("in the format YYYY-MM-DD and this is missing");
+					return -1;
+				}
+			}
+
+			Harvester dl = new Harvester();
+
+			// Check each source id is valid and run the program if it is... 
 
 			LoggingDataLayer logging_repo = new LoggingDataLayer();
-			Source source = logging_repo.FetchSourceParameters(source_id);
-			if (source == null)
-			{
-				WriteLine("Sorry - the first argument does not correspond to a known source");
-				return;
-			}
-
-			int harvest_type_id = GetHarvestType(args, source);
-			DateTime? harvest_cutoff_revision_date = harvest_type_id == 2 ? GetHarvestCutOffDate(args) : null;
-			if (harvest_type_id == 2 && harvest_cutoff_revision_date == null)
-			{
-				WriteLine("Sorry - there must be a valid cutoff date for a harvest of type 2");
-				return;
-			}
-
-			DataLayer repo = new DataLayer(source.database_name);
-
-			// Create sd tables. 
-			// (Some sources may be data objects only.)
-			if (harvest_type_id != 0)
-			{
-				// harvest_type_id = 0 means do not change the tables or data
-				// simply update the org ids in some tables and redo the hashes
-
-				SDBuilder sdb = new SDBuilder(repo.ConnString, source);
-				if (source.has_study_tables)
+			if (opts.source_ids.Count() > 0)
+            {
+				foreach (int source_id in opts.source_ids)
 				{
-					sdb.DeleteSDStudyTables();
-					sdb.BuildNewSDStudyTables();
-				}
-				sdb.DeleteSDObjectTables();
-				sdb.BuildNewSDObjectTables();
-
-				if (source.id < 100120 || (source.id > 100120 && source.id < 100123)
-					|| (source.id > 100123 && source.id < 100126)
-					|| (source.id > 100126 && source.id < 100133)
-					|| (source.id == 101989))
-				{
-					WHOController c = new WHOController(source, repo, logging_repo);
-					await c.LoopThroughFilesAsync();
-				}
-				else
-				{
-					switch (source.id)
+					Source source = logging_repo.FetchSourceParameters(source_id);
+					if (source == null)
 					{
-						case 101900:
-							{
-								BioLinccController c = new BioLinccController(source, repo, logging_repo);
-								c.GetInitialIDData();
-								c.LoopThroughFiles();
-								break;
-							}
-						case 101901:
-							{
-								YodaController c = new YodaController(source, repo, logging_repo);
-								c.LoopThroughFiles();
-								break;
-							}
-						case 100120:
-							{
-								CTGController c = new CTGController(source, repo, logging_repo);
-								await c.LoopThroughFilesAsync();
-								break;
-							}
-						case 100123:
-							{
-								EUCTRController c = new EUCTRController(source, repo, logging_repo);
-								await c.LoopThroughFilesAsync();
-								break;
-							}
-						case 100126:
-							{
-								ISRCTNController c = new ISRCTNController(source, repo, logging_repo);
-								await c.LoopThroughFilesAsync();
-								break;
-							}
-						case 100135:
-							{
-								PubmedController c = new PubmedController(source, repo, logging_repo);
-								await c.LoopThroughFilesAsync();
-								break; ;
-							}
+						WriteLine("Sorry - the first argument does not correspond to a known source");
+						return -1;
+					}
+					else
+					{
+						await dl.HarvestDataAsync(source, harvest_type_id, cutoff_date, opts.org_update_only);
 					}
 				}
 			}
-
-			HashBuilder hb = new HashBuilder(repo.ConnString, source);
-			hb.EstablishContextForeignTables(repo.Username, repo.Password);
-			hb.UpdateStudyIdentifierOrgs();
-			hb.UpdateStudyContributorOrgs();
-			hb.UpdateDataObjectOrgs();
-			hb.DropContextForeignTables();
-
-			hb.CreateStudyHashes();
-			hb.CreateStudyCompositeHashes();
-			hb.CreateDataObjectHashes();
-			hb.CreateObjectCompositeHashes();
+			
+			return 0;
 		}
 
-
-
-		private static bool NoArgsProvided(string[] args)
+		static Task HandleParseErrorAsync(IEnumerable<Error> errs)
 		{
-			if (args.Length == 0)
-			{
-				WriteLine("Sorry - one, two or three parameters are necessary");
-				WriteLine("The first is a 6 digit number to indicate the source.");
-				WriteLine("The second (optional) either 1, 2 or 3 to indicate if all (1) ");
-				WriteLine("or a time limited set of files (2) or ");
-				WriteLine("the files marked as non-complete (3) are to be imported");
-				WriteLine("if the second parameter is 2 a third parameter is required ");
-				WriteLine("which should be a date in YYYY-MM-DD format - only files with");
-				WriteLine("a revision date later than this date will be harvested.");
-				WriteLine("Any additional parameters will be ignored.");
-				return true;
-			}
-			else
-			{
-				return false;
-			}
+			// do nothing for the moment
+			return Task.CompletedTask;
 		}
 
-
-		private static int GetFirstArg(string arg)
-		{
-			int arg_id = 0;
-			if (!Int32.TryParse(arg, out arg_id))
-			{
-				WriteLine("Sorry - the first argument must be an integer");
-			}
-			return arg_id;
-		}
+	}
 
 
-		private static int GetHarvestType(string[] args, Source source_parameters)
-		{
-			if (args.Length > 1)
-			{
-				int harvest_type_arg = 0;
-				if (!Int32.TryParse(args[1], out harvest_type_arg))
-				{
-					WriteLine("The second argument, if present, must be an integer (default settinmg will be used)");
-					harvest_type_arg = source_parameters.default_harvest_type_id;
-				}
-				if (harvest_type_arg != 0 && harvest_type_arg != 1 
-					&& harvest_type_arg != 2 && harvest_type_arg != 3)
-				{
-					WriteLine("Sorry - the second argument, if present, must be 0, 1, 2, or 3 (default setting will be used)");
-					harvest_type_arg = source_parameters.default_harvest_type_id;
-				}
-				return harvest_type_arg;
-			}
-			else
-			{
-				// use the default harvesting method
-				return source_parameters.default_harvest_type_id;
-			}
-		}
+	public class Options
+	{
+		// Lists the command line arguments and options
 
+		[Option('s', "source_ids", Required = true, Separator = ',', HelpText = "Comma separated list of Integer ids of data sources.")]
+		public IEnumerable<int> source_ids { get; set; }
 
-		private static DateTime? GetHarvestCutOffDate(string[] args)
-		{
-				if (args.Length < 3)
-				{
-					WriteLine("Sorry - if the second argument is 2, ");
-					WriteLine("(harvest only files revised after a set date)");
-					WriteLine("You must include a third date parameter in the format YYYY-MM-DD");
-					return null;
-				}
+		[Option('t', "harvest_type_id", Required = true, HelpText = "Integer representing type of harvest (1 = full, 2 = with cutoff date, 3 = incomplete files only).")]
+		public int harvest_type_id { get; set; }
 
-				if (!Regex.Match(args[2], @"^20\d{2}-[0,1]\d{1}-[0, 1, 2, 3]\d{1}$").Success)
-				{
-					WriteLine("Sorry - if the second argument is 2, "); ;
-					WriteLine("(harvest only files revised after a set date)");
-					WriteLine("The third parameter must be in in the format YYYY-MM-DD");
-					return null;
-				}
+		[Option('d', "cutoff_date", Required = false, HelpText = "Only data revised or added since this date will be considered")]
+		public string cutoff_date { get; set; }
 
-				return new DateTime(Int32.Parse(args[2].Substring(0, 4)),
-									Int32.Parse(args[2].Substring(5, 2)), 
-									Int32.Parse(args[2].Substring(8, 2)));
-		}
+		[Option('G', "organisation_update_only", Required = false, HelpText = "If present does not recreate Sd tables - only updates organisation ids")]
+		public bool org_update_only { get; set; }
+
 	}
 }
+
+
 
 

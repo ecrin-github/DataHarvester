@@ -154,7 +154,10 @@ namespace DataHarvester.isrctn
 								{
 									contributors.Add(c);
 								}
-								c = new StudyContributor(sid, 54, "Trial Sponsor", null, i.item_value, null, null);
+								if (StringHelpers.FilterOut_Null_OrgNames(i.item_value.ToLower()) != "")
+								{
+									c = new StudyContributor(sid, 54, "Trial Sponsor", null, StringHelpers.TidyOrgName(i.item_value, sid), null, null);
+								}
 								break;
 							}
 						case "Sponsor type":
@@ -286,10 +289,15 @@ namespace DataHarvester.isrctn
 							}
 						case "Funder name":
 							{
-								// check a funder is not simply the sponsor...
-								if (i.item_value != study_sponsor)
+								if (StringHelpers.FilterOut_Null_OrgNames(i.item_value.ToLower()) != "")
 								{
-									contributors.Add(new StudyContributor(sid, 58, "Study Funder", null, i.item_value, null, null));
+									// check a funder is not simply the sponsor...
+									string funder = StringHelpers.TidyOrgName(i.item_value, sid);
+									if (funder != study_sponsor)
+									{
+										contributors.Add(new StudyContributor(sid, 58, "Study Funder", null, funder, null, null));
+									}
+									
 								}
 								break;
 							}

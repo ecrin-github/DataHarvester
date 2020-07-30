@@ -92,7 +92,7 @@ namespace DataHarvester
 
 		public static PostgreSQLCopyHelper<AvailableIPD> study_ipd_copyhelper =
 			new PostgreSQLCopyHelper<AvailableIPD>("sd", "study_ipd_available")
-				.MapVarchar("sd_id", x => x.sd_id)
+				.MapVarchar("sd_sid", x => x.sd_sid)
 				.MapVarchar("ipd_id", x => x.ipd_id)
 				.MapVarchar("ipd_type", x => x.ipd_type)
 				.MapVarchar("ipd_url", x => x.ipd_url)

@@ -14,7 +14,7 @@ namespace DataHarvester.pubmed
         PubmedProcessor processor;
         Source source;
 
-        public PubmedController(Source _source, DataLayer _common_repo, LoggingDataLayer _logging_repo)
+        public PubmedController(Source _source, DataLayer _common_repo, LoggingDataLayer _logging_repo, int harvest_type_id, DateTime? cutoff_date)
         {
             source = _source;
             processor = new PubmedProcessor();
@@ -24,7 +24,7 @@ namespace DataHarvester.pubmed
         }
 
 
-        async public Task LoopThroughFilesAsync()
+        public void LoopThroughFiles()
         {
             string fileBase = source.local_folder;
             

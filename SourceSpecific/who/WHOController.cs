@@ -13,25 +13,29 @@ namespace DataHarvester.who
 		WHODataLayer who_repo;
 		WHOProcessor processor;
 		Source source;
+		int harvest_type_id;
+		DateTime? cutoff_date;
 
-		public WHOController(Source _source, DataLayer _common_repo, LoggingDataLayer _logging_repo)
+		public WHOController(Source _source, DataLayer _common_repo, LoggingDataLayer _logging_repo, int _harvest_type_id, DateTime? _cutoff_date)
 		{
 			source = _source;
 			processor = new WHOProcessor();
 			common_repo = _common_repo;
 			logging_repo = _logging_repo;
 			who_repo = new WHODataLayer();
+			harvest_type_id = _harvest_type_id;
+			cutoff_date = _cutoff_date;
 		}
 
 
-		async public Task LoopThroughFilesAsync()
+		public void LoopThroughFiles()
 		{
 			// Construct a list of the files 
 			// Rather than using a file base, it is possible
 			// to use the sf records to get a list of files
 			// and local paths...
 
-			IEnumerable<FileRecord> file_list = logging_repo.FetchStudyFileRecords(source.id);
+			IEnumerable<FileRecord> file_list = logging_repo.FetchStudyFileRecords(source.id, harvest_type_id, cutoff_date);
 			int n = 0; string filePath = "";
 			XmlSerializer serializer = new XmlSerializer(typeof(WHORecord));
 
@@ -49,7 +53,6 @@ namespace DataHarvester.who
 					{
 						inputString += streamReader.ReadToEnd();
 					}
-
                     
                     StringReader rdr = new StringReader(inputString);
 					WHORecord studyRegEntry = (WHORecord)serializer.Deserialize(rdr);

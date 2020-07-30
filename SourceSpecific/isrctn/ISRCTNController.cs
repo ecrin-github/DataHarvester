@@ -13,7 +13,7 @@ namespace DataHarvester.isrctn
 		ISRCTNProcessor processor;
 		Source source;
 
-		public ISRCTNController(Source _source, DataLayer _common_repo, LoggingDataLayer _logging_repo)
+		public ISRCTNController(Source _source, DataLayer _common_repo, LoggingDataLayer _logging_repo, int harvest_type_id, DateTime? cutoff_date)
 		{
 			source = _source;
 			processor = new ISRCTNProcessor();

@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Globalization;
 using System.Net.Http;
+using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 
 namespace DataHarvester.ctg
@@ -154,10 +155,10 @@ namespace DataHarvester.ctg
 				s.display_title = (brief_title != null) ? brief_title : official_title;
 
 				// get the sponsor id information
-				string org = StringHelpers.TidyPunctuation(StructFieldValue(id_items, "Organization", "OrgFullName"));
+				string org = StringHelpers.TidyOrgName(StructFieldValue(id_items, "Organization", "OrgFullName"), sid);
 				string org_study_id = StructFieldValue(id_items, "OrgStudyIdInfo", "OrgStudyId");
 				string org_id_type = StructFieldValue(id_items, "OrgStudyIdInfo", "OrgStudyIdType");
-				string org_id_domain = StringHelpers.TidyPunctuation(StructFieldValue(id_items, "OrgStudyIdInfo", "OrgStudyIdDomain"));
+				string org_id_domain = StringHelpers.TidyOrgName(StructFieldValue(id_items, "OrgStudyIdInfo", "OrgStudyIdDomain"), sid);
 				string org_id_link = StructFieldValue(id_items, "OrgStudyIdInfo", "OrgStudyIdLink");
 
 				// add the sponsor's identifier
@@ -281,11 +282,14 @@ namespace DataHarvester.ctg
 				StructType sponsor = FindStruct(items, "LeadSponsor");
 				if (sponsor != null)
 				{
-					sponsor_name = StringHelpers.TidyPunctuation(FieldValue(sponsor.Items, "LeadSponsorName"));
-
-					if (sponsor_name == "[Redacted]") sponsor_name = "(sponsor name redacted in registry record)";
-					contributors.Add(new StudyContributor(sid, 54, "Trial Sponsor", null, sponsor_name, 
+					string sponsor_candidate = FieldValue(sponsor.Items, "LeadSponsorName");
+					if (StringHelpers.FilterOut_Null_OrgNames(sponsor_candidate) != "")
+					{
+						sponsor_name = StringHelpers.TidyOrgName(sponsor_candidate, sid);
+						if (sponsor_name == "[Redacted]") sponsor_name = "(sponsor name redacted in registry record)";
+						contributors.Add(new StudyContributor(sid, 54, "Trial Sponsor", null, sponsor_name,
 																null, null));
+					}
 				}
 
 				StructType resp_party = FindStruct(items, "ResponsibleParty");
@@ -333,9 +337,13 @@ namespace DataHarvester.ctg
 						for (int i = 0; i < collabs.Length; i++)
 						{
 							StructType collab = collabs[i] as StructType;
-							string collab_name = StringHelpers.TidyPunctuation(FieldValue(collab.Items, "CollaboratorName"));
-							contributors.Add(new StudyContributor(sid, 69, "Collaborating organisation", null, collab_name, 
-												null, null));
+							string collab_candidate = FieldValue(collab.Items, "CollaboratorName");
+							if (StringHelpers.FilterOut_Null_OrgNames(collab_candidate) != "")
+							{
+								string collab_name = StringHelpers.TidyOrgName(collab_candidate, sid);
+								contributors.Add(new StudyContributor(sid, 69, "Collaborating organisation", null, collab_name,
+															null, null));
+							}
 						}
 					}
 				}
@@ -376,7 +384,7 @@ namespace DataHarvester.ctg
 								var condition_items = condition_mesh.Items;
 								string mesh_code = FieldValue(condition_items, "ConditionMeshId");
 								string mesh_term = FieldValue(condition_items, "ConditionMeshTerm");
-								topics.Add(new StudyTopic(sid, 13, "condition", mesh_term, mesh_code, "browse list"));
+								topics.Add(new StudyTopic(sid, 13, "condition", mesh_term, 14, "MESH", mesh_code, "browse list"));
 							}
 						}
 					}
@@ -401,7 +409,7 @@ namespace DataHarvester.ctg
 								var intervention_items = intervention_mesh.Items;
 								string mesh_code = FieldValue(intervention_items, "InterventionMeshId");
 								string mesh_term = FieldValue(intervention_items, "InterventionMeshTerm");
-								topics.Add(new StudyTopic(sid, 12, "chemical / agent", mesh_term, mesh_code, "browse list"));
+								topics.Add(new StudyTopic(sid, 12, "chemical / agent", mesh_term, 14, "MESH", mesh_code, "browse list"));
 							}
 						}
 					}
@@ -598,7 +606,10 @@ namespace DataHarvester.ctg
 						{
 							if (Int32.TryParse(enrolment_count, out int enrolment))
 							{
-								s.study_enrolment = enrolment;
+								if (enrolment <= 1000 || !Regex.Match(enrolment_count, @"^9+$").Success )
+								{
+									s.study_enrolment = enrolment;
+								}
 							}
 						}
 					}
@@ -623,6 +634,10 @@ namespace DataHarvester.ctg
 				if (items != null)
 				{
 					s.study_gender_elig = FieldValue(items, "Gender") ?? "Not provided";
+					if (s.study_gender_elig == "All")
+					{
+						s.study_gender_elig = "Both";
+					}
 					s.study_gender_elig_id = TypeHelpers.GetGenderEligId(s.study_gender_elig);
 
 					string min_age = FieldValue(items, "MinimumAge");
@@ -818,7 +833,7 @@ namespace DataHarvester.ctg
 									"ClinicalTrials.gov", 12, download_datetime));
 
 				// add in title
-				object_titles.Add(new ObjectTitle(sid, object_display_title,
+				object_titles.Add(new ObjectTitle(sd_oid, object_display_title,
 								title_type_id, title_type, true));
 
 				// add in dates

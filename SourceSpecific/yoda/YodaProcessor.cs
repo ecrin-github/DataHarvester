@@ -151,7 +151,7 @@ namespace DataHarvester.yoda
 			if (!string.IsNullOrEmpty(st.sponsor))
 			{
 				sponsor_org_id = st.sponsor_id;
-				sponsor_org = st.sponsor;
+				sponsor_org = StringHelpers.TidyOrgName(st.sponsor, sid);
 			}
 			else
 			{

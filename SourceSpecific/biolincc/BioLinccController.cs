@@ -65,8 +65,8 @@ namespace DataHarvester.biolincc
 
 		public void LoopThroughFiles()
 		{
-			// Construct a list of the files using the sf records to get a list of files
-			// the sf records to get a list of files and local paths...
+			// Construct a list of the files using the sf records to get 
+			// a list of files and local paths...
 
 			IEnumerable<FileRecord> file_list = logging_repo.FetchStudyFileRecords(source.id);
 			int n = 0; string filePath = "";

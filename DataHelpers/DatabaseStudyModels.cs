@@ -319,6 +319,21 @@ namespace DataHarvester
 			topic_ct = _topic_ct;
 			topic_ct_code = _topic_ct_code;
 		}
+
+
+		public StudyTopic(string _sd_sid, int _topic_type_id, string _topic_type,
+					 string _topic_value, int? _topic_ct_id, string _topic_ct,
+					 string _topic_ct_code, string _where_found)
+		{
+			sd_sid = _sd_sid;
+			topic_type_id = _topic_type_id;
+			topic_type = _topic_type;
+			topic_value = _topic_value;
+			topic_ct_id = _topic_ct_id;
+			topic_ct = _topic_ct;
+			topic_ct_code = _topic_ct_code;
+			where_found = _where_found;
+		}
 	}
 
 
@@ -359,16 +374,16 @@ namespace DataHarvester
 
 	public class AvailableIPD
 	{
-		public string sd_id { get; set; }
+		public string sd_sid { get; set; }
 		public string ipd_id { get; set; }
 		public string ipd_type { get; set; }
 		public string ipd_url { get; set; }
 		public string ipd_comment { get; set; }
 
-		public AvailableIPD(string _sd_id, string _ipd_id, string _ipd_type,
+		public AvailableIPD(string _sd_sid, string _ipd_id, string _ipd_type,
 								string _ipd_url, string _ipd_comment)
 		{
-			sd_id = _sd_id;
+			sd_sid = _sd_sid;
 			ipd_id = _ipd_id;
 			ipd_type = _ipd_type;
 			ipd_url = _ipd_url;

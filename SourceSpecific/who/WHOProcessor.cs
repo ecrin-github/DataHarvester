@@ -10,7 +10,7 @@ namespace DataHarvester.who
 	public class WHOProcessor
 	{
 
-		public Study ProcessData(WHORecord st, DateTime? download_datetime, DataLayer common_repo, WHODataLayer biolincc_repo)
+		public Study ProcessData(WHORecord st, DateTime? download_datetime, DataLayer common_repo, WHODataLayer who_repo)
 		{
 			Study s = new Study();
 
@@ -45,40 +45,21 @@ namespace DataHarvester.who
 									 get_source_name(st.source_id), registration_date?.date_string, null));
 
 			// titles
-			string public_title = "", scientific_title = "";
-
-			if (!string.IsNullOrEmpty(st.public_title))
-			{
-				if (st.public_title.Contains("<"))
-				{
-					public_title = HtmlHelpers.replace_tags(st.public_title);
-					public_title = HtmlHelpers.strip_tags(public_title);
-				}
-				else
-				{
-					public_title = st.public_title;
-				}
-			}
-
-
-			if (!string.IsNullOrEmpty(st.scientific_title))
-			{
-				if (st.scientific_title.Contains("<"))
-				{
-					scientific_title = HtmlHelpers.replace_tags(st.scientific_title);
-					scientific_title = HtmlHelpers.strip_tags(scientific_title);
-				}
-				else
-				{
-					scientific_title = st.scientific_title;
-				}
-			}
+			string public_title = StringHelpers.CheckTitle(st.public_title);
+			string scientific_title = StringHelpers.CheckTitle(st.scientific_title);
 
 			if (public_title == "")
 			{
 				if (scientific_title != "")
 				{
-					study_titles.Add(new StudyTitle(sid, scientific_title, 16, "Trial registry title", true));
+					if (scientific_title.Length < 11)
+					{
+						study_titles.Add(new StudyTitle(sid, scientific_title, 14, "Acronym or Abbreviation", true));
+					}
+					else
+					{
+						study_titles.Add(new StudyTitle(sid, scientific_title, 16, "Trial registry title", true));
+					}
 					s.display_title = scientific_title;
 				}
 				else
@@ -88,8 +69,16 @@ namespace DataHarvester.who
 			}
 			else
 			{
-				study_titles.Add(new StudyTitle(sid, public_title, 15, "Public Title", true));
+				if (public_title.Length < 11)
+				{
+					study_titles.Add(new StudyTitle(sid, public_title, 14, "Acronym or Abbreviation", true));
+				}
+				else
+				{
+					study_titles.Add(new StudyTitle(sid, public_title, 15, "Public Title", true));
+				}
 				s.display_title = public_title;
+
 				if (scientific_title != "" && scientific_title.ToLower() != public_title.ToLower())
 				{
 					study_titles.Add(new StudyTitle(sid, scientific_title, 16, "Trial registry title", false));
@@ -171,10 +160,10 @@ namespace DataHarvester.who
 				}
 			}
 
-			if (!string.IsNullOrEmpty(st.date_enrollement))
+			if (!string.IsNullOrEmpty(st.date_enrolment))
 			{
-				SplitDate enrolment_date = DateHelpers.GetDatePartsFromISOString(st.date_enrollement);
-				if (enrolment_date.year > 1960)
+				SplitDate enrolment_date = DateHelpers.GetDatePartsFromISOString(st.date_enrolment);
+				if (enrolment_date?.year > 1960)
 				{
 					s.study_start_year = enrolment_date.year;
 					s.study_start_month = enrolment_date.month;
@@ -252,24 +241,18 @@ namespace DataHarvester.who
 				if (st.agemin_units.StartsWith("Other"))
 				{
 					// was not classified previously...
-					if (Regex.Match(st.agemin_units.ToLower(), @"\d+y").Success)
-                    {
-						s.min_age_units = "Years";
-						s.min_age_units_id = 17;
-					}
-					if (Regex.Match(st.agemin_units.ToLower(), @"\d+m").Success)
-					{
-						s.min_age_units = "Months";
-						s.min_age_units_id = 16;
-					}
-
+					s.min_age_units = TypeHelpers.GetTimeUnits(st.agemin_units);
 				}
 				else
 				{
 					s.min_age_units = st.agemin_units;
+				}
+				if (s.min_age_units != null)
+				{
 					s.min_age_units_id = TypeHelpers.GetTimeUnitsId(s.min_age_units);
 				}
 			}
+
 
 			if (Int32.TryParse(st.agemax, out int max))
 			{
@@ -279,70 +262,50 @@ namespace DataHarvester.who
 					if (st.agemax_units.StartsWith("Other"))
 					{
 						// was not classified previously...
-						if (Regex.Match(st.agemax_units.ToLower(), @"\d+y").Success)
-						{
-							s.max_age_units = "Years";
-							s.max_age_units_id = 17;
-						}
-						else if (Regex.Match(st.agemax_units.ToLower(), @"\d+m").Success)
-						{
-							s.max_age_units = "Months";
-							s.max_age_units_id = 16;
-						}
+						s.max_age_units = TypeHelpers.GetTimeUnits(st.agemax_units);
 					}
 					else
 					{
 						s.max_age_units = st.agemax_units;
+					}
+					if (s.max_age_units != null)
+					{
 						s.max_age_units_id = TypeHelpers.GetTimeUnitsId(s.max_age_units);
 					}
 				}
 			}
-			 
-			
-			if (st.gender.StartsWith("?? Unavle to classify "))
-     		{
-				// was not classified previously...
-				string gen = st.gender.Replace("?? Unavle to classify", "").Trim().ToLower();
-				if (gen.Contains("f"))
-                {
-					s.study_gender_elig = "Female";
-					s.study_gender_elig_id = 905;
-				}
-				else if (gen.Contains("m"))
-				{
-					s.study_gender_elig = "Male";
-					s.study_gender_elig_id = 910;
-				}
-				else
-                {
-					s.study_gender_elig = "Not provided";
-					s.study_gender_elig_id = 915;
-				}
-    		}
-			else
+
+
+			if (st.gender.Contains("?? Unable to classify"))
             {
-				s.study_gender_elig = st.gender;
-				s.study_gender_elig_id = TypeHelpers.GetGenderEligId(st.gender);
+				st.gender = "Not provided";
 			}
-			
+
+            s.study_gender_elig = st.gender;
+			s.study_gender_elig_id = TypeHelpers.GetGenderEligId(st.gender);
+
 
 			// Add study attribute records.
 
-			// study contributors - Sponsor
-			string sponsor_name = "";
+			// study contributors - Sponsor N.B. default below
+			string sponsor_name = "No organisation name provided in source data";
+
 			if (!string.IsNullOrEmpty(st.primary_sponsor))
 			{
-				sponsor_name = st.primary_sponsor;
+				sponsor_name = StringHelpers.TidyOrgName(st.primary_sponsor, sid);
 				string sponsor = sponsor_name.ToLower();
-				if (sponsor.StartsWith("dr ") || sponsor.StartsWith("dr. ")
-					|| sponsor.StartsWith("prof ") || sponsor.StartsWith("prof. ")
-					|| sponsor.StartsWith("professor "))
+				if (StringHelpers.FilterOut_Null_OrgNames(sponsor) != "")
 				{
-					study_contributors.Add(new StudyContributor(sid, 54, "Trial Sponsor", null, null, sponsor_name, null));
-				}
-				else
-                {
-					study_contributors.Add(new StudyContributor(sid, 54, "Trial Sponsor", null, sponsor_name, null, null));
+					if (sponsor.StartsWith("dr ") || sponsor.StartsWith("dr. ")
+						|| sponsor.StartsWith("prof ") || sponsor.StartsWith("prof. ")
+						|| sponsor.StartsWith("professor "))
+					{
+						study_contributors.Add(new StudyContributor(sid, 54, "Trial Sponsor", null, null, sponsor_name, null));
+					}
+					else
+					{
+						study_contributors.Add(new StudyContributor(sid, 54, "Trial Sponsor", null, sponsor_name, null, null));
+					}
 				}
 			}
 
@@ -412,15 +375,23 @@ namespace DataHarvester.who
 			{
 				foreach (StudyCondition sc in st.condition_list)
 				{
-					if (sc.code == null)
+					if (!string.IsNullOrEmpty(sc.condition))
 					{
-						study_topics.Add(new StudyTopic(sid, 11, "Condition", sc.condition, null, null));
-					}
-					else
-					{
-						if (sc.code_system == "ICD 10")
+						char[] chars_to_trim = {' ', '?', ':', '*', '/', '-', '_', '+', '='};
+						string cond = sc.condition.Trim(chars_to_trim);
+						if (!string.IsNullOrEmpty(cond) && cond.ToLower() != "not applicable" && cond.ToLower() != "&quot")
 						{
-							study_topics.Add(new StudyTopic(sid, 11, "Condition", sc.condition, 12, sc.code_system, sc.code));
+							if (sc.code == null)
+							{
+								study_topics.Add(new StudyTopic(sid, 11, "Condition", cond, null, null));
+							}
+							else
+							{
+								if (sc.code_system == "ICD 10")
+								{
+									study_topics.Add(new StudyTopic(sid, 11, "Condition", cond, 12, sc.code_system, sc.code));
+								}
+							}
 						}
 					}
 				}
@@ -460,10 +431,10 @@ namespace DataHarvester.who
 			}
 
 
-			// there may be (rarely) a results link...
+			// there may be (rarely) a results link... (exclude those on CTG - should be picked up there)
 			if (!string.IsNullOrEmpty(st.results_url_link))
 			{
-				if (st.results_url_link.Contains("http"))
+				if (st.results_url_link.Contains("http") && !st.results_url_link.ToLower().Contains("clinicaltrials.gov"))
                 {
 					object_display_title = name_base + " :: " + "Results summary";
 					sd_oid = HashHelpers.CreateMD5(sid + object_display_title);
@@ -496,10 +467,10 @@ namespace DataHarvester.who
 			}
 
 
-			// there may be (rarely) a protocol link...
+			// there may be (rarely) a protocol link...(exclude those simply referring to CTG - should be picked up there)
 			if (!string.IsNullOrEmpty(st.results_url_protocol))
 			{
-				if (st.results_url_protocol.Contains("http"))
+				if (st.results_url_protocol.Contains("http") && !st.results_url_protocol.ToLower().Contains("clinicaltrials.gov"))
 				{
 					object_display_title = name_base + " :: " + "Study Protocol ";
 					sd_oid = HashHelpers.CreateMD5(sid + object_display_title);

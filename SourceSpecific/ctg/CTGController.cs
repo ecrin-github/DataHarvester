@@ -1,4 +1,6 @@
-﻿using System;
+﻿using Microsoft.VisualBasic.CompilerServices;
+using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Threading.Tasks;
 using System.Xml.Serialization;
@@ -11,41 +13,42 @@ namespace DataHarvester.ctg
 		LoggingDataLayer logging_repo;
 		CTGProcessor processor;
 		Source source;
+		int harvest_type_id;
+		DateTime? cutoff_date;
 
-		public CTGController(Source _source, DataLayer _common_repo, LoggingDataLayer _logging_repo)
+		public CTGController(Source _source, DataLayer _common_repo, LoggingDataLayer _logging_repo, int _harvest_type_id, DateTime? _cutoff_date)
 		{
 			source = _source;
 			processor = new CTGProcessor();
 			common_repo = _common_repo;
 			logging_repo = _logging_repo;
+			harvest_type_id = _harvest_type_id;
+			cutoff_date = _cutoff_date;
 		}
 
-		public async Task LoopThroughFilesAsync()
+		public void LoopThroughFiles()
 		{
-			// Get the folder base from the appsettings file
-			// and construct a list of the folders of CGT XML files
+			// Loop through the available records 1000 at a time
+			// First get the total number of records in the system for this source
 
-			string folderBase = source.local_folder;
-			string[] folder_list = Directory.GetDirectories(folderBase);
+			// Set up the outer limit and get the relevant records for each pass
+			int total_amount = logging_repo.FetchStudyFileRecordsCount(source.id);
+			int chunk = 1000;
 
-			for (int f = 0; f < folder_list.Length; f++)
+			for (int m = 0; m < total_amount; m += chunk)
 			{
-				// for testing...
-				// if (f == 5) break;
-				string fileBase = folder_list[f];
+				IEnumerable<FileRecord> file_list = logging_repo.FetchStudyFileRecordsByOffset(source.id, m, chunk, harvest_type_id, cutoff_date);
 
-				// Get the files within each folder in turn.
-				string[] file_list = Directory.GetFiles(fileBase);
-				for (int g = 0; g < file_list.Length; g++)
+				int n = 0; string filePath = "";
+				foreach (FileRecord rec in file_list)
 				{
-					// for testing...
-					//if (g > 5) break; 
-					string fileName = file_list[g];
+					n++;
+					filePath = rec.local_path;
 
-					if (File.Exists(fileName))
+					if (File.Exists(filePath))
 					{
 						string inputString = "";
-						using (var streamReader = new StreamReader(fileName, System.Text.Encoding.UTF8))
+						using (var streamReader = new StreamReader(filePath, System.Text.Encoding.UTF8))
 						{
 							inputString += streamReader.ReadToEnd();
 						}
@@ -55,21 +58,22 @@ namespace DataHarvester.ctg
 						FullStudy studyRegEntry = (FullStudy)serializer.Deserialize(rdr);
 
 						// break up the file into relevant data classes
-						DateTime? download_time = null; // **********to SORT
-						Study s = processor.ProcessData(studyRegEntry, download_time, common_repo);
+						Study s = processor.ProcessData(studyRegEntry, rec.download_datetime, common_repo);
 
 						// check and store data object links - just pdfs for now
 						// (commented out for the moment to save time during extraction).
-						await HtmlHelpers.CheckURLsAsync(s.object_instances);
+						// await HtmlHelpers.CheckURLsAsync(s.object_instances);
 
 						// store the data in the database
 						processor.StoreData(common_repo, s);
 
-					}
+						// update file record with last processed datetime
+						logging_repo.UpdateStudyFileRecLastProcessed(rec.id);
 
+					}
+					
+					if (n % 10 == 0) Console.WriteLine(m.ToString() + ": " + n.ToString()); 
 				}
-				
-				Console.WriteLine(folder_list[f]); 
 			}
 		}
 	}

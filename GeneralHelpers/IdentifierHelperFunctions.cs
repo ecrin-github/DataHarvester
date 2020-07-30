@@ -64,19 +64,19 @@ namespace DataHarvester
 				id.id_org = "No organisation name provided in source data";
 			}
 
-			if (id_type == null)
+            if (id_type == null)
 			{
 				id.id_type_id = 1;
 				id.id_type = "No type given in source data";
 			}
-
-			if (id_type == "Other Identifier")
+			
+			else if (id_type == "Other Identifier")
 			{
 				id.id_type_id = 90;
 				id.id_type = "Other";
 			}
 
-			if (id_type == "U.S. NIH Grant/Contract")
+			else if (id_type == "U.S. NIH Grant/Contract")
 			{
 				id.id_org_id = 100134;
 				id.id_org = "National Institutes of Health";
@@ -84,13 +84,13 @@ namespace DataHarvester
 				id.id_type = "Funder ID";
 			}
 
-			if (id_type == "Other Grant/Funding Number")
+			else if (id_type == "Other Grant/Funding Number")
 			{
 				id.id_type_id = 13;
 				id.id_type = "Funder ID";
 			}
 
-			if (id_type == "EudraCT Number")
+			else if (id_type == "EudraCT Number")
 			{
 				id.id_org_id = 100123;
 				id.id_org = "EU Clinical Trials Register";
@@ -98,7 +98,7 @@ namespace DataHarvester
 				id.id_type = "Trial Registry ID";
 			}
 
-			if (id_type == "Registry Identifier")
+			else if (id_type == "Registry Identifier")
 			{
 				id.id_type_id = 11;
 				id.id_type = "Trial Registry ID";
@@ -240,38 +240,41 @@ namespace DataHarvester
 
 			if (id.id_type_id == 1 || id.id_type_id == 90)
 			{
-				if (id_org == "UTN")
+				if (id_org != null)
 				{
-					// WHO universal trail number
-					id.id_org_id = 100115;
-					id.id_org = "International Clinical Trials Registry Platform";
-					id.id_type_id = 11;
-					id.id_type = "Trial Registry ID";
-				}
+					if (id_org == "UTN")
+					{
+						// WHO universal trail number
+						id.id_org_id = 100115;
+						id.id_org = "International Clinical Trials Registry Platform";
+						id.id_type_id = 11;
+						id.id_type = "Trial Registry ID";
+					}
 
-				if (id_org.ToLower().Contains("ansm") || id_org.ToLower().Contains("rcb"))
-				{
-					// French ANSM number
-					id.id_org_id = 101408;
-					id.id_org = "Agence Nationale de Sécurité du Médicament";
-					id.id_type_id = 41;
-					id.id_type = "Regulatory Body ID";
-				}
+					if (id_org.ToLower().Contains("ansm") || id_org.ToLower().Contains("rcb"))
+					{
+						// French ANSM number
+						id.id_org_id = 101408;
+						id.id_org = "Agence Nationale de Sécurité du Médicament";
+						id.id_type_id = 41;
+						id.id_type = "Regulatory Body ID";
+					}
 
-				if (id_org == "JHMIRB" || id_org == "JHM IRB")
-				{
-					// ethics approval number
-					id.id_org_id = 100190;
-					id.id_org = "Johns Hopkins University";
-					id.id_type_id = 12;
-					id.id_type = "Ethics Review ID";
-				}
+					if (id_org == "JHMIRB" || id_org == "JHM IRB")
+					{
+						// ethics approval number
+						id.id_org_id = 100190;
+						id.id_org = "Johns Hopkins University";
+						id.id_type_id = 12;
+						id.id_type = "Ethics Review ID";
+					}
 
-				if (id_org.ToLower().Contains("ethics") || id_org == "Independent Review Board" || id_org.Contains("IRB"))
-				{
-					// ethics approval number
-					id.id_type_id = 12;
-					id.id_type = "Ethics Review ID";
+					if (id_org.ToLower().Contains("ethics") || id_org == "Independent Review Board" || id_org.Contains("IRB"))
+					{
+						// ethics approval number
+						id.id_type_id = 12;
+						id.id_type = "Ethics Review ID";
+					}
 				}
 
 				if (id_value.Length > 4 && id_value.Substring(0, 4) == "NCI-")

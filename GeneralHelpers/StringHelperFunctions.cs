@@ -37,35 +37,68 @@ namespace DataHarvester
 
 		public static string ReplaceApos(string apos_name)
 		{
-			int apos_pos = apos_name.IndexOf("'");
-			int alen = apos_name.Length;
-			if (apos_pos != -1)
+			try
 			{
-				if (apos_pos == 0)
+     			int apos_pos = apos_name.IndexOf("'");
+				int alen = apos_name.Length;
+				if (apos_pos != -1)
 				{
-					apos_name = "‘" + apos_name.Substring(1);
-				}
-				else if (apos_pos == alen - 1)
-				{
-					apos_name = apos_name.Substring(0, alen - 1) + "’";
-				}
-				{
-					if (apos_name[apos_pos - 1] == ' ' || apos_name[apos_pos - 1] == '(')
+					if (apos_pos == 0)
 					{
-						apos_name = apos_name.Substring(0, apos_pos) + "‘" + apos_name.Substring(apos_pos + 1, alen - apos_pos - 1);
-
+						apos_name = "‘" + apos_name.Substring(1);
+					}
+					else if (apos_pos == alen - 1)
+					{
+						apos_name = apos_name.Substring(0, alen - 1) + "’";
 					}
 					else
 					{
-						apos_name = apos_name.Substring(0, apos_pos) + "’" + apos_name.Substring(apos_pos + 1, alen - apos_pos - 1);
+						if (apos_name[apos_pos - 1] == ' ' || apos_name[apos_pos - 1] == '(')
+						{
+							apos_name = apos_name.Substring(0, apos_pos) + "‘" + apos_name.Substring(apos_pos + 1, alen - apos_pos - 1);
+
+						}
+						else
+						{
+							apos_name = apos_name.Substring(0, apos_pos) + "’" + apos_name.Substring(apos_pos + 1, alen - apos_pos - 1);
+						}
+					}
+				}
+				return apos_name;
+			}
+			catch(Exception e)
+            {
+                return apos_name;
+            }
+			
+		}
+
+		public static string CheckTitle(string in_title)
+		{
+			string out_title = "";
+			if (!string.IsNullOrEmpty(in_title))
+			{
+				string lower_title = in_title.ToLower().Trim();
+				if (lower_title != "n.a." && lower_title != "na" 
+					&& lower_title != "n.a" && lower_title != "n/a"
+					&& lower_title != "no disponible" && lower_title != "not available")
+				{
+					if (in_title.Contains("<"))
+					{
+						out_title = HtmlHelpers.replace_tags(in_title);
+						out_title = HtmlHelpers.strip_tags(out_title);
+					}
+					else
+					{
+						out_title = in_title;
 					}
 				}
 			}
-			return apos_name;
+			return out_title;
 		}
 
 
-		public static string TidyPunctuation(string in_name)
+		public static string TidyOrgName(string in_name, string sid)
 		{
 			string name = in_name;
 			if (name != null)
@@ -90,9 +123,66 @@ namespace DataHarvester
 				{
 					name = ReplaceApos(name);
 				}
+
+				if (name.ToLower().Contains("newcastle") && name.ToLower().Contains("university")
+					&& !name.Contains("hospital"))
+                {
+					if (name.ToLower().Contains("nsw") || name.ToLower().Contains("australia"))
+                    {
+						name = "University of Newcastle (Australia)";
+                    }
+					else if (name.ToLower().Contains("uk") || name.ToLower().Contains("tyne"))
+					{
+						name = "University of Newcastle (UK)";
+					}
+					else if (sid.StartsWith("ACTRN"))
+                    {
+						name = "University of Newcastle (Australia)";
+					}
+                    else
+                    {
+						name = "University of Newcastle (UK)";
+					}
+				}
+
 			}
+
+
+
 			return name;
 		}
+
+
+		public static string FilterOut_Null_OrgNames(string in_name)
+        {
+			string out_name = in_name;
+			// in_name should be in lower case...
+            if (in_name == "-" || in_name == "n.a." || in_name == "n a" || in_name == "n/a" ||
+				in_name == "na" || in_name == "nil" || in_name == "nill" || in_name == "no" || in_name == "non")
+            {
+				out_name = "";
+			}
+			else if (in_name.StartsWith("no ") || in_name == "not applicable" || in_name.StartsWith("not prov"))
+			{
+				out_name = "";
+			}
+			else if (in_name == "none" || in_name.StartsWith("non fund") || in_name.StartsWith("non spon")
+				|| in_name.StartsWith("nonfun") || in_name.StartsWith("noneno"))
+			{
+				out_name = "";
+			}
+			else if (in_name.StartsWith("investigator ") || in_name == "investigator" || in_name == "self"
+				|| in_name.StartsWith("Organisation name "))
+			{
+				out_name = "";
+			}
+			else
+            {
+				out_name = in_name;
+			}
+
+			return out_name;
+        }
 
 
 		public static string TidyORCIDIdentifier(string input_identifier, string sd_oid, DataLayer repo)

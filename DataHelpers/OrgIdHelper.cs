@@ -20,7 +20,7 @@ namespace DataHarvester
             string sql_string = @"update sd.study_identifiers i
             set identifier_org_id = g.id
             from context_ctx.organisations g
-            where i.identifier_org = g.default_name
+            where lower(i.identifier_org) = lower(g.default_name)
             and identifier_org_id is null;";
 
             using (var conn = new NpgsqlConnection(db_conn))
@@ -29,12 +29,31 @@ namespace DataHarvester
             }
         }
 
+
+        // need to check the possible utility of this....as an additional option
+        public void update_study_identifiers_using_default_name_and_suffix()
+        {
+            string sql_string = @"update sd.study_identifiers i
+            set identifier_org_id = g.id
+            from context_ctx.organisations g
+            where g.display_suffix is not null and g.trim(display_suffix) <> '' 
+            and lower(i.identifier_org) =  lower(g.default_name || ' (' || g.display_suffix || ')') 
+            and identifier_org_id is null;";
+
+            using (var conn = new NpgsqlConnection(db_conn))
+            {
+                conn.Execute(sql_string);
+            }
+        }
+
+
+
         public void update_study_identifiers_using_other_name()
         {
             string sql_string = @"update sd.study_identifiers i
             set identifier_org_id = a.org_id
             from context_ctx.org_other_names a
-            where i.identifier_org = a.other_name
+            where lower(i.identifier_org) = lower(a.other_name)
             and identifier_org_id is null;";
 
             using (var conn = new NpgsqlConnection(db_conn))
@@ -80,7 +99,7 @@ namespace DataHarvester
             string sql_string = @"update sd.study_contributors c
             set organisation_id = g.id
             from context_ctx.organisations g
-            where c.organisation_name = g.default_name
+            where lower(c.organisation_name) = lower(g.default_name)
             and c.organisation_id is null;";
 
             using (var conn = new NpgsqlConnection(db_conn))
@@ -94,7 +113,7 @@ namespace DataHarvester
             string sql_string = @"update sd.study_contributors c
             set organisation_id = a.org_id
             from context_ctx.org_other_names a
-            where c.organisation_name = a.other_name
+            where lower(c.organisation_name) = lower(a.other_name)
             and c.organisation_id is null;";
 
             using (var conn = new NpgsqlConnection(db_conn))
@@ -140,7 +159,7 @@ namespace DataHarvester
             string sql_string = @"update sd.data_objects d
             set managing_org_id = g.id
             from context_ctx.organisations g
-            where d.managing_org = g.default_name
+            where lower(d.managing_org) = lower(g.default_name)
             and d.managing_org_id is null;";
 
             using (var conn = new NpgsqlConnection(db_conn))
@@ -154,7 +173,7 @@ namespace DataHarvester
             string sql_string = @"update sd.data_objects d
             set managing_org_id = a.org_id
             from context_ctx.org_other_names a
-            where d.managing_org = a.other_name
+            where lower(d.managing_org) = lower(a.other_name)
             and d.managing_org_id is null;";
 
             using (var conn = new NpgsqlConnection(db_conn))

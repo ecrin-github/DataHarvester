@@ -8,7 +8,7 @@ namespace DataHarvester.euctr
 {
 	public class EUCTRProcessor
 	{
-		public async Task<Study> ProcessDataAsync(EUCTR_Record fs, DateTime? download_datetime, DataLayer common_repo)
+		public Study ProcessData(EUCTR_Record fs, DateTime? download_datetime, DataLayer common_repo)
 		{
 			Study s = new Study();
 			List<StudyIdentifier> identifiers = new List<StudyIdentifier>();
@@ -86,19 +86,22 @@ namespace DataHarvester.euctr
 	        }
 
 			// contributor - sponsor
-			string study_sponsor = fs.sponsor_name;
-			string sponsor = study_sponsor.ToLower();
-			if (!string.IsNullOrEmpty(sponsor) && sponsor.Length > 1
-				&& sponsor != "na" && sponsor != "n/a" && sponsor != "no" && sponsor != "dr"
-				&& sponsor != "none" && sponsor != "no profit" && sponsor != "no sponsor" && !sponsor.StartsWith("no fund"))
+			string sponsor_name = "No organisation name provided in source data";
+
+			if (StringHelpers.FilterOut_Null_OrgNames(fs.sponsor_name?.ToLower()) != "")
 			{
-				contributors.Add(new StudyContributor(sid, 54, "Trial Sponsor", null, study_sponsor, null, null));
+				sponsor_name = StringHelpers.TidyOrgName(fs.sponsor_name, sid);
+				string sponsor = sponsor_name.ToLower();
+				if (!string.IsNullOrEmpty(sponsor) && sponsor.Length > 1
+					&& sponsor != "dr" && sponsor != "no profit")
+				{
+					contributors.Add(new StudyContributor(sid, 54, "Trial Sponsor", null, sponsor_name, null, null));
+				}
 			}
-			
+
 			// may get funders or other supporting orgs
 			if (fs.sponsors.Count > 0)
 			{
-				//fs.funders.Sort();
 				foreach (DetailLine i in fs.sponsors)
 				{
 					switch (i.item_name)
@@ -106,15 +109,17 @@ namespace DataHarvester.euctr
 						case "Name of organisation providing support":
 							{
 								// check a funder is not simply the sponsor...
-								if (i.item_values[0].value != study_sponsor)
+								if (StringHelpers.FilterOut_Null_OrgNames(i.item_values[0].value?.ToLower()) != "")
 								{
-									string funder = i.item_values[0].value;
-									string fund = funder.ToLower();
-									if (!string.IsNullOrEmpty(fund) && fund.Length > 1
-				                    && fund != "na" && fund != "n/a" && fund != "no" && fund != "dr"
-				                    && fund != "none" && fund != "no profit" && fund != "no sponsor" && !fund.StartsWith("no fund"))
+									string funder = StringHelpers.TidyOrgName(i.item_values[0].value, sid);
+									if (funder != sponsor_name)
 									{
-										contributors.Add(new StudyContributor(sid, 58, "Study Funder", null, funder, null, null));
+										string fund = funder.ToLower();
+										if (!string.IsNullOrEmpty(fund) && fund.Length > 1
+										&& fund != "dr" && fund != "no profit")
+										{
+											contributors.Add(new StudyContributor(sid, 58, "Study Funder", null, funder, null, null));
+										}
 									}
 								}
 								break;
@@ -137,9 +142,9 @@ namespace DataHarvester.euctr
 			// do the sponsor's id
 			if (!string.IsNullOrEmpty(fs.sponsor_id))
 			{
-				if (!string.IsNullOrEmpty(study_sponsor))
+				if (!string.IsNullOrEmpty(sponsor_name))
 				{
-					identifiers.Add(new StudyIdentifier(sid, fs.sponsor_id, 14, "Sponsor ID", null, study_sponsor, null, null));
+					identifiers.Add(new StudyIdentifier(sid, fs.sponsor_id, 14, "Sponsor ID", null, sponsor_name, null, null));
 				}
 				else
 				{
@@ -161,15 +166,18 @@ namespace DataHarvester.euctr
 								string st_name = "";
 								foreach (item_value n in i.item_values)
 								{
-									st_name = n.value.Trim().ToLower();
-									if (st_name != null && st_name.Length >= 4 && st_name != "n.a." && st_name != "none" &&
-										!st_name.StartsWith("see ") && !st_name.StartsWith("not avail") &&
-										!st_name.StartsWith("not applic") && !st_name.StartsWith("non applic") && !st_name.StartsWith("non aplic") &&
-										!st_name.StartsWith("no applic") && !st_name.StartsWith("no aplic") && !st_name.StartsWith("not aplic") &&
-										st_name != "not done" && st_name != "same as above" && st_name != "in preparation" &&
-										!st_name.StartsWith("non dispo") && st_name != "non fornito")
+									if (n.value != null && n.value.Length >= 4)
 									{
-										titles.Add(new StudyTitle(sid, n.value, 16, "Trial Registry title", false));
+										st_name = n.value.Trim().ToLower();
+										if (st_name != "n.a." && st_name != "none" &&
+											!st_name.StartsWith("see ") && !st_name.StartsWith("not avail") &&
+											!st_name.StartsWith("not applic") && !st_name.StartsWith("non applic") && !st_name.StartsWith("non aplic") &&
+											!st_name.StartsWith("no applic") && !st_name.StartsWith("no aplic") && !st_name.StartsWith("not aplic") &&
+											st_name != "not done" && st_name != "same as above" && st_name != "in preparation" &&
+											!st_name.StartsWith("non dispo") && st_name != "non fornito")
+										{
+											titles.Add(new StudyTitle(sid, n.value, 16, "Trial Registry title", false));
+										}
 									}
 								}
 								break;
@@ -180,22 +188,18 @@ namespace DataHarvester.euctr
 								int k = 0; string st_name = "";
 								foreach (item_value n in i.item_values)
 								{
-									st_name = n.value.Trim().ToLower();
-									if (st_name != null && st_name.Length >= 4 && st_name != "n.a." && st_name != "none" &&
-										!st_name.StartsWith("see ") && !st_name.StartsWith("not avail") &&
-										!st_name.StartsWith("not applic") && !st_name.StartsWith("non applic") && !st_name.StartsWith("non aplic") &&
-										!st_name.StartsWith("no applic") && !st_name.StartsWith("no aplic") && !st_name.StartsWith("not aplic") &&
-										st_name != "not done" && st_name != "same as above" && st_name != "in preparation" &&
-										!st_name.StartsWith("non dispo") && st_name != "non fornito")
+									if (n.value != null && n.value.Length >= 4)
 									{
-										k++;
-										if (k == 1)
+										st_name = n.value.Trim().ToLower();
+										if (st_name != "n.a." && st_name != "none" &&
+											!st_name.StartsWith("see ") && !st_name.StartsWith("not avail") &&
+											!st_name.StartsWith("not applic") && !st_name.StartsWith("non applic") && !st_name.StartsWith("non aplic") &&
+											!st_name.StartsWith("no applic") && !st_name.StartsWith("no aplic") && !st_name.StartsWith("not aplic") &&
+											st_name != "not done" && st_name != "same as above" && st_name != "in preparation" &&
+											!st_name.StartsWith("non dispo") && st_name != "non fornito")
 										{
-											titles.Add(new StudyTitle(sid, n.value, 15, "Public title", true));
-										}
-										else
-										{
-											titles.Add(new StudyTitle(sid, n.value, 15, "Public title", false));
+											k++;
+											titles.Add(new StudyTitle(sid, n.value, 15, "Public title", (k == 1)));
 										}
 									}
 								}

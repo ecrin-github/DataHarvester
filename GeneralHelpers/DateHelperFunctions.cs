@@ -1,11 +1,13 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq.Expressions;
 using System.Net;
 using System.Reflection.Metadata.Ecma335;
 using System.Security.Cryptography;
 using System.Text;
 using System.Text.Json;
+using System.Text.RegularExpressions;
 using System.Xml.Linq;
 
 namespace DataHarvester
@@ -71,42 +73,64 @@ namespace DataHarvester
 
         public static SplitDate GetDatePartsFromISOString(string dateString)
         {
-            // input date string, if present, is in the form of "yyyy-mm-dd"
-            if (dateString == null) return null;
-
-            string year_string, month_string, day_string;
-            int? year_num, month_num, day_num;
-
-            year_string = dateString.Substring(0, 4);
-            month_string = dateString.Substring(5, 2);
-            day_string = dateString.Substring(8, 2);
-
-            // convert strings into integers
-            if (int.TryParse(year_string, out int y)) year_num = y; else year_num = null;
-            if (int.TryParse(month_string, out int m)) month_num = m; else month_num = null;
-            if (int.TryParse(day_string, out int d)) day_num = d; else day_num = null;
-            string month_as3 = ((Months3)month_num).ToString();
-
-            // get date as string
-            string date_as_string;
-            if (year_num != null && month_num != null && day_num != null)
+            try
             {
-                date_as_string = year_num.ToString() + " " + month_as3 + " " + day_num.ToString();
-            }
-            else if (year_num != null && month_num != null && day_num == null)
-            {
-                date_as_string = year_num.ToString() + ' ' + month_as3;
-            }
-            else if (year_num != null && month_num == null && day_num == null)
-            {
-                date_as_string = year_num.ToString();
-            }
-            else
-            {
-                date_as_string = null;
-            }
+                // input date string, if present, is in the form of "yyyy-mm-dd"
+                if (dateString == null) return null;
 
-            return new SplitDate(year_num, month_num, day_num, date_as_string);
+                // check format and possible alternative
+                if (Regex.Match(dateString, @"^\d{8}$").Success)
+                {
+                    // If presented without hyphens add them to create the standard format
+                    dateString = dateString.Substring(0, 4) + "-" + dateString.Substring(4, 2) + "-" + dateString.Substring(6, 2);
+                }
+
+                if (Regex.Match(dateString, @"^\d{4}-\d{2}-\d{2}$").Success)
+                {
+                    string year_string, month_string, day_string;
+                    int? year_num, month_num, day_num;
+
+                    year_string = dateString.Substring(0, 4);
+                    month_string = dateString.Substring(5, 2);
+                    day_string = dateString.Substring(8, 2);
+
+                    // convert strings into integers
+                    if (int.TryParse(year_string, out int y)) year_num = y; else year_num = null;
+                    if (int.TryParse(month_string, out int m)) month_num = m; else month_num = null;
+                    if (int.TryParse(day_string, out int d)) day_num = d; else day_num = null;
+                    string month_as3 = ((Months3)month_num).ToString();
+
+                    // get date as string
+                    string date_as_string;
+                    if (year_num != null && month_num != null && day_num != null)
+                    {
+                        date_as_string = year_num.ToString() + " " + month_as3 + " " + day_num.ToString();
+                    }
+                    else if (year_num != null && month_num != null && day_num == null)
+                    {
+                        date_as_string = year_num.ToString() + ' ' + month_as3;
+                    }
+                    else if (year_num != null && month_num == null && day_num == null)
+                    {
+                        date_as_string = year_num.ToString();
+                    }
+                    else
+                    {
+                        date_as_string = null;
+                    }
+
+                    return new SplitDate(year_num, month_num, day_num, date_as_string);
+                }
+                else
+                {
+                    return null;
+                }
+            }
+            catch (Exception e)
+            {
+                string s = e.Message;
+                return null;
+            }
         }
 
 

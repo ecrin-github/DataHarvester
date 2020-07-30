@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Text;
+using System.Text.RegularExpressions;
 
 namespace DataHarvester
 {
@@ -49,7 +50,7 @@ namespace DataHarvester
 			int? type_id = null;
 			switch (gender_elig.ToLower())
 			{
-				case "all": type_id = 900; break;
+				case "both": type_id = 900; break;
 				case "female": type_id = 905; break;
 				case "male": type_id = 910; break;
 				case "not provided": type_id = 915; break;
@@ -205,6 +206,42 @@ namespace DataHarvester
 			return type_id;
 		}
 
+
+		public static string GetTimeUnits(string time_units)
+		{
+			// was not classified previously...
+			// starts with "Other" and has brackets around the text
+			string time_string = time_units.Replace("Other", "").Trim();
+			time_string = time_string.TrimStart('(').TrimEnd(')').ToLower();
+
+			// was not classified previously...
+			if (Regex.Match(time_string, @"\d+y").Success)
+			{
+				return "Years";
+			}
+			else if (Regex.Match(time_string, @"\d+m").Success)
+			{
+				return "Months";
+			}
+			else if (Regex.Match(time_string, @"\d+w").Success)
+			{
+				return "Weeks";
+			}
+			else if (Regex.Match(time_string, @"\d+d").Success)
+			{
+				return "Days";
+			}
+			else if (Regex.Match(time_string, @"^\d+$").Success)
+            {
+				// default of years for numbers on their own
+				return "Years";
+			}
+			else
+            {
+				return null;
+
+			}
+		}
 	}
 
 }

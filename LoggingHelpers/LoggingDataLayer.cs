@@ -49,6 +49,7 @@ namespace DataHarvester
 			}
 		}
 
+		/*
 		public IEnumerable<FileRecord> FetchStudyFileRecords(int source_id)
 		{
 			using (NpgsqlConnection Conn = new NpgsqlConnection(mon_connString))
@@ -61,6 +62,113 @@ namespace DataHarvester
 				sql_string += " order by local_path";
 				return Conn.Query<FileRecord>(sql_string);
 			}
+		}
+		*/
+
+		public IEnumerable<FileRecord> FetchStudyFileRecords(int source_id, int harvest_type_id = 1, DateTime? cutoff_date = null)
+		{
+			string sql_string = "select id, source_id, sd_id, remote_url, last_sf_id, last_revised, ";
+			sql_string += " assume_complete, download_status, download_datetime, local_path, last_processed ";
+			sql_string += " from sf.source_data_studies ";
+
+			if (harvest_type_id == 1)
+            {
+				// Harvest all files.
+                sql_string += " where source_id = " + source_id.ToString();
+                
+            }
+            else if (harvest_type_id == 2)
+            {
+				// Harvest only those files that have been revised (or added) on or since the cutoff date.
+
+				sql_string += " where source_id = " + source_id.ToString() + " and last_revised >= '" + cutoff_date + "'";
+			}
+            else if (harvest_type_id == 3)
+            {
+				// For sources with no revision date - harvestfiles unless assumed complete has been set
+				// as true (default is null) in which case no further change is expected.
+
+				sql_string += " where source_id = " + source_id.ToString() + " and assume_complete is null";
+			}
+			
+			sql_string += " and local_path is not null";
+            sql_string += " order by local_path";
+
+			using (NpgsqlConnection Conn = new NpgsqlConnection(mon_connString))
+			{
+				return Conn.Query<FileRecord>(sql_string);
+			}
+		}
+
+
+		public int FetchStudyFileRecordsCount(int source_id, int harvest_type_id = 1, DateTime? cutoff_date = null)
+	    {
+			string sql_string = "select count(*) ";
+			sql_string += " from sf.source_data_studies ";
+			if (harvest_type_id == 1)
+			{
+				// Count all files.
+
+				sql_string += " where source_id = " + source_id.ToString();
+			}
+			else if (harvest_type_id == 2)
+			{
+				// Count only those files that have been revised (or added) on or since the cutoff date.
+
+				sql_string += " where source_id = " + source_id.ToString() + " and last_revised >= '" + cutoff_date + "'";
+			}
+			else if (harvest_type_id == 3)
+			{
+				// For sources with no revision date - Count files unless assumed complete has been set
+				// as true (default is null) in which case no further change is expected.
+
+				sql_string += " where source_id = " + source_id.ToString() + " and assume_complete is null";
+			}
+
+			sql_string += " and local_path is not null";
+
+			using (NpgsqlConnection Conn = new NpgsqlConnection(mon_connString))
+			{
+				return Conn.ExecuteScalar<int>(sql_string);
+			}
+		}
+
+
+
+        public IEnumerable<FileRecord> FetchStudyFileRecordsByOffset(int source_id, int offset_num, int amount, int harvest_type_id = 1, DateTime? cutoff_date = null)
+        {
+			string sql_string = "select id, source_id, sd_id, remote_url, last_sf_id, last_revised, ";
+			sql_string += " assume_complete, download_status, download_datetime, local_path, last_processed ";
+			sql_string += " from sf.source_data_studies ";
+
+			if (harvest_type_id == 1)
+			{
+				// Harvest all files.
+				sql_string += " where source_id = " + source_id.ToString();
+			}
+			else if (harvest_type_id == 2)
+			{
+				// Harvest only those files that have been revised (or added) on or since the cutoff date.
+
+				sql_string += " where source_id = " + source_id.ToString() + " and last_revised >= '" + cutoff_date + "'";
+			}
+			else if (harvest_type_id == 3)
+			{
+				// For sources with no revision date - harvestfiles unless assumed complete has been set
+				// as true (default is null) in which case no further change is expected.
+
+				sql_string += " where source_id = " + source_id.ToString() + " and assume_complete is null";
+			}
+
+			sql_string += " and local_path is not null";
+			sql_string += " order by local_path";
+			sql_string += " offset " + offset_num.ToString() + " limit " + amount.ToString();
+
+			using (NpgsqlConnection Conn = new NpgsqlConnection(mon_connString))
+			{
+				return Conn.Query<FileRecord>(sql_string);
+			}
+
 		}
 
 
