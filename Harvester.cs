@@ -49,11 +49,17 @@ namespace DataHarvester
 				sdb.DeleteSDObjectTables();
 				sdb.BuildNewSDObjectTables();
 
+				// construct the harvest_event record
+				int harvest_id = logging_repo.GetNextHarvestEventId();
+				HarvestEvent harvest = new HarvestEvent(harvest_id, source.id, harvest_type_id, cutoff_date);
+				
+
 				// Harvest the data from the local XML files
 
 				if (source.uses_who_harvest)
 				{
-					WHOController c = new WHOController(source, repo, logging_repo, harvest_type_id, cutoff_date);
+					WHOController c = new WHOController(harvest_id, source, repo, logging_repo, harvest_type_id, cutoff_date);
+					harvest.num_records_available = logging_repo.FetchFullFileCount(source.id, "study");
 					c.LoopThroughFiles();
 				}
 				else
@@ -62,56 +68,71 @@ namespace DataHarvester
 					{
 						case 101900:
 							{
-								BioLinccController c = new BioLinccController(source, repo, logging_repo);
+								BioLinccController c = new BioLinccController(harvest_id, source, repo, logging_repo);
 								c.GetInitialIDData();
-								c.LoopThroughFiles();
+								harvest.num_records_available = logging_repo.FetchFullFileCount(source.id, "study");
+								harvest.num_records_harvested = c.LoopThroughFiles();
 								break;
 							}
 						case 101901:
 							{
-								YodaController c = new YodaController(source, repo, logging_repo);
-								c.LoopThroughFiles();
+								YodaController c = new YodaController(harvest_id, source, repo, logging_repo);
+								harvest.num_records_available = logging_repo.FetchFullFileCount(source.id, "study");
+								harvest.num_records_harvested = c.LoopThroughFiles();
 								break;
 							}
 						case 100120:
 							{
-								CTGController c = new CTGController(source, repo, logging_repo, harvest_type_id, cutoff_date);
-								c.LoopThroughFiles();
+								CTGController c = new CTGController(harvest_id, source, repo, logging_repo, harvest_type_id, cutoff_date);
+								harvest.num_records_available = logging_repo.FetchFullFileCount(source.id, "study");
+								harvest.num_records_harvested = c.LoopThroughFiles();
 								break;
 							}
 						case 100123:
 							{
-								EUCTRController c = new EUCTRController(source, repo, logging_repo, harvest_type_id, cutoff_date);
-								c.LoopThroughFiles();
+								EUCTRController c = new EUCTRController(harvest_id, source, repo, logging_repo, harvest_type_id, cutoff_date);
+								harvest.num_records_available = logging_repo.FetchFullFileCount(source.id, "study");
+								harvest.num_records_harvested = c.LoopThroughFiles();
 								break;
 							}
 						case 100126:
 							{
-								ISRCTNController c = new ISRCTNController(source, repo, logging_repo, harvest_type_id, cutoff_date);
-								await c.LoopThroughFilesAsync();
+								ISRCTNController c = new ISRCTNController(harvest_id, source, repo, logging_repo, harvest_type_id, cutoff_date);
+								harvest.num_records_available = logging_repo.FetchFullFileCount(source.id, "study");
+								harvest.num_records_harvested = await c.LoopThroughFilesAsync();
 								break;
 							}
 						case 100135:
 							{
-								PubmedController c = new PubmedController(source, repo, logging_repo, harvest_type_id, cutoff_date);
-								c.LoopThroughFiles();
+								PubmedController c = new PubmedController(harvest_id, source, repo, logging_repo, harvest_type_id, cutoff_date);
+								harvest.num_records_available = logging_repo.FetchFullFileCount(source.id, "object");
+								harvest.num_records_harvested = c.LoopThroughFiles();
 								break; ;
 							}
 					}
 				}
+
+				harvest.time_ended = DateTime.Now;
+				logging_repo.StoreHarvestEvent(harvest);
+
 			}
 
 			// These functions have to be run even if the 
 			// harvest is 'org_update_only', as well as when the 
-			// sd tables are constructged in the normal way
+			// sd tables are constructed in the normal way
+
+			OrgUpdater gu = new OrgUpdater(repo.ConnString, source);
+			gu.EstablishContextForeignTables(repo.Username, repo.Password);
+			gu.UpdateStudyIdentifierOrgs();
+			gu.UpdateStudyContributorOrgs();
+			gu.UpdateDataObjectOrgs();
+			gu.DropContextForeignTables();
+
+			// Note the hashes can only be done after all the
+			// data is complete, including the organisation 
+			// codes and names derived above
 
 			HashBuilder hb = new HashBuilder(repo.ConnString, source);
-			hb.EstablishContextForeignTables(repo.Username, repo.Password);
-			hb.UpdateStudyIdentifierOrgs();
-			hb.UpdateStudyContributorOrgs();
-			hb.UpdateDataObjectOrgs();
-			hb.DropContextForeignTables();
-
 			hb.CreateStudyHashes();
 			hb.CreateStudyCompositeHashes();
 			hb.CreateDataObjectHashes();

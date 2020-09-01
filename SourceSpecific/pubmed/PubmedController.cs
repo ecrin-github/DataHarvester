@@ -13,18 +13,20 @@ namespace DataHarvester.pubmed
         PubmedDataLayer pubmed_repo;
         PubmedProcessor processor;
         Source source;
+        int last_harvest_id;
 
-        public PubmedController(Source _source, DataLayer _common_repo, LoggingDataLayer _logging_repo, int harvest_type_id, DateTime? cutoff_date)
+        public PubmedController(int _last_harvest_id, Source _source, DataLayer _common_repo, LoggingDataLayer _logging_repo, int harvest_type_id, DateTime? cutoff_date)
         {
             source = _source;
             processor = new PubmedProcessor();
             common_repo = _common_repo;
             logging_repo = _logging_repo;
             pubmed_repo = new PubmedDataLayer();
+            last_harvest_id = _last_harvest_id;
         }
 
 
-        public void LoopThroughFiles()
+        public int? LoopThroughFiles()
         {
             string fileBase = source.local_folder;
             
@@ -33,9 +35,8 @@ namespace DataHarvester.pubmed
             // the PMID as an integral part of the file name.
 
             int total_number = (int)pubmed_repo.Get_pmid_record_count();
-            int i = 0;
+            int i = 0; 
             int number_of_loops_needed = (total_number / ((int) source.grouping_range_by_id)) + 1;
-
 
             for (int loop = 0; loop < number_of_loops_needed; loop++)
             {
@@ -77,7 +78,7 @@ namespace DataHarvester.pubmed
                     if (i % 100 == 0) Console.WriteLine(i.ToString());
                 }
             }
-         
+            return i;
         }
     }
 }

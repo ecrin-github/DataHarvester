@@ -68,7 +68,8 @@ namespace DataHarvester
 			}
 			catch(Exception e)
             {
-                return apos_name;
+				Console.WriteLine(e.Message);
+				return apos_name;
             }
 			
 		}

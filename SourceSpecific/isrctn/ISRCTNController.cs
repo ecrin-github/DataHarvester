@@ -12,16 +12,18 @@ namespace DataHarvester.isrctn
 		LoggingDataLayer logging_repo;
 		ISRCTNProcessor processor;
 		Source source;
+		int last_harvest_id;
 
-		public ISRCTNController(Source _source, DataLayer _common_repo, LoggingDataLayer _logging_repo, int harvest_type_id, DateTime? cutoff_date)
+		public ISRCTNController(int _last_harvest_id, Source _source, DataLayer _common_repo, LoggingDataLayer _logging_repo, int harvest_type_id, DateTime? cutoff_date)
 		{
 			source = _source;
 			processor = new ISRCTNProcessor();
 			common_repo = _common_repo;
 			logging_repo = _logging_repo;
+			last_harvest_id = _last_harvest_id;
 		}
 
-		public async Task LoopThroughFilesAsync()
+		public async Task<int?> LoopThroughFilesAsync()
 		{
 			// Get the folder base from the appsettings file
 			// and construct a list of the files 
@@ -32,9 +34,9 @@ namespace DataHarvester.isrctn
 			// to use the sf records to get a list of files
 			// and local paths...
 
-			IEnumerable<FileRecord> file_list = logging_repo.FetchStudyFileRecords(source.id);
+			IEnumerable<StudyFileRecord> file_list = logging_repo.FetchStudyFileRecords(source.id);
 			int n = 0; string filePath = "";
-			foreach (FileRecord rec in file_list)
+			foreach (StudyFileRecord rec in file_list)
 			{
 				n++;
 				// for testing...
@@ -54,14 +56,19 @@ namespace DataHarvester.isrctn
 					ISCTRN_Record studyRegEntry = (ISCTRN_Record)serializer.Deserialize(rdr);
 
 					// break up the file into relevant data classes
-					Study s = await processor.ProcessDataAsync(studyRegEntry, rec.download_datetime, common_repo);
+					Study s = await processor.ProcessDataAsync(studyRegEntry, rec.last_downloaded, common_repo);
 
 					// store the data in the database
-					processor.StoreData(common_repo, s); 
+					processor.StoreData(common_repo, s);
+
+					// update file record with last processed datetime
+					logging_repo.UpdateFileRecLastHarvested(rec.id, "study", last_harvest_id);
 				}
 
 				if (n % 10 == 0) Console.WriteLine(n.ToString());
 			}
+
+			return n;
 		}
 	}
 }

@@ -15,8 +15,9 @@ namespace DataHarvester.who
 		Source source;
 		int harvest_type_id;
 		DateTime? cutoff_date;
+		int last_harvest_id;
 
-		public WHOController(Source _source, DataLayer _common_repo, LoggingDataLayer _logging_repo, int _harvest_type_id, DateTime? _cutoff_date)
+		public WHOController(int _last_harvest_id, Source _source, DataLayer _common_repo, LoggingDataLayer _logging_repo, int _harvest_type_id, DateTime? _cutoff_date)
 		{
 			source = _source;
 			processor = new WHOProcessor();
@@ -25,6 +26,7 @@ namespace DataHarvester.who
 			who_repo = new WHODataLayer();
 			harvest_type_id = _harvest_type_id;
 			cutoff_date = _cutoff_date;
+			last_harvest_id = _last_harvest_id;
 		}
 
 
@@ -35,11 +37,11 @@ namespace DataHarvester.who
 			// to use the sf records to get a list of files
 			// and local paths...
 
-			IEnumerable<FileRecord> file_list = logging_repo.FetchStudyFileRecords(source.id, harvest_type_id, cutoff_date);
+			IEnumerable<StudyFileRecord> file_list = logging_repo.FetchStudyFileRecords(source.id, harvest_type_id, cutoff_date);
 			int n = 0; string filePath = "";
 			XmlSerializer serializer = new XmlSerializer(typeof(WHORecord));
 
-			foreach (FileRecord rec in file_list)
+			foreach (StudyFileRecord rec in file_list)
 			{
 				n++;
 				// for testing...
@@ -58,14 +60,13 @@ namespace DataHarvester.who
 					WHORecord studyRegEntry = (WHORecord)serializer.Deserialize(rdr);
 
                     // break up the file into relevant data classes
-                    Study s = processor.ProcessData(studyRegEntry, rec.download_datetime, common_repo, who_repo);
+                    Study s = processor.ProcessData(studyRegEntry, rec.last_downloaded, common_repo, who_repo);
 
                     // store the data in the database			
                     processor.StoreData(common_repo, s);
 
 					// update file record with last processed datetime
-					logging_repo.UpdateStudyFileRecLastProcessed(rec.id);
-
+					logging_repo.UpdateFileRecLastHarvested(rec.id, "study", last_harvest_id);
 				}
 
 				if (n % 10 == 0) Console.WriteLine(n.ToString());

@@ -20,82 +20,6 @@ namespace DataHarvester
 			source = _source;
 		}
 
-
-		public void EstablishContextForeignTables(string user_name, string password)
-        {
-			using (var conn = new NpgsqlConnection(connString))
-			{
-				string sql_string = @"CREATE EXTENSION IF NOT EXISTS postgres_fdw
-			                         schema sd;";
-                conn.Execute(sql_string);
-
-     			sql_string = @"CREATE SERVER IF NOT EXISTS context "
-						   + @" FOREIGN DATA WRAPPER postgres_fdw
-                             OPTIONS (host 'localhost', dbname 'context', port '5432');";
-				conn.Execute(sql_string);
-
-				sql_string = @"CREATE USER MAPPING IF NOT EXISTS FOR CURRENT_USER
-                     SERVER context 
-					 OPTIONS (user '" + user_name + "', password '" + password + "');";
-				conn.Execute(sql_string);
-
-				sql_string = @"DROP SCHEMA IF EXISTS context_ctx cascade;
-                     CREATE SCHEMA context_ctx; 
-                     IMPORT FOREIGN SCHEMA ctx
-                     FROM SERVER context 
-                     INTO context_ctx;";
-				conn.Execute(sql_string);
-			}
-		}
-
-		public void UpdateStudyIdentifierOrgs()
-		{
-			OrgIdHelper helper = new OrgIdHelper(connString);
-			helper.update_study_identifiers_using_default_name();
-			helper.update_study_identifiers_using_other_name();
-			helper.update_study_identifiers_insert_default_names();
-			helper.store_unmatched_study_identifiers_org_names(source.id);
-		}
-
-
-		public void UpdateStudyContributorOrgs()
-		{
-			if (source.has_study_contributors)
-			{
-				OrgIdHelper helper = new OrgIdHelper(connString);
-				helper.update_study_contributors_using_default_name();
-				helper.update_study_contributors_using_other_name();
-				helper.update_study_contributors_insert_default_names();
-				helper.store_unmatched_study_contributors_org_names(source.id);
-			}
-		}
-
-		public void UpdateDataObjectOrgs()
-		{
-			OrgIdHelper helper = new OrgIdHelper(connString);
-			helper.update_data_objects_using_default_name();
-			helper.update_data_objects_using_other_name();
-			helper.update_data_objects_insert_default_names();
-			helper.store_unmatched_data_object_org_names(source.id);
-		}
-
-
-		public void DropContextForeignTables()
-		{
-			using (var conn = new NpgsqlConnection(connString))
-			{
-				string sql_string = @"DROP USER MAPPING IF EXISTS FOR CURRENT_USER
-                     SERVER context;";
-				conn.Execute(sql_string);
-
-				sql_string = @"DROP SERVER IF EXISTS context CASCADE;";
-				conn.Execute(sql_string);
-
-				sql_string = @"DROP SCHEMA IF EXISTS context_ctx;";
-				conn.Execute(sql_string);
-			}
-		}
-
 		public void CreateStudyHashes()
 		{
 			StudyHashCreators hashcreator = new StudyHashCreators(connString);
@@ -125,8 +49,8 @@ namespace DataHarvester
 			if (source.has_study_contributors) hashcreator.create_composite_study_hashes(15, "contributors", "study_contributors");
 			if (source.has_study_relationships) hashcreator.create_composite_study_hashes(16, "relationships", "study_relationships");
 			if (source.has_study_references) hashcreator.create_composite_study_hashes(17, "references", "study_references");
-			if (source.has_study_links) hashcreator.create_composite_study_hashes(18, "links", "study_links");
-			if (source.has_study_ipd_available) hashcreator.create_composite_study_hashes(19, "ipd_available", "study_ipd_available");
+			if (source.has_study_links) hashcreator.create_composite_study_hashes(18, "study links", "study_links");
+			if (source.has_study_ipd_available) hashcreator.create_composite_study_hashes(19, "ipd available", "study_ipd_available");
 		}
 
 

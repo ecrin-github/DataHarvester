@@ -235,6 +235,7 @@ namespace DataHarvester
 				conn.Execute(sql_string);
 			}
 		}
+
 		public void create_table_study_hashes()
 		{
 			string sql_string = @"CREATE TABLE sd.study_hashes(

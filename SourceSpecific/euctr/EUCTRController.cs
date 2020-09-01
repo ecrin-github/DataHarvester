@@ -12,25 +12,27 @@ namespace DataHarvester.euctr
 		LoggingDataLayer logging_repo;
 		EUCTRProcessor processor;
 		Source source;
+		int last_harvest_id;
 
-		public EUCTRController(Source _source, DataLayer _common_repo, LoggingDataLayer _logging_repo, int harvest_type_id, DateTime? cutoff_date)
+		public EUCTRController(int _last_harvest_id, Source _source, DataLayer _common_repo, LoggingDataLayer _logging_repo, int harvest_type_id, DateTime? cutoff_date)
 		{
 			source = _source;
 			processor = new EUCTRProcessor();
 			common_repo = _common_repo;
 			logging_repo = _logging_repo;
+			last_harvest_id = _last_harvest_id;
 		}
 
-		public void LoopThroughFiles()
+		public int? LoopThroughFiles()
 		{
      		// Construct a list of the files 
 			// Rather than using a file base, it is possible
 			// to use the sf records to get a list of files
 			// and local paths...
 
-			IEnumerable<FileRecord> file_list = logging_repo.FetchStudyFileRecords(source.id);
+			IEnumerable<StudyFileRecord> file_list = logging_repo.FetchStudyFileRecords(source.id);
 			int n = 0; string filePath = "";
-			foreach (FileRecord rec in file_list)
+			foreach (StudyFileRecord rec in file_list)
 			{
 				n++;
 				// for testing...
@@ -56,7 +58,7 @@ namespace DataHarvester.euctr
 						EUCTR_Record studyRegEntry = (EUCTR_Record)serializer.Deserialize(rdr);
 
 						// break up the file into relevant data classes
-						Study s = processor.ProcessData(studyRegEntry, rec.download_datetime, common_repo);
+						Study s = processor.ProcessData(studyRegEntry, rec.last_downloaded, common_repo);
 
 						// check and store data object links - just pdfs for now
 						// (commented out for the moment to save time during extraction).
@@ -64,6 +66,9 @@ namespace DataHarvester.euctr
 
 						// store the data in the database
 						processor.StoreData(common_repo, s);
+
+						// update file record with last processed datetime
+						logging_repo.UpdateFileRecLastHarvested(rec.id, "study", last_harvest_id);
 					}
 
 					catch (Exception e)
@@ -75,6 +80,7 @@ namespace DataHarvester.euctr
 
 				if (n % 10 == 0) Console.WriteLine(n.ToString());
 			}
+			return n;
 		}
 	}
 }

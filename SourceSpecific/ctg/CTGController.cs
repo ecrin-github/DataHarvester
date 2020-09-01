@@ -15,8 +15,9 @@ namespace DataHarvester.ctg
 		Source source;
 		int harvest_type_id;
 		DateTime? cutoff_date;
+		int last_harvest_id;
 
-		public CTGController(Source _source, DataLayer _common_repo, LoggingDataLayer _logging_repo, int _harvest_type_id, DateTime? _cutoff_date)
+		public CTGController(int _last_harvest_id, Source _source, DataLayer _common_repo, LoggingDataLayer _logging_repo, int _harvest_type_id, DateTime? _cutoff_date)
 		{
 			source = _source;
 			processor = new CTGProcessor();
@@ -24,25 +25,26 @@ namespace DataHarvester.ctg
 			logging_repo = _logging_repo;
 			harvest_type_id = _harvest_type_id;
 			cutoff_date = _cutoff_date;
+			last_harvest_id = _last_harvest_id;
 		}
 
-		public void LoopThroughFiles()
+		public int? LoopThroughFiles()
 		{
 			// Loop through the available records 1000 at a time
 			// First get the total number of records in the system for this source
 
 			// Set up the outer limit and get the relevant records for each pass
-			int total_amount = logging_repo.FetchStudyFileRecordsCount(source.id);
+			int total_amount = logging_repo.FetchFileRecordsCount(source.id, "study");
 			int chunk = 1000;
-
+			int k = 0;
 			for (int m = 0; m < total_amount; m += chunk)
 			{
-				IEnumerable<FileRecord> file_list = logging_repo.FetchStudyFileRecordsByOffset(source.id, m, chunk, harvest_type_id, cutoff_date);
+				IEnumerable<StudyFileRecord> file_list = logging_repo.FetchStudyFileRecordsByOffset(source.id, m, chunk, harvest_type_id, cutoff_date);
 
 				int n = 0; string filePath = "";
-				foreach (FileRecord rec in file_list)
+				foreach (StudyFileRecord rec in file_list)
 				{
-					n++;
+					n++; k++;
 					filePath = rec.local_path;
 
 					if (File.Exists(filePath))
@@ -58,7 +60,7 @@ namespace DataHarvester.ctg
 						FullStudy studyRegEntry = (FullStudy)serializer.Deserialize(rdr);
 
 						// break up the file into relevant data classes
-						Study s = processor.ProcessData(studyRegEntry, rec.download_datetime, common_repo);
+						Study s = processor.ProcessData(studyRegEntry, rec.last_downloaded, common_repo);
 
 						// check and store data object links - just pdfs for now
 						// (commented out for the moment to save time during extraction).
@@ -68,13 +70,17 @@ namespace DataHarvester.ctg
 						processor.StoreData(common_repo, s);
 
 						// update file record with last processed datetime
-						logging_repo.UpdateStudyFileRecLastProcessed(rec.id);
+						logging_repo.UpdateFileRecLastHarvested(rec.id, "study", last_harvest_id);
 
 					}
 					
 					if (n % 10 == 0) Console.WriteLine(m.ToString() + ": " + n.ToString()); 
 				}
 			}
+
+            return (k);
 		}
+
+		
 	}
 }
