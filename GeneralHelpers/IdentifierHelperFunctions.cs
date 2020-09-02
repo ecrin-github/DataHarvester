@@ -50,7 +50,8 @@ namespace DataHarvester
 
 		// A helper function called from the loop that goes through the secondary Id data
 		// It tries to make the data as complete as possible, depending on the typem of 
-		// secondary id that is being processed
+		// secondary id that is being processed.
+
 		public static IdentifierDetails GetIdentifierProps(string id_type, string id_org, string id_value)
 		{
 			// use initial values
@@ -58,7 +59,7 @@ namespace DataHarvester
 
 			IdentifierDetails id = new IdentifierDetails(id_type, id_org, id_value); 
 			
-			if (id_org == null)
+			if (id_org == null || id_org == "Other" || id_org == "Alias Study Number")
 			{
 				id.id_org_id = 12;
 				id.id_org = "No organisation name provided in source data";
@@ -269,11 +270,19 @@ namespace DataHarvester
 						id.id_type = "Ethics Review ID";
 					}
 
-					if (id_org.ToLower().Contains("ethics") || id_org == "Independent Review Board" || id_org.Contains("IRB"))
+					if (id_org.ToLower().Contains("ethics") || id_org == "Independent Review Board" ||
+						id_org == "Institutional Review Board" || id_org.Contains("IRB"))
 					{
 						// ethics approval number
 						id.id_type_id = 12;
 						id.id_type = "Ethics Review ID";
+					}
+
+					if (id_org.ToLower() == "pdq")
+					{
+						// NCI Physician Database id
+						id.id_org_id = 100162;
+						id.id_org = "National Cancer Institute";
 					}
 				}
 
@@ -283,11 +292,10 @@ namespace DataHarvester
 					id.id_org_id = 100162;
 					id.id_org = "National Cancer Institute";
 				}
-    		}
+			}
 
 			return id;
 		}
-
 
 
 		public static IdentifierDetails GetISRCTNIdentifierProps(string id_value, string study_sponsor)

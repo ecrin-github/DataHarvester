@@ -70,6 +70,7 @@ namespace DataHarvester
 			string sql_string = sql_file_select_string;
 			sql_string += " from sf.source_data_studies ";
 			sql_string += GetWhereClause(source_id, harvest_type_id, cutoff_date);
+			sql_string += " order by local_path";
 
 			using (NpgsqlConnection Conn = new NpgsqlConnection(connString))
 			{
@@ -82,6 +83,7 @@ namespace DataHarvester
 			string sql_string = sql_file_select_string;
 			sql_string += " from sf.source_data_objects";
 			sql_string += GetWhereClause(source_id, harvest_type_id, cutoff_date);
+			sql_string += " order by local_path";
 
 			using (NpgsqlConnection Conn = new NpgsqlConnection(connString))
 			{
@@ -126,6 +128,7 @@ namespace DataHarvester
 			string sql_string = sql_file_select_string;
 			sql_string += " from sf.source_data_studies ";
 			sql_string += GetWhereClause(source_id, harvest_type_id, cutoff_date);
+			sql_string += " order by local_path ";
 			sql_string += " offset " + offset_num.ToString() + " limit " + amount.ToString();
 
 			using (NpgsqlConnection Conn = new NpgsqlConnection(connString))
@@ -140,6 +143,7 @@ namespace DataHarvester
 			string sql_string = sql_file_select_string;
 			sql_string += " from sf.source_data_objects ";
 			sql_string += GetWhereClause(source_id, harvest_type_id, cutoff_date);
+			sql_string += " order by local_path ";
 			sql_string += " offset " + offset_num.ToString() + " limit " + amount.ToString();
 
 			using (NpgsqlConnection Conn = new NpgsqlConnection(connString))
@@ -169,7 +173,7 @@ namespace DataHarvester
 			}
 
 			where_clause += " and local_path is not null";
-			where_clause += " order by local_path";
+			
 			return where_clause;
 		}
 

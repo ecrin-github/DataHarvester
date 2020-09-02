@@ -46,7 +46,7 @@ namespace DataHarvester.biolincc
 			using (var conn = new NpgsqlConnection(nct_connString))
 			{
 				string sql_string = "Select organisation_id as org_id, organisation_name as org_name from ad.study_contributors ";
-				sql_string += "where sd_id = '" + nct_id + "' and contrib_type_id = 54;";
+				sql_string += "where sd_sid = '" + nct_id + "' and contrib_type_id = 54;";
 				return conn.QueryFirstOrDefault<SponsorDetails>(sql_string);
 			}
 		}
@@ -57,7 +57,7 @@ namespace DataHarvester.biolincc
 			using (var conn = new NpgsqlConnection(nct_connString))
 			{
 				string sql_string = "Select display_title  from ad.studies ";
-				sql_string += "where sd_id = '" + nct_id + "'";
+				sql_string += "where sd_sid = '" + nct_id + "'";
 				return conn.QueryFirstOrDefault<string>(sql_string);
 			}
 		}

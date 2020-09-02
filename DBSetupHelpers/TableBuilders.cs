@@ -267,7 +267,7 @@ namespace DataHarvester
 		public void create_table_data_objects()
 		{
 			string sql_string = @"CREATE TABLE sd.data_objects(
-				sd_oid                 CHAR(32)        NULL
+				sd_oid                 CHAR(24)        PRIMARY KEY
               , sd_sid                 VARCHAR         NOT NULL
 			  , display_title          VARCHAR         NULL
 			  , doi                    VARCHAR         NULL 
@@ -303,7 +303,7 @@ namespace DataHarvester
 		public void create_table_dataset_properties()
 		{
 			string sql_string = @"CREATE TABLE sd.dataset_properties(
-                sd_oid                 CHAR(32)        NULL
+                sd_oid                 CHAR(24)        NULL
 			  , record_keys_type_id    INT             NULL 
 			  , record_keys_type       VARCHAR         NULL     	
 			  , record_keys_details    VARCHAR         NULL    
@@ -327,7 +327,7 @@ namespace DataHarvester
 		public void create_table_object_dates()
 		{
 			string sql_string = @"CREATE TABLE sd.object_dates(
-                sd_oid                 CHAR(32)        NULL
+                sd_oid                 CHAR(24)        NULL
 			  , date_type_id           INT             NULL
 			  , date_type              VARCHAR         NULL
 			  , is_date_range          BOOLEAN         NULL default false
@@ -353,7 +353,7 @@ namespace DataHarvester
 		public void create_table_object_instances()
 		{
 			string sql_string = @"CREATE TABLE sd.object_instances(
-                sd_oid                 CHAR(32)        NULL
+                sd_oid                 CHAR(24)        NULL
 			  , instance_type_id       INT             NOT NULL  default 1
 			  , instance_type          VARCHAR         NULL default 'Full Resource'
 			  , repository_org_id      INT             NULL
@@ -379,7 +379,7 @@ namespace DataHarvester
 		public void create_table_object_contributors()
 		{
 			string sql_string = @"CREATE TABLE sd.object_contributors(
-                sd_oid                 CHAR(32)        NULL
+                sd_oid                 CHAR(24)        NULL
 			  , contrib_type_id        INT             NULL
 			  , contrib_type           VARCHAR         NULL
 			  , is_individual          BOOLEAN         NULL
@@ -408,7 +408,7 @@ namespace DataHarvester
 		public void create_table_object_titles()
 		{
 			string sql_string = @"CREATE TABLE sd.object_titles(
-                sd_oid                 CHAR(32)        NULL
+                sd_oid                 CHAR(24)        NULL
 			  , title_text             VARCHAR         NULL
 			  , title_type_id          INT             NULL
 			  , title_type             VARCHAR         NULL
@@ -430,7 +430,7 @@ namespace DataHarvester
 		public void create_table_object_topics()
 		{
 			string sql_string = @"CREATE TABLE sd.object_topics(
-				sd_oid                 VARCHAR         NOT NULL
+				sd_oid                 CHAR(24)        NOT NULL
 			  , topic_type_id          INT             NULL
 			  , topic_type             VARCHAR         NULL
 			  , topic_value            VARCHAR         NULL
@@ -451,7 +451,7 @@ namespace DataHarvester
 		public void create_table_object_languages()
 		{
 			string sql_string = @"CREATE TABLE sd.object_languages(
-                sd_oid                 CHAR(32)        NULL
+                sd_oid                 CHAR(24)        NULL
 			  , lang_code              VARCHAR         NULL default 'en'
               , record_hash            CHAR(32)        NULL
 			);
@@ -466,7 +466,7 @@ namespace DataHarvester
         public void create_table_object_corrections()
 		{
 			string sql_string = @"CREATE TABLE sd.object_corrections(
-                sd_oid                 CHAR(32)        NULL
+                sd_oid                 CHAR(24)        NULL
 			  , ref_type               VARCHAR         NULL 
 			  , ref_source             VARCHAR         NULL 
 			  , pmid                   VARCHAR         NULL 
@@ -485,7 +485,7 @@ namespace DataHarvester
 		public void create_table_object_descriptions()
 		{
 			string sql_string = @"CREATE TABLE sd.object_descriptions(
-                sd_oid                 CHAR(32)        NULL
+                sd_oid                 CHAR(24)        NULL
 			  , description_type_id    INT             NULL
 			  , description_type       VARCHAR         NULL
 			  , label                  VARCHAR         NULL
@@ -505,7 +505,7 @@ namespace DataHarvester
 		public void create_table_object_identifiers()
 		{
 			string sql_string = @"CREATE TABLE sd.object_identifiers(
-                sd_oid                 CHAR(32)        NULL
+                sd_oid                 CHAR(24)        NULL
               , identifier_value       VARCHAR         NULL
 			  , identifier_type_id     INT             NULL
 			  , identifier_type        VARCHAR         NULL
@@ -525,7 +525,7 @@ namespace DataHarvester
 		public void create_table_object_links()
 		{
 			string sql_string = @"CREATE TABLE sd.object_links(
-                sd_oid                 CHAR(32)        NULL
+                sd_oid                 CHAR(24)        NULL
 			  , bank_sequence          INT             NULL
 			  , bank_name              VARCHAR         NULL
 			  , accession_number       VARCHAR         NULL
@@ -542,7 +542,7 @@ namespace DataHarvester
 		public void create_table_object_public_types()
 		{
 			string sql_string = @"CREATE TABLE sd.object_public_types(
-                sd_oid                 CHAR(32)        NULL
+                sd_oid                 CHAR(24)        NULL
 			  , type_name              VARCHAR         NULL
               , record_hash            CHAR(32)        NULL
 			);
@@ -557,7 +557,7 @@ namespace DataHarvester
 		public void create_table_object_hashes()
 		{
 			string sql_string = @"CREATE TABLE sd.object_hashes(
-                sd_oid                 CHAR(32)        NULL
+                sd_oid                 CHAR(24)        NULL
 			  , hash_type_id           INT             NULL
 			  , hash_type              VARCHAR         NULL
               , composite_hash         CHAR(32)        NULL

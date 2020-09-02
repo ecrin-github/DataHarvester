@@ -11,8 +11,7 @@ namespace DataHarvester
 {
 	public static class HashHelpers
 	{
-		
-		public static string CreateMD5(string input)
+        public static string CreateMD5(string input)
 		{
 			// Use input string to calculate MD5 hash
 			using (MD5 md5 = MD5.Create())
@@ -24,16 +23,6 @@ namespace DataHarvester
 				// 16 bytes = (5*4) characters + XX==, 
 				// 24 rather than 32 hex characters
 				return Convert.ToBase64String(hashBytes);
-
-				/*
-				// Convert the byte array to hexadecimal string
-				StringBuilder sb = new StringBuilder();
-				for (int i = 0; i < hashBytes.Length; i++)
-				{
-					sb.Append(hashBytes[i].ToString("X2"));
-				}
-				return sb.ToString();
-				*/
 			}
 		}
 	}

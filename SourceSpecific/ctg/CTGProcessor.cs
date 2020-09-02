@@ -51,7 +51,7 @@ namespace DataHarvester.ctg
 			StructType LargeDocumentModule = null;
 			StructType ConditionBrowseModule = null;
 			StructType InterventionBrowseModule = null;
-		
+
 			var Sections = Array.ConvertAll(fs.Struct.Items, item => (StructType)item);
 
 			foreach (StructType st in Sections)
@@ -59,45 +59,45 @@ namespace DataHarvester.ctg
 				var Modules = Array.ConvertAll(st.Items, item => (StructType)item);
 				switch (st.Name)
 				{
-				case "ProtocolSection":
-					{
-						// useful to get the NCT ID and the submission date before other data
-						// as they are used 'out of sequence' in the sections that follow
-						IdentificationModule = FindModule(Modules, "IdentificationModule");
-						StatusModule = FindModule(Modules, "StatusModule");
-						SponsorCollaboratorsModule = FindModule(Modules, "SponsorCollaboratorsModule");
-						DescriptionModule = FindModule(Modules, "DescriptionModule");
-						ConditionsModule = FindModule(Modules, "ConditionsModule");
-						DesignModule = FindModule(Modules, "DesignModule");
-						EligibilityModule = FindModule(Modules, "EligibilityModule");
-						ContactsLocationsModule = FindModule(Modules, "ContactsLocationsModule");
-						ReferencesModule = FindModule(Modules, "ReferencesModule");
-						IPDSharingStatementModule = FindModule(Modules, "IPDSharingStatementModule");
-						break;
-					}
+					case "ProtocolSection":
+						{
+							// useful to get the NCT ID and the submission date before other data
+							// as they are used 'out of sequence' in the sections that follow
+							IdentificationModule = FindModule(Modules, "IdentificationModule");
+							StatusModule = FindModule(Modules, "StatusModule");
+							SponsorCollaboratorsModule = FindModule(Modules, "SponsorCollaboratorsModule");
+							DescriptionModule = FindModule(Modules, "DescriptionModule");
+							ConditionsModule = FindModule(Modules, "ConditionsModule");
+							DesignModule = FindModule(Modules, "DesignModule");
+							EligibilityModule = FindModule(Modules, "EligibilityModule");
+							ContactsLocationsModule = FindModule(Modules, "ContactsLocationsModule");
+							ReferencesModule = FindModule(Modules, "ReferencesModule");
+							IPDSharingStatementModule = FindModule(Modules, "IPDSharingStatementModule");
+							break;
+						}
 
-				case "ResultsSection":
-					{
-						bool ParticipantFlowModuleExists = CheckModuleExists(Modules, "ParticipantFlowModule");
-						bool BaselineCharacteristicsModuleExists = CheckModuleExists(Modules, "BaselineCharacteristicsModule");
-						bool OutcomeMeasuresModuleExists = CheckModuleExists(Modules, "OutcomeMeasuresModules");
-						results_data_present = (ParticipantFlowModuleExists || BaselineCharacteristicsModuleExists
-							|| OutcomeMeasuresModuleExists);
-						break;
-					}
+					case "ResultsSection":
+						{
+							bool ParticipantFlowModuleExists = CheckModuleExists(Modules, "ParticipantFlowModule");
+							bool BaselineCharacteristicsModuleExists = CheckModuleExists(Modules, "BaselineCharacteristicsModule");
+							bool OutcomeMeasuresModuleExists = CheckModuleExists(Modules, "OutcomeMeasuresModules");
+							results_data_present = (ParticipantFlowModuleExists || BaselineCharacteristicsModuleExists
+								|| OutcomeMeasuresModuleExists);
+							break;
+						}
 
-				case "DocumentSection":
-					{
-						LargeDocumentModule = FindModule(Modules, "LargeDocumentModule");
-						break;
-					}
+					case "DocumentSection":
+						{
+							LargeDocumentModule = FindModule(Modules, "LargeDocumentModule");
+							break;
+						}
 
-				case "DerivedSection":
-					{
-						ConditionBrowseModule = FindModule(Modules, "ConditionBrowseModule");
-						InterventionBrowseModule = FindModule(Modules, "InterventionBrowseModule");
-						break;
-					}
+					case "DerivedSection":
+						{
+							ConditionBrowseModule = FindModule(Modules, "ConditionBrowseModule");
+							InterventionBrowseModule = FindModule(Modules, "InterventionBrowseModule");
+							break;
+						}
 				}
 			}
 
@@ -199,7 +199,7 @@ namespace DataHarvester.ctg
 							if (org_study_id == null || id_value.Trim().ToLower() != org_study_id.Trim().ToLower())
 							{
 								string identifier_type = FieldValue(sec_items, "SecondaryIdType");
-								string identifier_org = FieldValue(sec_items, "SecondaryIdDomain");
+								string identifier_org = StringHelpers.TidyOrgName(FieldValue(sec_items, "SecondaryIdDomain"), sid);
 								IdentifierDetails idd = IdentifierHelpers.GetIdentifierProps(identifier_type, identifier_org, id_value);
 
 								// add the secondary identifier
@@ -315,7 +315,7 @@ namespace DataHarvester.ctg
 
 							if (rp_type == "Principal Investigator")
 							{
-								contributors.Add(new StudyContributor(sid, 51, "Study Lead", null, null, 
+								contributors.Add(new StudyContributor(sid, 51, "Study Lead", null, null,
 												rp_name, rp_affil));
 							}
 
@@ -434,7 +434,7 @@ namespace DataHarvester.ctg
 								// only add the condition name if not already present in the mesh coded conditions
 								if (condition_is_new(condition_name.ToLower()))
 								{
-									topics.Add(new StudyTopic(sid, 13, "condition", condition_name,  null, "conditions module"));
+									topics.Add(new StudyTopic(sid, 13, "condition", condition_name, null, "conditions module"));
 								}
 							}
 						}
@@ -606,7 +606,7 @@ namespace DataHarvester.ctg
 						{
 							if (Int32.TryParse(enrolment_count, out int enrolment))
 							{
-								if (enrolment <= 1000 || !Regex.Match(enrolment_count, @"^9+$").Success )
+								if (enrolment <= 1000 || !Regex.Match(enrolment_count, @"^9+$").Success)
 								{
 									s.study_enrolment = enrolment;
 								}
@@ -691,7 +691,7 @@ namespace DataHarvester.ctg
 								{
 									official_name = StringHelpers.TidyName(official_name);
 									string official_affiliation = FieldValue(collab.Items, "OverallOfficialAffiliation");
-									contributors.Add(new StudyContributor(sid, 51, "Study Lead", null, 
+									contributors.Add(new StudyContributor(sid, 51, "Study Lead", null,
 															null, official_name, official_affiliation));
 								}
 							}
@@ -726,10 +726,10 @@ namespace DataHarvester.ctg
 
 						ListType IPDSharingInfoTypeList = FindList(items, "IPDSharingInfoTypeList");
 						if (IPDSharingInfoTypeList != null)
-						{	
+						{
 							var item_types = IPDSharingInfoTypeList.Items;
 							if (item_types.Length > 0)
-							{	
+							{
 								string itemlist = "";
 								for (int i = 0; i < item_types.Length; i++)
 								{
@@ -748,7 +748,7 @@ namespace DataHarvester.ctg
 			#region Establish Linked Data Objects
 
 			/********************* Linked Data Object Data **********************************/
-	
+
 			string title_base = "";
 			int title_type_id = 0;
 			string title_type = "";
@@ -798,7 +798,7 @@ namespace DataHarvester.ctg
 			int object_type_id = 13, object_class_id = 23;
 
 			data_objects.Add(new DataObject(sd_oid, sid, object_display_title, firstpost.year,
-								23, "Text", 13, "Trial Registry entry", 100120, 
+								23, "Text", 13, "Trial Registry entry", 100120,
 								"ClinicalTrials.gov", 12, download_datetime));
 
 			// add in title
@@ -818,8 +818,8 @@ namespace DataHarvester.ctg
 
 			// add in instance
 			url = "https://clinicaltrials.gov/ct2/show/study/" + sid;
-			object_instances.Add(new ObjectInstance(sd_oid, 100120, "ClinicalTrials.gov", url, true, 
-				                      39, "Web text with XML or JSON via API"));
+			object_instances.Add(new ObjectInstance(sd_oid, 100120, "ClinicalTrials.gov", url, true,
+									  39, "Web text with XML or JSON via API"));
 
 
 			// if present, set up results data object
@@ -829,7 +829,7 @@ namespace DataHarvester.ctg
 				sd_oid = HashHelpers.CreateMD5(sid + object_display_title);
 
 				data_objects.Add(new DataObject(sd_oid, sid, object_display_title, resultspost.year,
-									23, "Text", 28, "Trial registry results summary", 100120, 
+									23, "Text", 28, "Trial registry results summary", 100120,
 									"ClinicalTrials.gov", 12, download_datetime));
 
 				// add in title
@@ -850,8 +850,8 @@ namespace DataHarvester.ctg
 
 				// add in instance
 				url = "https://clinicaltrials.gov/ct2/show/results/" + sid;
-				object_instances.Add(new ObjectInstance(sd_oid, 100120, "ClinicalTrials.gov", url, true, 
-					                               39, "Web text with XML or JSON via API"));
+				object_instances.Add(new ObjectInstance(sd_oid, 100120, "ClinicalTrials.gov", url, true,
+												   39, "Web text with XML or JSON via API"));
 
 			}
 
@@ -891,53 +891,75 @@ namespace DataHarvester.ctg
 
 								switch (type_abbrev)
 								{
-								case "Prot":
-									{
-										object_type_id = 11; object_type = "Study Protocol";
-										break;
-									}
-								case "SAP":
-									{
-										object_type_id = 22; object_type = "Statistical analysis plan";
-										break;
-									}
-								case "ICF":
-									{
-										object_type_id = 18; object_type = "Informed consent forms";
-										break;
-									}
-								case "Prot_SAP":
-									{
-										object_type_id = 74; object_type = "Protocol SAP";
-										break;
-									}
-								case "Prot_ICF":
-									{
-										object_type_id = 75; object_type = "Protocol ICF";
-										break;
-									}
-								case "Prot_SAP_ICF":
-									{
-										object_type_id = 76; object_type = "Protocol SAP ICF";
-										break;
-									}
-								default:
-									{
-										object_type_id = 37; object_type = type_abbrev;
-										break;
-									}
+									case "Prot":
+										{
+											object_type_id = 11; object_type = "Study Protocol";
+											break;
+										}
+									case "SAP":
+										{
+											object_type_id = 22; object_type = "Statistical analysis plan";
+											break;
+										}
+									case "ICF":
+										{
+											object_type_id = 18; object_type = "Informed consent forms";
+											break;
+										}
+									case "Prot_SAP":
+										{
+											object_type_id = 74; object_type = "Protocol SAP";
+											break;
+										}
+									case "Prot_ICF":
+										{
+											object_type_id = 75; object_type = "Protocol ICF";
+											break;
+										}
+									case "Prot_SAP_ICF":
+										{
+											object_type_id = 76; object_type = "Protocol SAP ICF";
+											break;
+										}
+									default:
+										{
+											object_type_id = 37; object_type = type_abbrev;
+											break;
+										}
 								}
 
-								object_display_title = title_base + " :: " + object_type;
+								int t_type_id; string t_type;
+								if (!string.IsNullOrEmpty(doc_label))
+								{
+									object_display_title = title_base + " :: " + doc_label;
+									t_type_id = 21; t_type = "Study short name :: object name";
+								}
+								else
+								{
+									object_display_title = title_base + " :: " + object_type;
+									t_type_id = 22; t_type = "Study short name :: object type";
+								}
+
+								// check name
+								int next_num = CheckObjectName(object_titles, object_display_title);
+                                if (next_num > 0)
+								{
+									object_display_title += "_" + next_num.ToString();
+								}
 								sd_oid = HashHelpers.CreateMD5(sid + object_display_title);
 
 								data_objects.Add(new DataObject(sd_oid, sid, object_display_title, docdate.year,
 								23, "Text", object_type_id, object_type, 100120,
 								"ClinicalTrials.gov", 11, download_datetime));
 
+								// check here not a previous data object of the same type
+								// It may have the same url. If so ignore it.
+								// If it appears to be different, add a suffix to the data object name
+
+
 								// add in title
 								object_titles.Add(new ObjectTitle(sd_oid, object_display_title,
-								title_type_id, title_type, true));
+								t_type_id, t_type, true));
 
 								// add in dates
 								if (docdate != null)
@@ -958,8 +980,7 @@ namespace DataHarvester.ctg
 								// add in instance
 								url = "https://clinicaltrials.gov/ProvidedDocs/" + sid.Substring(sid.Length - 2, 2) + "/" + sid + "/" + file_name;
 								object_instances.Add(new ObjectInstance(sd_oid, 100120, "ClinicalTrials.gov", url, true, 11, "PDF"));
-
-							}
+    						}
 						}
 					}
 				}
@@ -1085,7 +1106,7 @@ namespace DataHarvester.ctg
 									else
 									{
 										sponsor_id = null;
-										t_base = sponsor_name + "-" ?? ""; 
+										t_base = sponsor_name + "-" ?? "";
 									}
 
 									if (ipd_id == null)
@@ -1100,11 +1121,19 @@ namespace DataHarvester.ctg
 									}
 
 									object_display_title = t_base + " :: " + object_type;
+
+									// check name
+									int next_num = CheckObjectName(object_titles, object_display_title);
+									if (next_num > 0)
+									{
+										object_display_title += "_" + next_num.ToString();
+									}
+
 									sd_oid = HashHelpers.CreateMD5(sid + object_display_title);
 
 									// add data object
 									data_objects.Add(new DataObject(sd_oid, sid, object_display_title, null,
-									object_class_id, object_class, object_type_id, object_type, sponsor_id, sponsor_name, 
+									object_class_id, object_class, object_type_id, object_type, sponsor_id, sponsor_name,
 									17, "Case by case download", gsk_access_details,
 									"https://clinicalstudydatarequest.com/Help/Help-How-to-Request-Data.aspx",
 									null, download_datetime));
@@ -1153,10 +1182,17 @@ namespace DataHarvester.ctg
 
 									object_class_id = (object_type_id == 80 || object_type_id == 69) ? 14 : 23;
 									object_class = (object_type_id == 80 || object_type_id == 69) ? "Dataset" : "Text";
-
-									// no name provided (in general)
+									
 									object_display_title = title_base + " :: " + object_type;
-  						     		sd_oid = HashHelpers.CreateMD5(sid + object_display_title);
+
+									// check name
+									int next_num = CheckObjectName(object_titles, object_display_title);
+									if (next_num > 0)
+									{
+										object_display_title += "_" + next_num.ToString();
+									}
+
+									sd_oid = HashHelpers.CreateMD5(sid + object_display_title);
 
 									data_objects.Add(new DataObject(sd_oid, sid, object_display_title, null,
 									object_class_id, object_class, object_type_id, object_type, 101418, "Servier",
@@ -1164,10 +1200,9 @@ namespace DataHarvester.ctg
 									"https://clinicaltrials.servier.com/data-request-portal/", null, download_datetime));
 
 									// add in title
-   								    title_type_id = 22; title_type = "Study short name :: object type";
+									title_type_id = 22; title_type = "Study short name :: object type";
 									object_titles.Add(new ObjectTitle(sd_oid, object_display_title,
 									title_type_id, title_type, true));
-
 								}
 
 								else if (ipd_url.Contains("merck.com"))
@@ -1178,7 +1213,7 @@ namespace DataHarvester.ctg
 
 									// the others are indications that the object exists but is not directly available
 									// create a new data object
-								
+
 									if (ipd_url.Contains("&tab=access"))
 									{
 										object_type_id = 79; object_type = "CSR Summary";
@@ -1186,44 +1221,30 @@ namespace DataHarvester.ctg
 
 										// disregard the other entries - as they lead nowhere
 										object_display_title = title_base + " :: " + object_type;
+
+										// check name
+										int next_num = CheckObjectName(object_titles, object_display_title);
+										if (next_num > 0)
+										{
+											object_display_title += "_" + next_num.ToString();
+										}
+
 										sd_oid = HashHelpers.CreateMD5(sid + object_display_title);
 
 										data_objects.Add(new DataObject(sd_oid, sid, object_display_title, null,
-										object_class_id, object_class, object_type_id, object_type, 
+										object_class_id, object_class, object_type_id, object_type,
 										100165, "Merck Sharp & Dohme", 11, download_datetime));
 
 										// add in title
 										title_type_id = 22; title_type = "Study short name :: object type";
 										object_titles.Add(new ObjectTitle(sd_oid, object_display_title,
 										title_type_id, title_type, true));
-										
-										// add in instance
-										object_instances.Add(new ObjectInstance(sd_oid, 4, "Summary version", 100165, 
-													"Merck Sharp & Dohme Corp.", ipd_url, true, 11, "PDF", null, null));
 
+										// add in instance
+										object_instances.Add(new ObjectInstance(sd_oid, 4, "Summary version", 100165,
+													"Merck Sharp & Dohme Corp.", ipd_url, true, 11, "PDF", null, null));
 									}
 								}
-
-								/*
-								else if (ipd_url.Contains("biolincc.nhlbi.nih.gov"))
-								{
-
-									// for now use the data in CT gov,
-									// though later would be better to use the data on BioLINCC itself
-									do_id++;
-
-									object_title = title_base + " :: " + object_type;
-
-									DataObject doc_object = new DataObject(sdid, do_id, object_title, null,
-									object_class_id, object_class, object_type_id, object_type, 100120, "ClinicalTrials.gov", 11);
-
-									// add in title
-									object_titles.Add(new DataObjectTitle(sdid, do_id, object_title,
-									title_type_id, title_type, true));
-								}
-								*/
-
-
 								else
 								{
 									ipd_info.Add(new AvailableIPD(sid, ipd_id, ipd_type, ipd_url, ipd_comment));
@@ -1231,9 +1252,10 @@ namespace DataHarvester.ctg
 							}
 						}
 					}
-	 
-					// at the moment these records are for storage and  future processing
-					// tidy up urls, remove a smnall proportion of obvious nn-useful links
+
+					// at the moment these records are for storage and future processing
+					// tidy up urls, remove a small proportion of obvious non-useful links
+
 					ListType see_also_list = FindList(items, "SeeAlsoLinkList");
 					if (see_also_list != null)
 					{
@@ -1259,10 +1281,18 @@ namespace DataHarvester.ctg
 
 										// disregard the other entries - as they lead nowhere
 										object_display_title = title_base + " :: " + object_type;
+
+										// check name
+										int next_num = CheckObjectName(object_titles, object_display_title);
+										if (next_num > 0)
+										{
+											object_display_title += "_" + next_num.ToString();
+										}
+
 										sd_oid = HashHelpers.CreateMD5(sid + object_display_title);
 
-										data_objects.Add(new DataObject(sid, sd_oid, object_display_title, null,
-										object_class_id, object_class, object_type_id, object_type, 100360, 
+										data_objects.Add(new DataObject(sd_oid, sid, object_display_title, null,
+										object_class_id, object_class, object_type_id, object_type, 100360,
 										"National Institutes of Health Clinical Center", 11, download_datetime));
 
 										// add in title
@@ -1277,11 +1307,8 @@ namespace DataHarvester.ctg
 										add_to_db = false;
 									}
 
-
 									if (link_url.Contains("filehosting.pharmacm.com/Download"))
 									{
-										// add new data object
-
 										string test_url = link_url.ToLower();
 										object_type_id = 0;
 										int instance_type_id = 1; // default
@@ -1331,7 +1358,7 @@ namespace DataHarvester.ctg
 											}
 										}
 
-										else if (test_url.Contains("summary") || test_url.Contains("rds") || test_url.Contains("ref"))
+										else if (test_url.Contains("summary") || test_url.Contains("rds"))
 										{
 											object_type_id = 79; object_type = "CSR Summary";
 											instance_type_id = 4; instance_type = "Summary version";
@@ -1342,13 +1369,28 @@ namespace DataHarvester.ctg
 											object_type_id = 108; object_type = "Conference Poster";
 										}
 
+
 										if (object_type_id > 0 && sponsor_name != null)
 										{
-											object_class_id = 23; object_class = "Text";
-											object_display_title = title_base + " :: " + object_type;
-											sd_oid = HashHelpers.CreateMD5(sid + object_display_title);
+											// Probably need to add a new data object. By default....
 
-											DataObject doc_object = new DataObject(sid, sd_oid, object_display_title, null,
+											object_display_title = title_base + " :: " + object_type;
+
+											// check name
+											int next_num = CheckObjectName(object_titles, object_display_title);
+											if (next_num > 0)
+											{
+												object_display_title += "_" + next_num.ToString();
+											}
+
+											sd_oid = HashHelpers.CreateMD5(sid + object_display_title);
+											// check here not a previous data object of the same type
+											// It may have the same url. If so ignore it.
+											// If it appears to be different, add a suffix to the data object name
+
+											object_class_id = 23; object_class = "Text";
+												
+    										DataObject doc_object = new DataObject(sd_oid, sid, object_display_title, null,
 											23, "Text", object_type_id, object_type, null, sponsor_name, 11, download_datetime);
 
 											// add data object
@@ -1360,10 +1402,9 @@ namespace DataHarvester.ctg
 											title_type_id, title_type, true));
 
 											// add in instance
-											object_instances.Add(new ObjectInstance(sd_oid, instance_type_id, instance_type, 
+											object_instances.Add(new ObjectInstance(sd_oid, instance_type_id, instance_type,
 												101419, "TrialScope Disclose", link_url, true, 11, "PDF", null, null));
 
-											add_to_db = false;
 										}
 									}
 
@@ -1378,6 +1419,8 @@ namespace DataHarvester.ctg
 									if (link_url == "http://trials.boehringer-ingelheim.com") add_to_db = false;
 
 									if ((link_label == null || link_label == "") && (link_url.EndsWith(".com") || link_url.EndsWith(".org"))) add_to_db = false;
+
+									// only add to links table if all tests above have failed
 
 									if (add_to_db)
 									{
@@ -1401,9 +1444,6 @@ namespace DataHarvester.ctg
 				}
 			}
 
-
-
-
 			#endregion
 
 
@@ -1425,7 +1465,7 @@ namespace DataHarvester.ctg
 
 			return s;
 
-        }
+		}
 
 
 		public void StoreData(DataLayer repo, Study s)
@@ -1656,6 +1696,21 @@ namespace DataHarvester.ctg
 
 		#endregion
 
+		// check name...
+		private int CheckObjectName(List<ObjectTitle> titles, string object_display_title)
+		{
+			int num_of_this_type = 0;
+			if (titles.Count > 0)
+			{
+				for (int j = 0; j < titles.Count; j++)
+				{
+					if (titles[j].title_text.Contains(object_display_title))
+					{
+						num_of_this_type++;
+					}
+				}
+			}
+			return num_of_this_type;
+		}
 	}
-
 }
