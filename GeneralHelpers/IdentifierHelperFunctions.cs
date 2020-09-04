@@ -261,6 +261,15 @@ namespace DataHarvester
 						id.id_type = "Regulatory Body ID";
 					}
 
+					if (id_org.Contains("IRAS"))
+					{
+						// uk IRAS number
+						id.id_org_id = 101409;
+						id.id_org = "Health Research Authority";
+						id.id_type_id = 41;
+						id.id_type = "Regulatory Body ID";
+					}
+
 					if (id_org == "JHMIRB" || id_org == "JHM IRB")
 					{
 						// ethics approval number

@@ -1446,7 +1446,33 @@ namespace DataHarvester.ctg
 
 			#endregion
 
-
+			// edit contributors - identify individuals down as organisations
+			// transfer to a helper function!
+			/*
+			 select * from 
+sd.study_contributors
+where (organisation_name like '% MD' or organisation_name like '% MD,%' or organisation_name like '% MD %'
+       or organisation_name like '% PhD' or organisation_name like '% PhD,%' or organisation_name like '% PhD %'
+       or organisation_name like '%Dr %' or organisation_name like '%Dr.%' 
+       or organisation_name like '%Prof %' or organisation_name like '%Prof.%'
+       or organisation_name like '%Professor%')
+and organisation_name not ilike '%hospi%'    
+and organisation_name not ilike '%univer%'   
+and organisation_name not ilike '%labo%'   
+and organisation_name not ilike '%founda%'    
+and organisation_name not ilike '%institu%'   
+and organisation_name not ilike '%labato%'   
+and organisation_name not ilike '%associat%' 
+and organisation_name not ilike '%school%' 
+and organisation_id is null
+			 * */
+			/*
+			// ?? chinese and korean names
+			select* from
+sd.study_contributors
+where organisation_name in ('Seung-Jung Park', 'Kang Yan')
+and organisation_id is null
+				*/
 
 			s.identifiers = identifiers;
 			s.titles = titles;
