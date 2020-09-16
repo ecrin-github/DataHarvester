@@ -51,6 +51,8 @@ namespace DataHarvester
 			if (source.has_study_references) hashcreator.create_composite_study_hashes(17, "references", "study_references");
 			if (source.has_study_links) hashcreator.create_composite_study_hashes(18, "study links", "study_links");
 			if (source.has_study_ipd_available) hashcreator.create_composite_study_hashes(19, "ipd available", "study_ipd_available");
+
+			hashcreator.create_full_study_hashes();
 		}
 
 
@@ -75,7 +77,6 @@ namespace DataHarvester
 				hashcreator.create_object_link_hashes();
 				hashcreator.create_object_public_type_hashes();
 			}
-
 		}
 
 
@@ -99,12 +100,12 @@ namespace DataHarvester
 				hashcreator.create_composite_object_hashes(62, "public types", "object_public_types");
 				hashcreator.create_composite_object_hashes(63, "identifiers", "object_identifiers");
 			}
-			// objects must be fully rolled up first..
+
 			hashcreator.create_full_data_object_hashes();
 
-			StudyCompositeHashCreators studyhashcreator = new StudyCompositeHashCreators(connString);
-			studyhashcreator.create_composite_dataobject_hashes();
-			studyhashcreator.create_full_study_hashes();
+			// StudyCompositeHashCreators studyhashcreator = new StudyCompositeHashCreators(connString);
+			// studyhashcreator.create_composite_dataobject_hashes();
+			// studyhashcreator.create_full_study_hashes();
 		}
 
 	}

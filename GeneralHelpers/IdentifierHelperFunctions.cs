@@ -261,7 +261,7 @@ namespace DataHarvester
 						id.id_type = "Regulatory Body ID";
 					}
 
-					if (id_org.Contains("IRAS"))
+					if (id_org == "IRAS")
 					{
 						// uk IRAS number
 						id.id_org_id = 101409;
@@ -285,6 +285,8 @@ namespace DataHarvester
 						// ethics approval number
 						id.id_type_id = 12;
 						id.id_type = "Ethics Review ID";
+						id.id_org_id = 102374;
+						id.id_org = "Unspecified IRB / Ethics Review Board";
 					}
 
 					if (id_org.ToLower() == "pdq")
@@ -435,6 +437,40 @@ namespace DataHarvester
 			}
 
 			return id;
+		}
+
+
+		public static bool CheckIfIndividual(string orgname)
+		{
+			bool make_individual = false;
+
+			// if looks like an individual's name
+			if (orgname.EndsWith(" md") || orgname.EndsWith(" phd") ||
+				orgname.Contains(" md,") || orgname.Contains(" md ") ||
+				orgname.Contains(" phd,") || orgname.Contains(" phd ") ||
+				orgname.Contains("dr ") || orgname.Contains("dr.") ||
+				orgname.Contains("prof ") || orgname.Contains("prof.") ||
+				orgname.Contains("professor"))
+			{
+				make_individual = true;
+				// but if part of a organisation reference...
+				if (orgname.Contains("hosp") || orgname.Contains("univer") ||
+					orgname.Contains("labor") || orgname.Contains("labat") ||
+					orgname.Contains("institu") || orgname.Contains("istitu") ||
+					orgname.Contains("school") || orgname.Contains("founda") ||
+					orgname.Contains("associat"))
+
+				{
+					make_individual = false;
+				}
+			}
+
+			// some specific individuals...
+			if (orgname == "seung-jung park" || orgname == "kang yan")
+			{
+				make_individual = true;
+			}
+			return make_individual;
 		}
 
 	}

@@ -60,7 +60,7 @@ namespace DataHarvester
 				{
 					WHOController c = new WHOController(harvest_id, source, repo, logging_repo, harvest_type_id, cutoff_date);
 					harvest.num_records_available = logging_repo.FetchFullFileCount(source.id, "study");
-					c.LoopThroughFiles();
+					harvest.num_records_harvested = c.LoopThroughFiles();
 				}
 				else
 				{
@@ -107,6 +107,12 @@ namespace DataHarvester
 								PubmedController c = new PubmedController(harvest_id, source, repo, logging_repo, harvest_type_id, cutoff_date);
 								harvest.num_records_available = logging_repo.FetchFullFileCount(source.id, "object");
 								harvest.num_records_harvested = c.LoopThroughFiles();
+
+								// For pubmed necessary to do additional processing afterwards 
+								// to identify publishers and agregate study linkage data
+								c.IdentifyPublishers();
+								c.CollectTogetherStudyLinks();
+
 								break; ;
 							}
 					}
@@ -123,20 +129,36 @@ namespace DataHarvester
 
 			OrgUpdater gu = new OrgUpdater(repo.ConnString, source);
 			gu.EstablishContextForeignTables(repo.Username, repo.Password);
-			gu.UpdateStudyIdentifierOrgs();
-			gu.UpdateStudyContributorOrgs();
+			if (source.has_study_tables)
+			{
+				gu.UpdateStudyIdentifierOrgs();
+				Console.WriteLine("study identifier orgs updated");
+				gu.UpdateStudyContributorOrgs();
+				Console.WriteLine("study contributor orgs updated");
+			}
 			gu.UpdateDataObjectOrgs();
+			Console.WriteLine("data object managing orgs updated");
+			gu.StoreUnMatchedNames();
+			Console.WriteLine("unmatched org names stored");
 			gu.DropContextForeignTables();
+
 
 			// Note the hashes can only be done after all the
 			// data is complete, including the organisation 
 			// codes and names derived above
 
 			HashBuilder hb = new HashBuilder(repo.ConnString, source);
-			hb.CreateStudyHashes();
-			hb.CreateStudyCompositeHashes();
+			if (source.has_study_tables)
+			{
+				hb.CreateStudyHashes();
+				Console.WriteLine("study hashes created");
+				hb.CreateStudyCompositeHashes();
+				Console.WriteLine("study composite hashes created");
+			}
 			hb.CreateDataObjectHashes();
+			Console.WriteLine("data object hashes created");
 			hb.CreateObjectCompositeHashes();
+			Console.WriteLine("data object composite hashes created");
 		}
 	}
 }

@@ -213,7 +213,6 @@ namespace DataHarvester
 			return output_string;
 		}
 
-
 		public static async Task CheckURLsAsync(List<ObjectInstance> web_resources)
 		{
 			HttpClient Client = new HttpClient();
@@ -235,7 +234,6 @@ namespace DataHarvester
 				}
 			}
 		}
-
 
 		public static async Task<bool> CheckURLAsync(string url_to_check)
 		{

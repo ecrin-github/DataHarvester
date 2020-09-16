@@ -14,7 +14,10 @@ namespace DataHarvester
 		{
 			db_conn = _db_conn;
 		}
-		
+
+		// REPLACE WITH FUNCTION // REPLACE WITH FUNCTION // REPLACE WITH FUNCTION 
+		// REPLACE WITH FUNCTION // REPLACE WITH FUNCTION 
+
 		public void drop_table_studies()
 		{
 			string sql_string = @"DROP TABLE IF EXISTS sd.studies;";
@@ -246,6 +249,15 @@ namespace DataHarvester
 		public void drop_table_object_public_types()
 		{
 			string sql_string = @"DROP TABLE IF EXISTS sd.object_public_types;";
+			using (var conn = new NpgsqlConnection(db_conn))
+			{
+				conn.Execute(sql_string);
+			}
+		}
+
+		public void drop_table_citation_objects()
+		{
+			string sql_string = @"DROP TABLE IF EXISTS sd.citation_objects;";
 			using (var conn = new NpgsqlConnection(db_conn))
 			{
 				conn.Execute(sql_string);

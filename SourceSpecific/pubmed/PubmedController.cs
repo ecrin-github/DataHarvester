@@ -14,8 +14,10 @@ namespace DataHarvester.pubmed
         PubmedProcessor processor;
         Source source;
         int last_harvest_id;
+        int harvest_type_id;
+        DateTime? cutoff_date;
 
-        public PubmedController(int _last_harvest_id, Source _source, DataLayer _common_repo, LoggingDataLayer _logging_repo, int harvest_type_id, DateTime? cutoff_date)
+        public PubmedController(int _last_harvest_id, Source _source, DataLayer _common_repo, LoggingDataLayer _logging_repo, int _harvest_type_id, DateTime? _cutoff_date)
         {
             source = _source;
             processor = new PubmedProcessor();
@@ -23,62 +25,59 @@ namespace DataHarvester.pubmed
             logging_repo = _logging_repo;
             pubmed_repo = new PubmedDataLayer();
             last_harvest_id = _last_harvest_id;
+            harvest_type_id = _harvest_type_id;
+            cutoff_date = _cutoff_date;
         }
 
 
         public int? LoopThroughFiles()
         {
+            // ***************************************************
+            // set up pp local extraction errors folder .....
+            // or better to use centtral sf mon....
+            // **************************************************
+
             string fileBase = source.local_folder;
-            
-            // Put all the PMIDs of interest in memory and use to find the source 
-            // XML file of each (as these files have previously been stored using 
-            // the PMID as an integral part of the file name.
 
-            int total_number = (int)pubmed_repo.Get_pmid_record_count();
-            int i = 0; 
-            int number_of_loops_needed = (total_number / ((int) source.grouping_range_by_id)) + 1;
+            // harvest_type_id can be 1 (all), 2 (use cutoff date) or 3 (harvest_type_id only 'incomplete' files)
+            int total_amount = logging_repo.FetchFileRecordsCount(source.id, "object", harvest_type_id, cutoff_date);
+            int chunk = 1000;
+            int k = 0;
 
-            for (int loop = 0; loop < number_of_loops_needed; loop++)
+            for (int m = 0; m < total_amount; m += chunk)
             {
-                //if (loop > 1) break; // when testing...
-
-                IEnumerable<ObjectFileRecord> file_records = pubmed_repo.Get_pmid_records(loop);
-
-                foreach (ObjectFileRecord fe in file_records)
+                IEnumerable<ObjectFileRecord> file_list = logging_repo.FetchObjectFileRecordsByOffset(source.id, m, chunk, harvest_type_id, cutoff_date);
+                int n = 0; string filePath = "";
+                foreach (ObjectFileRecord rec in file_list)
                 {
-                    //if (i > 1000) break; // when testing...
-
-                    string pmid = fe.sd_id;
-                    string fileName = fe.local_path; 
-
-                    if (File.Exists(fileName))
+                    n++; k++;
+                    filePath = rec.local_path;
+                    if (File.Exists(filePath))
                     {
-                        // Get file with that id in its name - load as an XML document and 
-                        // send for processing, then store the data in the constructed Data object.
+                        XmlDocument xdoc = new XmlDocument();
+                        xdoc.Load(filePath);
+                        // CitationObject c = 
+                        processor.ProcessData(common_repo, rec.sd_id, xdoc, rec.last_downloaded);
+                        //processor.StoreData(common_repo, c);
 
-                        // First check not already in the database...
-                        // Indicate if it is ... (at least for now - not if updating!)
-                        if (!pubmed_repo.FileInDatabase(pmid))
-                        {
-                            XmlDocument xdoc = new XmlDocument();
-                            xdoc.Load(fileName);
-
-                            CitationObject c = processor.ProcessData(common_repo, pmid, xdoc);
-                            processor.StoreData(common_repo, c);
-                            i++;
-
-                            pubmed_repo.UpdateFileRecord(fe.id);
-                        }
-                    }
-                    else
-                    {
-                        pubmed_repo.StoreExtractionNote(pmid, 12, "No file found for this PMID (pmid = : " + pmid.ToString() + ")");
+                        // update file record with last processed datetime
+                        logging_repo.UpdateFileRecLastHarvested(rec.id, "object", last_harvest_id);
                     }
 
-                    if (i % 100 == 0) Console.WriteLine(i.ToString());
+                    if (n % 10 == 0) Console.WriteLine(m.ToString() + ": " + n.ToString());
                 }
             }
-            return i;
+            return k;
+        }
+
+        public void IdentifyPublishers()
+        {
+            // to do
+        }
+
+        public void CollectTogetherStudyLinks()
+        {
+            // to do
         }
     }
 }

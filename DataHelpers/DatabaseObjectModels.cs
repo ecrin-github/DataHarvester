@@ -5,12 +5,13 @@ using System.Text;
 
 namespace DataHarvester
 {
-	
+
 	public class DataObject
 	{
 		public string sd_oid { get; set; }
 		public string sd_sid { get; set; }
-		public string display_name { get; set; }
+		public string display_title { get; set; }
+		public string version { get; set; }
 		public string doi { get; set; }
 		public int doi_status_id { get; set; }
 		public int? publication_year { get; set; }
@@ -25,18 +26,20 @@ namespace DataHarvester
 		public string access_details { get; set; }
 		public string access_details_url { get; set; }
 		public DateTime? url_last_checked { get; set; }
+		public int? eosc_category { get; set; }
 		public bool add_study_contribs { get; set; }
 		public bool add_study_topics { get; set; }
 		public DateTime? datetime_of_data_fetch { get; set; }
 
-		public DataObject(string _sd_oid, string _sd_sid, string _display_name, int? _publication_year, int _object_class_id,
+
+		public DataObject(string _sd_oid, string _sd_sid, string _display_title, int? _publication_year, int _object_class_id,
 							string _object_class, int? _object_type_id, string _object_type,
-							int? _managing_org_id, string _managing_org, int? _access_type_id, 
+							int? _managing_org_id, string _managing_org, int? _access_type_id,
 							DateTime? _datetime_of_data_fetch)
 		{
 			sd_oid = _sd_oid;
 			sd_sid = _sd_sid;
-			display_name = _display_name;
+			display_title = _display_title;
 			doi_status_id = 9;
 			publication_year = _publication_year;
 			object_class_id = _object_class_id;
@@ -48,13 +51,14 @@ namespace DataHarvester
 			access_type_id = _access_type_id;
 			if (_access_type_id == 11) access_type = "Public on-screen access and download";
 			if (_access_type_id == 12) access_type = "Public on-screen access (open)";
+			eosc_category = (_object_class_id == 23) ? 0 : 3;
 			add_study_contribs = true;
 			add_study_topics = true;
 			datetime_of_data_fetch = _datetime_of_data_fetch;
 		}
 
 
-		public DataObject(string _sd_oid, string _sd_sid, string _display_name, int? _publication_year, int _object_class_id,
+		public DataObject(string _sd_oid, string _sd_sid, string _display_title, int? _publication_year, int _object_class_id,
 							string _object_class, int _object_type_id, string _object_type,
 							int? _managing_org_id, string _managing_org,
 							int? _access_type_id, string _access_type, string _access_details,
@@ -63,7 +67,7 @@ namespace DataHarvester
 		{
 			sd_oid = _sd_oid;
 			sd_sid = _sd_sid;
-			display_name = _display_name;
+			display_title = _display_title;
 			doi_status_id = 9;
 			publication_year = _publication_year;
 			object_class_id = _object_class_id;
@@ -77,6 +81,37 @@ namespace DataHarvester
 			access_details = _access_details;
 			access_details_url = _access_details_url;
 			url_last_checked = _url_last_checked;
+			eosc_category = (_object_class_id == 23) ? 0 : 3;
+			add_study_contribs = true;
+			add_study_topics = true;
+			datetime_of_data_fetch = _datetime_of_data_fetch;
+		}
+
+
+		public DataObject(string _sd_oid, string _sd_sid, string _display_title, int? _publication_year, int _object_class_id,
+							string _object_class, int _object_type_id, string _object_type,
+							int? _managing_org_id, string _managing_org,
+							int? _access_type_id, string _access_type, string _access_details,
+							string _access_details_url, DateTime? _url_last_checked,
+							int? _eosc_category, DateTime? _datetime_of_data_fetch)
+		{
+			sd_oid = _sd_oid;
+			sd_sid = _sd_sid;
+			display_title = _display_title;
+			doi_status_id = 9;
+			publication_year = _publication_year;
+			object_class_id = _object_class_id;
+			object_class = _object_class;
+			object_type_id = _object_type_id;
+			object_type = _object_type;
+			managing_org_id = _managing_org_id;
+			managing_org = _managing_org;
+			access_type_id = _access_type_id;
+			access_type = _access_type;
+			access_details = _access_details;
+			access_details_url = _access_details_url;
+			url_last_checked = _url_last_checked;
+			eosc_category = _eosc_category;
 			add_study_contribs = true;
 			add_study_topics = true;
 			datetime_of_data_fetch = _datetime_of_data_fetch;
@@ -91,62 +126,73 @@ namespace DataHarvester
 		public int? record_keys_type_id { get; set; }
 		public string record_keys_type { get; set; }
 		public string record_keys_details { get; set; }
-		public int? identifiers_type_id { get; set; }
-		public string identifiers_type { get; set; }
-		public string identifiers_details { get; set; }
-		public int? consents_type_id { get; set; }
-		public string consents_type { get; set; }
-		public string consents_details { get; set; }
+		public int? deident_type_id { get; set; }
+		public string deident_type { get; set; }
+		public bool? deident_direct { get; set; }
+		public bool? deident_hipaa { get; set; }
+		public bool? deident_dates { get; set; }
+		public bool? deident_nonarr { get; set; }
+		public bool? deident_kanon { get; set; }
+		public string deident_details { get; set; }
+		public int? consent_type_id { get; set; }
+		public string consent_type { get; set; }
+		public bool? consent_noncommercial { get; set; }
+		public bool? consent_geog_restrict { get; set; }
+		public bool? consent_research_type { get; set; }
+		public bool? consent_genetic_only { get; set; }
+		public bool? consent_no_methods { get; set; }
+		public string consent_details { get; set; }
 
-
-		public DataSetProperties(string _sd_oid, 
+		public DataSetProperties(string _sd_oid,
 							int? _record_keys_type_id, string _record_keys_type, string _record_keys_details,
-							int? _identifiers_type_id, string _identifiers_type, string _identifiers_details,
-							int? _consents_type_id, string _consents_type, string _consents_details)
+							int? _deident_type_id, string _deident_type, string _deident_details,
+							int? _consent_type_id, string _consent_type, string _consent_details)
 		{
 			sd_oid = _sd_oid;
 			record_keys_type_id = _record_keys_type_id;
 			record_keys_type = _record_keys_type;
 			record_keys_details = _record_keys_details;
-			identifiers_type_id = _identifiers_type_id;
-			identifiers_type = _identifiers_type;
-			identifiers_details = _identifiers_details;
-			consents_type_id = _consents_type_id;
-			consents_type = _consents_type;
-			consents_details = _consents_details;
+			deident_type_id = _deident_type_id;
+			deident_type = _deident_type;
+			deident_details = _deident_details;
+			consent_type_id = _consent_type_id;
+			consent_type = _consent_type;
+			consent_details = _consent_details;
+		}
+
+		public DataSetProperties(string _sd_oid,
+							int? _record_keys_type_id, string _record_keys_type, string _record_keys_details,
+							int? _deident_type_id, string _deident_type,
+							bool? _deident_direct, bool? _deident_hipaa, bool? _deident_dates,
+							bool? _deident_nonarr, bool? _deident_kanon, string _deident_details,
+							int? _consent_type_id, string _consent_type,
+							bool? _consent_noncommercial, bool? _consent_geog_restrict, bool? _consent_research_type,
+							bool? _consent_genetic_only, bool? _consent_no_methods,
+							string _consent_details)
+		{
+			sd_oid = _sd_oid;
+			record_keys_type_id = _record_keys_type_id;
+			record_keys_type = _record_keys_type;
+			record_keys_details = _record_keys_details;
+			deident_type_id = _deident_type_id;
+			deident_type = _deident_type;
+			deident_direct = _deident_direct;
+			deident_hipaa = _deident_hipaa;
+			deident_dates = _deident_dates;
+			deident_nonarr = _deident_nonarr;
+			deident_kanon = _deident_kanon;
+			deident_details = _deident_details;
+			consent_type_id = _consent_type_id;
+			consent_type = _consent_type;
+			consent_noncommercial = _consent_noncommercial;
+			consent_geog_restrict = _consent_geog_restrict;
+			consent_research_type = _consent_research_type;
+			consent_genetic_only = _consent_genetic_only;
+			consent_no_methods = _consent_no_methods;
+			consent_details = _consent_details;
 		}
 	}
 
-	public class CitationObject
-	{
-		public string sd_oid { get; set; }
-		public int? sd_oid_version { get; set; }
-		public string display_title { get; set; }
-		public string doi { get; set; }
-		public string status { get; set; }
-		public string pub_model { get; set; }
-		public int? publication_year { get; set; }
-		public string publication_status { get; set; }
-		public string journal_title { get; set; }
-		public string pissn { get; set; }
-		public string eissn { get; set; }
-		public DateTime? datetime_of_data_fetch { get; set; }
-
-		public List<string> LanguageList { get; set; }
-		public List<ObjectTitle> object_titles { get; set; }
-		public List<ObjectDescription> object_descriptions { get; set; }
-		public List<ObjectLanguage> object_languages { get; set; }
-		public List<ObjectContributor> object_contributors { get; set; }
-		//public List<Person_Identifier> contrib_identifiers { get; set; }
-		//public List<Person_Affiliation> contrib_affiliations { get; set; }
-		public List<ObjectInstance> object_instances { get; set; }
-		public List<ObjectDBAccessionNumber> accession_numbers { get; set; }
-		public List<ObjectTopic> object_topics { get; set; }
-		public List<ObjectIdentifier> object_identifiers { get; set; }
-		public List<ObjectDate> object_dates { get; set; }
-		public List<ObjectPublicationType> publication_types { get; set; }
-		public List<ObjectCommentCorrection> comments { get; set; }
-	}
 
 
 	public class ObjectTitle
@@ -160,14 +206,14 @@ namespace DataHarvester
 		public bool is_default { get; set; }
 		public string comments { get; set; }
 
-		public ObjectTitle(string _sd_oid, string _title_text, 
+		public ObjectTitle(string _sd_oid, string _title_text,
 								int _title_type_id, string _title_type, bool _is_default)
 		{
 			sd_oid = _sd_oid;
 			title_text = _title_text;
 			title_type_id = _title_type_id;
 			title_type = _title_type;
-    	}
+		}
 
 		public ObjectTitle(string _sd_oid, string _title_text, int? _title_type_id, string _title_type, bool _is_default, string _comments)
 		{
@@ -208,6 +254,7 @@ namespace DataHarvester
 		public string resource_type { get; set; }
 		public string resource_size { get; set; }
 		public string resource_size_units { get; set; }
+		public string resource_comments { get; set; }
 
 		public ObjectInstance(string _sd_oid, int? _repository_org_id,
 					string _repository_org, string _url, bool _url_accessible,
@@ -227,7 +274,7 @@ namespace DataHarvester
 
 		public ObjectInstance(string _sd_oid, int? _repository_org_id,
 					string _repository_org, string _url, bool _url_accessible,
-					int? _resource_type_id, string _resource_type, 
+					int? _resource_type_id, string _resource_type,
 					string _resource_size, string _resource_size_units)
 		{
 			sd_oid = _sd_oid;
@@ -244,8 +291,28 @@ namespace DataHarvester
 		}
 
 
-		public ObjectInstance(string _sd_oid, int? _instance_type_id, string _instance_type, 
-			        int? _repository_org_id, string _repository_org, string _url, bool _url_accessible,
+		public ObjectInstance(string _sd_oid, int? _repository_org_id,
+					string _repository_org, string _url, bool _url_accessible,
+					int? _resource_type_id, string _resource_type,
+					string _resource_size, string _resource_size_units, string _resource_comments)
+		{
+			sd_oid = _sd_oid;
+			instance_type_id = 1;
+			instance_type = "Full Resource";
+			repository_org_id = _repository_org_id;
+			repository_org = _repository_org;
+			url = _url;
+			url_accessible = _url_accessible;
+			resource_type_id = _resource_type_id;
+			resource_type = _resource_type;
+			resource_size = _resource_size;
+			resource_size_units = _resource_size_units;
+			resource_comments = _resource_comments;
+		}
+
+
+		public ObjectInstance(string _sd_oid, int? _instance_type_id, string _instance_type,
+					int? _repository_org_id, string _repository_org, string _url, bool _url_accessible,
 					int? _resource_type_id, string _resource_type, string _resource_size, string _resource_size_units)
 		{
 			sd_oid = _sd_oid;
@@ -260,6 +327,7 @@ namespace DataHarvester
 			resource_size = _resource_size;
 			resource_size_units = _resource_size_units;
 		}
+
 
 		public ObjectInstance()
 		{ }
@@ -353,7 +421,7 @@ namespace DataHarvester
 	{
 		public string sd_oid { get; set; }
 		public string type_name { get; set; }
-		
+
 		public ObjectPublicationType(string _sd_oid, string _type_name)
 		{
 			sd_oid = _sd_oid;
@@ -383,8 +451,6 @@ namespace DataHarvester
 		public string bank_name { get; set; }
 		public string accession_number { get; set; }
 	}
-
-
 
 	// (Object) Comment Correction class, a Data Object component
 
@@ -465,31 +531,6 @@ namespace DataHarvester
 		}
 	}
 
-	
-	// Person Identifier class, a Data Object component,
-	// Stored as part of the contributor record, linked by the person id
-
-	public class PersonIdentifier
-	{
-		public string sd_oid { get; set; }
-		public int person_id { get; set; }
-		public string identifier { get; set; }
-		public string identifier_source { get; set; }
-	}
-
-	// Person affiliation class, a Data Object component,
-	// Stored as part of the contributor record, linked by the person id
-
-	public class PersonAffiliation
-	{
-		public string sd_oid { get; set; }
-		public int person_id { get; set; }
-		public string affiliation { get; set; }
-		public string affil_identifier { get; set; }
-		public string affil_ident_source { get; set; }
-	}
-
-
 	// The Object language class, essentially just
 	// a string language code attached to the source data Id
 
@@ -505,25 +546,108 @@ namespace DataHarvester
 		}
 	}
 
-	// The class used to store data in the Data_objects table -
-	// essentially the Data Object without its repeating components.
 
-	[Table("sd.Data_objects")]
-	public class CitationObject_in_DB
+	public class CitationObject
 	{
-		[ExplicitKey]
 		public string sd_oid { get; set; }
-		public int? sd_id_version { get; set; }
+		public string sd_sid { get; set; }
 		public string display_title { get; set; }
+		public string version { get; set; }
 		public string doi { get; set; }
-		public string status { get; set; }
-		public string pub_model { get; set; }
+		public int doi_status_id { get; set; }
 		public int? publication_year { get; set; }
+		public int? managing_org_id { get; set; }
+		public string managing_org { get; set; }
+		public int? access_type_id { get; set; }
+		public string access_type { get; set; }
+		public string access_details { get; set; }
+		public string access_details_url { get; set; }
+		public DateTime? url_last_checked { get; set; }
+		public DateTime? datetime_of_data_fetch { get; set; }
+		public string abstract_status { get; set; }
+		public string pub_model { get; set; }
 		public string publication_status { get; set; }
 		public string journal_title { get; set; }
 		public string pissn { get; set; }
 		public string eissn { get; set; }
-		public DateTime? datetime_of_data_fetch { get; set; }
+		public List<string> language_list { get; set; }
+
+		public List<ObjectDate> article_dates { get; set; }
+		public List<ObjectTitle> article_titles { get; set; }
+		public List<ObjectIdentifier> article_identifiers { get; set; }
+		public List<ObjectTopic> article_topics { get; set; }
+		public List<ObjectPublicationType> article_pubtypes { get; set; }
+		public List<ObjectDescription> article_descriptions { get; set; }
+		public List<ObjectInstance> article_instances { get; set; }
+		public List<ObjectLanguage> article_languages { get; set; }
+		public List<ObjectContributor> article_contributors { get; set; }
+		public List<ObjectCommentCorrection> article_comments { get; set; }
+		public List<ObjectDBAccessionNumber> article_registry_ids { get; set; }
+
+		// This constructor used for journal articles in Pubmed
+
+		public CitationObject(string _sd_oid, DateTime? _datetime_of_data_fetch)
+		{
+			sd_oid = _sd_oid;
+			datetime_of_data_fetch = _datetime_of_data_fetch;
+		}
+
 	}
 
+
+	[Table("sd.Citation_objects")]
+	public class CitationObjectInDB
+	{
+		public string sd_oid { get; set; }
+		public string sd_sid { get; set; }
+		public string display_title { get; set; }
+		public string version { get; set; }
+		public string doi { get; set; }
+		public int doi_status_id { get; set; }
+		public int? publication_year { get; set; }
+		public int object_class_id { get; set; }
+		public string object_class { get; set; }
+		public int? object_type_id { get; set; }
+		public string object_type { get; set; }
+		public int? managing_org_id { get; set; }
+		public string managing_org { get; set; }
+		public int? access_type_id { get; set; }
+		public string access_type { get; set; }
+		public string access_details { get; set; }
+		public string access_details_url { get; set; }
+		public DateTime? url_last_checked { get; set; }
+		public int? eosc_category { get; set; }
+		public bool add_study_contribs { get; set; }
+		public bool add_study_topics { get; set; }
+		public DateTime? datetime_of_data_fetch { get; set; }
+		public string journal_title { get; set; }
+		public string pissn { get; set; }
+		public string eissn { get; set; }
+
+		public CitationObjectInDB(CitationObject c)
+		{
+			sd_oid = c.sd_oid;
+			display_title = c.display_title;
+			version = c.version;
+			doi = c.doi;
+			doi_status_id = c.doi_status_id;
+			publication_year = c.publication_year;
+			object_class_id = 23;
+			object_class = "Text";
+			object_type_id = 12;
+			object_type = "Journal Article";
+			access_type_id = c.access_type_id;
+			access_type = c.access_type;
+			access_details = c.access_details;
+			access_details_url = c.access_details_url;
+			url_last_checked = c.url_last_checked;
+			eosc_category = 0;
+			add_study_contribs = false;
+			add_study_topics = false;
+			datetime_of_data_fetch = c.datetime_of_data_fetch;
+			journal_title = c.journal_title;
+			pissn = c.pissn;
+			eissn = c.eissn;
+		}
+	}
 }

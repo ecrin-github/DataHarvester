@@ -78,22 +78,6 @@ namespace DataHarvester
         }
 
 
-        public void store_unmatched_study_identifiers_org_names(int source_id)
-        {
-            string sql_string = @"delete from context_ctx.orgs_to_match where source_id = " 
-            + source_id.ToString() + @" and source_table = 'study_identifiers';
-            insert into context_ctx.orgs_to_match (source_id, source_table, org_name, number_of) 
-            select " + source_id.ToString() + @", 'study_identifiers', identifier_org, count(identifier_org) 
-            from sd.study_identifiers 
-            where identifier_org_id is null 
-            group by identifier_org; ";
-
-            using (var conn = new NpgsqlConnection(db_conn))
-            {
-                conn.Execute(sql_string);
-            }
-        }
-
         public void update_study_contributors_using_default_name()
         {
             string sql_string = @"update sd.study_contributors c
@@ -137,22 +121,22 @@ namespace DataHarvester
             }
         }
 
-        public void store_unmatched_study_contributors_org_names(int source_id)
+        public void update_missing_sponsor_ids()
         {
-            string sql_string = @"delete from context_ctx.orgs_to_match where source_id = "
-            + source_id.ToString() + @" and source_table = 'study_contributors';
-            insert into context_ctx.orgs_to_match (source_id, source_table, org_name, number_of) 
-            select " + source_id.ToString() + @", 'study_contributors', organisation_name, count(organisation_name) 
-            from sd.study_contributors 
-            where organisation_id is null 
-            group by organisation_name;";
+            string sql_string = @"update sd.study_identifiers si
+                   set identifier_org_id = sc.organisation_id,
+                   identifier_org = sc.organisation_name
+                   from sd.study_contributors sc
+                   where si.sd_sid = sc.sd_sid
+                   and (si.identifier_org ilike 'sponsor' 
+                   or si.identifier_org ilike 'company internal')
+                   and sc.contrib_type_id = 54";
 
             using (var conn = new NpgsqlConnection(db_conn))
             {
                 conn.Execute(sql_string);
             }
         }
-
 
         public void update_data_objects_using_default_name()
         {
@@ -197,6 +181,37 @@ namespace DataHarvester
             }
         }
 
+        public void store_unmatched_study_identifiers_org_names(int source_id)
+        {
+            string sql_string = @"delete from context_ctx.orgs_to_match where source_id = "
+            + source_id.ToString() + @" and source_table = 'study_identifiers';
+            insert into context_ctx.orgs_to_match (source_id, source_table, org_name, number_of) 
+            select " + source_id.ToString() + @", 'study_identifiers', identifier_org, count(identifier_org) 
+            from sd.study_identifiers 
+            where identifier_org_id is null 
+            group by identifier_org; ";
+
+            using (var conn = new NpgsqlConnection(db_conn))
+            {
+                conn.Execute(sql_string);
+            }
+        }
+
+        public void store_unmatched_study_contributors_org_names(int source_id)
+        {
+            string sql_string = @"delete from context_ctx.orgs_to_match where source_id = "
+            + source_id.ToString() + @" and source_table = 'study_contributors';
+            insert into context_ctx.orgs_to_match (source_id, source_table, org_name, number_of) 
+            select " + source_id.ToString() + @", 'study_contributors', organisation_name, count(organisation_name) 
+            from sd.study_contributors 
+            where organisation_id is null 
+            group by organisation_name;";
+
+            using (var conn = new NpgsqlConnection(db_conn))
+            {
+                conn.Execute(sql_string);
+            }
+        }
 
         public void store_unmatched_data_object_org_names(int source_id)
         {

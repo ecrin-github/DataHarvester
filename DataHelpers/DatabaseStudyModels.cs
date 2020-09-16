@@ -255,19 +255,7 @@ namespace DataHarvester
 			identifier_org_id = _identifier_org_id;
 			identifier_org = _identifier_org;
 		}
-		/*
-		public StudyIdentifier(string _sd_sid, string _identifier_value,
-			int? _identifier_type_id, string _identifier_type,
-			string _identifier_date, string _identifier_link)
-		{
-			sd_sid = _sd_sid;
-			identifier_value = _identifier_value;
-			identifier_type_id = _identifier_type_id;
-			identifier_type = _identifier_type;
-			identifier_date = _identifier_date;
-			identifier_link = _identifier_link;
-		}
-		*/
+		
 		public StudyIdentifier(string _sd_sid, string _identifier_value,
 			int? _identifier_type_id, string _identifier_type,
 			int? _identifier_org_id, string _identifier_org,

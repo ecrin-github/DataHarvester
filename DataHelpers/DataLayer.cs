@@ -66,11 +66,11 @@ namespace DataHarvester
 
 		// Inserts the base Data object, i.e. with all the  
 		// singleton properties, in the database.
-		public void StoreDataObject(CitationObject_in_DB cdb)
+		public void StoreDataObject(CitationObjectInDB cdb)
 		{
 			using (var conn = new NpgsqlConnection(connString))
 			{
-				conn.Insert<CitationObject_in_DB>(cdb);
+				conn.Insert<CitationObjectInDB>(cdb);
 			}
 		}
 

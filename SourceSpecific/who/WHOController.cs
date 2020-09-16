@@ -30,7 +30,7 @@ namespace DataHarvester.who
 		}
 
 
-		public void LoopThroughFiles()
+		public int? LoopThroughFiles()
 		{
 			// Construct a list of the files 
 			// Rather than using a file base, it is possible
@@ -71,9 +71,8 @@ namespace DataHarvester.who
 
 				if (n % 10 == 0) Console.WriteLine(n.ToString());
 			}
+			return n;
 		}
-
-
 	}
 
 }

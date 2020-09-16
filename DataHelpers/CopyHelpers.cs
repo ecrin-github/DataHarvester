@@ -107,8 +107,9 @@ namespace DataHarvester
 			new PostgreSQLCopyHelper<DataObject>("sd", "data_objects")
 				.MapVarchar("sd_oid", x => x.sd_oid)
 				.MapVarchar("sd_sid", x => x.sd_sid)
-				.MapVarchar("display_title", x => x.display_name)
-			    .MapVarchar("doi", x => x.doi)
+				.MapVarchar("display_title", x => x.display_title)
+			    .MapVarchar("version", x => x.version)
+				.MapVarchar("doi", x => x.doi)
 				.MapInteger("doi_status_id", x => x.doi_status_id)
 				.MapInteger("publication_year ", x => x.publication_year)
 				.MapInteger("object_class_id", x => x.object_class_id)
@@ -122,6 +123,7 @@ namespace DataHarvester
 				.MapVarchar("access_details", x => x.access_details)
 				.MapVarchar("access_details_url", x => x.access_details_url)
 				.MapDate("url_last_checked", x => x.url_last_checked)
+			    .MapInteger("eosc_category", x => x.eosc_category)
 				.MapBoolean("add_study_contribs", x => x.add_study_contribs)
 				.MapBoolean("add_study_topics", x => x.add_study_topics)
 			    .MapTimeStampTz("datetime_of_data_fetch", x => x.datetime_of_data_fetch);
@@ -133,12 +135,22 @@ namespace DataHarvester
 				.MapInteger("record_keys_type_id", x => x.record_keys_type_id)
 				.MapVarchar("record_keys_type", x => x.record_keys_type)
 				.MapVarchar("record_keys_details", x => x.record_keys_details)
-				.MapInteger("identifiers_type_id", x => x.identifiers_type_id)
-				.MapVarchar("identifiers_type", x => x.identifiers_type)
-				.MapVarchar("identifiers_details", x => x.identifiers_details)
-				.MapInteger("consents_type_id", x => x.consents_type_id)
-				.MapVarchar("consents_type", x => x.consents_type)
-				.MapVarchar("consents_details", x => x.consents_details);
+				.MapInteger("identifiers_type_id", x => x.deident_type_id)
+				.MapVarchar("identifiers_type", x => x.deident_type)
+			    .MapBoolean("deident_direct", x => x.deident_direct)
+		    	.MapBoolean("deident_hipaa", x => x.deident_hipaa)
+			    .MapBoolean("deident_dates", x => x.deident_dates)
+			    .MapBoolean("deident_nonarr", x => x.deident_nonarr)
+			    .MapBoolean("deident_kanon", x => x.deident_kanon)
+				.MapVarchar("identifiers_details", x => x.deident_details)
+				.MapInteger("consents_type_id", x => x.consent_type_id)
+				.MapVarchar("consents_type", x => x.consent_type)
+                .MapBoolean("consent_noncommercial", x => x.consent_noncommercial)
+				.MapBoolean("consent_geog_restrict", x => x.consent_geog_restrict)
+				.MapBoolean("consent_research_type", x => x.consent_research_type)
+				.MapBoolean("consent_genetic_only", x => x.consent_genetic_only)
+				.MapBoolean("consent_no_methods", x => x.consent_no_methods)
+				.MapVarchar("consents_details", x => x.consent_details);
 
 
 		public static PostgreSQLCopyHelper<ObjectTitle> object_titles_helper =
@@ -159,7 +171,8 @@ namespace DataHarvester
 				.MapBoolean("url_accessible", x => x.url_accessible)
 				.MapDate("url_last_checked", x => x.url_last_checked)
 				.MapInteger("resource_type_id", x => x.resource_type_id)
-				.MapVarchar("resource_type", x => x.resource_type);
+				.MapVarchar("resource_type", x => x.resource_type)
+			    .MapVarchar("resource_comments", x => x.resource_comments);
 
 
         public static PostgreSQLCopyHelper<ObjectDate> object_dates_helper =

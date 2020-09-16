@@ -171,6 +171,7 @@ namespace DataHarvester
             }
         }
 
+        /*
         public void create_composite_dataobject_hashes()
         {
             string sql_string = @"Insert into sd.study_hashes 
@@ -185,7 +186,7 @@ namespace DataHarvester
                 conn.Execute(sql_string);
             }
         }
-
+        */
 
         public void create_full_study_hashes()
         {
@@ -222,9 +223,9 @@ namespace DataHarvester
         public void create_object_record_hashes()
         {
             string sql_string = @"Update sd.data_objects
-              set record_hash = md5(json_build_array(display_title, doi, doi_status_id, publication_year,
+              set record_hash = md5(json_build_array(display_title, version, doi, doi_status_id, publication_year,
               object_class_id, object_type_id, managing_org_id, managing_org, access_type_id,
-              access_details, access_details_url, url_last_checked, add_study_contribs,
+              access_details, access_details_url, url_last_checked, eosc_category, add_study_contribs,
               add_study_topics)::varchar);";
 
             using (var conn = new NpgsqlConnection(db_conn))
@@ -237,15 +238,18 @@ namespace DataHarvester
         public void create_recordset_properties_hashes()
         {
             string sql_string = @"Update sd.dataset_properties
-              set record_hash = md5(json_build_array(record_keys_type_id, record_keys_details, 
-              identifiers_type_id, identifiers_details, consents_type_id, 
-              consents_details)::varchar);";
+              set record_hash = md5(json_build_array(record_keys_type_id, record_keys_details,
+              deident_type_id, deident_direct, deident_hipaa,
+              deident_dates, deident_nonarr, deident_kanon, deident_details,
+              consent_type_id, consent_noncommercial, consent_geog_restrict,
+              consent_research_type, consent_genetic_only, consent_no_methods, consent_details)::varchar);";
 
             using (var conn = new NpgsqlConnection(db_conn))
             {
                 conn.Execute(sql_string);
             }
         }
+
 
         public void create_object_date_hashes()
         {
@@ -265,7 +269,7 @@ namespace DataHarvester
             string sql_string = @"Update sd.object_instances
               set record_hash = md5(json_build_array(instance_type_id, repository_org_id, 
               repository_org, url, url_accessible, url_last_checked, 
-              resource_type_id, resource_size, resource_size_units)::varchar);";
+              resource_type_id, resource_size, resource_size_units, resource_comments)::varchar);";
 
             using (var conn = new NpgsqlConnection(db_conn))
             {
@@ -381,9 +385,6 @@ namespace DataHarvester
                 conn.Execute(sql_string);
             }
         }
-
-
-
     }
 
  

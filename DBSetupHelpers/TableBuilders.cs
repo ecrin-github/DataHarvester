@@ -270,6 +270,7 @@ namespace DataHarvester
 				sd_oid                 CHAR(24)        PRIMARY KEY
               , sd_sid                 VARCHAR         NOT NULL
 			  , display_title          VARCHAR         NULL
+              , version                VARCHAR         NULL
 			  , doi                    VARCHAR         NULL 
 			  , doi_status_id          INT             NULL
 			  , publication_year       INT             NULL
@@ -284,6 +285,7 @@ namespace DataHarvester
 			  , access_details         VARCHAR         NULL
 			  , access_details_url     VARCHAR         NULL
 			  , url_last_checked       DATE            NULL
+              , eosc_category          INT             NULL
 			  , add_study_contribs     BOOLEAN         NULL
 			  , add_study_topics       BOOLEAN         NULL
 			  , datetime_of_data_fetch TIMESTAMPTZ     NULL
@@ -307,12 +309,22 @@ namespace DataHarvester
 			  , record_keys_type_id    INT             NULL 
 			  , record_keys_type       VARCHAR         NULL     	
 			  , record_keys_details    VARCHAR         NULL    
-			  , identifiers_type_id    INT             NULL  
-			  , identifiers_type  	   VARCHAR         NULL    
-			  , identifiers_details    VARCHAR         NULL    
-			  , consents_type_id       INT             NULL  
-			  , consents_type          VARCHAR         NULL    
-			  , consents_details       VARCHAR         NULL 
+			  , deident_type_id        INT             NULL  
+			  , deident_type  	       VARCHAR         NULL    
+              , deident_direct 	       BOOLEAN         NULL   
+              , deident_hipaa 	       BOOLEAN         NULL   
+              , deident_dates 	       BOOLEAN         NULL   
+              , deident_nonarr 	       BOOLEAN         NULL   
+              , deident_kanon	       BOOLEAN         NULL   
+			  , deident_details        VARCHAR         NULL    
+			  , consent_type_id        INT             NULL  
+			  , consent_type           VARCHAR         NULL
+			  , consent_noncommercial  BOOLEAN         NULL
+			  , consent_geog_restrict  BOOLEAN         NULL
+			  , consent_research_type  BOOLEAN         NULL
+			  , consent_genetic_only   BOOLEAN         NULL
+			  , consent_no_methods     BOOLEAN         NULL
+			  , consent_details        VARCHAR         NULL 
               , record_hash            CHAR(32)        NULL
 			);
             CREATE INDEX dataset_properties_sd_oid ON sd.dataset_properties(sd_oid);";
@@ -365,6 +377,7 @@ namespace DataHarvester
 			  , resource_type          VARCHAR         NULL
 			  , resource_size          VARCHAR         NULL
 			  , resource_size_units    VARCHAR         NULL
+			  , resource_comments      VARCHAR         NULL
               , record_hash            CHAR(32)        NULL
 			);
             CREATE INDEX object_instances_sd_oid ON sd.object_instances(sd_oid);";
@@ -564,6 +577,45 @@ namespace DataHarvester
 			);
             CREATE INDEX object_hashes_sd_oid ON sd.object_hashes(sd_oid);";
 
+
+			using (var conn = new NpgsqlConnection(db_conn))
+			{
+				conn.Execute(sql_string);
+			}
+		}
+
+
+		// TODO  // TODO  // TODO  // TODO  // TODO  // TODO  // TODO
+		public void create_table_citation_objects()
+		{
+			string sql_string = @"CREATE TABLE sd.data_objects(
+				sd_oid                 CHAR(24)        PRIMARY KEY
+              , sd_sid                 VARCHAR         NOT NULL
+			  , display_title          VARCHAR         NULL
+              , version                VARCHAR         NULL
+			  , doi                    VARCHAR         NULL 
+			  , doi_status_id          INT             NULL
+			  , publication_year       INT             NULL
+			  , object_class_id        INT             NULL
+			  , object_class           VARCHAR         NULL
+			  , object_type_id         INT             NULL
+			  , object_type            VARCHAR         NULL
+			  , managing_org_id        INT             NULL
+			  , managing_org           VARCHAR         NULL
+			  , access_type_id         INT             NULL
+			  , access_type            VARCHAR         NULL
+			  , access_details         VARCHAR         NULL
+			  , access_details_url     VARCHAR         NULL
+			  , url_last_checked       DATE            NULL
+              , eosc_category          INT             NULL
+			  , add_study_contribs     BOOLEAN         NULL
+			  , add_study_topics       BOOLEAN         NULL
+			  , datetime_of_data_fetch TIMESTAMPTZ     NULL
+              , record_hash            CHAR(32)        NULL
+              , object_full_hash       CHAR(32)        NULL
+			);
+            CREATE INDEX data_objects_sd_oid ON sd.data_objects(sd_oid);
+            CREATE INDEX data_objects_sd_sid ON sd.data_objects(sd_sid);";
 
 			using (var conn = new NpgsqlConnection(db_conn))
 			{

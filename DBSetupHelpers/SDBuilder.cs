@@ -57,6 +57,7 @@ namespace DataHarvester
 			dropper.drop_table_object_identifiers();
 			dropper.drop_table_object_links();
 			dropper.drop_table_object_public_types();
+			dropper.drop_table_citation_objects();
 		}
 
 
@@ -99,6 +100,7 @@ namespace DataHarvester
 			if (source.has_object_languages) builder.create_table_object_languages();
 			if (source.has_object_pubmed_set)
 			{
+				builder.create_table_citation_objects();
 				builder.create_table_object_contributors();
 				builder.create_table_object_topics();
 				builder.create_table_object_corrections();

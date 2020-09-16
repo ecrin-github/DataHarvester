@@ -34,7 +34,7 @@ namespace DataHarvester.ctg
 			// First get the total number of records in the system for this source
 
 			// Set up the outer limit and get the relevant records for each pass
-			int total_amount = logging_repo.FetchFileRecordsCount(source.id, "study");
+			int total_amount = logging_repo.FetchFileRecordsCount(source.id, "study", harvest_type_id, cutoff_date);
 			int chunk = 1000;
 			int k = 0;
 			for (int m = 0; m < total_amount; m += chunk)

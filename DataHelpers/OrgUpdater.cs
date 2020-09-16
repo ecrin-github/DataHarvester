@@ -1,23 +1,19 @@
-﻿using Dapper.Contrib.Extensions;
-using Dapper;
+﻿using Dapper;
 using Npgsql;
-using System;
-using Microsoft.Extensions.Configuration;
-using System.Linq;
-using System.Collections.Generic;
-using PostgreSQLCopyHelper;
 
 namespace DataHarvester
 {
-	public class OrgUpdater
+    public class OrgUpdater
 	{
 		private string connString;
 		private Source source;
+		private OrgIdHelper helper;
 
 		public OrgUpdater(string _connString, Source _source)
 		{
 			connString = _connString;
 			source = _source;
+			helper = new OrgIdHelper(connString);
 		}
 
 
@@ -50,11 +46,9 @@ namespace DataHarvester
 
 		public void UpdateStudyIdentifierOrgs()
 		{
-			OrgIdHelper helper = new OrgIdHelper(connString);
 			helper.update_study_identifiers_using_default_name();
 			helper.update_study_identifiers_using_other_name();
 			helper.update_study_identifiers_insert_default_names();
-			helper.store_unmatched_study_identifiers_org_names(source.id);
 		}
 
 
@@ -62,20 +56,30 @@ namespace DataHarvester
 		{
 			if (source.has_study_contributors)
 			{
-				OrgIdHelper helper = new OrgIdHelper(connString);
-				helper.update_study_contributors_using_default_name();
+    			helper.update_study_contributors_using_default_name();
 				helper.update_study_contributors_using_other_name();
 				helper.update_study_contributors_insert_default_names();
-				helper.store_unmatched_study_contributors_org_names(source.id);
+				helper.update_missing_sponsor_ids();
 			}
 		}
 
 		public void UpdateDataObjectOrgs()
 		{
-			OrgIdHelper helper = new OrgIdHelper(connString);
 			helper.update_data_objects_using_default_name();
 			helper.update_data_objects_using_other_name();
 			helper.update_data_objects_insert_default_names();
+		}
+
+		public void StoreUnMatchedNames()
+		{
+			if (source.has_study_tables)
+			{
+				helper.store_unmatched_study_identifiers_org_names(source.id);
+			}
+			if (source.has_study_tables && source.has_study_contributors)
+			{
+				helper.store_unmatched_study_contributors_org_names(source.id);
+			}
 			helper.store_unmatched_data_object_org_names(source.id);
 		}
 

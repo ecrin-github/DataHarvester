@@ -14,14 +14,13 @@ namespace DataHarvester.pubmed
         // Its inputs include a single XML document representing the citation
         // as well as the currrent PMID and a refrence to the data layer.
 
-        public CitationObject ProcessData(DataLayer repo, string sd_oid, XmlDocument d)
+        public CitationObject ProcessData(DataLayer repo, string sdoid, XmlDocument d, DateTime? download_datetime)
         {
-
             // First convert the XML document to a Linq XML Document.
 
             XDocument xDoc = XDocument.Load(new XmlNodeReader(d));
 
-            // obtain the main top level elements of the citation.
+            // Obtain the main top level elements of the citation.
 
             XElement pubmedArticle = xDoc.Root;
             XElement citation = pubmedArticle.Element("MedlineCitation");
@@ -30,21 +29,22 @@ namespace DataHarvester.pubmed
             XElement journal = article.Element("Journal");
             XElement JournalInfo = citation.Element("MedlineJournalInfo");
 
-            // Establish citation object and list structures to receive data
-            // Each of the lists corresponds to one of the repeating compomnents of the 
-            // citation object - they will be added to it at the end of the extraction.
+            // Establish main citation object
+            // and list structures to receive data
 
-            CitationObject c = new CitationObject();
+            CitationObject c = new CitationObject(sdoid, download_datetime);
 
+            List<ObjectInstance> instances = new List<ObjectInstance>();
             List<ObjectDate> dates = new List<ObjectDate>();
             List<ObjectTitle> titles = new List<ObjectTitle>();
-            List<ObjectIdentifier> ids = new List<ObjectIdentifier>();
+            List<ObjectIdentifier> identifiers = new List<ObjectIdentifier>();
             List<ObjectTopic> topics = new List<ObjectTopic>();
             List<ObjectPublicationType> pubtypes = new List<ObjectPublicationType>();
             List<ObjectDescription> descriptions = new List<ObjectDescription>();
-            List<ObjectInstance> instances = new List<ObjectInstance>();
             List<ObjectLanguage> object_languages = new List<ObjectLanguage>();
             List<ObjectContributor> contributors = new List<ObjectContributor>();
+            List<ObjectCommentCorrection> comments = new List<ObjectCommentCorrection>();
+            List<ObjectDBAccessionNumber> registry_ids = new List<ObjectDBAccessionNumber>();
 
             string author_string = "";
             string art_title = "";
@@ -52,24 +52,23 @@ namespace DataHarvester.pubmed
             string journal_source = "";
 
 
-
             #region Header
 
-            // Identify the PMID as the source data Id (sd_id), and also construct and add 
+            // Identify the PMID as the source data object Id (sd_oid), and also construct and add 
             // this to the 'other identifiers' list ('other' because it is not a doi).
             // The date applied may or may not be available later.
 
-            c.sd_oid = sd_oid;
-            ids.Add(new ObjectIdentifier(sd_oid, 16, "PMID", sd_oid, 100133, "National Library of Medicine"));
+            identifiers.Add(new ObjectIdentifier(sdoid, 16, "PMID", sdoid, 100133, "National Library of Medicine"));
 
-            // Set the PMID entry as an object instance (type id 3 = abstract, resource 40 = Web text journal abstract), add to the instances list.
+            // Set the PMID entry as an object instance 
+            // (type id 3 = abstract, resource 40 = Web text journal abstract), add to the instances list.
 
             ObjectInstance inst = new ObjectInstance
             {
-                sd_oid = c.sd_oid,
+                sd_oid = sdoid,
                 instance_type_id = 3,
                 instance_type = "Article abstract",
-                url = "https://www.ncbi.nlm.nih.gov/pubmed/" + sd_oid,
+                url = "https://www.ncbi.nlm.nih.gov/pubmed/" + sdoid,
                 url_accessible = true,
                 repository_org_id = 100133,
                 repository_org = "National Library of Medicine",
@@ -91,21 +90,22 @@ namespace DataHarvester.pubmed
             {
                 if (Int32.TryParse(pmidVersion, out int res))
                 {
-                    c.sd_oid_version = res;
+                    c.version = res.ToString();
                 }
                 else
                 {
-                    repo.StoreExtractionNote(sd_oid, 16, "PMID version not an integer");
+                    c.version = pmidVersion;
+                    repo.StoreExtractionNote(sdoid, 16, "PMID version not an integer");
                 }
             }
             else
             {
-                repo.StoreExtractionNote(sd_oid, 16, "No PMID version attribute found");
+                repo.StoreExtractionNote(sdoid, 16, "No PMID version attribute found");
             }
 
             // Obtain and store the citation status.
 
-            c.status = GetAttributeAsString(citation.Attribute("Status"));
+            c.abstract_status = GetAttributeAsString(citation.Attribute("Status"));
 
             // Version and version_date hardly ever present
             // if they do occur put them in as an extraction note.
@@ -115,12 +115,12 @@ namespace DataHarvester.pubmed
             if (version_id != null)
             {
                 string qText = "A version attribute (" + version_id + ") found for this citation!";
-                repo.StoreExtractionNote(sd_oid, 15, qText);
+                repo.StoreExtractionNote(sdoid, 15, qText);
             }
             if (version_date != null)
             {
                 string qText = "A version date attribute (" + version_date + ") found for this citation!";
-                repo.StoreExtractionNote(sd_oid, 15, qText);
+                repo.StoreExtractionNote(sdoid, 15, qText);
             }
 
             #endregion
@@ -133,17 +133,16 @@ namespace DataHarvester.pubmed
 
             c.pub_model = GetAttributeAsString(article.Attribute("PubModel"));
 
-
             // Obtain and store (in the languages list) the article's language(s) - 
             // get these early as may be needed by title extraction code below.
 
             var languages = article.Elements("Language");
             if (languages.Count() > 0)
             {
-                c.LanguageList = languages.Select(g => GetElementAsString(g)).ToList();
+                c.language_list = languages.Select(g => GetElementAsString(g)).ToList();
                 foreach (string g in languages)
                 {
-                    object_languages.Add(new ObjectLanguage(sd_oid, g));
+                    object_languages.Add(new ObjectLanguage(sdoid, g));
                 }
             }
 
@@ -217,7 +216,7 @@ namespace DataHarvester.pubmed
                     {   
                         // Log this in extraction_notes and strip tags apart from super and subscripts.
                         string qText = "The article title may include embedded html (" + atitle + ")";
-                        repo.StoreExtractionNote(sd_oid, 17, qText);
+                        repo.StoreExtractionNote(sdoid, 17, qText);
 
                         atitle = HtmlHelpers.replace_tags(atitle);
                         atitle = HtmlHelpers.strip_tags(atitle);
@@ -227,14 +226,14 @@ namespace DataHarvester.pubmed
                 {
                     article_title_present = false;
                     string qText = "The citation has an empty article title element";
-                    repo.StoreExtractionNote(sd_oid, 28, qText);
+                    repo.StoreExtractionNote(sdoid, 28, qText);
                 }
             }
             else
             {
                 article_title_present = false;
                 string qText = "The citation does not have an article title element";
-                repo.StoreExtractionNote(sd_oid, 28, qText);
+                repo.StoreExtractionNote(sdoid, 28, qText);
             }
 
 
@@ -256,7 +255,7 @@ namespace DataHarvester.pubmed
                     {
                         // Log this in extraction_notes and strip tags apart from super and subscripts.
                         string qText = "The vernacular title may include embedded html (" + vtitle + ")";
-                        repo.StoreExtractionNote(sd_oid, 17, qText);
+                        repo.StoreExtractionNote(sdoid, 17, qText);
 
                         vtitle = HtmlHelpers.replace_tags(vtitle);
                         vtitle = HtmlHelpers.strip_tags(vtitle);
@@ -265,7 +264,7 @@ namespace DataHarvester.pubmed
                     // Try and get vernacular code language - not explicitly given so
                     // all methods imperfect but seem to work in most situations so far.
 
-                    foreach (string s in c.LanguageList)
+                    foreach (string s in c.language_list)
                     {
                         if (s != "eng")
                         {
@@ -320,7 +319,7 @@ namespace DataHarvester.pubmed
                     {
                         vernacular_title_present = false;
                         string qText = "The article and vernacular titles seem identical";
-                        repo.StoreExtractionNote(sd_oid, 29, qText);
+                        repo.StoreExtractionNote(sdoid, 29, qText);
                     }
                 }
             }
@@ -379,7 +378,7 @@ namespace DataHarvester.pubmed
                         if (bracket_count > 0)
                         {
                             string qText = "The title starts with '[', end with ')', but unable to match parentheses. Title = " + atitle;
-                            repo.StoreExtractionNote(sd_oid, 18, qText);
+                            repo.StoreExtractionNote(sdoid, 18, qText);
                             vernacular_title_expected = false;
                         }
                     }
@@ -389,7 +388,7 @@ namespace DataHarvester.pubmed
 
                         vernacular_title_expected = false;
                         string qText = "The title starts with a '[' but there is no matching ']' or ')' at the end of the title. Title = " + atitle;
-                        repo.StoreExtractionNote(sd_oid, 18, qText);
+                        repo.StoreExtractionNote(sdoid, 18, qText);
                     }
 
                     // Store the title(s) - square brackets being present.
@@ -401,20 +400,20 @@ namespace DataHarvester.pubmed
                             // Something odd, no vernacular title but one was expected.
 
                             string qText = "There is no vernacular title but the article title appears to be translated";
-                            repo.StoreExtractionNote(sd_oid, 18, qText);
+                            repo.StoreExtractionNote(sdoid, 18, qText);
                         }
 
                         // Add the article title, without the brackets and with any comments - as the only title present it becomes the default.
 
-                        titles.Add(new ObjectTitle(c.sd_oid, atitle, 19, "Journal article title", "eng", 11, true, poss_comment));
+                        titles.Add(new ObjectTitle(sdoid, atitle, 19, "Journal article title", "eng", 11, true, poss_comment));
                     }
                     else
                     {
                         // Both titles are present, add them both, with the vernacular title as the default.
 
-                        titles.Add(new ObjectTitle(c.sd_oid, atitle, 19, "Journal article title", "eng", 12, false, poss_comment));
+                        titles.Add(new ObjectTitle(sdoid, atitle, 19, "Journal article title", "eng", 12, false, poss_comment));
 
-                        titles.Add(new ObjectTitle(c.sd_oid, vtitle, 19, "Journal article title", vlang_code, 21, true, ""));
+                        titles.Add(new ObjectTitle(sdoid, vtitle, 19, "Journal article title", vlang_code, 21, true, ""));
                     }
 
                 }
@@ -428,16 +427,16 @@ namespace DataHarvester.pubmed
                         // Possibly something odd, vernacular title but no indication of translation in article title.
 
                         string qText = "There is a vernacular title but the article title does not indicate it is translated";
-                        repo.StoreExtractionNote(sd_oid, 18, qText);
+                        repo.StoreExtractionNote(sdoid, 18, qText);
 
                         // Add the vernacular title, will not be the default in this case.
 
-                        titles.Add(new ObjectTitle(sd_oid, vtitle, 19, "Journal article title", vlang_code, 21, false, ""));
+                        titles.Add(new ObjectTitle(sdoid, vtitle, 19, "Journal article title", vlang_code, 21, false, ""));
                     }
 
                     // The most common, default situation - simply add only title as the default title record in English.
 
-                    titles.Add(new ObjectTitle(sd_oid, atitle, 19, "Journal article title", "eng", 11, true, ""));
+                    titles.Add(new ObjectTitle(sdoid, atitle, 19, "Journal article title", "eng", 11, true, ""));
                 }
             }
             else
@@ -446,7 +445,7 @@ namespace DataHarvester.pubmed
 
                 if (vernacular_title_present)
                 {
-                    titles.Add(new ObjectTitle(sd_oid, vtitle, 19, "Journal article title", vlang_code, 21, true, ""));
+                    titles.Add(new ObjectTitle(sdoid, vtitle, 19, "Journal article title", vlang_code, 21, true, ""));
                 }
             }
 
@@ -475,8 +474,6 @@ namespace DataHarvester.pubmed
             // DB_Accession_Number records.
 
             XElement databanklist = article.Element("DataBankList");
-            List<ObjectDBAccessionNumber> acc_numbers = null;
-
             if (databanklist != null)
             {
                 int n = 0;
@@ -492,10 +489,10 @@ namespace DataHarvester.pubmed
                         // Get the accession numbers for this list, for this databank.
                         // Add each to the DB_Acession_Number list.
 
-                        acc_numbers = accList.Elements("AccessionNumber")
+                        registry_ids = accList.Elements("AccessionNumber")
                                 .Select(a => new ObjectDBAccessionNumber
                                 {
-                                    sd_oid = c.sd_oid,
+                                    sd_oid = sdoid,
                                     bank_id = n,
                                     bank_name = bnkname,
                                     accession_number = GetElementAsString(a)
@@ -506,19 +503,16 @@ namespace DataHarvester.pubmed
 
                         if (bnkname.ToLower() == "clinicaltrials.gov")
                         {
-                            int num_nct_links = acc_numbers.Count();
+                            int num_nct_links = registry_ids.Count();
                             if (num_nct_links > 1)
                             {
                                 string qText = "This study has " + num_nct_links.ToString() + " clinicalTrials.gov ids. ";
                                 qText += "All should be stored in the accession numbers table.";
-                                repo.StoreExtractionNote(sd_oid, 13, qText);
+                                repo.StoreExtractionNote(sdoid, 13, qText);
                             }
                         }
                     }
                 }
-
-                // Add the accession numbers to the Citation Object.
-                c.accession_numbers = acc_numbers;
             }
 
             #endregion
@@ -547,7 +541,7 @@ namespace DataHarvester.pubmed
                     // split any range.
 
                     string date_string = pub_date.Element("MedlineDate").Value;
-                    publication_date = DateHelpers.ProcessMedlineDate(sd_oid, date_string, 12, "Available");
+                    publication_date = DateHelpers.ProcessMedlineDate(sdoid, date_string, 12, "Available");
                 }
                 else
                 {
@@ -555,7 +549,7 @@ namespace DataHarvester.pubmed
                     // ProcessDate is a helper function that splits the date components, 
                     //  identifies partial dates, and creates the date as a string.
 
-                    publication_date = DateHelpers.ProcessDate(c.sd_oid, pub_date, 12, "Available");
+                    publication_date = DateHelpers.ProcessDate(sdoid, pub_date, 12, "Available");
                 }
                 dates.Add(publication_date);
                 c.publication_year = publication_date.start_year;
@@ -567,19 +561,19 @@ namespace DataHarvester.pubmed
             var date_citation_created = citation.Element("DateCreated");
             if (date_citation_created != null)
             {
-                dates.Add(DateHelpers.ProcessDate(sd_oid, date_citation_created, 52, "Pubmed citation created"));
+                dates.Add(DateHelpers.ProcessDate(sdoid, date_citation_created, 52, "Pubmed citation created"));
             }
 
             var date_citation_revised = citation.Element("DateRevised");
             if (date_citation_revised != null)
             {
-                dates.Add(DateHelpers.ProcessDate(sd_oid, date_citation_revised, 53, "Pubmed citation revised"));
+                dates.Add(DateHelpers.ProcessDate(sdoid, date_citation_revised, 53, "Pubmed citation revised"));
             }
 
             var date_citation_completed = citation.Element("DateCompleted");
             if (date_citation_completed != null)
             {
-                dates.Add(DateHelpers.ProcessDate(sd_oid, date_citation_completed, 54, "Pubmed citation completed"));
+                dates.Add(DateHelpers.ProcessDate(sdoid, date_citation_completed, 54, "Pubmed citation completed"));
             }
 
 
@@ -600,14 +594,14 @@ namespace DataHarvester.pubmed
                         if (date_type.ToLower() == "electronic")
                         {
                             // = epublish, type id 55
-                            ObjectDate electronic_date = DateHelpers.ProcessDate(sd_oid, e, 55, "Epublish");
+                            ObjectDate electronic_date = DateHelpers.ProcessDate(sdoid, e, 55, "Epublish");
                             dates.Add(electronic_date);
                             electronic_date_string = electronic_date.date_as_string;
                         }
                         else
                         {
                             string qText = "Unexpected date type (" + date_type + ") found in an article date element";
-                            repo.StoreExtractionNote(sd_oid, 19, qText);
+                            repo.StoreExtractionNote(sdoid, 19, qText);
 
                         }
                     }
@@ -666,14 +660,14 @@ namespace DataHarvester.pubmed
                                     {
                                         date_type = 0;
                                         string qText = "A unexpexted status (" + pub_status + ") found a date in the history section";
-                                        repo.StoreExtractionNote(sd_oid, 20, qText);
+                                        repo.StoreExtractionNote(sdoid, 20, qText);
                                         break;
                                     }
                             }
 
                             if (date_type != 0)
                             {
-                                dates.Add(DateHelpers.ProcessDate(sd_oid, e, date_type, date_type_name));
+                                dates.Add(DateHelpers.ProcessDate(sdoid, e, date_type, date_type_name));
                             }
                         }
                     }
@@ -699,7 +693,7 @@ namespace DataHarvester.pubmed
                         XElement chemName = ch.Element("NameOfSubstance");
                         ObjectTopic tp = new ObjectTopic
                         {
-                            sd_oid = sd_oid,
+                            sd_oid = sdoid,
                             topic = GetElementAsString(chemName),
                             ct_scheme = "MESH",
                             ct_scheme_id = 14,
@@ -731,7 +725,7 @@ namespace DataHarvester.pubmed
 
                     ObjectTopic nt = new ObjectTopic
                     {
-                        sd_oid = sd_oid,
+                        sd_oid = sdoid,
                         topic = GetElementAsString(desc),
                         ct_scheme = "MESH",
                         ct_scheme_id = 14,
@@ -764,7 +758,7 @@ namespace DataHarvester.pubmed
                         {
                             ObjectTopic qt = new ObjectTopic
                             {
-                                sd_oid = sd_oid,
+                                sd_oid = sdoid,
                                 topic = nt.topic,
                                 ct_scheme = "MESH",
                                 ct_scheme_id = 14,
@@ -792,7 +786,7 @@ namespace DataHarvester.pubmed
                     {
                         ObjectTopic ts = new ObjectTopic
                         {
-                            sd_oid = sd_oid,
+                            sd_oid = sdoid,
                             topic = GetElementAsString(s),
                             ct_scheme = "MESH",
                             ct_scheme_id = 14,
@@ -822,7 +816,7 @@ namespace DataHarvester.pubmed
                         {
                             ObjectTopic kw = new ObjectTopic
                             {
-                                sd_oid = c.sd_oid,
+                                sd_oid = sdoid,
                                 topic = GetElementAsString(k),
                                 where_found = "keywords"
                             };
@@ -868,7 +862,7 @@ namespace DataHarvester.pubmed
                             {
                                 case "pii":
                                     {
-                                        ids.Add(new ObjectIdentifier(sd_oid, 34, "Publisher article ID", value, null, null));
+                                        identifiers.Add(new ObjectIdentifier(sdoid, 34, "Publisher article ID", value, null, null));
                                         source_elocation_string += " pii:" + value + ".";
                                         break;
                                     }
@@ -906,10 +900,10 @@ namespace DataHarvester.pubmed
                         {
                             if (other_id.Substring(0, 3) == "PMC")
                             {
-                                ids.Add(new ObjectIdentifier(sd_oid, 31, "PMCID", other_id, 100133, "National Library of Medicine"));
+                                identifiers.Add(new ObjectIdentifier(sdoid, 31, "PMCID", other_id, 100133, "National Library of Medicine"));
                                 ObjectInstance objinst = new ObjectInstance
                                 {
-                                    sd_oid = sd_oid,
+                                    sd_oid = sdoid,
                                     instance_type_id = 1,
                                     instance_type = "Full resource",
                                     url = "https://www.ncbi.nlm.nih.gov/pmc/articles/" + other_id.ToString(),
@@ -923,17 +917,17 @@ namespace DataHarvester.pubmed
                             }
                             else
                             {
-                                ids.Add(new ObjectIdentifier(sd_oid, 32, "NIH Manuscript ID", other_id, 100134, "National Institutes of Health"));
+                                identifiers.Add(new ObjectIdentifier(sdoid, 32, "NIH Manuscript ID", other_id, 100134, "National Institutes of Health"));
                             }
                         }
                         else if (source == "NRCBL")
                         {
-                            ids.Add(new ObjectIdentifier(sd_oid, 33, "NRCBL", other_id, 100447, "Georgetown University"));
+                            identifiers.Add(new ObjectIdentifier(sdoid, 33, "NRCBL", other_id, 100447, "Georgetown University"));
                         }
                         else
                         {
                             string qText = "Unexpected source code (" + source + ") found in 'other IDs'";
-                            repo.StoreExtractionNote(sd_oid, 21, qText);
+                            repo.StoreExtractionNote(sdoid, 21, qText);
                         }
                     }
                 }
@@ -972,7 +966,7 @@ namespace DataHarvester.pubmed
                                             if (c.doi != other_id)
                                             {
                                                 string qText = "Two different dois have been supplied: " + c.doi + " from ELocation, and " + other_id + " from Article Ids";
-                                                repo.StoreExtractionNote(sd_oid, 14, qText);
+                                                repo.StoreExtractionNote(sdoid, 14, qText);
                                                 break;
                                             }
                                         }
@@ -980,49 +974,49 @@ namespace DataHarvester.pubmed
                                     }
                                 case "pii":
                                     {
-                                        if (IdentifierHelpers.IdNotPresent(ids, 34, other_id))
+                                        if (IdentifierHelpers.IdNotPresent(identifiers, 34, other_id))
                                         {
-                                            ids.Add(new ObjectIdentifier(sd_oid, 34, "Publisher article ID", other_id, null, null));
+                                            identifiers.Add(new ObjectIdentifier(sdoid, 34, "Publisher article ID", other_id, null, null));
                                         }
                                         break;
                                     }
 
-                                case "pmcpid": { ids.Add(new ObjectIdentifier(sd_oid, 37, "PMC Publisher ID", other_id, null, null)); break; }
+                                case "pmcpid": { identifiers.Add(new ObjectIdentifier(sdoid, 37, "PMC Publisher ID", other_id, null, null)); break; }
 
-                                case "pmpid": { ids.Add(new ObjectIdentifier(sd_oid, 38, "PM Publisher ID", other_id, null, null)); break; }
+                                case "pmpid": { identifiers.Add(new ObjectIdentifier(sdoid, 38, "PM Publisher ID", other_id, null, null)); break; }
 
-                                case "sici": { ids.Add(new ObjectIdentifier(sd_oid, 35, "Serial Item and Contribution Identifier ", other_id, null, null)); break; }
+                                case "sici": { identifiers.Add(new ObjectIdentifier(sdoid, 35, "Serial Item and Contribution Identifier ", other_id, null, null)); break; }
 
-                                case "medline": { ids.Add(new ObjectIdentifier(sd_oid, 36, "Medline UID", other_id, 100133, "National Library of Medicine")); break; }
+                                case "medline": { identifiers.Add(new ObjectIdentifier(sdoid, 36, "Medline UID", other_id, 100133, "National Library of Medicine")); break; }
 
                                 case "pubmed":
                                     {
-                                        if (IdentifierHelpers.IdNotPresent(ids, 16, other_id))
+                                        if (IdentifierHelpers.IdNotPresent(identifiers, 16, other_id))
                                         {
                                             // should be present already! - if a different value log it a a query
-                                            string qText = "Two different values for pmid found: record pmiod is " + sd_oid + ", but in article ids the value " + other_id + " is listed";
-                                            repo.StoreExtractionNote(sd_oid, 22, qText);
-                                            ids.Add(new ObjectIdentifier(sd_oid, 16, "PMID", sd_oid, 100133, "National Library of Medicine"));
+                                            string qText = "Two different values for pmid found: record pmiod is " + sdoid + ", but in article ids the value " + other_id + " is listed";
+                                            repo.StoreExtractionNote(sdoid, 22, qText);
+                                            identifiers.Add(new ObjectIdentifier(sdoid, 16, "PMID", sdoid, 100133, "National Library of Medicine"));
                                         }
                                         break;
                                     }
                                 case "mid":
                                     {
-                                        if (IdentifierHelpers.IdNotPresent(ids, 32, other_id))
+                                        if (IdentifierHelpers.IdNotPresent(identifiers, 32, other_id))
                                         {
-                                            ids.Add(new ObjectIdentifier(sd_oid, 32, "NIH Manuscript ID", other_id, 100134, "National Institutes of Health"));
+                                            identifiers.Add(new ObjectIdentifier(sdoid, 32, "NIH Manuscript ID", other_id, 100134, "National Institutes of Health"));
                                         }
                                         break;
                                     }
 
                                 case "pmc":
                                     {
-                                        if (IdentifierHelpers.IdNotPresent(ids, 31, other_id))
+                                        if (IdentifierHelpers.IdNotPresent(identifiers, 31, other_id))
                                         {
-                                            ids.Add(new ObjectIdentifier(c.sd_oid, 31, "PMCID", other_id, 100133, "National Library of Medicine"));
+                                            identifiers.Add(new ObjectIdentifier(sdoid, 31, "PMCID", other_id, 100133, "National Library of Medicine"));
                                             ObjectInstance objinst = new ObjectInstance
                                             {
-                                                sd_oid = sd_oid,
+                                                sd_oid = sdoid,
                                                 instance_type_id = 1,
                                                 instance_type = "Full resource",
                                                 url = "https://www.ncbi.nlm.nih.gov/pmc/articles/" + other_id.ToString(),
@@ -1039,12 +1033,12 @@ namespace DataHarvester.pubmed
 
                                 case "pmcid":
                                     {
-                                        if (IdentifierHelpers.IdNotPresent(ids, 31, other_id))
+                                        if (IdentifierHelpers.IdNotPresent(identifiers, 31, other_id))
                                         {
-                                            ids.Add(new ObjectIdentifier(c.sd_oid, 31, "PMCID", other_id, 100133, "National Library of Medicine"));
+                                            identifiers.Add(new ObjectIdentifier(sdoid, 31, "PMCID", other_id, 100133, "National Library of Medicine"));
                                             ObjectInstance objinst = new ObjectInstance
                                             {
-                                                sd_oid = sd_oid,
+                                                sd_oid = sdoid,
                                                 instance_type_id = 1,
                                                 instance_type = "Full resource",
                                                 url = "https://www.ncbi.nlm.nih.gov/pmc/articles/" + other_id.ToString(),
@@ -1061,7 +1055,7 @@ namespace DataHarvester.pubmed
                                 default:
                                     {
                                         string qText = "A unexpexted article id type (" + id_type + ") found a date in the article id section";
-                                        repo.StoreExtractionNote(sd_oid, 23, qText);
+                                        repo.StoreExtractionNote(sdoid, 23, qText);
                                         break;
                                     }
                             }
@@ -1073,7 +1067,7 @@ namespace DataHarvester.pubmed
 
             // See if any article dates can be matched to the identifiers.
 
-            foreach (ObjectIdentifier i in ids)
+            foreach (ObjectIdentifier i in identifiers)
             {
                 if (i.identifier_type_id == 16)
                 {
@@ -1204,14 +1198,14 @@ namespace DataHarvester.pubmed
                                 // should only ever be a single ORCID identifier
                                 if (identifier_source == "ORCID")
                                 {
-                                    identifier = StringHelpers.TidyORCIDIdentifier(identifier, sd_oid, repo);
+                                    identifier = StringHelpers.TidyORCIDIdentifier(identifier, sdoid, repo);
                                     break;  // no need to look for more
                                 }
                                 else
                                 {
-                                    string qText = "person " + full_name + "(linked to " + sd_oid + ") identifier ";
+                                    string qText = "person " + full_name + "(linked to " + sdoid + ") identifier ";
                                     qText += "is not an ORCID (" + identifier + " (source =" + identifier_source + "))";
-                                    repo.StoreExtractionNote(sd_oid, 27, qText);
+                                    repo.StoreExtractionNote(sdoid, 27, qText);
                                     identifier = ""; identifier_source = "";  // do not store in db
                                 }
                             }
@@ -1230,15 +1224,15 @@ namespace DataHarvester.pubmed
                                 if (affil_identifier != "")
                                 {
                                     affil_ident_source = GetAttributeAsString(e.Element("Identifier").Attribute("Source"));
-                                    string qText = "person " + full_name + "(linked to " + sd_oid + ") affiliation given ";
+                                    string qText = "person " + full_name + "(linked to " + sdoid + ") affiliation given ";
                                     qText += "as Id and Id source  (" + affil_identifier + " (source =" + affil_ident_source + ")";
-                                    repo.StoreExtractionNote(sd_oid, 25, qText);
+                                    repo.StoreExtractionNote(sdoid, 25, qText);
                                 }
                             }
 
                         }
 
-                        contributors.Add(new ObjectContributor(sd_oid, 11, "Creator",
+                        contributors.Add(new ObjectContributor(sdoid, 11, "Creator",
                                                          given_name, family_name, full_name,
                                                          identifier, identifier_source,
                                                          affiliation, affil_identifier, affil_ident_source));
@@ -1285,6 +1279,7 @@ namespace DataHarvester.pubmed
             }
 
             #endregion
+
 
 
             #region Descriptions
@@ -1402,7 +1397,7 @@ namespace DataHarvester.pubmed
                 // add the description
                 descriptions.Add(new ObjectDescription
                 {
-                    sd_oid = c.sd_oid,
+                    sd_oid = sdoid,
                     description_type_id = 18,
                     description_type = "Journal Source String",
                     description_text = journal_source,
@@ -1504,78 +1499,107 @@ namespace DataHarvester.pubmed
              #endregion
 
 
-             #region Miscellaneous
+
+            #region Miscellaneous
 
              // Comment corrections list.
 
-             //XElement comments_list = citation.Element("CommentsCorrectionsList");
-             //if (comments_list != null)
-             //{
-             //    List<CommentCorrection> comments = comments_list
-             //                .Elements("CommentsCorrections").Select(cc => new CommentCorrection
-             //                {
-             //                    sd_id = c.sd_id,
-             //                    ref_type = GetAttributeAsString(cc.Attribute("RefType")),
-             //                    ref_source = GetElementAsString(cc.Element("RefSource")),
-             //                    pmid = GetElementAsString(cc.Element("PMID")),
-             //                    pmid_version = (cc.Element("PMID") != null) ? GetAttributeAsString(cc.Element("PMID").Attribute("Version")) : null,
-             //                    note = GetElementAsString(cc.Element("Note"))
-             //                }).ToList();
-
-             //    c.comments = comments;
-             //}
+             XElement comments_list = citation.Element("CommentsCorrectionsList");
+             if (comments_list != null)
+             {
+                 comments = comments_list
+                            .Elements("CommentsCorrections").Select(cc => new ObjectCommentCorrection
+                            {
+                                sd_oid = sdoid,
+                                ref_type = GetAttributeAsString(cc.Attribute("RefType")),
+                                ref_source = GetElementAsString(cc.Element("RefSource")),
+                                pmid = GetElementAsString(cc.Element("PMID")),
+                                pmid_version = (cc.Element("PMID") != null) ? GetAttributeAsString(cc.Element("PMID").Attribute("Version")) : null,
+                                note = GetElementAsString(cc.Element("Note"))
+                            }).ToList();
+             }
 
 
             // Publication types.
 
-             //XElement publication_type_list = article.Element("PublicationTypeList");
-             //if (publication_type_list != null)
-             //{
-             //    string type_name;
-             //    var pub_types = publication_type_list.Elements("PublicationType");
-             //    if (pub_types.Count() > 0)
-             //    {
-             //        foreach (var pub in pub_types)
-             //        {
-             //            type_name = GetElementAsString(pub);
-             //            if (type_name == "Review" || type_name == "Case Reports" || type_name == "Meta - Analysis" ||
-             //                type_name == "Video - Audio Media" || type_name == "Systematic Review" || type_name == "English Abstract" ||
-             //                type_name == "Retracted Publication" || type_name == "Webcasts")
-             //            {
-             //                pubtypes.Add(new Publication_Type(c.sd_id, type_name));
-             //            }
-             //        }
-             //    }
-             //}
-
-             #endregion
-
-             // Tidy up article title and then the display title.
-
-             if (!art_title.EndsWith(".") && !art_title.EndsWith("?") && !art_title.EndsWith(";"))
+            XElement publication_type_list = article.Element("PublicationTypeList");
+            if (publication_type_list != null)
             {
-                art_title = art_title + ".";
+                string type_name;
+                var pub_types = publication_type_list.Elements("PublicationType");
+                if (pub_types.Count() > 0)
+                {
+                    foreach (var pub in pub_types)
+                    {
+                        type_name = GetElementAsString(pub);
+                        if (type_name == "Review" || type_name == "Case Reports" || type_name == "Meta - Analysis" ||
+                            type_name == "Video - Audio Media" || type_name == "Systematic Review" || type_name == "English Abstract" ||
+                            type_name == "Retracted Publication" || type_name == "Webcasts")
+                        {
+                            pubtypes.Add(new ObjectPublicationType(sdoid, type_name));
+                        }
+                    }
+                }
             }
+
+            #endregion
+
+
+
+            // Tidy up article title and then derive the display title.
+
+            if (!art_title.EndsWith(".") && !art_title.EndsWith("?") && !art_title.EndsWith(";"))
+             {
+                art_title = art_title + ".";
+             }
              c.display_title = (author_string != "" ? author_string + ". " : "") + art_title + journal_source;
 
-             // Assign repeating properties to citationn object
-             // and return the dully constructed citation object.
- 
-             c.object_dates = dates;
-             c.object_titles = titles;
-             c.object_identifiers = ids;
-             c.object_languages = object_languages;
-             c.object_contributors = contributors;
-             c.object_descriptions = descriptions;
-             c.publication_types = pubtypes;
-             c.object_instances = instances;
-             c.object_topics = topics;
 
-             // constant for now
-             c.datetime_of_data_fetch = new DateTime(2020, 5, 17);
+            // Tidy up doi status
+            c.doi_status_id = (c.doi != null) ? 1 : 5;
 
 
-             return c;
+            // Tidy up access type
+            Boolean PMC_present = false;
+            foreach (ObjectInstance i in instances)
+            {
+                if (i.instance_type_id == 1)
+                {
+                    PMC_present = true;
+                    break;
+                }
+            }
+            if (PMC_present)
+            {
+                c.access_type_id = 11;
+                c.access_type = "Public on-screen access and download";
+            }
+            else
+            {
+                c.access_type_id = 15;
+                c.access_type = "Restricted download";
+                c.access_details = "Not in PMC - presumed behind pay wall, but to check'";
+            }
+
+
+
+            // Assign repeating properties to citationn object
+            // and return the fully constructed citation object.
+
+            c.article_instances = instances;
+            c.article_dates = dates;
+            c.article_titles = titles;
+            c.article_identifiers = identifiers;
+            c.article_languages = object_languages;
+            c.article_contributors = contributors;
+            c.article_descriptions = descriptions;
+            c.article_pubtypes = pubtypes;
+            c.article_topics = topics;
+            c.article_registry_ids = registry_ids;
+            c.article_comments = comments;
+
+            return c;
+
         }
 
 
@@ -1587,68 +1611,76 @@ namespace DataHarvester.pubmed
 
             // Create the base Citation record and store it.
 
-            CitationObject_in_DB cdb = new CitationObject_in_DB
-            {
-                sd_oid = c.sd_oid,
-                sd_id_version = c.sd_oid_version,
-                display_title = c.display_title,
-                doi = c.doi,
-                status = c.status,
-                pub_model = c.pub_model,
-                publication_year = c.publication_year,
-                publication_status = c.publication_status,
-                journal_title = c.journal_title,
-                pissn = c.pissn,
-                eissn = c.eissn,
-                datetime_of_data_fetch = c.datetime_of_data_fetch
-            };
-
+            CitationObjectInDB cdb = new CitationObjectInDB(c);
             repo.StoreDataObject(cdb);
 
             // Store the contributors, their identifiers and attributions. 
 
-            if (c.object_instances.Count > 0)
+            if (c.article_instances.Count > 0)
             {
                 repo.StoreObjectInstances(ObjectCopyHelpers.object_instances_helper,
-                                            c.object_instances);
+                                            c.article_instances);
             }
 
-            if (c.object_titles.Count > 0)
+            if (c.article_titles.Count > 0)
             {
                 repo.StoreObjectTitles(ObjectCopyHelpers.object_titles_helper,
-                                            c.object_titles);
+                                            c.article_titles);
             }
 
-            if (c.object_dates.Count > 0)
+            if (c.article_dates.Count > 0)
             {
                 repo.StoreObjectDates(ObjectCopyHelpers.object_dates_helper,
-                                            c.object_dates);
+                                            c.article_dates);
             }
 
-            if (c.object_contributors != null) repo.StoreObjectContributors(ObjectCopyHelpers.object_contributor_copyhelper, c.object_contributors);
+            if (c.article_contributors.Count > 0)
+            {
+                repo.StoreObjectContributors(ObjectCopyHelpers.object_contributor_copyhelper, 
+                    c.article_contributors);
+            }
 
-            //if (c.contrib_identifiers != null) repo.StoreContribIdentifiers(h.persid_copyhelper, c.contrib_identifiers);
+            if (c.article_identifiers.Count > 0)
+            {
+                repo.StoreObjectIdentifiers(ObjectCopyHelpers.object_identifier_copyhelper, 
+                    c.article_identifiers);
+            }
 
-            //if (c.contrib_affiliations != null) repo.StoreContribAffiliations(h.persaff_copyhelper, c.contrib_affiliations);
+            if (c.article_languages.Count > 0)
+            {
+                repo.StoreObjectLanguages(ObjectCopyHelpers.object_language_copyhelper, 
+                    c.article_languages);
+            }
 
-            // Store the object id, date, language and description records.
+            if (c.article_descriptions.Count > 0)
+            {
+                repo.StoreObjectDescriptions(ObjectCopyHelpers.object_description_copyhelper, 
+                    c.article_descriptions);
+            }
 
-            if (c.object_identifiers != null) repo.StoreObjectIdentifiers(ObjectCopyHelpers.object_identifier_copyhelper, c.object_identifiers);
+            if (c.article_topics.Count > 0)
+            {
+                repo.StoreObjectTopics(ObjectCopyHelpers.object_topic_copyhelper, 
+                    c.article_topics);
+            }
 
-            if (c.object_languages != null) repo.StoreObjectLanguages(ObjectCopyHelpers.object_language_copyhelper, c.object_languages);
+            if (c.article_registry_ids.Count > 0)
+            {
+                repo.StoreObjectAcessionNumbers(ObjectCopyHelpers.object_accession_number_copyhelper, 
+                    c.article_registry_ids);
+            }
 
-            if (c.object_descriptions != null) repo.StoreObjectDescriptions(ObjectCopyHelpers.object_description_copyhelper, c.object_descriptions);
+            if (c.article_pubtypes.Count > 0)
+            {
+                repo.StorePublicationTypes(ObjectCopyHelpers.pub_type_copyhelper, 
+                    c.article_pubtypes);
+            }
 
-            // Store the object instance, accession number, publication type and title records, and any comments.
-
-            if (c.accession_numbers != null) repo.StoreObjectAcessionNumbers(ObjectCopyHelpers.object_accession_number_copyhelper, c.accession_numbers);
-
-            //if (c.publication_types != null) r.StorePublicationTypes(h.pub_type_copyhelper, c.publication_types);
-
-            if (c.comments != null) repo.StoreObjectComments(ObjectCopyHelpers.object_correction_copyhelper, c.comments);
-
-            if (c.object_topics != null) repo.StoreObjectTopics(ObjectCopyHelpers.object_topic_copyhelper, c.object_topics);
-
+            if (c.article_comments.Count > 0)
+            {
+                repo.StoreObjectComments(ObjectCopyHelpers.object_correction_copyhelper, 
+                    c.article_comments);
+            }
         }
 
 

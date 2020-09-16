@@ -489,6 +489,23 @@ namespace DataHarvester.who
 				}
 			}
 
+			// edit contributors - identify individuals down as organisations
+			if (study_contributors.Count > 0)
+			{
+				foreach (StudyContributor sc in study_contributors)
+				{
+					if (!sc.is_individual)
+					{
+						string orgname = sc.organisation_name.ToLower();
+						if (IdentifierHelpers.CheckIfIndividual(orgname))
+						{
+							sc.person_full_name = sc.organisation_name;
+							sc.organisation_name = null;
+							sc.is_individual = true;
+						}
+					}
+				}
+			}
 
 			// add in the study properties
 			s.identifiers = study_identifiers;

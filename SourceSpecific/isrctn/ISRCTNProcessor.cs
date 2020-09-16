@@ -879,7 +879,7 @@ namespace DataHarvester.isrctn
 				string href = PIS_details.Substring(ref_start, ref_end - ref_start);
 
 				// first check link does not provide a 404
-				if (await HtmlHelpers.CheckURLAsync(href))
+				if (true) //await HtmlHelpers.CheckURLAsync(href))
 				{
 					int res_type_id = 35;
 					string res_type = "Web text";
@@ -991,12 +991,12 @@ namespace DataHarvester.isrctn
 
 											if (pmid_found && pmid > 0)
 											{
-												references.Add(new StudyReference(sid, ref_items[j], ref_items[j + 2], pmid.ToString(), null));
+												references.Add(new StudyReference(sid, pmid.ToString(),ref_items[j + 2], ref_items[j],  null));
 
 											}
 											else
 											{
-												references.Add(new StudyReference(sid, ref_items[j], ref_items[j + 2], null, null));
+												references.Add(new StudyReference(sid, null, ref_items[j + 2], ref_items[j], null));
 
 											}
 										}
@@ -1171,7 +1171,7 @@ namespace DataHarvester.isrctn
 			if (!string.IsNullOrEmpty(fs.trial_website))
 			{
 				// first check website link does not provide a 404
-				if (await HtmlHelpers.CheckURLAsync(fs.trial_website))
+				if (true) //await HtmlHelpers.CheckURLAsync(fs.trial_website))
 				{
 					object_display_title = s.display_title + " :: website";
 					sd_oid = HashHelpers.CreateMD5(sid + object_display_title);
