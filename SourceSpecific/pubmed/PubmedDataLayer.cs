@@ -81,20 +81,6 @@ namespace DataHarvester.pubmed
             }
         }
 
-
-        // Stores an 'extraction note', e.g. an unusual occurence found and
-        // logged during the extraction, in the associated table.
-
-        public void StoreExtractionNote(string id, int note_type, string note)
-        {
-            ExtractionNote en = new ExtractionNote(id, note_type, note);
-            using (IDbConnection Conn = new NpgsqlConnection(pubmed_connString))
-            {
-                Conn.Insert<ExtractionNote>(en);
-            }
-        }
-
-
         public bool FileInDatabase(string sd_oid)
         {
             string sql_string = "SELECT count(*) FROM sd.data_objects";

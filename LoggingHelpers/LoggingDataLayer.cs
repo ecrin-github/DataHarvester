@@ -221,7 +221,20 @@ namespace DataHarvester
 				return (int)conn.Insert<HarvestEvent>(harvest);
 			}
 		}
+
+
+		// Stores an 'extraction note', e.g. an unusual occurence found and
+		// logged during the extraction, in the associated table.
+
+		public void StoreExtractionNote(ExtractionNote ext_note)
+		{
+			using (var conn = new NpgsqlConnection(connString))
+			{
+				conn.Insert<ExtractionNote>(ext_note);
+			}
+		}
+
 	}
-		
+
 }
 

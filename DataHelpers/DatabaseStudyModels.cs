@@ -202,7 +202,8 @@ namespace DataHarvester
 		public string relationship_type { get; set; }
 		public string target_sd_sid { get; set; }
 
-		public StudyRelationship(string _sd_sid, int _relationship_type_id, string _relationship_type, string _target_sd_sid)
+		public StudyRelationship(string _sd_sid, int _relationship_type_id, 
+			                     string _relationship_type, string _target_sd_sid)
 		{
 			sd_sid = _sd_sid;
 			relationship_type_id = _relationship_type_id;
@@ -383,19 +384,6 @@ namespace DataHarvester
 	// Used during the extraction process, to log any odd or error condition.
 	// The data are transfered directly to the database as required using Dapper.
 
-	[Table("pp.extraction_notes")]
-	public class ExtractionNote
-	{
-		public int id { get; set; }
-		public string sd_oid { get; set; }
-		public int note_type { get; set; }
-		public string note { get; set; }
-		public ExtractionNote(string _sd_oid, int _note_type, string _note)
-		{
-			sd_oid = _sd_oid;
-			note_type = _note_type;
-			note = _note;
-		}
-	}
+	
 
 }

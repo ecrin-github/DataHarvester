@@ -227,28 +227,28 @@ namespace DataHarvester
 				.MapBoolean("contains_html", x => x.contains_html);
 
 
-		public static PostgreSQLCopyHelper<ObjectDBAccessionNumber> object_accession_number_copyhelper =
-			new PostgreSQLCopyHelper<ObjectDBAccessionNumber>("sd", "object_links")
+		public static PostgreSQLCopyHelper<ObjectDBLink> object_db_link_copyhelper =
+			new PostgreSQLCopyHelper<ObjectDBLink>("sd", "object_db_links")
 				.MapVarchar("sd_oid", x => x.sd_oid)
-				.MapInteger("bank_id", x => x.bank_id)
-				.MapVarchar("bank_name", x => x.bank_name)
-				.MapVarchar("accession_number", x => x.accession_number);
+				.MapInteger("db_sequence", x => x.db_sequence)
+				.MapVarchar("db_name", x => x.db_name)
+				.MapVarchar("id_in_db", x => x.id_in_db);
 
 
-		public static PostgreSQLCopyHelper<ObjectPublicationType> pub_type_copyhelper =
-			new PostgreSQLCopyHelper<ObjectPublicationType>("sd", "object_public_types")
+		public static PostgreSQLCopyHelper<ObjectPublicationType> publication_type_copyhelper =
+			new PostgreSQLCopyHelper<ObjectPublicationType>("sd", "object_publication_types")
 				.MapVarchar("sd_oid", x => x.sd_oid)
 				.MapVarchar("type_name", x => x.type_name);
 
 
-		public static PostgreSQLCopyHelper<ObjectCommentCorrection> object_correction_copyhelper =
-			new PostgreSQLCopyHelper<ObjectCommentCorrection>("sd", "object_corrections")
+		public static PostgreSQLCopyHelper<ObjectComment> object_comment_copyhelper =
+			new PostgreSQLCopyHelper<ObjectComment>("sd", "object_comments")
 				.MapVarchar("sd_oid", x => x.sd_oid)
 				.MapVarchar("ref_type", x => x.ref_type)
 				.MapVarchar("ref_source", x => x.ref_source)
 				.MapVarchar("pmid", x => x.pmid)
 				.MapVarchar("pmid_version", x => x.pmid_version)
-				.MapVarchar("note", x => x.note);
+				.MapVarchar("notes", x => x.notes);
 
 
 		public static PostgreSQLCopyHelper<ObjectTopic> object_topic_copyhelper =
@@ -267,6 +267,22 @@ namespace DataHarvester
 			new PostgreSQLCopyHelper<ObjectLanguage>("sd", "object_languages")
 				.MapVarchar("sd_oid", x => x.sd_oid)
 				.MapVarchar("lang_code", x => x.lang_code);
+
+
+		public static PostgreSQLCopyHelper<ObjectRight> object_right_copyhelper =
+			new PostgreSQLCopyHelper<ObjectRight>("sd", "object_rights")
+				.MapVarchar("sd_oid", x => x.sd_oid)
+				.MapVarchar("right_name", x => x.right_name)
+			    .MapVarchar("right_uri", x => x.right_uri)
+			    .MapVarchar("notes", x => x.notes);
+
+
+		public static PostgreSQLCopyHelper<ObjectRelationship> object_relationship_copyhelper =
+			new PostgreSQLCopyHelper<ObjectRelationship>("sd", "object_relationships")
+				.MapVarchar("sd_oid", x => x.sd_oid)
+			    .MapInteger("relationship_type_id", x => x.relationship_type_id)
+			    .MapVarchar("relationship_type", x => x.relationship_type)
+				.MapVarchar("target_sd_oid", x => x.target_sd_oid);
 
 	}
 }

@@ -63,18 +63,6 @@ namespace DataHarvester
 			}
 		}
 
-
-		// Inserts the base Data object, i.e. with all the  
-		// singleton properties, in the database.
-		public void StoreDataObject(CitationObjectInDB cdb)
-		{
-			using (var conn = new NpgsqlConnection(connString))
-			{
-				conn.Insert<CitationObjectInDB>(cdb);
-			}
-		}
-
-
 		public ulong StoreStudyIdentifiers(PostgreSQLCopyHelper<StudyIdentifier> copyHelper, IEnumerable<StudyIdentifier> entities)
 		{
 			using (var conn = new NpgsqlConnection(connString))
@@ -165,10 +153,6 @@ namespace DataHarvester
 
 
 
-
-
-
-
 		public ulong StoreDataObjects(PostgreSQLCopyHelper<DataObject> copyHelper, IEnumerable<DataObject> entities)
 		{
 			using (var conn = new NpgsqlConnection(connString))
@@ -250,7 +234,7 @@ namespace DataHarvester
 		// Inserts the set of 'databank' accession records associated with each Data,
 		// including any linked ClinicalTrials.gov NCT numbers.
 
-		public ulong StoreObjectAcessionNumbers(PostgreSQLCopyHelper<ObjectDBAccessionNumber> copyHelper, IEnumerable<ObjectDBAccessionNumber> entities)
+		public ulong StoreObjectAcessionNumbers(PostgreSQLCopyHelper<ObjectDBLink> copyHelper, IEnumerable<ObjectDBLink> entities)
 		{
 			using (var conn = new NpgsqlConnection(connString))
 			{
@@ -275,7 +259,7 @@ namespace DataHarvester
 
 		// Inserts the set of any comments records associated with each Data.
 
-		public ulong StoreObjectComments(PostgreSQLCopyHelper<ObjectCommentCorrection> copyHelper, IEnumerable<ObjectCommentCorrection> entities)
+		public ulong StoreObjectComments(PostgreSQLCopyHelper<ObjectComment> copyHelper, IEnumerable<ObjectComment> entities)
 		{
 			using (var conn = new NpgsqlConnection(connString))
 			{
@@ -297,7 +281,7 @@ namespace DataHarvester
 		}
 
 
-		// Inserts the contributor (person or organisation) records for each Data.
+		// Inserts the contributor (person or organisation) records for each Data Object.
 
 		public ulong StoreObjectContributors(PostgreSQLCopyHelper<ObjectContributor> copyHelper, IEnumerable<ObjectContributor> entities)
 		{
@@ -308,8 +292,7 @@ namespace DataHarvester
 			}
 		}
 
-		// Should inserts the set of keyword records associated with each Data.
-		// Not used at the moment - see below.
+		// Inserts the set of keyword records associated with each Data Object.
 
 		public ulong StoreObjectTopics(PostgreSQLCopyHelper<ObjectTopic> copyHelper, IEnumerable<ObjectTopic> entities)
 		{
@@ -320,19 +303,36 @@ namespace DataHarvester
 			}
 		}
 
+        // Inserts any rights records associated with each Data Object.
 
-		// Stores an 'extraction note', e.g. an unusual occurence found and
-		// logged during the extraction, in the associated table.
-
-		public void StoreExtractionNote(string pmid, int note_type, string note)
+		public ulong StoreObjectRights(PostgreSQLCopyHelper<ObjectRight> copyHelper, IEnumerable<ObjectRight> entities)
 		{
-			ExtractionNote en = new ExtractionNote(pmid, note_type, note);
 			using (var conn = new NpgsqlConnection(connString))
 			{
-				conn.Insert<ExtractionNote>(en);
+				conn.Open();
+				return copyHelper.SaveAll(conn, entities);
 			}
 		}
 
+		// Inserts related object records associated with each Data Object.
+
+		public ulong StoreObjectRelationships(PostgreSQLCopyHelper<ObjectRelationship> copyHelper, IEnumerable<ObjectRelationship> entities)
+		{
+			using (var conn = new NpgsqlConnection(connString))
+			{
+				conn.Open();
+				return copyHelper.SaveAll(conn, entities);
+			}
+		}
+
+		
+		public void StoreCitationObject(CitationObjectInDB ctob)
+		{
+			using (var conn = new NpgsqlConnection(connString))
+			{
+				conn.Insert<CitationObjectInDB>(ctob);
+			}
+		}
 
 	}
 }

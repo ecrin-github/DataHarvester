@@ -442,26 +442,26 @@ namespace DataHarvester
 	}
 
 
-	// (Object) Database Accession Number class, a Data Object component
+	// (Object) DBLink class, a Data Object component
 
-	public class ObjectDBAccessionNumber
+	public class ObjectDBLink
 	{
 		public string sd_oid { get; set; }
-		public int bank_id { get; set; }
-		public string bank_name { get; set; }
-		public string accession_number { get; set; }
+		public int db_sequence { get; set; }
+		public string db_name { get; set; }
+		public string id_in_db { get; set; }
 	}
 
 	// (Object) Comment Correction class, a Data Object component
 
-	public class ObjectCommentCorrection
+	public class ObjectComment
 	{
 		public string sd_oid { get; set; }
 		public string ref_type { get; set; }
 		public string ref_source { get; set; }
 		public string pmid { get; set; }
 		public string pmid_version { get; set; }
-		public string note { get; set; }
+		public string notes { get; set; }
 	}
 
 
@@ -531,6 +531,45 @@ namespace DataHarvester
 		}
 	}
 
+	// The Object Right class
+
+	public class ObjectRight
+	{
+		public string sd_oid { get; set; }
+		public string right_name { get; set; }
+		public string right_uri { get; set; }
+		public string notes { get; set; }
+
+		public ObjectRight(string _sd_oid, string _right_name,
+							string _right_uri, string _notes)
+		{
+			sd_oid = _sd_oid;
+			right_name = _right_name;
+			right_uri = _right_uri;
+			notes = _notes;
+		}
+	}
+
+	// The Object relationship class
+
+	public class ObjectRelationship
+	{
+		public string sd_oid { get; set; }
+		public int relationship_type_id { get; set; }
+		public string relationship_type { get; set; }
+		public string target_sd_oid { get; set; }
+
+		public ObjectRelationship(string _sd_oid, int _relationship_type_id, 
+			                      string _relationship_type, string _target_sd_oid)
+		{
+			sd_oid = _sd_oid;
+			relationship_type_id = _relationship_type_id;
+			relationship_type = _relationship_type;
+			target_sd_oid = _target_sd_oid;
+		}
+	}
+
+
 	// The Object language class, essentially just
 	// a string language code attached to the source data Id
 
@@ -545,12 +584,9 @@ namespace DataHarvester
 			lang_code = _lang_code;
 		}
 	}
-
-
 	public class CitationObject
 	{
 		public string sd_oid { get; set; }
-		public string sd_sid { get; set; }
 		public string display_title { get; set; }
 		public string version { get; set; }
 		public string doi { get; set; }
@@ -581,8 +617,8 @@ namespace DataHarvester
 		public List<ObjectInstance> article_instances { get; set; }
 		public List<ObjectLanguage> article_languages { get; set; }
 		public List<ObjectContributor> article_contributors { get; set; }
-		public List<ObjectCommentCorrection> article_comments { get; set; }
-		public List<ObjectDBAccessionNumber> article_registry_ids { get; set; }
+		public List<ObjectComment> article_comments { get; set; }
+		public List<ObjectDBLink> article_db_ids { get; set; }
 
 		// This constructor used for journal articles in Pubmed
 

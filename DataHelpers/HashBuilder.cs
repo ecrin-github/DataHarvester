@@ -67,15 +67,17 @@ namespace DataHarvester
 			if (source.has_dataset_properties) hashcreator.create_recordset_properties_hashes();
 			if (source.has_object_dates) hashcreator.create_object_date_hashes();
 			if (source.has_object_languages) hashcreator.create_object_language_hashes();
+			if (source.has_object_relationships) hashcreator.create_object_relationship_hashes();
+			if (source.has_object_rights) hashcreator.create_object_right_hashes();
 			if (source.has_object_pubmed_set)
 			{
 				hashcreator.create_object_contributor_hashes();
 				hashcreator.create_object_topic_hashes();
-				hashcreator.create_object_correction_hashes();
+				hashcreator.create_object_comment_hashes();
 				hashcreator.create_object_description_hashes();
 				hashcreator.create_object_identifier_hashes();
-				hashcreator.create_object_link_hashes();
-				hashcreator.create_object_public_type_hashes();
+				hashcreator.create_object_db_link_hashes();
+				hashcreator.create_object_publication_type_hashes();
 			}
 		}
 
@@ -90,6 +92,8 @@ namespace DataHarvester
 			if (source.has_dataset_properties) hashcreator.create_composite_object_hashes(50, "datasets", "dataset_properties");
 			if (source.has_object_dates) hashcreator.create_composite_object_hashes(53, "dates", "object_dates");
 			if (source.has_object_languages) hashcreator.create_composite_object_hashes(58, "languages", "object_languages");
+			if (source.has_object_relationships) hashcreator.create_composite_object_hashes(56, "relationships", "object_relationships");
+			if (source.has_object_rights) hashcreator.create_composite_object_hashes(59, "rights", "object_rights");
 			if (source.has_object_pubmed_set)
 			{
 				hashcreator.create_composite_object_hashes(54, "topics", "object_topics");
@@ -102,10 +106,6 @@ namespace DataHarvester
 			}
 
 			hashcreator.create_full_data_object_hashes();
-
-			// StudyCompositeHashCreators studyhashcreator = new StudyCompositeHashCreators(connString);
-			// studyhashcreator.create_composite_dataobject_hashes();
-			// studyhashcreator.create_full_study_hashes();
 		}
 
 	}

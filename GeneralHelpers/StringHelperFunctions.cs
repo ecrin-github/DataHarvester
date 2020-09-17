@@ -186,26 +186,28 @@ namespace DataHarvester
         }
 
 
-		public static string TidyORCIDIdentifier(string input_identifier, string sd_oid, DataLayer repo)
+		public static string TidyORCIDId(string input_identifier)
 		{
 			string identifier = input_identifier.Replace("https://orcid.org/", "");
 			identifier = identifier.Replace("http://orcid.org/", "");
 			identifier = identifier.Replace("/", "-");
 			identifier = identifier.Replace(" ", "-");
-			if (identifier.Length != 19)
-			{
-				string qText = "ORCID identifier for person " + sd_oid + " is " + identifier + " and has non standard length'";
-				repo.StoreExtractionNote(sd_oid, 24, qText);
-				if (identifier.Length == 16)
-				{
-					identifier = identifier.Substring(0, 4) + "-" + identifier.Substring(4, 4) +
-								"-" + identifier.Substring(8, 4) + "-" + identifier.Substring(12, 4);
-				}
-				if (identifier.Length == 15) identifier = "0000" + identifier;
-				if (identifier.Length == 14) identifier = "0000-" + identifier;
-			}
 			return identifier;
 		}
 
+
+		public static string TidyORCIDId2(string input_identifier)
+		{
+			string identifier = input_identifier;
+			if (identifier.Length == 16)
+			{
+				identifier = identifier.Substring(0, 4) + "-" + identifier.Substring(4, 4) +
+							"-" + identifier.Substring(8, 4) + "-" + identifier.Substring(12, 4);
+			}
+			if (identifier.Length == 15) identifier = "0000" + identifier;
+			if (identifier.Length == 14) identifier = "0000-" + identifier;
+
+			return identifier;
+		}
 	}
 }

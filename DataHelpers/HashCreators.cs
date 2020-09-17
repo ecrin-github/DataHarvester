@@ -327,9 +327,9 @@ namespace DataHarvester
             }
         }
 
-        public void create_object_correction_hashes()
+        public void create_object_comment_hashes()
         {
-            string sql_string = @"Update sd.object_corrections
+            string sql_string = @"Update sd.object_comments
               set record_hash = md5(json_build_array(ref_type, ref_source, pmid, pmid_version,
               notes)::varchar);";
 
@@ -354,8 +354,8 @@ namespace DataHarvester
         public void create_object_identifier_hashes()
         {
             string sql_string = @"Update sd.object_identifiers
-              set record_hash = md5(json_build_array(identifier_value, identifier_type_id, identifier_org_id,
-              identifier_org, identifier_date)::varchar);";
+              set record_hash = md5(json_build_array(identifier_value, identifier_type_id, 
+                                identifier_org_id, identifier_org, identifier_date)::varchar);";
 
             using (var conn = new NpgsqlConnection(db_conn))
             {
@@ -363,11 +363,11 @@ namespace DataHarvester
             }
         }
 
-        public void create_object_link_hashes()
+        public void create_object_db_link_hashes()
         {
-            string sql_string = @"Update sd.object_links
-              set record_hash = md5(json_build_array(bank_sequence, bank_name, 
-              accession_number)::varchar);";
+            string sql_string = @"Update sd.object_db_links
+              set record_hash = md5(json_build_array(db_sequence, db_name, 
+              id_in_db)::varchar);";
 
             using (var conn = new NpgsqlConnection(db_conn))
             {
@@ -375,9 +375,10 @@ namespace DataHarvester
             }
         }
 
-        public void create_object_public_type_hashes()
+
+        public void create_object_publication_type_hashes()
         {
-            string sql_string = @"Update sd.object_public_types
+            string sql_string = @"Update sd.object_publication_types
               set record_hash = md5(json_build_array(type_name)::varchar);";
 
             using (var conn = new NpgsqlConnection(db_conn))
@@ -385,6 +386,33 @@ namespace DataHarvester
                 conn.Execute(sql_string);
             }
         }
+
+
+        public void create_object_relationship_hashes()
+        {
+            string sql_string = @"Update sd.object_publication_types
+              set record_hash = md5(json_build_array(relationship_type_id,
+                                target_sd_oid)::varchar);";
+
+            using (var conn = new NpgsqlConnection(db_conn))
+            {
+                conn.Execute(sql_string);
+            }
+        }
+
+
+        public void create_object_right_hashes()
+        {
+            string sql_string = @"Update sd.object_publication_types
+              set record_hash = md5(json_build_array(right_name, 
+                                right_uri, notes)::varchar);";
+
+            using (var conn = new NpgsqlConnection(db_conn))
+            {
+                conn.Execute(sql_string);
+            }
+        }
+
     }
 
  

@@ -13,6 +13,15 @@ namespace DataHarvester
 			db_conn = _db_conn;
 		}
 
+		public void drop_table(string table_name)
+		{
+			string sql_string = @"DROP TABLE IF EXISTS sd." + table_name;
+			using (var conn = new NpgsqlConnection(db_conn))
+			{
+				conn.Execute(sql_string);
+			}
+		}
+
 		public void create_table_studies()
 		{
 			string sql_string = @"CREATE TABLE sd.studies(
@@ -263,6 +272,14 @@ namespace DataHarvester
 			db_conn = _db_conn;
 		}
 
+		public void drop_table(string table_name)
+		{
+			string sql_string = @"DROP TABLE IF EXISTS sd." + table_name;
+			using (var conn = new NpgsqlConnection(db_conn))
+			{
+				conn.Execute(sql_string);
+			}
+		}
 
 		public void create_table_data_objects()
 		{
@@ -476,9 +493,9 @@ namespace DataHarvester
 			}
 		}
 
-        public void create_table_object_corrections()
+        public void create_table_object_comments()
 		{
-			string sql_string = @"CREATE TABLE sd.object_corrections(
+			string sql_string = @"CREATE TABLE sd.object_comments(
                 sd_oid                 CHAR(24)        NULL
 			  , ref_type               VARCHAR         NULL 
 			  , ref_source             VARCHAR         NULL 
@@ -487,7 +504,7 @@ namespace DataHarvester
 			  , notes                  VARCHAR         NULL 
               , record_hash            CHAR(32)        NULL
 			);
-            CREATE INDEX object_corrections_sd_oid ON sd.object_corrections(sd_oid);";
+            CREATE INDEX object_comments_sd_oid ON sd.object_comments(sd_oid);";
 
 			using (var conn = new NpgsqlConnection(db_conn))
 			{
@@ -535,16 +552,16 @@ namespace DataHarvester
 			}
 		}
 
-		public void create_table_object_links()
+		public void create_table_object_db_links()
 		{
-			string sql_string = @"CREATE TABLE sd.object_links(
+			string sql_string = @"CREATE TABLE sd.object_db_links(
                 sd_oid                 CHAR(24)        NULL
-			  , bank_sequence          INT             NULL
-			  , bank_name              VARCHAR         NULL
-			  , accession_number       VARCHAR         NULL
+			  , db_sequence            INT             NULL
+			  , db_name                VARCHAR         NULL
+			  , id_in_db               VARCHAR         NULL
               , record_hash            CHAR(32)        NULL
 			);
-            CREATE INDEX object_links_sd_oid ON sd.object_links(sd_oid);";
+            CREATE INDEX object_db_links_sd_oid ON sd.object_db_links(sd_oid);";
 
 			using (var conn = new NpgsqlConnection(db_conn))
 			{
@@ -552,14 +569,50 @@ namespace DataHarvester
 			}
 		}
 
-		public void create_table_object_public_types()
+		public void create_table_object_publication_types()
 		{
-			string sql_string = @"CREATE TABLE sd.object_public_types(
+			string sql_string = @"CREATE TABLE sd.object_publication_types(
                 sd_oid                 CHAR(24)        NULL
 			  , type_name              VARCHAR         NULL
               , record_hash            CHAR(32)        NULL
 			);
-            CREATE INDEX object_public_type_sd_oid ON sd.object_public_type(sd_oid);";
+            CREATE INDEX object_publication_types_sd_oid ON sd.object_publication_types(sd_oid);";
+
+			using (var conn = new NpgsqlConnection(db_conn))
+			{
+				conn.Execute(sql_string);
+			}
+		}
+
+
+		public void create_table_object_relationships()
+		{
+			string sql_string = @"CREATE TABLE sd.object_relationships(
+                sd_oid                 CHAR(24)        NULL
+              , relationship_id        INT             NULL
+    		  , relationship_name      VARCHAR         NULL
+              , target_sd_oid          CHAR(24)        NULL
+              , record_hash            CHAR(32)        NULL
+			);
+            CREATE INDEX object_relationships_sd_oid ON sd.object_relationships(sd_oid);";
+
+			using (var conn = new NpgsqlConnection(db_conn))
+			{
+				conn.Execute(sql_string);
+			}
+		}
+
+
+		public void create_table_object_rights()
+		{
+			string sql_string = @"CREATE TABLE sd.object_rights(
+                sd_oid                 CHAR(24)        NULL
+			  , rights_name            VARCHAR         NULL
+              , rights_uri             VARCHAR         NULL
+              , notes                  VARCHAR         NULL
+              , record_hash            CHAR(32)        NULL
+			);
+            CREATE INDEX object_rights_sd_oid ON sd.object_rights(sd_oid);";
 
 			using (var conn = new NpgsqlConnection(db_conn))
 			{
@@ -585,7 +638,6 @@ namespace DataHarvester
 		}
 
 
-		// TODO  // TODO  // TODO  // TODO  // TODO  // TODO  // TODO
 		public void create_table_citation_objects()
 		{
 			string sql_string = @"CREATE TABLE sd.data_objects(
@@ -611,11 +663,11 @@ namespace DataHarvester
 			  , add_study_contribs     BOOLEAN         NULL
 			  , add_study_topics       BOOLEAN         NULL
 			  , datetime_of_data_fetch TIMESTAMPTZ     NULL
-              , record_hash            CHAR(32)        NULL
-              , object_full_hash       CHAR(32)        NULL
+              , journal_title          VARCHAR         NULL
+              , pissn                  VARCHAR         NULL
+              , eissn                  VARCHAR         NULL
 			);
-            CREATE INDEX data_objects_sd_oid ON sd.data_objects(sd_oid);
-            CREATE INDEX data_objects_sd_sid ON sd.data_objects(sd_sid);";
+            CREATE INDEX data_objects_sd_oid ON sd.data_objects(sd_oid);";
 
 			using (var conn = new NpgsqlConnection(db_conn))
 			{

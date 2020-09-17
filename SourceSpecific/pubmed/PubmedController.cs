@@ -13,18 +13,18 @@ namespace DataHarvester.pubmed
         PubmedDataLayer pubmed_repo;
         PubmedProcessor processor;
         Source source;
-        int last_harvest_id;
+        int harvest_id;
         int harvest_type_id;
         DateTime? cutoff_date;
 
-        public PubmedController(int _last_harvest_id, Source _source, DataLayer _common_repo, LoggingDataLayer _logging_repo, int _harvest_type_id, DateTime? _cutoff_date)
+        public PubmedController(int _harvest_id, Source _source, DataLayer _common_repo, LoggingDataLayer _logging_repo, int _harvest_type_id, DateTime? _cutoff_date)
         {
             source = _source;
             processor = new PubmedProcessor();
             common_repo = _common_repo;
             logging_repo = _logging_repo;
             pubmed_repo = new PubmedDataLayer();
-            last_harvest_id = _last_harvest_id;
+            harvest_id = _harvest_id;
             harvest_type_id = _harvest_type_id;
             cutoff_date = _cutoff_date;
         }
@@ -57,11 +57,11 @@ namespace DataHarvester.pubmed
                         XmlDocument xdoc = new XmlDocument();
                         xdoc.Load(filePath);
                         // CitationObject c = 
-                        processor.ProcessData(common_repo, rec.sd_id, xdoc, rec.last_downloaded);
+                        processor.ProcessData(logging_repo, rec.sd_id, xdoc, rec.last_downloaded, harvest_id);
                         //processor.StoreData(common_repo, c);
 
                         // update file record with last processed datetime
-                        logging_repo.UpdateFileRecLastHarvested(rec.id, "object", last_harvest_id);
+                        logging_repo.UpdateFileRecLastHarvested(rec.id, "object", harvest_id);
                     }
 
                     if (n % 10 == 0) Console.WriteLine(m.ToString() + ": " + n.ToString());
