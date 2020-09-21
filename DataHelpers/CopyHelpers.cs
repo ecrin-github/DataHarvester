@@ -14,16 +14,20 @@ namespace DataHarvester
 				.MapInteger("identifier_type_id", x => x.identifier_type_id)
 				.MapVarchar("identifier_type", x => x.identifier_type)
 				.MapInteger("identifier_org_id", x => x.identifier_org_id)
-				.MapVarchar("identifier_org", x => x.identifier_org);
+				.MapVarchar("identifier_org", x => x.identifier_org)
+		        .MapVarchar("identifier_date", x => x.identifier_date)
+		        .MapVarchar("identifier_link", x => x.identifier_link);
 
 		public static PostgreSQLCopyHelper<StudyTitle> study_titles_helper =
 			new PostgreSQLCopyHelper<StudyTitle>("sd", "study_titles")
 				.MapVarchar("sd_sid", x => x.sd_sid)
-				.MapVarchar("title_text", x => x.title_text)
 				.MapInteger("title_type_id", x => x.title_type_id)
 				.MapVarchar("title_type", x => x.title_type)
+				.MapVarchar("title_text", x => x.title_text)
 				.MapBoolean("is_default", x => x.is_default)
-				.MapVarchar("comments", x => x.comments);
+				.MapVarchar("title_lang_code", x => x.title_lang_code)
+		        .MapInteger("lang_usage_id", x => x.lang_usage_id)
+		        .MapVarchar("comments", x => x.comments);
 
 
 		public static PostgreSQLCopyHelper<StudyTopic> study_topics_helper =
@@ -31,11 +35,15 @@ namespace DataHarvester
 				.MapVarchar("sd_sid", x => x.sd_sid)
 				.MapInteger("topic_type_id", x => x.topic_type_id)
 				.MapVarchar("topic_type", x => x.topic_type)
+			    .MapBoolean("mesh_coded", x => x.mesh_coded)
+				.MapVarchar("topic_code", x => x.topic_code)
 				.MapVarchar("topic_value", x => x.topic_value)
-				.MapInteger("topic_ct_id", x => x.topic_ct_id)
-				.MapVarchar("topic_ct", x => x.topic_ct)
-				.MapVarchar("topic_ct_code", x => x.topic_ct_code)
-				.MapVarchar("where_found", x => x.where_found);
+				.MapVarchar("topic_qualcode", x => x.topic_qualcode)
+				.MapVarchar("topic_qualvalue", x => x.topic_qualvalue)
+				.MapInteger("original_ct_id", x => x.original_ct_id)
+				.MapVarchar("original_ct_code", x => x.original_ct_code)
+				.MapVarchar("original_value", x => x.original_value)
+				.MapVarchar("comments", x => x.comments);
 
 
 		public static PostgreSQLCopyHelper<StudyContributor> study_contributors_helper =
@@ -156,16 +164,21 @@ namespace DataHarvester
 		public static PostgreSQLCopyHelper<ObjectTitle> object_titles_helper =
 			new PostgreSQLCopyHelper<ObjectTitle>("sd", "object_titles")
 				.MapVarchar("sd_oid", x => x.sd_oid)
-				.MapVarchar("title_text", x => x.title_text)
 				.MapInteger("title_type_id", x => x.title_type_id)
 				.MapVarchar("title_type", x => x.title_type)
-				.MapBoolean("is_default", x => x.is_default);
-		
-		
+				.MapVarchar("title_text", x => x.title_text)
+				.MapBoolean("is_default", x => x.is_default)
+			    .MapVarchar("title_lang_code", x => x.title_lang_code)
+				.MapInteger("lang_usage_id", x => x.lang_usage_id)
+				.MapVarchar("comments", x => x.comments);
+
+
 		public static PostgreSQLCopyHelper<ObjectInstance> object_instances_helper =
 			new PostgreSQLCopyHelper<ObjectInstance>("sd", "object_instances")
 				.MapVarchar("sd_oid", x => x.sd_oid)
-				.MapInteger("repository_org_id", x => x.repository_org_id)
+			    .MapInteger("instance_type_id", x => x.instance_type_id)
+				.MapVarchar("instance_type", x => x.instance_type)
+	            .MapInteger("repository_org_id", x => x.repository_org_id)
 				.MapVarchar("repository_org", x => x.repository_org)
 				.MapVarchar("url", x => x.url)
 				.MapBoolean("url_accessible", x => x.url_accessible)
@@ -213,7 +226,7 @@ namespace DataHarvester
 				.MapVarchar("identifier_value", x => x.identifier_value)
 				.MapInteger("identifier_org_id", x => x.identifier_org_id)
 				.MapVarchar("identifier_org", x => x.identifier_org)
-				.MapVarchar("date_applied", x => x.date_applied);
+				.MapVarchar("identifier_date", x => x.identifier_date);
 
 
 		public static PostgreSQLCopyHelper<ObjectDescription> object_description_copyhelper =
@@ -254,13 +267,17 @@ namespace DataHarvester
 		public static PostgreSQLCopyHelper<ObjectTopic> object_topic_copyhelper =
 			new PostgreSQLCopyHelper<ObjectTopic>("sd", "object_topics")
 				.MapVarchar("sd_oid", x => x.sd_oid)
-				.MapVarchar("topic", x => x.topic)
 				.MapInteger("topic_type_id", x => x.topic_type_id)
 				.MapVarchar("topic_type", x => x.topic_type)
-				.MapInteger("ct_scheme_id", x => x.ct_scheme_id)
-				.MapVarchar("ct_scheme", x => x.ct_scheme)
-				.MapVarchar("ct_scheme_code", x => x.ct_scheme_code)
-				.MapVarchar("where_found", x => x.where_found);
+				.MapBoolean("mesh_coded", x => x.mesh_coded)
+				.MapVarchar("topic_code", x => x.topic_code)
+				.MapVarchar("topic_value", x => x.topic_value)
+				.MapVarchar("topic_qualcode", x => x.topic_qualcode)
+				.MapVarchar("topic_qualvalue", x => x.topic_qualvalue)
+				.MapInteger("original_ct_id", x => x.original_ct_id)
+				.MapVarchar("original_ct_code", x => x.original_ct_code)
+				.MapVarchar("original_value", x => x.original_value)
+				.MapVarchar("comments", x => x.comments);
 
 
 		public static PostgreSQLCopyHelper<ObjectLanguage> object_language_copyhelper =

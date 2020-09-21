@@ -8,22 +8,20 @@ namespace DataHarvester.pubmed
 {
     class PubmedController
     {
-        DataLayer common_repo;
+        DataLayer repo;
         LoggingDataLayer logging_repo;
-        PubmedDataLayer pubmed_repo;
         PubmedProcessor processor;
         Source source;
         int harvest_id;
         int harvest_type_id;
         DateTime? cutoff_date;
 
-        public PubmedController(int _harvest_id, Source _source, DataLayer _common_repo, LoggingDataLayer _logging_repo, int _harvest_type_id, DateTime? _cutoff_date)
+        public PubmedController(int _harvest_id, Source _source, DataLayer _repo, LoggingDataLayer _logging_repo, int _harvest_type_id, DateTime? _cutoff_date)
         {
             source = _source;
             processor = new PubmedProcessor();
-            common_repo = _common_repo;
+            repo = _repo;
             logging_repo = _logging_repo;
-            pubmed_repo = new PubmedDataLayer();
             harvest_id = _harvest_id;
             harvest_type_id = _harvest_type_id;
             cutoff_date = _cutoff_date;
@@ -56,28 +54,34 @@ namespace DataHarvester.pubmed
                     {
                         XmlDocument xdoc = new XmlDocument();
                         xdoc.Load(filePath);
-                        // CitationObject c = 
-                        processor.ProcessData(logging_repo, rec.sd_id, xdoc, rec.last_downloaded, harvest_id);
-                        //processor.StoreData(common_repo, c);
+                        CitationObject c = processor.ProcessData(logging_repo, rec.sd_id, xdoc, rec.last_downloaded, harvest_id);
+                        processor.StoreData(repo, c);
 
                         // update file record with last processed datetime
                         logging_repo.UpdateFileRecLastHarvested(rec.id, "object", harvest_id);
                     }
 
-                    if (n % 10 == 0) Console.WriteLine(m.ToString() + ": " + n.ToString());
+                    if (k % 10 == 0) Console.WriteLine(k.ToString());
                 }
+
+                if (k > 990) break;              
+
             }
+
             return k;
         }
 
-        public void IdentifyPublishers()
+        public void DoPubMedPostProcessing()
         {
-            // to do
+            PostProcBuilder ppb = new PostProcBuilder(repo.ConnString, source);
+            ppb.EstablishContextForeignTables(repo.Username, repo.Password);
+            ppb.ObtainPublisherNames();
+            ppb.UpdatePublisherOrgIds();
+            ppb.UpdateIdentifierPublisherData();
+            ppb.CreateDataObjectsTable();
+            ppb.DropContextForeignTables();
+            ppb.CreateTotalLinksTable();
         }
 
-        public void CollectTogetherStudyLinks()
-        {
-            // to do
-        }
     }
 }

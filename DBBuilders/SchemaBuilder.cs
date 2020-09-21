@@ -9,14 +9,14 @@ using PostgreSQLCopyHelper;
 
 namespace DataHarvester
 {
-	public class SDBuilder
+	public class SchemaBuilder
 	{
 		private string connString;
 		private Source source;
 		private StudyTableBuildersSD study_tablebuilder;
 		private ObjectTableBuildersSD object_tablebuilder;
 
-		public SDBuilder(string _connString, Source _source)
+		public SchemaBuilder(string _connString, Source _source)
 		{
 			connString = _connString;
 			source = _source;

@@ -124,9 +124,9 @@ namespace DataHarvester
 		{
 			string sql_string = @"CREATE TABLE sd.study_titles(
 				sd_sid                 VARCHAR         NOT NULL
-			  , title_text             VARCHAR         NULL
 			  , title_type_id          INT             NULL
 			  , title_type             VARCHAR         NULL
+			  , title_text             VARCHAR         NULL
 			  , title_lang_code        VARCHAR         NOT NULL default 'en'
 			  , lang_usage_id          INT             NOT NULL default 11
 			  , is_default             BOOLEAN         NULL
@@ -175,23 +175,28 @@ namespace DataHarvester
 		public void create_table_study_topics()
 		{
 			string sql_string = @"CREATE TABLE sd.study_topics(
-				sd_sid                 VARCHAR         NOT NULL
+				sd_oid                 CHAR(24)        NOT NULL
 			  , topic_type_id          INT             NULL
 			  , topic_type             VARCHAR         NULL
+              , mesh_coded             BOOLEAN         NULL
+              , topic_code             VARCHAR         NULL
 			  , topic_value            VARCHAR         NULL
-			  , topic_ct_id            INT             NULL
-			  , topic_ct               VARCHAR         NULL
-			  , topic_ct_code          VARCHAR         NULL
-			  , where_found            VARCHAR         NULL
+			  , topic_qualcode         VARCHAR         NULL
+			  , topic_qualvalue        VARCHAR         NULL
+			  , original_ct_id         INT             NULL
+              , original_ct_code       VARCHAR         NULL
+			  , original_value         VARCHAR         NULL
+			  , comments               VARCHAR         NULL
               , record_hash            CHAR(32)        NULL
 			);
-            CREATE INDEX study_topics_sid ON sd.study_topics(sd_sid);";
+            CREATE INDEX study_topics_sd_sid ON sd.study_topics(sd_sid);";
 
 			using (var conn = new NpgsqlConnection(db_conn))
 			{
 				conn.Execute(sql_string);
 			}
 		}
+
 
 		public void create_table_study_features()
 		{
@@ -227,6 +232,7 @@ namespace DataHarvester
 			}
 		}
 
+
 		public void create_table_ipd_available()
 		{
 			string sql_string = @"CREATE TABLE sd.study_ipd_available(
@@ -245,6 +251,7 @@ namespace DataHarvester
 			}
 		}
 
+
 		public void create_table_study_hashes()
 		{
 			string sql_string = @"CREATE TABLE sd.study_hashes(
@@ -260,6 +267,7 @@ namespace DataHarvester
 				conn.Execute(sql_string);
 			}
 		}
+
 	}
 
 
@@ -285,7 +293,7 @@ namespace DataHarvester
 		{
 			string sql_string = @"CREATE TABLE sd.data_objects(
 				sd_oid                 CHAR(24)        PRIMARY KEY
-              , sd_sid                 VARCHAR         NOT NULL
+              , sd_sid                 VARCHAR         NULL
 			  , display_title          VARCHAR         NULL
               , version                VARCHAR         NULL
 			  , doi                    VARCHAR         NULL 
@@ -383,8 +391,8 @@ namespace DataHarvester
 		{
 			string sql_string = @"CREATE TABLE sd.object_instances(
                 sd_oid                 CHAR(24)        NULL
-			  , instance_type_id       INT             NOT NULL  default 1
-			  , instance_type          VARCHAR         NULL default 'Full Resource'
+			  , instance_type_id       INT             NOT NULL 
+			  , instance_type          VARCHAR         NULL
 			  , repository_org_id      INT             NULL
 			  , repository_org         VARCHAR         NULL
 			  , url                    VARCHAR         NULL
@@ -439,10 +447,10 @@ namespace DataHarvester
 		{
 			string sql_string = @"CREATE TABLE sd.object_titles(
                 sd_oid                 CHAR(24)        NULL
-			  , title_text             VARCHAR         NULL
 			  , title_type_id          INT             NULL
 			  , title_type             VARCHAR         NULL
-			  , title_lang_code        VARCHAR         NOT NULL default 'en'
+			  , title_text             VARCHAR         NULL
+			  , title_lang_code        VARCHAR         NULL
 			  , lang_usage_id          INT             NOT NULL default 11
 			  , is_default             BOOLEAN         NULL
 			  , comments               VARCHAR         NULL
@@ -457,17 +465,22 @@ namespace DataHarvester
 			}
 		}
 
+
 		public void create_table_object_topics()
 		{
 			string sql_string = @"CREATE TABLE sd.object_topics(
 				sd_oid                 CHAR(24)        NOT NULL
 			  , topic_type_id          INT             NULL
 			  , topic_type             VARCHAR         NULL
+              , mesh_coded             BOOLEAN         NULL
+              , topic_code             VARCHAR         NULL
 			  , topic_value            VARCHAR         NULL
-			  , topic_ct_id            INT             NULL
-			  , topic_ct               VARCHAR         NULL
-			  , topic_ct_code          VARCHAR         NULL
-			  , where_found            VARCHAR         NULL
+			  , topic_qualcode         VARCHAR         NULL
+			  , topic_qualvalue        VARCHAR         NULL
+			  , original_ct_id         INT             NULL
+              , original_ct_code       VARCHAR         NULL
+			  , original_value         VARCHAR         NULL
+			  , comments               VARCHAR         NULL
               , record_hash            CHAR(32)        NULL
 			);
             CREATE INDEX object_topics_sd_oid ON sd.object_topics(sd_oid);";
@@ -477,6 +490,7 @@ namespace DataHarvester
 				conn.Execute(sql_string);
 			}
 		}
+
 
 		public void create_table_object_languages()
 		{
@@ -640,9 +654,9 @@ namespace DataHarvester
 
 		public void create_table_citation_objects()
 		{
-			string sql_string = @"CREATE TABLE sd.data_objects(
+			string sql_string = @"CREATE TABLE sd.citation_objects(
 				sd_oid                 CHAR(24)        PRIMARY KEY
-              , sd_sid                 VARCHAR         NOT NULL
+              , sd_sid                 VARCHAR         NULL
 			  , display_title          VARCHAR         NULL
               , version                VARCHAR         NULL
 			  , doi                    VARCHAR         NULL 
@@ -667,7 +681,7 @@ namespace DataHarvester
               , pissn                  VARCHAR         NULL
               , eissn                  VARCHAR         NULL
 			);
-            CREATE INDEX data_objects_sd_oid ON sd.data_objects(sd_oid);";
+            CREATE INDEX citation_objects_sd_oid ON sd.citation_objects(sd_oid);";
 
 			using (var conn = new NpgsqlConnection(db_conn))
 			{

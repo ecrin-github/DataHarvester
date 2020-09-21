@@ -40,7 +40,7 @@ namespace DataHarvester
 			{
 				// Construct the sd tables.
 
-				SDBuilder sdb = new SDBuilder(repo.ConnString, source);
+				SchemaBuilder sdb = new SchemaBuilder(repo.ConnString, source);
 				if (source.has_study_tables)
 				{
 					sdb.DeleteSDStudyTables();
@@ -110,10 +110,8 @@ namespace DataHarvester
 
 								// For pubmed necessary to do additional processing afterwards 
 								// to identify publishers and agregate study linkage data
-								c.IdentifyPublishers();
-								c.CollectTogetherStudyLinks();
-
-								break; ;
+								c.DoPubMedPostProcessing();
+								break;
 							}
 					}
 				}
@@ -127,21 +125,29 @@ namespace DataHarvester
 			// harvest is 'org_update_only', as well as when the 
 			// sd tables are constructed in the normal way
 
-			OrgUpdater gu = new OrgUpdater(repo.ConnString, source);
-			gu.EstablishContextForeignTables(repo.Username, repo.Password);
+			PostProcBuilder ppb = new PostProcBuilder(repo.ConnString, source);
+			ppb.EstablishContextForeignTables(repo.Username, repo.Password);
+
+			// Update and standardise organbisation ids and names
+
 			if (source.has_study_tables)
 			{
-				gu.UpdateStudyIdentifierOrgs();
+				ppb.UpdateStudyIdentifierOrgs();
 				Console.WriteLine("study identifier orgs updated");
-				gu.UpdateStudyContributorOrgs();
+				ppb.UpdateStudyContributorOrgs();
 				Console.WriteLine("study contributor orgs updated");
 			}
-			gu.UpdateDataObjectOrgs();
+			ppb.UpdateDataObjectOrgs();
 			Console.WriteLine("data object managing orgs updated");
-			gu.StoreUnMatchedNames();
+			ppb.StoreUnMatchedNames();
 			Console.WriteLine("unmatched org names stored");
-			gu.DropContextForeignTables();
 
+			// Update and standardise topic ids and names
+			string source_type = source.has_study_tables ? "study" : "object";
+			ppb.UpdateTopics(source_type);
+			Console.WriteLine("topic data updated");
+
+			ppb.DropContextForeignTables();
 
 			// Note the hashes can only be done after all the
 			// data is complete, including the organisation 

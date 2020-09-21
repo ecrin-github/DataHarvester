@@ -725,8 +725,8 @@ namespace DataHarvester.euctr
 						med_version = (string.IsNullOrEmpty(i.version)) ? "" : i.version;
 						level = (string.IsNullOrEmpty(i.level)) ? "" : i.level;
 
-						topics.Add(new StudyTopic(sid, 13, "condition", term, 
-							     ("MedDRA " + med_version + " " + level).Trim(), "meddra"));
+						topics.Add(new StudyTopic(sid, 13, "condition", term, 16, code,
+							     ("MedDRA " + med_version + " " + level).Trim()));
 					}
 				}
 			}

@@ -383,13 +383,13 @@ namespace DataHarvester.who
 						{
 							if (sc.code == null)
 							{
-								study_topics.Add(new StudyTopic(sid, 11, "Condition", cond, null, null));
+								study_topics.Add(new StudyTopic(sid, 13, "Condition", cond));
 							}
 							else
 							{
 								if (sc.code_system == "ICD 10")
 								{
-									study_topics.Add(new StudyTopic(sid, 11, "Condition", cond, 12, sc.code_system, sc.code));
+									study_topics.Add(new StudyTopic(sid, 13, "Condition", cond, 12, sc.code));
 								}
 							}
 						}

@@ -75,8 +75,10 @@ namespace DataHarvester
         public void create_study_topic_hashes()
         {
             string sql_string = @"Update sd.study_topics
-              set record_hash = md5(json_build_array(topic_type_id, topic_value, topic_ct_id,
-              topic_ct_code, where_found)::varchar);";
+              set record_hash = md5(json_build_array(topic_type_id, topic_value, 
+              mesh_coded, topic_code, topic_value, topic_qualcode,
+		      topic_qualvalue, original_ct_id, original_ct_code,
+		      original_value, comments)::varchar);";
 
             using (var conn = new NpgsqlConnection(db_conn))
             {
@@ -318,8 +320,10 @@ namespace DataHarvester
         public void create_object_topic_hashes()
         {
             string sql_string = @"Update sd.object_topics
-              set record_hash = md5(json_build_array(topic_type_id, topic_value, topic_ct_id,
-              topic_ct_code, where_found)::varchar);";
+              set record_hash = md5(json_build_array(topic_type_id, topic_value,
+              mesh_coded, topic_code, topic_value, topic_qualcode,
+              topic_qualvalue, original_ct_id, original_ct_code,
+              original_value, comments)::varchar);";
 
             using (var conn = new NpgsqlConnection(db_conn))
             {

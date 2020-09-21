@@ -237,6 +237,7 @@ namespace DataHarvester
 			is_default = _is_default;
 			comments = _comments;
 		}
+
 	}
 
 
@@ -328,6 +329,20 @@ namespace DataHarvester
 			resource_size_units = _resource_size_units;
 		}
 
+		public ObjectInstance(string _sd_oid, int? _instance_type_id, string _instance_type,
+					int? _repository_org_id, string _repository_org, string _url, bool _url_accessible,
+					int? _resource_type_id, string _resource_type)
+		{
+			sd_oid = _sd_oid;
+			instance_type_id = _instance_type_id;
+			instance_type = _instance_type;
+			repository_org_id = _repository_org_id;
+			repository_org = _repository_org;
+			url = _url;
+			url_accessible = _url_accessible;
+			resource_type_id = _resource_type_id;
+			resource_type = _resource_type;
+		}
 
 		public ObjectInstance()
 		{ }
@@ -343,7 +358,7 @@ namespace DataHarvester
 		public string identifier_value { get; set; }
 		public int? identifier_org_id { get; set; }
 		public string identifier_org { get; set; }
-		public string date_applied { get; set; }
+		public string identifier_date { get; set; }
 
 		public ObjectIdentifier(string _sd_oid, int _type_id, string _type_name,
 				string _id_value, int? _org_id, string _org_name)
@@ -469,15 +484,87 @@ namespace DataHarvester
 	public class ObjectTopic
 	{
 		public string sd_oid { get; set; }
-		public string topic { get; set; }
 		public int topic_type_id { get; set; }
 		public string topic_type { get; set; }
-		public int? ct_scheme_id { get; set; }
-		public string ct_scheme { get; set; }
-		public string ct_scheme_code { get; set; }
-		public string where_found { get; set; }
+		public bool? mesh_coded { get; set; }
+		public string topic_code { get; set; }
+		public string topic_value { get; set; }
+		public string topic_qualcode { get; set; }
+		public string topic_qualvalue { get; set; }
+		public int? original_ct_id { get; set; }
+		public string original_ct_code { get; set; }
+		public string original_value { get; set; }
+		public string comments { get; set; }
+
+
+		public ObjectTopic(string _sd_oid, int _topic_type_id, string _topic_type,
+					 bool _mesh_coded, string _topic_code, string _topic_value, string _comments)
+		{
+			sd_oid = _sd_oid;
+			topic_type_id = _topic_type_id;
+			topic_type = _topic_type;
+			mesh_coded = _mesh_coded;
+			topic_code = _topic_code;
+			topic_value = _topic_value;
+			original_ct_id = 14;
+			comments = _comments;
+		}
+
+		public ObjectTopic(string _sd_oid, int _topic_type_id, string _topic_type,
+					 bool _mesh_coded, string _topic_code, string _topic_value, 
+					 string _topic_qualcode, string _topic_qualvalue, string _comments)
+		{
+			sd_oid = _sd_oid;
+			topic_type_id = _topic_type_id;
+			topic_type = _topic_type;
+			mesh_coded = _mesh_coded;
+			topic_code = _topic_code;
+			topic_value = _topic_value;
+			topic_qualcode = _topic_qualcode;
+			topic_qualvalue = _topic_qualvalue;
+			original_ct_id = 14;
+			original_value = _topic_value + '/' + _topic_qualvalue;
+			comments = _comments;
+		}
+
+
+		public ObjectTopic(string _sd_sid, int _topic_type_id, string _topic_type,
+					 string _topic_value, int? _original_ct_id, string _comments)
+		{
+			sd_oid = _sd_sid;
+			topic_type_id = _topic_type_id;
+			topic_type = _topic_type;
+			mesh_coded = false;
+    		topic_value = _topic_value;
+			original_ct_id = _original_ct_id;
+			comments = _comments;
+		}
+
+		public ObjectTopic(string _sd_sid, int _topic_type_id, string _topic_type,
+					       string _topic_value)
+		{
+			sd_oid = _sd_sid;
+			topic_type_id = _topic_type_id;
+			topic_type = _topic_type;
+			mesh_coded = false;
+			topic_value = _topic_value;
+			original_ct_id = 0;
+			original_value = _topic_value;
+		}
+
+		public ObjectTopic(string _sd_sid, int _topic_type_id, string _topic_type,
+						   string _topic_value, int? _original_ct_id)
+		{
+			sd_oid = _sd_sid;
+			topic_type_id = _topic_type_id;
+			topic_type = _topic_type;
+			topic_value = _topic_value;
+			original_ct_id = _original_ct_id;
+			original_value = _topic_value;
+		}
 
 	}
+
 
 	public class ObjectContributor
 	{

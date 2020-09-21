@@ -167,7 +167,7 @@ namespace DataHarvester.yoda
 			// study topics
 			if (!string.IsNullOrEmpty(st.compound_generic_name))
 			{
-				study_topics.Add(new StudyTopic(sid, 12, "chemical / agent", st.compound_generic_name, null, "Yoda"));
+				study_topics.Add(new StudyTopic(sid, 12, "chemical / agent", st.compound_generic_name));
 			}
 
 			if (!string.IsNullOrEmpty(st.compound_product_name))
@@ -187,14 +187,14 @@ namespace DataHarvester.yoda
 				if (add_product)
 				{
 					product_name = CultureInfo.CurrentCulture.TextInfo.ToTitleCase(product_name.ToLower());
-					study_topics.Add(new StudyTopic(sid, 12, "chemical / agent", product_name, null, "Yoda"));
+					study_topics.Add(new StudyTopic(sid, 12, "chemical / agent", product_name));
 				}
 			}
 
 
 			if (!string.IsNullOrEmpty(st.conditions_studied))
 			{
-				study_topics.Add(new StudyTopic(sid, 13, "condition", st.conditions_studied, null, "Yoda"));
+				study_topics.Add(new StudyTopic(sid, 13, "condition", st.conditions_studied));
 			}
 
 			// create study references (pmids)

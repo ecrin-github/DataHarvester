@@ -384,7 +384,7 @@ namespace DataHarvester.ctg
 								var condition_items = condition_mesh.Items;
 								string mesh_code = FieldValue(condition_items, "ConditionMeshId");
 								string mesh_term = FieldValue(condition_items, "ConditionMeshTerm");
-								topics.Add(new StudyTopic(sid, 13, "condition", mesh_term, 14, "MESH", mesh_code, "browse list"));
+								topics.Add(new StudyTopic(sid, 13, "condition", true, mesh_code, mesh_term, "browse list"));
 							}
 						}
 					}
@@ -409,7 +409,7 @@ namespace DataHarvester.ctg
 								var intervention_items = intervention_mesh.Items;
 								string mesh_code = FieldValue(intervention_items, "InterventionMeshId");
 								string mesh_term = FieldValue(intervention_items, "InterventionMeshTerm");
-								topics.Add(new StudyTopic(sid, 12, "chemical / agent", mesh_term, 14, "MESH", mesh_code, "browse list"));
+								topics.Add(new StudyTopic(sid, 12, "chemical / agent", true, mesh_code, mesh_term, "browse list"));
 							}
 						}
 					}
@@ -434,7 +434,7 @@ namespace DataHarvester.ctg
 								// only add the condition name if not already present in the mesh coded conditions
 								if (condition_is_new(condition_name.ToLower()))
 								{
-									topics.Add(new StudyTopic(sid, 13, "condition", condition_name, null, "conditions module"));
+									topics.Add(new StudyTopic(sid, 13, "condition", condition_name));
 								}
 							}
 						}
@@ -449,7 +449,7 @@ namespace DataHarvester.ctg
 							for (int i = 0; i < kwords.Length; i++)
 							{
 								string keyword_name = (kwords[i] as FieldType).Value;
-								topics.Add(new StudyTopic(sid, 11, "keyword", keyword_name, null, "conditions module"));
+								topics.Add(new StudyTopic(sid, 11, "keyword", keyword_name));
 							}
 						}
 					}

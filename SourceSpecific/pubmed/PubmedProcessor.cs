@@ -14,7 +14,7 @@ namespace DataHarvester.pubmed
         // Its inputs include a single XML document representing the citation
         // as well as the currrent PMID and a refrence to the data layer.
 
-        public CitationObject ProcessData(LoggingDataLayer logging_repo, string sdoid, XmlDocument d, 
+        public CitationObject ProcessData(LoggingDataLayer logging_repo, string sdoid, XmlDocument d,
                                           DateTime? download_datetime, int harvest_id)
         {
             // First convert the XML document to a Linq XML Document.
@@ -63,20 +63,11 @@ namespace DataHarvester.pubmed
 
             // Set the PMID entry as an object instance 
             // (type id 3 = abstract, resource 40 = Web text journal abstract), add to the instances list.
+           
+            instances.Add(new ObjectInstance(sdoid, 3, "Article abstract", 100133, "National Library of Medicine",
+                   "https://www.ncbi.nlm.nih.gov/pubmed/" + sdoid, true,
+                    40, "Web text journal abstract"));
 
-            ObjectInstance inst = new ObjectInstance
-            {
-                sd_oid = sdoid,
-                instance_type_id = 3,
-                instance_type = "Article abstract",
-                url = "https://www.ncbi.nlm.nih.gov/pubmed/" + sdoid,
-                url_accessible = true,
-                repository_org_id = 100133,
-                repository_org = "National Library of Medicine",
-                resource_type_id = 40,
-                resource_type = "Web text journal abstract"
-            };
-            instances.Add(inst);
 
             // Can assume there is always a PMID element ... (if not the 
             // original data search for this citation would not have worked).
@@ -96,7 +87,7 @@ namespace DataHarvester.pubmed
                 else
                 {
                     c.version = pmidVersion;
-                    logging_repo.StoreExtractionNote(new ExtractionNote(100135, sdoid, 
+                    logging_repo.StoreExtractionNote(new ExtractionNote(100135, sdoid,
                             "Harvest", harvest_id, 16, "PMID version not an integer"));
                 }
             }
@@ -218,7 +209,7 @@ namespace DataHarvester.pubmed
                 if (atitle != "")
                 {
                     if (atitle.Contains("<"))
-                    {   
+                    {
                         // Log this in extraction_notes and strip tags apart from super and subscripts.
                         string qText = "The article title may include embedded html (" + atitle + ")";
                         logging_repo.StoreExtractionNote(new ExtractionNote(100135, sdoid,
@@ -264,7 +255,7 @@ namespace DataHarvester.pubmed
                         // Log this in extraction_notes and strip tags apart from super and subscripts.
                         string qText = "The vernacular title may include embedded html (" + vtitle + ")";
                         logging_repo.StoreExtractionNote(new ExtractionNote(100135, sdoid,
-                                                         "Harvest", harvest_id, 17, qText));
+                                                            "Harvest", harvest_id, 17, qText));
 
                         vtitle = HtmlHelpers.replace_tags(vtitle);
                         vtitle = HtmlHelpers.strip_tags(vtitle);
@@ -521,7 +512,7 @@ namespace DataHarvester.pubmed
                             if (num_nct_links > 1)
                             {
                                 string qText = "This study has " + num_nct_links.ToString() + " clinicalTrials.gov ids. ";
-                                qText += "All should be stored in the accession numbers table.";
+                                qText += "All should be stored in the db links table.";
                                 logging_repo.StoreExtractionNote(new ExtractionNote(100135, sdoid,
                                 "Harvest", harvest_id, 13, qText));
                             }
@@ -677,7 +668,7 @@ namespace DataHarvester.pubmed
                                         date_type = 0;
                                         string qText = "A unexpexted status (" + pub_status + ") found a date in the history section";
                                         logging_repo.StoreExtractionNote(new ExtractionNote(100135, sdoid,
-                                                   "Harvest", harvest_id, 20, qText));
+                                                    "Harvest", harvest_id, 20, qText));
                                         break;
                                     }
                             }
@@ -708,22 +699,14 @@ namespace DataHarvester.pubmed
                     foreach (XElement ch in chemicals)
                     {
                         XElement chemName = ch.Element("NameOfSubstance");
-                        ObjectTopic tp = new ObjectTopic
-                        {
-                            sd_oid = sdoid,
-                            topic = GetElementAsString(chemName),
-                            ct_scheme = "MESH",
-                            ct_scheme_id = 14,
-                            topic_type_id = 12,
-                            topic_type = "chemical / agent",
-                            where_found = "chemicals list"
-                        };
-
+                        string topic_ct_code = null;
                         if (chemName != null)
                         {
-                            tp.ct_scheme_code = GetAttributeAsString(chemName.Attribute("UI"));
+                            topic_ct_code = GetAttributeAsString(chemName.Attribute("UI"));
                         }
-                        topics.Add(tp);
+
+                        topics.Add(new ObjectTopic(sdoid, 12, "chemical / agent", true, 
+                                 topic_ct_code, GetElementAsString(chemName), "chemicals list"));
                     }
                 }
             }
@@ -740,30 +723,32 @@ namespace DataHarvester.pubmed
 
                     // Create a simple mesh heading record.
 
-                    ObjectTopic nt = new ObjectTopic
+                    string topic_ct_code = null, topic_value = null, topic_type = null;
+                    if (desc != null)
                     {
-                        sd_oid = sdoid,
-                        topic = GetElementAsString(desc),
-                        ct_scheme = "MESH",
-                        ct_scheme_id = 14,
-                        ct_scheme_code = GetAttributeAsString(desc.Attribute("UI")),
-                        topic_type = (GetAttributeAsString(desc.Attribute("Type"))?.ToLower()),
-                        where_found = "mesh headings"
-                    };
+                        topic_value = GetElementAsString(desc);
+                        topic_ct_code = GetAttributeAsString(desc.Attribute("UI"));
+                        topic_type = GetAttributeAsString(desc.Attribute("Type"))?.ToLower();
+                    }
 
                     // Check does not already exist (if it does, usually because it was in the chemicals list)
 
                     bool new_topic = true;
                     foreach (ObjectTopic t in topics)
                     {
-                        if (t.topic.ToLower() == nt.topic.ToLower()
-                            && (t.topic_type == nt.topic_type || (t.topic_type == "chemical / agent" && nt.topic_type == null)))
+                        if (t.topic_value.ToLower() == topic_value.ToLower()
+                            && (t.topic_type == topic_type || (t.topic_type == "chemical / agent" && topic_type == null)))
                         {
                             new_topic = false;
                             break;
                         }
                     }
-                    if (new_topic) topics.Add(nt);
+
+                    if (new_topic)
+                    {
+                        topics.Add(new ObjectTopic(sdoid, 0, topic_type, true,
+                                 topic_ct_code, topic_value, "mesh headings"));
+                    }
 
 
                     // if there are qualifiers, use these as the term type (or scope / context) 
@@ -771,20 +756,15 @@ namespace DataHarvester.pubmed
                     IEnumerable<XElement> qualifiers = e.Elements("QualifierName");
                     if (qualifiers.Count() > 0)
                     {
+                        string qualcode = null, qualvalue = null;
                         foreach (XElement em in qualifiers)
                         {
-                            ObjectTopic qt = new ObjectTopic
-                            {
-                                sd_oid = sdoid,
-                                topic = nt.topic,
-                                ct_scheme = "MESH",
-                                ct_scheme_id = 14,
-                                ct_scheme_code = nt.ct_scheme_code + "-" + GetAttributeAsString(em.Attribute("UI")),
-                                topic_type = GetElementAsString(em),
-                                where_found = "mesh headings"
-                            };
+                            qualcode = GetAttributeAsString(em.Attribute("UI"));
+                            qualvalue = GetElementAsString(em);
 
-                            topics.Add(qt);
+                            topics.Add(new ObjectTopic(sdoid, 0, topic_type, true,
+                                topic_ct_code, topic_value, qualcode, qualvalue, "mesh headings"));
+
                         }
                     }
                 }
@@ -801,18 +781,9 @@ namespace DataHarvester.pubmed
                 {
                     foreach (XElement s in supp_mesh_names)
                     {
-                        ObjectTopic ts = new ObjectTopic
-                        {
-                            sd_oid = sdoid,
-                            topic = GetElementAsString(s),
-                            ct_scheme = "MESH",
-                            ct_scheme_id = 14,
-                            ct_scheme_code = GetAttributeAsString(s.Attribute("UI")),
-                            topic_type = (GetAttributeAsString(s.Attribute("Type"))?.ToLower()),
-                            where_found = "supp mesh list"
-                        };
+                        topics.Add(new ObjectTopic(sdoid, 0, GetAttributeAsString(s.Attribute("Type"))?.ToLower(), true,
+                                 GetAttributeAsString(s.Attribute("UI")), GetElementAsString(s), "supp mesh list"));
 
-                        topics.Add(ts);
                     }
                 }
             }
@@ -831,21 +802,14 @@ namespace DataHarvester.pubmed
                     {
                         foreach (XElement k in words)
                         {
-                            ObjectTopic kw = new ObjectTopic
-                            {
-                                sd_oid = sdoid,
-                                topic = GetElementAsString(k),
-                                where_found = "keywords"
-                            };
-
                             if (this_owner == "NOTNLM")
                             {
-                                kw.ct_scheme = "Generated by authors";
-                                kw.ct_scheme_id = 11;
-                                kw.topic_type = "keyword";
+                                topics.Add(new ObjectTopic(sdoid, 11, "keyword", GetElementAsString(k)));
                             }
-
-                            topics.Add(kw);
+                            else
+                            {
+                                topics.Add(new ObjectTopic(sdoid, 11, "keyword", GetElementAsString(k), 11));
+                            }
                         }
                     }
 
@@ -918,19 +882,11 @@ namespace DataHarvester.pubmed
                             if (other_id.Substring(0, 3) == "PMC")
                             {
                                 identifiers.Add(new ObjectIdentifier(sdoid, 31, "PMCID", other_id, 100133, "National Library of Medicine"));
-                                ObjectInstance objinst = new ObjectInstance
-                                {
-                                    sd_oid = sdoid,
-                                    instance_type_id = 1,
-                                    instance_type = "Full resource",
-                                    url = "https://www.ncbi.nlm.nih.gov/pmc/articles/" + other_id.ToString(),
-                                    url_accessible = true,
-                                    repository_org_id = 100133,
-                                    repository_org = "National Library of Medicine",
-                                    resource_type_id = 36,
-                                    resource_type = "Web text with download"
-                                };
-                                instances.Add(objinst);
+
+                                instances.Add(new ObjectInstance(sdoid, 1, "Full resource", 100133, "National Library of Medicine",
+                                "https://www.ncbi.nlm.nih.gov/pmc/articles/" + other_id.ToString(), true,
+                                36, "Web text with download"));
+                               
                             }
                             else
                             {
@@ -985,7 +941,7 @@ namespace DataHarvester.pubmed
                                             {
                                                 string qText = "Two different dois have been supplied: " + c.doi + " from ELocation, and " + other_id + " from Article Ids";
                                                 logging_repo.StoreExtractionNote(new ExtractionNote(100135, sdoid,
-                                                                                 "Harvest", harvest_id, 14, qText));
+                                                                                    "Harvest", harvest_id, 14, qText));
                                                 break;
                                             }
                                         }
@@ -1015,7 +971,7 @@ namespace DataHarvester.pubmed
                                             // should be present already! - if a different value log it a a query
                                             string qText = "Two different values for pmid found: record pmiod is " + sdoid + ", but in article ids the value " + other_id + " is listed";
                                             logging_repo.StoreExtractionNote(new ExtractionNote(100135, sdoid,
-                                                                             "Harvest", harvest_id, 22, qText));
+                                                                                "Harvest", harvest_id, 22, qText));
                                             identifiers.Add(new ObjectIdentifier(sdoid, 16, "PMID", sdoid, 100133, "National Library of Medicine"));
                                         }
                                         break;
@@ -1034,19 +990,10 @@ namespace DataHarvester.pubmed
                                         if (IdentifierHelpers.IdNotPresent(identifiers, 31, other_id))
                                         {
                                             identifiers.Add(new ObjectIdentifier(sdoid, 31, "PMCID", other_id, 100133, "National Library of Medicine"));
-                                            ObjectInstance objinst = new ObjectInstance
-                                            {
-                                                sd_oid = sdoid,
-                                                instance_type_id = 1,
-                                                instance_type = "Full resource",
-                                                url = "https://www.ncbi.nlm.nih.gov/pmc/articles/" + other_id.ToString(),
-                                                url_accessible = true,
-                                                repository_org_id = 100133,
-                                                repository_org = "National Library of Medicine",
-                                                resource_type_id = 36,
-                                                resource_type = "Web text with download"
-                                            };
-                                            instances.Add(objinst);
+
+                                            instances.Add(new ObjectInstance(sdoid, 1, "Full resource", 100133, "National Library of Medicine",
+                                            "https://www.ncbi.nlm.nih.gov/pmc/articles/" + other_id.ToString(), true,
+                                            36, "Web text with download"));
                                         }
                                         break;
                                     }
@@ -1056,19 +1003,10 @@ namespace DataHarvester.pubmed
                                         if (IdentifierHelpers.IdNotPresent(identifiers, 31, other_id))
                                         {
                                             identifiers.Add(new ObjectIdentifier(sdoid, 31, "PMCID", other_id, 100133, "National Library of Medicine"));
-                                            ObjectInstance objinst = new ObjectInstance
-                                            {
-                                                sd_oid = sdoid,
-                                                instance_type_id = 1,
-                                                instance_type = "Full resource",
-                                                url = "https://www.ncbi.nlm.nih.gov/pmc/articles/" + other_id.ToString(),
-                                                url_accessible = true,
-                                                repository_org_id = 100133,
-                                                repository_org = "National Library of Medicine",
-                                                resource_type_id = 36,
-                                                resource_type = "Web text with download"
-                                            };
-                                            instances.Add(objinst);
+
+                                            instances.Add(new ObjectInstance(sdoid, 1, "Full resource", 100133, "National Library of Medicine",
+                                            "https://www.ncbi.nlm.nih.gov/pmc/articles/" + other_id.ToString(), true,
+                                            36, "Web text with download"));
                                         }
                                         break;
                                     }
@@ -1076,7 +1014,7 @@ namespace DataHarvester.pubmed
                                     {
                                         string qText = "A unexpexted article id type (" + id_type + ") found a date in the article id section";
                                         logging_repo.StoreExtractionNote(new ExtractionNote(100135, sdoid,
-                                                                         "Harvest", harvest_id, 23, qText));
+                                                                            "Harvest", harvest_id, 23, qText));
                                         break;
                                     }
                             }
@@ -1098,14 +1036,14 @@ namespace DataHarvester.pubmed
                         if (dt.date_type_id == 62)
                         {
                             // date added to PubMed
-                            i.date_applied = dt.date_as_string;
+                            i.identifier_date = dt.date_as_string;
                             break;
                         }
                     }
                 }
 
                 // pmid date may be available as an entrez date
-                if (i.identifier_type_id == 16 && i.date_applied == null)
+                if (i.identifier_type_id == 16 && i.identifier_date == null)
                 {
                     // pmid
                     foreach (ObjectDate dt in dates)
@@ -1113,7 +1051,7 @@ namespace DataHarvester.pubmed
                         if (dt.date_type_id == 65)
                         {
                             // date added to Entrez (normally = date added to pubMed)
-                            i.date_applied = dt.date_as_string;
+                            i.identifier_date = dt.date_as_string;
                             break;
                         }
                     }
@@ -1127,7 +1065,7 @@ namespace DataHarvester.pubmed
                         if (dt.date_type_id == 61)
                         {
                             // date added to PMC
-                            i.date_applied = dt.date_as_string;
+                            i.identifier_date = dt.date_as_string;
                             break;
                         }
                     }
@@ -1141,7 +1079,7 @@ namespace DataHarvester.pubmed
                         if (dt.date_type_id == 11)
                         {
                             // date of acceptance by publisher into their system
-                            i.date_applied = dt.date_as_string;
+                            i.identifier_date = dt.date_as_string;
                             break;
                         }
 
@@ -1156,7 +1094,7 @@ namespace DataHarvester.pubmed
                         if (dt.date_type_id == 63)
                         {
                             // date added to Medline
-                            i.date_applied = dt.date_as_string;
+                            i.identifier_date = dt.date_as_string;
                             break;
                         }
 
@@ -1204,7 +1142,7 @@ namespace DataHarvester.pubmed
                         }
                         else
                         {
-                            full_name = ((given_name != "") ? given_name : initials + " " + family_name + suffix).Trim();
+                            full_name = (given_name + " " + family_name + suffix).Trim();
                         }
 
                         string identifier = "", identifier_source = "";
@@ -1234,7 +1172,7 @@ namespace DataHarvester.pubmed
                                     string qText = "person " + full_name + "(linked to " + sdoid + ") identifier ";
                                     qText += "is not an ORCID (" + identifier + " (source =" + identifier_source + "))";
                                     logging_repo.StoreExtractionNote(new ExtractionNote(100135, sdoid,
-                                                                     "Harvest", harvest_id, 27, qText));
+                                                                        "Harvest", harvest_id, 27, qText));
                                     identifier = ""; identifier_source = "";  // do not store in db
                                 }
                             }
@@ -1263,9 +1201,9 @@ namespace DataHarvester.pubmed
                         }
 
                         contributors.Add(new ObjectContributor(sdoid, 11, "Creator",
-                                                         given_name, family_name, full_name,
-                                                         identifier, identifier_source,
-                                                         affiliation, affil_identifier, affil_ident_source));
+                                                            given_name, family_name, full_name,
+                                                            identifier, identifier_source,
+                                                            affiliation, affil_identifier, affil_ident_source));
 
                     }
 
@@ -1275,34 +1213,40 @@ namespace DataHarvester.pubmed
 
                 if (contributors.Count == 1)
                 {
-                    author_string = contributors[0].person_family_name + " " + contributors[0].person_given_name?.Substring(0, 1).ToUpper();
+                    string initial0 = (string.IsNullOrEmpty(contributors[0].person_given_name)) ? "" : contributors[0].person_given_name.Substring(0, 1).ToUpper();
+                    author_string = (contributors[0].person_family_name + " " + initial0).Trim();
                 }
 
                 else if (contributors.Count == 2)
                 {
-                    author_string = contributors[0].person_family_name + " " + contributors[0].person_given_name?.Substring(0, 1).ToUpper();
-                    author_string += " & ";
-                    author_string += contributors[1].person_family_name + " " + contributors[1].person_given_name?.Substring(0, 1).ToUpper();
+                    string initial0 = (string.IsNullOrEmpty(contributors[0].person_given_name)) ? "" : contributors[0].person_given_name.Substring(0, 1).ToUpper();
+                    string initial1 = (string.IsNullOrEmpty(contributors[1].person_given_name)) ? "" : contributors[1].person_given_name.Substring(0, 1).ToUpper();
+
+                    author_string = (contributors[0].person_family_name + " " + initial0).Trim() + " & ";
+                    author_string += (contributors[1].person_family_name + " " + initial1).Trim();
                 }
 
                 else if (contributors.Count == 3)
                 {
-                    author_string = contributors[0].person_family_name + " " + contributors[0].person_given_name?.Substring(0, 1).ToUpper();
-                    author_string += ", ";
-                    author_string += contributors[1].person_family_name + " " + contributors[1].person_given_name?.Substring(0, 1).ToUpper();
-                    author_string += " & ";
-                    author_string += contributors[2].person_family_name + " " + contributors[2].person_given_name?.Substring(0, 1).ToUpper();
+                    string initial0 = (string.IsNullOrEmpty(contributors[0].person_given_name)) ? "" : contributors[0].person_given_name.Substring(0, 1).ToUpper();
+                    string initial1 = (string.IsNullOrEmpty(contributors[1].person_given_name)) ? "" : contributors[1].person_given_name.Substring(0, 1).ToUpper();
+                    string initial2 = (string.IsNullOrEmpty(contributors[2].person_given_name)) ? "" : contributors[2].person_given_name.Substring(0, 1).ToUpper();
 
+                    author_string = (contributors[0].person_family_name + " " + initial0).Trim() + ", ";
+                    author_string += (contributors[1].person_family_name + " " + initial1).Trim() + " & ";
+                    author_string += (contributors[2].person_family_name + " " + initial2).Trim();
                 }
 
                 else if (contributors.Count > 3)
                 {
-                    author_string = contributors[0].person_family_name + " " + contributors[0].person_given_name?.Substring(0, 1).ToUpper();
-                    author_string += ", ";
-                    author_string += contributors[1].person_family_name + " " + contributors[1].person_given_name?.Substring(0, 1).ToUpper();
-                    author_string += ", ";
-                    author_string += contributors[2].person_family_name + " " + contributors[2].person_given_name?.Substring(0, 1).ToUpper();
-                    author_string += " et al";
+                    string initial0 = (string.IsNullOrEmpty(contributors[0].person_given_name)) ? "" : contributors[0].person_given_name.Substring(0, 1).ToUpper();
+                    string initial1 = (string.IsNullOrEmpty(contributors[1].person_given_name)) ? "" : contributors[1].person_given_name.Substring(0, 1).ToUpper();
+                    string initial2 = (string.IsNullOrEmpty(contributors[2].person_given_name)) ? "" : contributors[2].person_given_name.Substring(0, 1).ToUpper();
+
+                    author_string = (contributors[0].person_family_name + " " + initial0).Trim() + ", ";
+                    author_string += (contributors[1].person_family_name + " " + initial1).Trim() + ", ";
+                    author_string += (contributors[2].person_family_name + " " + initial2).Trim() + " et al";
+
                 }
 
                 author_string = author_string.Trim();
@@ -1319,7 +1263,7 @@ namespace DataHarvester.pubmed
             // Needs to be extended to take into account the publication model and thus the other poossible dates
             // see https://www.nlm.nih.gov/bsd/licensee/elements_article_source.html
 
-            if (JournalInfo != null)
+            if  (JournalInfo != null)
             {
                 string medline_ta = GetElementAsString(JournalInfo.Element("MedlineTA"));
 
@@ -1435,109 +1379,113 @@ namespace DataHarvester.pubmed
                 });
             }
 
-
-             // Article abstracts.
-
-             //XElement articleAbstract = article.Element("Abstract");
-             //if (articleAbstract != null)
-             //{
-                //    bool ab_contains_html = false;
-                //    IEnumerable<XElement> abstract_texts = articleAbstract.Elements("AbstractText");
-
-                //    foreach (XElement at in abstract_texts)
-                //    {
-                //        var abreader = at.CreateReader();
-                //        abreader.MoveToContent();
-                //        string ab_text = abreader.ReadInnerXml().Trim();
-
-                //        if (ab_text.Contains("<i>") || ab_text.Contains("<b>") || ab_text.Contains("<u>")
-                //            || ab_text.Contains("<sup>") || ab_text.Contains("<sub>") || ab_text.Contains("<math>"))
-                //        {
-                //            ab_contains_html = true;
-                //            // log this in extraction_notes
-                //            string qText = "The abstract text includes embedded html (" + ab_text + ")";
-                //            repo.StoreExtractionNote(pmid, 26, qText);
-                //        }
-                //        else
-                //        {
-                //            ab_contains_html = false;
-                //        }
-
-                //        Description abs = new Description
-                //        {
-                //            sd_id = c.sd_id,
-                //            description_type_id = 16,
-                //            description_type = "Abstract Section",
-                //            label = GetAttributeAsString(at.Attribute("Label")),
-                //            description_text = ab_text,
-                //            lang_code = "eng",
-                //            contains_html = ab_contains_html
-                //        };
-
-                //        descriptions.Add(abs);
-                //    }
-                //}
+            #endregion
 
 
-                //// Other abstracts (relatively rare).
 
-                //IEnumerable<XElement> other_abstracts = citation.Elements("OtherAbstract");
-                //if (other_abstracts.Count() > 0)
-                //{
-                //    foreach (XElement oab in other_abstracts)
-                //    {
-                //        bool ab_contains_html = false;
-                //        IEnumerable<XElement> abstract_texts = oab.Elements("AbstractText");
+            #region Abstracts (not used)
+            // Article abstracts.
 
-                //        foreach (XElement at in abstract_texts)
-                //        {
-                //            var abreader = at.CreateReader();
-                //            abreader.MoveToContent();
-                //            string ab_text = abreader.ReadInnerXml().Trim();
+            //XElement articleAbstract = article.Element("Abstract");
+            //if (articleAbstract != null)
+            //{
+            //    bool ab_contains_html = false;
+            //    IEnumerable<XElement> abstract_texts = articleAbstract.Elements("AbstractText");
 
-                //            if (ab_text.Contains("<i>") || ab_text.Contains("<b>") || ab_text.Contains("<u>")
-                //                || ab_text.Contains("<sup>") || ab_text.Contains("<sub>") || ab_text.Contains("<math>"))
-                //            {
-                //                ab_contains_html = true;
-                //                // log this in extraction_notes
-                //                string qText = "The abstract text includes embedded html (" + ab_text + ")";
-                //                repo.StoreExtractionNote(pmid, 26, qText);
-                //            }
-                //            else
-                //            {
-                //                ab_contains_html = false;
-                //            }
+            //    foreach (XElement at in abstract_texts)
+            //    {
+            //        var abreader = at.CreateReader();
+            //        abreader.MoveToContent();
+            //        string ab_text = abreader.ReadInnerXml().Trim();
+
+            //        if (ab_text.Contains("<i>") || ab_text.Contains("<b>") || ab_text.Contains("<u>")
+            //            || ab_text.Contains("<sup>") || ab_text.Contains("<sub>") || ab_text.Contains("<math>"))
+            //        {
+            //            ab_contains_html = true;
+            //            // log this in extraction_notes
+            //            string qText = "The abstract text includes embedded html (" + ab_text + ")";
+            //            repo.StoreExtractionNote(pmid, 26, qText);
+            //        }
+            //        else
+            //        {
+            //            ab_contains_html = false;
+            //        }
+
+            //        Description abs = new Description
+            //        {
+            //            sd_id = c.sd_id,
+            //            description_type_id = 16,
+            //            description_type = "Abstract Section",
+            //            label = GetAttributeAsString(at.Attribute("Label")),
+            //            description_text = ab_text,
+            //            lang_code = "eng",
+            //            contains_html = ab_contains_html
+            //        };
+
+            //        descriptions.Add(abs);
+            //    }
+            //}
 
 
-                //            Description abs = new Description
-                //            {
-                //                sd_id = c.sd_id,
-                //                description_type_id = 17,
-                //                description_type = "External Abstract",
-                //                label = GetAttributeAsString(at.Attribute("Label")),
-                //                description_text = ab_text,
-                //                lang_code = "eng",
-                //                contains_html = ab_contains_html
-                //            };
+            //// Other abstracts (relatively rare).
+
+            //IEnumerable<XElement> other_abstracts = citation.Elements("OtherAbstract");
+            //if (other_abstracts.Count() > 0)
+            //{
+            //    foreach (XElement oab in other_abstracts)
+            //    {
+            //        bool ab_contains_html = false;
+            //        IEnumerable<XElement> abstract_texts = oab.Elements("AbstractText");
+
+            //        foreach (XElement at in abstract_texts)
+            //        {
+            //            var abreader = at.CreateReader();
+            //            abreader.MoveToContent();
+            //            string ab_text = abreader.ReadInnerXml().Trim();
+
+            //            if (ab_text.Contains("<i>") || ab_text.Contains("<b>") || ab_text.Contains("<u>")
+            //                || ab_text.Contains("<sup>") || ab_text.Contains("<sub>") || ab_text.Contains("<math>"))
+            //            {
+            //                ab_contains_html = true;
+            //                // log this in extraction_notes
+            //                string qText = "The abstract text includes embedded html (" + ab_text + ")";
+            //                repo.StoreExtractionNote(pmid, 26, qText);
+            //            }
+            //            else
+            //            {
+            //                ab_contains_html = false;
+            //            }
 
 
-                //            descriptions.Add(abs);
-                //        }
-                //    }
-                //}
+            //            Description abs = new Description
+            //            {
+            //                sd_id = c.sd_id,
+            //                description_type_id = 17,
+            //                description_type = "External Abstract",
+            //                label = GetAttributeAsString(at.Attribute("Label")),
+            //                description_text = ab_text,
+            //                lang_code = "eng",
+            //                contains_html = ab_contains_html
+            //            };
 
-             #endregion
+
+            //            descriptions.Add(abs);
+            //        }
+            //    }
+            //}
+
+            #endregion
 
 
 
             #region Miscellaneous
 
-             // Comment corrections list.
+            // Comment corrections list.
 
-             XElement comments_list = citation.Element("CommentsCorrectionsList");
-             if (comments_list != null)
-             {
-                 comments = comments_list
+            XElement comments_list = citation.Element("CommentsCorrectionsList");
+            if (comments_list != null)
+            {
+                comments = comments_list
                             .Elements("CommentsCorrections").Select(cc => new ObjectComment
                             {
                                 sd_oid = sdoid,
@@ -1547,7 +1495,7 @@ namespace DataHarvester.pubmed
                                 pmid_version = (cc.Element("PMID") != null) ? GetAttributeAsString(cc.Element("PMID").Attribute("Version")) : null,
                                 notes = GetElementAsString(cc.Element("Note"))
                             }).ToList();
-             }
+            }
 
 
             // Publication types.
@@ -1579,10 +1527,10 @@ namespace DataHarvester.pubmed
             // Tidy up article title and then derive the display title.
 
             if (!art_title.EndsWith(".") && !art_title.EndsWith("?") && !art_title.EndsWith(";"))
-             {
+            {
                 art_title = art_title + ".";
-             }
-             c.display_title = (author_string != "" ? author_string + ". " : "") + art_title + journal_source;
+            }
+            c.display_title = (author_string != "" ? author_string + ". " : "") + art_title + journal_source;
 
 
             // Tidy up doi status
@@ -1612,7 +1560,6 @@ namespace DataHarvester.pubmed
             }
 
 
-
             // Assign repeating properties to citationn object
             // and return the fully constructed citation object.
 
@@ -1631,6 +1578,7 @@ namespace DataHarvester.pubmed
             return c;
 
         }
+
 
 
         public void StoreData(DataLayer repo, CitationObject c)

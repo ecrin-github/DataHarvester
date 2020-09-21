@@ -112,13 +112,13 @@ namespace DataHarvester.isrctn
 				string[] conds = conditions.Split(',');
 				for (int i = 0; i < conds.Length; i++)
 				{
-					topics.Add(new StudyTopic(sid, 13, "condition", conds[i], "", "condition_category"));
+					topics.Add(new StudyTopic(sid, 13, "condition", conds[i]));
 				}
 			}
 			else
 			{
 				// add a single topic
-				topics.Add(new StudyTopic(sid, 13, "condition", conditions, "", "condition_category"));
+				topics.Add(new StudyTopic(sid, 13, "condition", conditions));
 			}
 
 			// study registry entry dates
@@ -583,12 +583,12 @@ namespace DataHarvester.isrctn
 							}
 						case "Condition":
 							{
-								topics.Add(new StudyTopic(sid, 13, "condition", i.item_value, "", "study_info - condition"));
+								topics.Add(new StudyTopic(sid, 13, "condition", i.item_value));
 								break;
 							}
 						case "Drug names":
 							{
-								topics.Add(new StudyTopic(sid, 12, "chemical / agent", i.item_value, "", "study_info - drug names"));
+								topics.Add(new StudyTopic(sid, 12, "chemical / agent", i.item_value));
 								break;
 							}
 						case "Phase":
