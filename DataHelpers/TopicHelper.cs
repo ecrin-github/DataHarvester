@@ -55,71 +55,37 @@ namespace DataHarvester
         }
 
 
-        // indicates if the relevant topics table has any coded values
+        // indicates if the relevant topics table has any mesh coded values
 
-         public bool topics_have_codes(string source_type)
+        public bool topics_have_codes(string source_type)
         {
             string sql_string = @"select count(*) from ";
             sql_string += source_type.ToLower() == "study"
                                 ? "sd.study_topics "
                                 : "sd.object_topics ";
-            sql_string += @" where topic_ct_code is not null";
+            sql_string += @" where topic_code is not null";
+            
             int res = 0;
             using (var conn = new NpgsqlConnection(db_conn))
             {
                 res = conn.ExecuteScalar<int>(sql_string);
             }
             return (res > 0);
-        }        
-        
-        
-        public void update_topic_types(string source_type)
-        {
-            string sql_string = @"with t as (
-                            select id as type_id, name as topic_name
-                            from context_lup.topic_types
-                        )
-                        ";
-            sql_string += source_type.ToLower() == "study"
-                                    ? " update sd.study_topics p "
-                                    : " update sd.object_topics p ";
-            sql_string += @"set topic_type_id = t.type_id
-                        from t
-                        where lower(p.topic_type) = lower(t.topic_name)
-                        and topic_type_id is null;";
-
-            using (var conn = new NpgsqlConnection(db_conn))
-            {
-                conn.Execute(sql_string);
-            }
         }
 
 
-        public void setup_temp_topic_tables(string source_type)
+        // take ditinct mesh code / value pairs
+        public void add_mesh_codes(string source_type)
         {
-            string sql_string = "";
-            sql_string = @"DROP TABLE IF EXISTS sd.temp_topics_with_code; 
-                           CREATE TABLE sd.temp_topics_with_code
-                           as select * from ";
+            string sql_string = @"Insert into context_ctx.topics_in_mesh(mesh_code, topic_value)
+                   select distinct t.topic_code, t.topic_value from ";
             sql_string += source_type.ToLower() == "study"
-                                    ? " sd.study_topics "
-                                    : " sd.object_topics ";
-            sql_string += " where topic_ct_code is not null;";
-
-
-            using (var conn = new NpgsqlConnection(db_conn))
-            {
-                conn.Execute(sql_string);
-            }
-
-            sql_string = @"DROP TABLE IF EXISTS sd.temp_topics_without_code;
-                           CREATE TABLE sd.temp_topics_without_code
-                           as select * from ";
-            sql_string += source_type.ToLower() == "study"
-                                    ? " sd.study_topics "
-                                    : " sd.object_topics ";
-            sql_string += " where topic_ct_code is null;";
-
+                                ? "sd.study_topics t"
+                                : "sd.object_topics t";
+            sql_string += @" left join context_ctx.topics_in_mesh m
+                             on t.topic_code = m.mesh_code
+                             where t.topic_code is not null
+                             and m.mesh_code is null";
 
             using (var conn = new NpgsqlConnection(db_conn))
             {
@@ -128,56 +94,17 @@ namespace DataHarvester
 
         }
 
-        public void de_duplicate_topics(string source_type)
+
+        public void update_topics(string source_type)
         {
-            // delete topics in temp_topics_without_code
-            // that are duplicates of those in temp_topics_with_code
-
-            string sql_string = "";
-            sql_string = @"delete from sd.temp_topics_without_code w
-                           using sd.temp_topics_with_code c ";
+            string sql_string = @"Update ";
             sql_string += source_type.ToLower() == "study"
-                                    ? " where w.sd_sid = c.sd_sid "
-                                    : " where w.sd_oid = c.sd_oid ";
-            sql_string += " and lower(w.topic_value) = lower(c.topic_value);";
-
-            using (var conn = new NpgsqlConnection(db_conn))
-            {
-                conn.Execute(sql_string);
-            }
-
-
-            // Create a list of distinct code terms linked to topic names
-
-            sql_string = @"DROP TABLE IF EXISTS sd.temp_code_list;
-                           CREATE TABLE sd.temp_code_list
-                           as 
-                           select distinct topic_value, topic_ct_code ";
-            sql_string += source_type.ToLower() == "study"
-                                    ? " from sd.study_topics "
-                                    : " from sd.object_topics ";
-            sql_string += " where topic_ct_code is not null;";
-
-            using (var conn = new NpgsqlConnection(db_conn))
-            {
-                conn.Execute(sql_string);
-            }
-
-
-            // use the look up table to add mesh codes where possible
-
-            sql_string = @"UPDATE sd.temp_topics_without_code w
-                           set topic_ct_code = m.topic_ct_code
-                           from sd.temp_code_list m
-                           where lower(w.topic_value) = lower(m.topic_value);";
-
-            using (var conn = new NpgsqlConnection(db_conn))
-            {
-                conn.Execute(sql_string);
-            }
-
-
-            sql_string = @"DROP TABLE sd.temp_code_list;";
+                                ? "sd.study_topics t"
+                                : "sd.object_topics t";
+            sql_string += @" set topic_code = m.mesh_code
+                             from context_ctx.topics_in_mesh m
+                             where t.topic_code is null
+                             and t.topic_value = m.topic_value";
 
             using (var conn = new NpgsqlConnection(db_conn))
             {
@@ -186,42 +113,18 @@ namespace DataHarvester
         }
 
 
-        public void reassemble_topic_tables(string source_type)
+        public void store_unmatched_topic_values(string source_type, int source_id)
         {
-            string sql_string = "";
+            string sql_string = @"delete from context_ctx.topics_to_match where source_id = "
+            + source_id.ToString() + @";
+            insert into context_ctx.topics_to_match (source_id, topic_value, number_of) 
+            select " + source_id.ToString() + @", topic_value, count(topic_value)";
 
-            // put the two tables back together again
-                
-            sql_string = @"create table sd.new_topics as 
-                           select * from sd.temp_topics_with_code
-                           union
-                           select * from sd.temp_topics_without_code;";
-
-            using (var conn = new NpgsqlConnection(db_conn))
-            {
-                conn.Execute(sql_string);
-            }
-
-
-            // rename the tables 
-            // study_topics to old_topics
-            // new topics to study_topics
-
-            sql_string = @"DROP TABLE IF EXISTS sd.old_topics";
             sql_string += source_type.ToLower() == "study"
-                                    ? @" ALTER TABLE sd.study_topics RENAME TO old_topics;
-                                         ALTER TABLE sd.new_topics RENAME TO study_topics; "
-                                    : @" ALTER TABLE sd.object_topics RENAME TO old_topics;
-                                         ALTER TABLE sd.new_topics RENAME TO object_topics; ";
-
-            using (var conn = new NpgsqlConnection(db_conn))
-            {
-                conn.Execute(sql_string);
-            }
-
-            sql_string = @"DROP TABLE sd.temp_topics_with_code;
-                           DROP TABLE sd.temp_topics_without_code;";
-
+                                ? " from sd.study_topics t"
+                                : " from sd.object_topics t";
+            sql_string += @" where t.topic_code is null 
+                             group by t.topic_value;";
             using (var conn = new NpgsqlConnection(db_conn))
             {
                 conn.Execute(sql_string);

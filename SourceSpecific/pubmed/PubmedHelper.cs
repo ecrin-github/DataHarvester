@@ -6,11 +6,11 @@ using System.Text;
 
 namespace DataHarvester
 {
-    public class PublisherHelper
+    public class PubmedHelper
     {
         string db_conn;
 
-        public PublisherHelper(string _db_conn)
+        public PubmedHelper(string _db_conn)
         {
             db_conn = _db_conn;
         }
@@ -232,44 +232,45 @@ namespace DataHarvester
 
         public void store_bank_links_in_pp_schema()
         {
-            string sql_string = @"create table pp.bank_links as
-                        SELECT 
-                         sd_oid, sd_sid, 
-                         display_title, version, doi, doi_status_id, publication_year,
-                         object_class_id, object_class, object_type_id, object_type, 
-                         managing_org_id, managing_org, access_type_id, access_type,
-                         access_details, access_details_url, url_last_checked, eosc_category, add_study_contribs,
-                         add_study_topics, datetime_of_data_fetch
-                        FROM sd.citation_objects;";
+            string sql_string = @"DROP TABLE IF EXISTS pp.bank_links;
+                         CREATE TABLE pp.bank_links as
+                         SELECT 
+                         nlm.id as source_id, db.id_in_db as sd_sid, db.sd_oid as pmid
+                         from sd.object_db_links db
+                         inner join context_ctx.nlm_databanks nlm
+                         on db.db_name = nlm.nlm_abbrev
+                         where bank_type = 'Trial registry';";
 
             using (var conn = new NpgsqlConnection(db_conn))
             {
                 conn.Execute(sql_string);
             }
-
         }
 
 
         public void combine_distinct_study_pubmed_links()
         {
-            string sql_string = @"create table pp.total_pubmed_links as
-                        SELECT 
-                         sd_oid, sd_sid, 
-                         display_title, version, doi, doi_status_id, publication_year,
-                         object_class_id, object_class, object_type_id, object_type, 
-                         managing_org_id, managing_org, access_type_id, access_type,
-                         access_details, access_details_url, url_last_checked, eosc_category, add_study_contribs,
-                         add_study_topics, datetime_of_data_fetch
-                        FROM sd.citation_objects
+            string sql_string = @"DROP TABLE IF EXISTS pp.total_pubmed_links;
+                        CREATE TABLE pp.total_pubmed_links as
+                        SELECT source_id, sd_sid, pmid
+                        FROM pp.bank_links
                         UNION
-                        SELECT 
-                         sd_oid, sd_sid, 
-                         display_title, version, doi, doi_status_id, publication_year,
-                         object_class_id, object_class, object_type_id, object_type, 
-                         managing_org_id, managing_org, access_type_id, access_type,
-                         access_details, access_details_url, url_last_checked, eosc_category, add_study_contribs,
-                         add_study_topics, datetime_of_data_fetch
-                        FROM sd.citation_objects ;";
+                        SELECT source_id, sd_sid, pmid
+                        FROM pp.pmids_by_source_total;";
+
+            using (var conn = new NpgsqlConnection(db_conn))
+            {
+                conn.Execute(sql_string);
+            }
+        }
+
+
+        public void update_language_codes_in_languages()
+        {
+            string sql_string = @"UPDATE sd.object_languages s
+                                  SET lang_code = c.code
+                                  FROM context_lup.language_codes c
+                                  where s.lang_code = c.marc_code";
 
             using (var conn = new NpgsqlConnection(db_conn))
             {
@@ -278,6 +279,32 @@ namespace DataHarvester
 
         }
 
+        public void update_language_codes_in_titles()
+        {
+            string sql_string = @"UPDATE sd.object_titles s
+                                 SET lang_code = c.code
+                                 FROM context_lup.language_codes c
+                                 where s.lang_code = c.marc_code";
+
+            using (var conn = new NpgsqlConnection(db_conn))
+            {
+                conn.Execute(sql_string);
+            }
+        }
+
+
+        public void update_language_codes_in_derscriptions()
+        {
+            string sql_string = @"UPDATE sd.object_descriptions s
+                                  SET lang_code = c.code
+                                  FROM context_lup.language_codes c
+                                  where s.lang_code = c.marc_code";
+
+            using (var conn = new NpgsqlConnection(db_conn))
+            {
+                conn.Execute(sql_string);
+            }
+        }
     }
 
 }

@@ -47,7 +47,7 @@ namespace DataHarvester
         public void create_study_title_hashes()
         {
             string sql_string = @"Update sd.study_titles
-              set record_hash = md5(json_build_array(title_text, title_type_id, title_lang_code,
+              set record_hash = md5(json_build_array(title_text, title_type_id, lang_code,
               lang_usage_id, is_default, comments)::varchar);";
 
             using (var conn = new NpgsqlConnection(db_conn))
@@ -282,7 +282,7 @@ namespace DataHarvester
         public void create_object_title_hashes()
         {
             string sql_string = @"Update sd.object_titles
-              set record_hash = md5(json_build_array(title_text, title_type_id, title_lang_code, 
+              set record_hash = md5(json_build_array(title_text, title_type_id, lang_code, 
               lang_usage_id, is_default, comments)::varchar);";
 
             using (var conn = new NpgsqlConnection(db_conn))

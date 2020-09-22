@@ -3,19 +3,18 @@ using Npgsql;
 
 namespace DataHarvester
 {
-    public class PostProcBuilder
+    public class PubmedPostProcBuilder
 	{
 		private string connString;
 		private Source source;
-		private OrgHelper org_helper;
-		private TopicHelper topic_helper;
+		private PubmedHelper pub_helper;
 
-		public PostProcBuilder(string _connString, Source _source)
+
+		public PubmedPostProcBuilder(string _connString, Source _source)
 		{
 			connString = _connString;
 			source = _source;
-			org_helper = new OrgHelper(connString);
-			topic_helper = new TopicHelper(connString);
+			pub_helper = new PubmedHelper(connString);
 		}
 
 
@@ -53,57 +52,45 @@ namespace DataHarvester
 			}
 		}
 
-		public void UpdateStudyIdentifierOrgs()
+
+		public void ObtainPublisherNames()
 		{
-			org_helper.update_study_identifiers_using_default_name();
-			org_helper.update_study_identifiers_using_other_name();
-			org_helper.update_study_identifiers_insert_default_names();
+			pub_helper.obtain_publisher_names_using_eissn();
+			pub_helper.obtain_publisher_names_using_pissn();
+			pub_helper.obtain_publisher_names_using_journal_names();
+		}
+
+		public void UpdatePublisherOrgIds()
+		{
+			pub_helper.update_publisher_ids_using_default_names();
+			pub_helper.update_publisher_ids_using_other_names();
+			pub_helper.update_publisher_names_to_defaults();
+		}
+
+		public void UpdateIdentifierPublisherData()
+		{
+			pub_helper.update_identifiers_publishers_ids();
+			pub_helper.update_identifiers_publishers_names();
+		}
+
+		public void CreateDataObjectsTable()
+		{
+			pub_helper.store_unmatched_publisher_org_names(source.id);
+			pub_helper.transfer_citation_objects_to_data_objects();
 		}
 
 
-		public void UpdateStudyContributorOrgs()
+		public void UpdateLanguageCodes()
 		{
-			if (source.has_study_contributors)
-			{
-				org_helper.update_study_contributors_using_default_name();
-				org_helper.update_study_contributors_using_other_name();
-				org_helper.update_study_contributors_insert_default_names();
-				org_helper.update_missing_sponsor_ids();
-			}
+			pub_helper.update_language_codes_in_languages();
+			pub_helper.update_language_codes_in_titles();
+			pub_helper.update_language_codes_in_derscriptions();
 		}
 
-		public void UpdateDataObjectOrgs()
-		{
-			org_helper.update_data_objects_using_default_name();
-			org_helper.update_data_objects_using_other_name();
-			org_helper.update_data_objects_insert_default_names();
-		}
-
-		public void StoreUnMatchedNames()
-		{
-			if (source.has_study_tables)
-			{
-				org_helper.store_unmatched_study_identifiers_org_names(source.id);
-			}
-			if (source.has_study_tables && source.has_study_contributors)
-			{
-				org_helper.store_unmatched_study_contributors_org_names(source.id);
-			}
-			org_helper.store_unmatched_data_object_org_names(source.id);
-		}
-
-
-		public void UpdateTopics(string source_type)
+		public void CreateTotalLinksTable()
         {
-			topic_helper.delete_humans_as_topic(source_type); 
-			topic_helper.update_geographic_topics(source_type);
-
-			if (topic_helper.topics_have_codes(source_type))
-            {
-				topic_helper.add_mesh_codes(source_type);
-			}
-			topic_helper.update_topics(source_type);
-			topic_helper.store_unmatched_topic_values(source_type, source.id);
+			pub_helper.store_bank_links_in_pp_schema();
+			pub_helper.combine_distinct_study_pubmed_links();
 		}
 
 
@@ -125,7 +112,6 @@ namespace DataHarvester
 				conn.Execute(sql_string);
 			}
 		}
-
 	}
 }
 

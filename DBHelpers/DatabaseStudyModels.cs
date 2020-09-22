@@ -120,7 +120,7 @@ namespace DataHarvester
 		public string title_text { get; set; }
 		public int? title_type_id { get; set; }
 		public string title_type { get; set; }
-		public string title_lang_code { get; set; }
+		public string lang_code { get; set; }
 		public int lang_usage_id  { get; set; }
 	    public bool is_default { get; set; }
 		public string comments { get; set; }
@@ -144,14 +144,14 @@ namespace DataHarvester
 			comments = _comments;
 		}
 
-		public StudyTitle(string _sd_sid, string _title_text, int? _title_type_id, string _title_type, string _title_lang_code, 
+		public StudyTitle(string _sd_sid, string _title_text, int? _title_type_id, string _title_type, string _lang_code, 
 			                   int _lang_usage_id, bool _is_default, string _comments)
 		{
 			sd_sid = _sd_sid;
 			title_text = _title_text;
 			title_type_id = _title_type_id;
 			title_type = _title_type;
-			title_lang_code = _title_lang_code;
+			lang_code = _lang_code;
 			lang_usage_id = _lang_usage_id;
 			is_default = _is_default;
 			comments = _comments;

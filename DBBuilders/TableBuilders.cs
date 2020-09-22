@@ -127,7 +127,7 @@ namespace DataHarvester
 			  , title_type_id          INT             NULL
 			  , title_type             VARCHAR         NULL
 			  , title_text             VARCHAR         NULL
-			  , title_lang_code        VARCHAR         NOT NULL default 'en'
+			  , lang_code              VARCHAR         NOT NULL default 'en'
 			  , lang_usage_id          INT             NOT NULL default 11
 			  , is_default             BOOLEAN         NULL
 			  , comments               VARCHAR         NULL
@@ -450,7 +450,7 @@ namespace DataHarvester
 			  , title_type_id          INT             NULL
 			  , title_type             VARCHAR         NULL
 			  , title_text             VARCHAR         NULL
-			  , title_lang_code        VARCHAR         NULL
+			  , lang_code              VARCHAR         NULL
 			  , lang_usage_id          INT             NOT NULL default 11
 			  , is_default             BOOLEAN         NULL
 			  , comments               VARCHAR         NULL

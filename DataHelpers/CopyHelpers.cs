@@ -25,7 +25,7 @@ namespace DataHarvester
 				.MapVarchar("title_type", x => x.title_type)
 				.MapVarchar("title_text", x => x.title_text)
 				.MapBoolean("is_default", x => x.is_default)
-				.MapVarchar("title_lang_code", x => x.title_lang_code)
+				.MapVarchar("lang_code", x => x.lang_code)
 		        .MapInteger("lang_usage_id", x => x.lang_usage_id)
 		        .MapVarchar("comments", x => x.comments);
 
@@ -168,7 +168,7 @@ namespace DataHarvester
 				.MapVarchar("title_type", x => x.title_type)
 				.MapVarchar("title_text", x => x.title_text)
 				.MapBoolean("is_default", x => x.is_default)
-			    .MapVarchar("title_lang_code", x => x.title_lang_code)
+			    .MapVarchar("lang_code", x => x.lang_code)
 				.MapInteger("lang_usage_id", x => x.lang_usage_id)
 				.MapVarchar("comments", x => x.comments);
 

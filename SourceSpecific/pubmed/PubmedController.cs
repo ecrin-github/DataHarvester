@@ -61,10 +61,10 @@ namespace DataHarvester.pubmed
                         logging_repo.UpdateFileRecLastHarvested(rec.id, "object", harvest_id);
                     }
 
-                    if (k % 10 == 0) Console.WriteLine(k.ToString());
+                    if (k % 100 == 0) Console.WriteLine(k.ToString());
                 }
 
-                if (k > 990) break;              
+                if (k > 9990) break;              
 
             }
 
@@ -73,14 +73,17 @@ namespace DataHarvester.pubmed
 
         public void DoPubMedPostProcessing()
         {
-            PostProcBuilder ppb = new PostProcBuilder(repo.ConnString, source);
+            PubmedPostProcBuilder ppb = new PubmedPostProcBuilder(repo.ConnString, source);
             ppb.EstablishContextForeignTables(repo.Username, repo.Password);
+
             ppb.ObtainPublisherNames();
             ppb.UpdatePublisherOrgIds();
             ppb.UpdateIdentifierPublisherData();
             ppb.CreateDataObjectsTable();
-            ppb.DropContextForeignTables();
+            ppb.UpdateLanguageCodes();
             ppb.CreateTotalLinksTable();
+
+            ppb.DropContextForeignTables();
         }
 
     }
