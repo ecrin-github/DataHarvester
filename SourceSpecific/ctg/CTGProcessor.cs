@@ -24,6 +24,7 @@ namespace DataHarvester.ctg
 			List<StudyRelationship> relationships = new List<StudyRelationship>();
 
 			List<DataObject> data_objects = new List<DataObject>();
+			List<DataSetProperties> dataset_properties = new List<DataSetProperties>();
 			List<ObjectTitle> object_titles = new List<ObjectTitle>();
 			List<ObjectDate> object_dates = new List<ObjectDate>();
 			List<ObjectInstance> object_instances = new List<ObjectInstance>();
@@ -186,6 +187,7 @@ namespace DataHarvester.ctg
 
 
 				// add any additional identifiers (if not already used as a sponsor id)
+
 				StructType[] secIds = ListStructs(id_items, "SecondaryIdInfoList");
 				if (secIds != null)
 				{
@@ -705,6 +707,8 @@ namespace DataHarvester.ctg
 			//{
 			// this data not currently extracted 
 			//}
+
+
 			string object_type = "", object_class = "";
 			if (IPDSharingStatementModule != null)
 			{
@@ -761,10 +765,10 @@ namespace DataHarvester.ctg
 			gsk_access_details += " GSK may provide data directly to researchers where they are assured that the data will be secure";
 
 			// this used for specific additional objects from Servier
-			string servier_access_details = "Servier will provide anonymized patient - level and study-level clinical trial data in response to ";
+			string servier_access_details = "Servier will provide anonymized patient-level and study-level clinical trial data in response to ";
 			servier_access_details += "scientifically valid research proposals. Qualified scientific or medical researchers can submit a research ";
 			servier_access_details += "proposal to Servier after registering on the site. If the request is approved and before the transfer of data, ";
-			servier_access_details += "a so-called Data Sharing Agreement will have to be signed with Servie";
+			servier_access_details += "a so-called Data Sharing Agreement will have to be signed with Servier";
 
 
 			// set up initial registry entry data objects 
@@ -1035,6 +1039,7 @@ namespace DataHarvester.ctg
 					// some of these may be turnable into data objects available, either
 					// directly or after review of requests
 					// Others will need to be stored as records for future processing
+
 					ListType avail_ipd_List = FindList(items, "AvailIPDList");
 					if (avail_ipd_List != null)
 					{
@@ -1049,6 +1054,8 @@ namespace DataHarvester.ctg
 								string ipd_type = FieldValue(ipd_items, "AvailIPDType");
 								string ipd_url = FieldValue(ipd_items, "AvailIPDURL");
 								string ipd_comment = FieldValue(ipd_items, "AvailIPDComment");
+
+								// Often a GSK store
 
 								if (ipd_url.Contains("clinicalstudydatarequest.com"))
 								{
@@ -1141,6 +1148,25 @@ namespace DataHarvester.ctg
 									// add in title
 									object_titles.Add(new ObjectTitle(sd_oid, object_display_title,
 									title_type_id, title_type, true));
+
+									// for datasets also add dataset properties - even if they are largely unknown
+									if (object_type_id == 80)
+									{
+										if (sponsor_name == "GlaxoSmithKline" || sponsor_name == "GSK")
+										{
+											dataset_properties.Add(new DataSetProperties(sd_oid, 
+												        3, "Anonymised", "GSK states that... 'researchers are provided access to anonymized patient-level data '",
+														2, "De-identification applied", "",
+														0, "Not known", ""));
+										}
+										else
+										{
+											dataset_properties.Add(new DataSetProperties(sd_oid, 
+												        0, "Not known", "",
+														0, "Not known", "",
+														0, "Not known", ""));
+										}
+									}
 								}
 
 								else if (ipd_url.Contains("servier.com"))
@@ -1203,6 +1229,14 @@ namespace DataHarvester.ctg
 									title_type_id = 22; title_type = "Study short name :: object type";
 									object_titles.Add(new ObjectTitle(sd_oid, object_display_title,
 									title_type_id, title_type, true));
+
+									if (object_type_id == 80)
+									{
+										dataset_properties.Add(new DataSetProperties(sd_oid,
+													3, "Anonymised", "Sevier states that... 'Servier will provide anonymized patient-level and study-level clinical trial data'",
+													2, "De-identification applied", "",
+													0, "Not known", ""));
+									}
 								}
 
 								else if (ipd_url.Contains("merck.com"))
@@ -1481,6 +1515,7 @@ namespace DataHarvester.ctg
 			s.relationships = relationships;
 
 			s.data_objects = data_objects;
+			s.dataset_properties = dataset_properties;
 			s.object_titles = object_titles;
 			s.object_dates = object_dates;
 			s.object_instances = object_instances;
@@ -1567,6 +1602,12 @@ namespace DataHarvester.ctg
 			{
 				repo.StoreDataObjects(ObjectCopyHelpers.data_objects_helper,
 										  s.data_objects);
+			}
+
+			if (s.dataset_properties.Count > 0)
+			{
+				repo.StoreDatasetProperties(ObjectCopyHelpers.dataset_properties_helper,
+										 s.dataset_properties);
 			}
 
 			if (s.object_instances.Count > 0)

@@ -95,15 +95,19 @@ namespace DataHarvester
 
 		public void UpdateTopics(string source_type)
         {
-			topic_helper.delete_humans_as_topic(source_type); 
-			topic_helper.update_geographic_topics(source_type);
+			if ((source_type == "study" && source.has_study_topics)
+				 || source_type == "object")
+			{
+				topic_helper.delete_humans_as_topic(source_type);
+				topic_helper.update_geographic_topics(source_type);
 
-			if (topic_helper.topics_have_codes(source_type))
-            {
-				topic_helper.add_mesh_codes(source_type);
+				if (topic_helper.topics_have_codes(source_type))
+				{
+					topic_helper.add_mesh_codes(source_type);
+				}
+				topic_helper.update_topics(source_type);
+				topic_helper.store_unmatched_topic_values(source_type, source.id);
 			}
-			topic_helper.update_topics(source_type);
-			topic_helper.store_unmatched_topic_values(source_type, source.id);
 		}
 
 

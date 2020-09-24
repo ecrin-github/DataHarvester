@@ -74,7 +74,9 @@ namespace DataHarvester
         }
 
 
-        // take ditinct mesh code / value pairs
+        // take distinct mesh code / value pairs and 
+        // add them if not already present
+
         public void add_mesh_codes(string source_type)
         {
             string sql_string = @"Insert into context_ctx.topics_in_mesh(mesh_code, topic_value)
@@ -94,14 +96,14 @@ namespace DataHarvester
 
         }
 
-
         public void update_topics(string source_type)
         {
             string sql_string = @"Update ";
             sql_string += source_type.ToLower() == "study"
                                 ? "sd.study_topics t"
                                 : "sd.object_topics t";
-            sql_string += @" set topic_code = m.mesh_code
+            sql_string += @" set topic_code = m.mesh_code,
+                             mesh_coded = true
                              from context_ctx.topics_in_mesh m
                              where t.topic_code is null
                              and t.topic_value = m.topic_value";

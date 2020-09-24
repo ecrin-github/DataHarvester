@@ -389,7 +389,7 @@ namespace DataHarvester.who
 							{
 								if (sc.code_system == "ICD 10")
 								{
-									study_topics.Add(new StudyTopic(sid, 13, "Condition", cond, 12, sc.code));
+									study_topics.Add(new StudyTopic(sid, 13, "Condition", cond, 12, sc.code, ""));
 								}
 							}
 						}
@@ -470,26 +470,75 @@ namespace DataHarvester.who
 			// there may be (rarely) a protocol link...(exclude those simply referring to CTG - should be picked up there)
 			if (!string.IsNullOrEmpty(st.results_url_protocol))
 			{
-				if (st.results_url_protocol.Contains("http") && !st.results_url_protocol.ToLower().Contains("clinicaltrials.gov"))
+				string prot_url = st.results_url_protocol.ToLower();
+				if (prot_url.Contains("http") && !prot_url.Contains("clinicaltrials.gov"))
 				{
-					object_display_title = name_base + " :: " + "Study Protocol ";
+					// presumed to be a download or a web reference
+					string resource_type = "";
+					int resource_type_id = 0;
+					string url_link = "";
+					int url_start = prot_url.IndexOf("http");
+					if (st.results_url_protocol.Contains(".pdf"))
+					{
+						resource_type = "PDF";
+						resource_type_id = 11;
+						int pdf_end = prot_url.IndexOf(".pdf");
+						url_link = st.results_url_protocol.Substring(url_start, pdf_end - url_start + 4);
+
+					}
+					else if (prot_url.Contains(".doc"))
+					{
+						resource_type = "Word doc";
+						resource_type_id = 16;
+						if (prot_url.Contains(".docx"))
+						{
+							int docx_end = prot_url.IndexOf(".docx");
+							url_link = st.results_url_protocol.Substring(url_start, docx_end - url_start + 5);
+						}
+						else
+                        {
+							int doc_end = prot_url.IndexOf(".doc");
+							url_link = st.results_url_protocol.Substring(url_start, doc_end - url_start + 4);
+						}
+					}
+					else
+					{
+						// most probably some sort of web reference
+						resource_type = "Web text";
+						resource_type_id = 35;
+						url_link = Regex.Match(st.results_url_protocol, @"(http|https)://[\w-]+(\.[\w-]+)+([\w\.,@\?\^=%&:/~\+#-]*[\w@\?\^=%&/~\+#-])?").Value;
+					}
+
+					int object_type_id = 0; string object_type = "";
+					if (prot_url.Contains("results summary"))
+                    {
+						object_type_id = 79;
+						object_type = "CSR Summary";
+					}
+					else
+                    {
+						object_type_id = 11;
+						object_type = "Study Protocol";
+					}
+
+					object_display_title = name_base + " :: " + object_type;
 					sd_oid = HashHelpers.CreateMD5(sid + object_display_title);
 
 					// almost certainly not in the registry
-					data_objects.Add(new DataObject(sd_oid, sid, object_display_title, pub_year, 23, "Text", 11, "Study Protocol",
+					data_objects.Add(new DataObject(sd_oid, sid, object_display_title, pub_year, 23, "Text", object_type_id, object_type,
 					null, null, 11, download_datetime));
 
 					data_object_titles.Add(new ObjectTitle(sd_oid, object_display_title, 22,
 										"Study short name :: object type", true));
 
-					// presumed to be a download
-					string url_link = Regex.Match(st.results_url_protocol, @"(http|https)://[\w-]+(\.[\w-]+)+([\w\.,@\?\^=%&:/~\+#-]*[\w@\?\^=%&/~\+#-])?").Value;
 					data_object_instances.Add(new ObjectInstance(sd_oid, st.source_id, source_name,
-										url_link, true, 11, "PDF"));
+										url_link, true, resource_type_id, resource_type));
+					
 				}
 			}
 
 			// edit contributors - identify individuals down as organisations
+
 			if (study_contributors.Count > 0)
 			{
 				foreach (StudyContributor sc in study_contributors)

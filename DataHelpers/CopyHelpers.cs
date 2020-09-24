@@ -143,22 +143,22 @@ namespace DataHarvester
 				.MapInteger("record_keys_type_id", x => x.record_keys_type_id)
 				.MapVarchar("record_keys_type", x => x.record_keys_type)
 				.MapVarchar("record_keys_details", x => x.record_keys_details)
-				.MapInteger("identifiers_type_id", x => x.deident_type_id)
-				.MapVarchar("identifiers_type", x => x.deident_type)
+				.MapInteger("deident_type_id", x => x.deident_type_id)
+				.MapVarchar("deident_type", x => x.deident_type)
 			    .MapBoolean("deident_direct", x => x.deident_direct)
 		    	.MapBoolean("deident_hipaa", x => x.deident_hipaa)
 			    .MapBoolean("deident_dates", x => x.deident_dates)
 			    .MapBoolean("deident_nonarr", x => x.deident_nonarr)
 			    .MapBoolean("deident_kanon", x => x.deident_kanon)
-				.MapVarchar("identifiers_details", x => x.deident_details)
-				.MapInteger("consents_type_id", x => x.consent_type_id)
-				.MapVarchar("consents_type", x => x.consent_type)
+				.MapVarchar("deident_details", x => x.deident_details)
+				.MapInteger("consent_type_id", x => x.consent_type_id)
+				.MapVarchar("consent_type", x => x.consent_type)
                 .MapBoolean("consent_noncommercial", x => x.consent_noncommercial)
 				.MapBoolean("consent_geog_restrict", x => x.consent_geog_restrict)
 				.MapBoolean("consent_research_type", x => x.consent_research_type)
 				.MapBoolean("consent_genetic_only", x => x.consent_genetic_only)
 				.MapBoolean("consent_no_methods", x => x.consent_no_methods)
-				.MapVarchar("consents_details", x => x.consent_details);
+				.MapVarchar("consent_details", x => x.consent_details);
 
 
 		public static PostgreSQLCopyHelper<ObjectTitle> object_titles_helper =

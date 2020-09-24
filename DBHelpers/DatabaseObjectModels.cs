@@ -193,8 +193,7 @@ namespace DataHarvester
 		}
 	}
 
-
-
+	
 	public class ObjectTitle
 	{
 		public string sd_oid { get; set; }
@@ -207,26 +206,31 @@ namespace DataHarvester
 		public string comments { get; set; }
 
 		public ObjectTitle(string _sd_oid, string _title_text,
-								int _title_type_id, string _title_type, bool _is_default)
+								int? _title_type_id, string _title_type, bool _is_default)
 		{
 			sd_oid = _sd_oid;
 			title_text = _title_text;
 			title_type_id = _title_type_id;
 			title_type = _title_type;
+			lang_code = "en";
+			is_default = _is_default;
 		}
 
-		public ObjectTitle(string _sd_oid, string _title_text, int? _title_type_id, string _title_type, bool _is_default, string _comments)
+		public ObjectTitle(string _sd_oid, string _title_text, 
+			                   int? _title_type_id, string _title_type, bool _is_default, string _comments)
 		{
 			sd_oid = _sd_oid;
 			title_text = _title_text;
 			title_type_id = _title_type_id;
 			title_type = _title_type;
+			lang_code = "en";
 			is_default = _is_default;
 			comments = _comments;
 		}
 
-		public ObjectTitle(string _sd_oid, string _title_text, int? _title_type_id, string _title_type, string _lang_code,
-							   int _lang_usage_id, bool _is_default, string _comments)
+		public ObjectTitle(string _sd_oid, string _title_text, 
+			                    int? _title_type_id, string _title_type, string _lang_code,
+							    int _lang_usage_id, bool _is_default, string _comments)
 		{
 			sd_oid = _sd_oid;
 			title_text = _title_text;
@@ -496,6 +500,7 @@ namespace DataHarvester
 		public string original_value { get; set; }
 		public string comments { get; set; }
 
+		// used for a mesh coded topic
 
 		public ObjectTopic(string _sd_oid, int _topic_type_id, string _topic_type,
 					 bool _mesh_coded, string _topic_code, string _topic_value, string _comments)
@@ -507,8 +512,11 @@ namespace DataHarvester
 			topic_code = _topic_code;
 			topic_value = _topic_value;
 			original_ct_id = 14;
+			original_value = _topic_value;
 			comments = _comments;
 		}
+
+		// used for a mesh coded topic with a mesh qualifier
 
 		public ObjectTopic(string _sd_oid, int _topic_type_id, string _topic_type,
 					 bool _mesh_coded, string _topic_code, string _topic_value, 
@@ -526,19 +534,8 @@ namespace DataHarvester
 			original_value = _topic_value + '/' + _topic_qualvalue;
 			comments = _comments;
 		}
-
-
-		public ObjectTopic(string _sd_sid, int _topic_type_id, string _topic_type,
-					 string _topic_value, int? _original_ct_id, string _comments)
-		{
-			sd_oid = _sd_sid;
-			topic_type_id = _topic_type_id;
-			topic_type = _topic_type;
-			mesh_coded = false;
-    		topic_value = _topic_value;
-			original_ct_id = _original_ct_id;
-			comments = _comments;
-		}
+		
+		// non mesh coded topic - topic type and name only
 
 		public ObjectTopic(string _sd_sid, int _topic_type_id, string _topic_type,
 					       string _topic_value)
@@ -552,15 +549,21 @@ namespace DataHarvester
 			original_value = _topic_value;
 		}
 
+		// non mesh coded topic - but coded using another system - comments also possible
+
 		public ObjectTopic(string _sd_sid, int _topic_type_id, string _topic_type,
-						   string _topic_value, int? _original_ct_id)
+						   string _topic_value, int? _original_ct_id, 
+						   string _original_ct_code, string _comments)
 		{
 			sd_oid = _sd_sid;
 			topic_type_id = _topic_type_id;
 			topic_type = _topic_type;
+			mesh_coded = false;
 			topic_value = _topic_value;
 			original_ct_id = _original_ct_id;
+			original_ct_code = _original_ct_code;
 			original_value = _topic_value;
+			comments = _comments;
 		}
 
 	}

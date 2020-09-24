@@ -804,11 +804,11 @@ namespace DataHarvester.pubmed
                         {
                             if (this_owner == "NOTNLM")
                             {
-                                topics.Add(new ObjectTopic(sdoid, 11, "keyword", GetElementAsString(k)));
+                                topics.Add(new ObjectTopic(sdoid, 11, "keyword", GetElementAsString(k), 11, null, "Author generated"));
                             }
                             else
                             {
-                                topics.Add(new ObjectTopic(sdoid, 11, "keyword", GetElementAsString(k), 11));
+                                topics.Add(new ObjectTopic(sdoid, 11, "keyword", GetElementAsString(k), 0, null, this_owner));
                             }
                         }
                     }

@@ -64,8 +64,7 @@ namespace DataHarvester.pubmed
                     if (k % 100 == 0) Console.WriteLine(k.ToString());
                 }
 
-                if (k > 9990) break;              
-
+                //if (k > 1990) break;  // testing only
             }
 
             return k;

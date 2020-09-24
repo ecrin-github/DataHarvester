@@ -74,7 +74,7 @@ namespace DataHarvester.ctg
 
 					}
 					
-					if (n % 10 == 0) Console.WriteLine(m.ToString() + ": " + n.ToString()); 
+					if (k % 100 == 0) Console.WriteLine(m.ToString() + ": " + n.ToString());
 				}
 			}
 

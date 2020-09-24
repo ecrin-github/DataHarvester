@@ -47,7 +47,6 @@ namespace DataHarvester
 									Int32.Parse(cutoff_string.Substring(5, 2)),
 									Int32.Parse(cutoff_string.Substring(8, 2)));
 					}
-
 				}
 
 				if (cutoff_date == null)

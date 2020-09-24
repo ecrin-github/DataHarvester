@@ -100,7 +100,7 @@ namespace DataHarvester
 				hashcreator.create_composite_object_hashes(55, "contributors", "object_contributors");
 				hashcreator.create_composite_object_hashes(57, "descriptions", "object_descriptions");
 				hashcreator.create_composite_object_hashes(60, "links", "object_db_links");
-				hashcreator.create_composite_object_hashes(61, "corrections", "object_comments");
+				hashcreator.create_composite_object_hashes(61, "comments", "object_comments");
 				hashcreator.create_composite_object_hashes(62, "public types", "object_publication_types");
 				hashcreator.create_composite_object_hashes(63, "identifiers", "object_identifiers");
 			}

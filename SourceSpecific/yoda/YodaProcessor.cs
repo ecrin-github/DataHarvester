@@ -167,13 +167,14 @@ namespace DataHarvester.yoda
 			// study topics
 			if (!string.IsNullOrEmpty(st.compound_generic_name))
 			{
-				study_topics.Add(new StudyTopic(sid, 12, "chemical / agent", st.compound_generic_name));
+				study_topics.Add(new StudyTopic(sid, 12, "chemical / agent", st.compound_generic_name, "generic name"));
 			}
 
 			if (!string.IsNullOrEmpty(st.compound_product_name))
 			{
 				string product_name = st.compound_product_name.Replace(((char)174).ToString(), "");    // drop reg mark
 				product_name = product_name.Replace("   ", " ").Replace("  ", " ").Trim();
+
 				// see if already exists
 				bool add_product = true;
 				foreach(StudyTopic t in study_topics)
@@ -187,7 +188,7 @@ namespace DataHarvester.yoda
 				if (add_product)
 				{
 					product_name = CultureInfo.CurrentCulture.TextInfo.ToTitleCase(product_name.ToLower());
-					study_topics.Add(new StudyTopic(sid, 12, "chemical / agent", product_name));
+					study_topics.Add(new StudyTopic(sid, 12, "chemical / agent", product_name, "trade name"));
 				}
 			}
 
@@ -196,6 +197,7 @@ namespace DataHarvester.yoda
 			{
 				study_topics.Add(new StudyTopic(sid, 13, "condition", st.conditions_studied));
 			}
+
 
 			// create study references (pmids)
 			if (st.study_references.Count > 0)
@@ -325,19 +327,20 @@ namespace DataHarvester.yoda
 					}
 					else
 					{
+						DateTime date_access_url_checked = new DateTime(2020, 9, 23);
 						data_objects.Add(new DataObject(sd_oid, sid, object_display_title, null, object_class_id, object_class, object_type_id, object_type,
 										101901, "Yoda", 17, "Case by case download", access_details,
-										"https://yoda.yale.edu/how-request-data", new DateTime(2020, 05, 15), download_datetime));
+										"https://yoda.yale.edu/how-request-data", date_access_url_checked, download_datetime));
 						data_object_titles.Add(new ObjectTitle(sd_oid, object_display_title, 22, "Study short name :: object type", true));
 					}
 
 					// for datasets also add dataset properties - even if they are largely unknown
 					if (object_type_id == 80)
 					{
-						dataset_properties.Add(new DataSetProperties(sd_oid, 0, "Not yet known", "", 
-							                      2 , "De-identified", 
-												  "Yoda states that '...researchers will be granted access to participant-level study data that are devoid of personally identifiable information; current best guidelines for de-identification of data will be used.'", 
-												  0, "Not yet known", ""));
+						dataset_properties.Add(new DataSetProperties(sd_oid, 0, "Not known", "",
+												  2, "De-identification applied",
+												  "Yoda states that '...researchers will be granted access to participant-level study data that are devoid of personally identifiable information; current best guidelines for de-identification of data will be used.'",
+												  0, "Not known", ""));
 					}
 				}
 			}

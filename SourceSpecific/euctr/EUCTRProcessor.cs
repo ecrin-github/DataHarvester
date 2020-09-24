@@ -14,14 +14,11 @@ namespace DataHarvester.euctr
 			List<StudyIdentifier> identifiers = new List<StudyIdentifier>();
 			List<StudyTitle> titles = new List<StudyTitle>();
 			List<StudyContributor> contributors = new List<StudyContributor>();
-			List<StudyReference> references = new List<StudyReference>();
-			List<StudyLink> studylinks = new List<StudyLink>();
 			List<StudyTopic> topics = new List<StudyTopic>();
 			List<StudyFeature> features = new List<StudyFeature>();
 
 			List<DataObject> data_objects = new List<DataObject>();
 			List<ObjectTitle> object_titles = new List<ObjectTitle>();
-			List<ObjectDate> object_dates = new List<ObjectDate>();
 			List<ObjectInstance> object_instances = new List<ObjectInstance>();
 
 			// STUDY AND ATTRIBUTES
@@ -264,9 +261,7 @@ namespace DataHarvester.euctr
 							}
 						default:
 							{
-								studylinks.Add(new
-									StudyLink(sid, "identifier: " + i.item_code + " " + i.item_name, i.item_values[0].value));
-								break;
+								break;    // nothing left of any significance - do nothing
 							}
 					}
 				}
@@ -332,7 +327,7 @@ namespace DataHarvester.euctr
 								// conditions under study
 								foreach (item_value n in i.item_values)
 								{
-									topics.Add(new StudyTopic(sid, 13, "condition", n.value, null, "condition under study"));
+									topics.Add(new StudyTopic(sid, 13, "condition", n.value, "conditions under study"));
 								}
 								break;
 							}
@@ -525,9 +520,7 @@ namespace DataHarvester.euctr
 							}
 						default:
 							{
-								studylinks.Add(new
-									StudyLink(sid, "population: " + i.item_name, i.item_values[0].value));
-								break;
+								break;    // nothing left of any significance - do nothing
 							}
 					}
 				}
@@ -629,18 +622,19 @@ namespace DataHarvester.euctr
 								name = topic_name.ToLower();
 								if (name != "not available" && name != "n/a" && name != "na" && name != "not yet extablished")
 								{
+									string trade_name = topic_name.Replace(((char)174).ToString(), "");    // drop reg mark
 									// but is it already there?
 									bool new_topic = true;
 									foreach(StudyTopic t in topics)
 									{
-										if (t.topic_value == topic_name)
+										if (t.topic_value.ToLower() == trade_name.ToLower())
 										{
 											new_topic = false; break;
 										}
 									}
 									if (new_topic)
 									{
-										topics.Add(new StudyTopic(sid, 12, "chemical / agent", topic_name, null, "trade name"));
+										topics.Add(new StudyTopic(sid, 12, "chemical / agent", trade_name, "trade name"));
 									}
 								}
 								break;
@@ -652,18 +646,19 @@ namespace DataHarvester.euctr
 								name = topic_name.ToLower();
 								if (name != "not available" && name != "n/a" && name != "na" && name != "not yet extablished")
 								{
+									string product_name = topic_name.Replace(((char)174).ToString(), "");    // drop reg mark
 									// but is it already there?
 									bool new_topic = true;
 									foreach (StudyTopic t in topics)
 									{
-										if (t.topic_value == topic_name)
+										if (t.topic_value.ToLower() == product_name.ToLower())
 										{
 											new_topic = false; break;
 										}
 									}
 									if (new_topic)
 									{
-										topics.Add(new StudyTopic(sid, 12, "chemical / agent", i.item_values[0].value, null, "product name"));
+										topics.Add(new StudyTopic(sid, 12, "chemical / agent", product_name, "product name"));
 									}
 								}
 								break;
@@ -679,14 +674,14 @@ namespace DataHarvester.euctr
 									bool new_topic = true;
 									foreach (StudyTopic t in topics)
 									{
-										if (t.topic_value == topic_name)
+										if (t.topic_value.ToLower() == name)
 										{
 											new_topic = false; break;
 										}
 									}
 									if (new_topic)
 									{
-										topics.Add(new StudyTopic(sid, 12, "chemical / agent", i.item_values[0].value, null, "INN or proposed INN"));
+										topics.Add(new StudyTopic(sid, 12, "chemical / agent", i.item_values[0].value, "INN or proposed INN"));
 									}
 								}
 								break;
@@ -703,9 +698,7 @@ namespace DataHarvester.euctr
 							}
 						default:
 							{
-								studylinks.Add(new
-									StudyLink(sid, "imps: " + i.item_name, i.item_values[0].value));
-								break;
+								break;    // nothing left of any significance - do nothing
 							}
 					}
 				}
@@ -784,14 +777,11 @@ namespace DataHarvester.euctr
 			s.identifiers = identifiers;
 			s.titles = titles;
 			s.contributors = contributors;
-			s.references = references;
-			s.studylinks = studylinks;
 			s.topics = topics;
 			s.features = features;
 
 			s.data_objects = data_objects;
 			s.object_titles = object_titles;
-			s.object_dates = object_dates;
 			s.object_instances = object_instances;
 
 			return s;
@@ -829,22 +819,10 @@ namespace DataHarvester.euctr
 										  s.titles);
 			}
 
-			if (s.references.Count > 0)
-			{
-				repo.StoreStudyReferences(StudyCopyHelpers.study_references_helper,
-										  s.references);
-			}
-
 			if (s.contributors.Count > 0)
 			{
 				repo.StoreStudyContributors(StudyCopyHelpers.study_contributors_helper,
 										  s.contributors);
-			}
-
-			if (s.studylinks.Count > 0)
-			{
-				repo.StoreStudyLinks(StudyCopyHelpers.study_links_helper,
-										  s.studylinks);
 			}
 
 			if (s.topics.Count > 0)
@@ -858,10 +836,6 @@ namespace DataHarvester.euctr
 				repo.StoreStudyFeatures(StudyCopyHelpers.study_features_helper,
 										  s.features);
 			}
-
-			//if (s.ipd_info.Count > 0) r.StoreIPDInfo(ipd_copyhelper, s.ipd_info);
-
-			//if (s.relationships.Count > 0) r.StoreRelationships(relationship_copyhelper, s.relationships);
 
 			if (s.data_objects.Count > 0)
 			{
@@ -879,12 +853,6 @@ namespace DataHarvester.euctr
 			{
 				repo.StoreObjectTitles(ObjectCopyHelpers.object_titles_helper,
 										  s.object_titles);
-			}
-
-			if (s.object_dates.Count > 0)
-			{
-				repo.StoreObjectDates(ObjectCopyHelpers.object_dates_helper,
-										  s.object_dates);
 			}
 
 		}

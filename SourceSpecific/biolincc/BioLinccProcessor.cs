@@ -208,6 +208,7 @@ namespace DataHarvester.biolincc
 			// create the data object relating to the dataset, instance not available, title possible...
 			// may be a description of the data in 'Data Available...'
 			// if so add a data object description....with a data object title
+
 			if (st.resources_available.ToLower().Contains("datasets"))
 			{
 			    object_display_title = name_base + " :: " + "IPD Datasets";
@@ -229,27 +230,27 @@ namespace DataHarvester.biolincc
 				if (string.IsNullOrEmpty(st.dataset_consent_restrictions))
 				{
 					consent_type_id = 0;
-					consent_type = "Not yet known";
+					consent_type = "Not known";
 					restrictions = "";
 				}
-				else if (st.dataset_consent_restrictions.ToLower() == "none")
+				else if (st.dataset_consent_restrictions.ToLower() == "none"
+					|| st.dataset_consent_restrictions.ToLower() == "none.")
 				{
-					consent_type_id = 9;
-					consent_type = "Comment on consent present";
-					restrictions = "Comment only that restrictions on use = None";
+					consent_type_id = 2;
+					consent_type = "No restriction";
+					restrictions = "Explicitly states that there are no restrictions on use";
 				}
 				else 
 				{
-					consent_type_id = 9;
-					consent_type = "Comment on consent present";
+					consent_type_id = 6;
+					consent_type = "Consent specified, not elsewhere categorised";
 					restrictions = st.dataset_consent_restrictions;
 				}
 
 				// do dataset object separately
-
-				dataset_properties.Add(new DataSetProperties(sd_oid,  
-					                     3, "Pseudonymised", "",
-	                                     3, "Has Indirect Identifiers", de_identification, 
+				dataset_properties.Add(new DataSetProperties(sd_oid,
+										 0, "Not known", "",
+										 2, "De-identification applied", de_identification, 
 					                     consent_type_id, consent_type, restrictions));
 			}
 

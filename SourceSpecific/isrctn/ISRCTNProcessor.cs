@@ -27,7 +27,7 @@ namespace DataHarvester.isrctn
 			List<StudyReference> references = new List<StudyReference>();
 			List<StudyTopic> topics = new List<StudyTopic>();
 			List<StudyFeature> features = new List<StudyFeature>();
-			List<StudyLink> studylinks = new List<StudyLink>();
+			//List<StudyLink> studylinks = new List<StudyLink>();
 
 			List<DataObject> data_objects = new List<DataObject>();
 			List<ObjectTitle> object_titles = new List<ObjectTitle>();
@@ -167,8 +167,7 @@ namespace DataHarvester.isrctn
 							}
 						default:
 							{
-								studylinks.Add(new
-									StudyLink(sid, "sponsor: " + i.item_name, i.item_value));
+								// Ignore...
 								break;
 							}
 
@@ -257,8 +256,7 @@ namespace DataHarvester.isrctn
 						
 						default:
 							{
-								studylinks.Add(new
-									StudyLink(sid, "contacts: " + i.item_name, i.item_value));
+								// Ignore...
 								break;
 							}
 
@@ -323,8 +321,7 @@ namespace DataHarvester.isrctn
 							}
 						default:
 							{
-								studylinks.Add(new
-									StudyLink(sid, "funder: " + i.item_name, i.item_value));
+								// Ignore...
 								break;
 							}
 					}
@@ -398,8 +395,7 @@ namespace DataHarvester.isrctn
 							}
 						default:
 							{
-								studylinks.Add(new
-									StudyLink(sid, "identifier: " + i.item_name, i.item_value));
+								// Ignore...
 								break;
 							}
 
@@ -699,8 +695,7 @@ namespace DataHarvester.isrctn
 							}
 						default:
 							{
-								studylinks.Add(new
-									StudyLink(sid, "study_info: " + i.item_name, i.item_value));
+								// Ignore...
 								break;
 							}
 
@@ -820,8 +815,7 @@ namespace DataHarvester.isrctn
 							}
 						default:
 							{
-								studylinks.Add(new
-									StudyLink(sid, "eligibility: " + i.item_name, i.item_value));
+								// Ignore...
 								break;
 							}
 
@@ -1072,8 +1066,7 @@ namespace DataHarvester.isrctn
 							}
 						default:
 							{
-								studylinks.Add(new
-									StudyLink(sid, "publications: " + i.item_name, i.item_value));
+								// Ignore...
 								break;
 							}
 					}
@@ -1205,7 +1198,7 @@ namespace DataHarvester.isrctn
 			s.references = references;
 			s.topics = topics;
 			s.features = features;
-			s.studylinks = studylinks;
+			//s.studylinks = studylinks;
 
 			s.data_objects = data_objects;
 			s.object_titles = object_titles;
@@ -1260,11 +1253,13 @@ namespace DataHarvester.isrctn
 										  s.contributors);
 			}
 
+			/*
 			if (s.studylinks.Count > 0)
 			{
 				repo.StoreStudyLinks(StudyCopyHelpers.study_links_helper,
 										  s.studylinks);
 			}
+			*/
 
 			if (s.topics.Count > 0)
 			{
@@ -1278,9 +1273,6 @@ namespace DataHarvester.isrctn
 										  s.features);
 			}
 
-			//if (s.ipd_info.Count > 0) r.StoreIPDInfo(m.ipd_copyhelper, s.ipd_info);
-
-			//if (s.relationships.Count > 0) r.StoreRelationships(relationship_copyhelper, s.relationships);
 
 			if (s.data_objects.Count > 0)
 			{

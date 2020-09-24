@@ -6,15 +6,199 @@ using System.Text;
 
 namespace DataHarvester
 {
-    public class StudyHashCreators
+
+    public class HashHelper
     {
         string db_conn;
 
-        public StudyHashCreators(string _db_conn)
+        public HashHelper(string _db_conn)
         {
             db_conn = _db_conn;
         }
 
+        public int GetRecordCount(string table_name)
+        {
+            int res = 0;
+            string sql_string = @"select count(*) from sd." + table_name;
+            using (var conn = new NpgsqlConnection(db_conn))
+            {
+                res = conn.ExecuteScalar<int>(sql_string);
+            }
+            return res;
+        }
+
+        public void ExecuteSQL(string sql_string)
+        {
+            using (var conn = new NpgsqlConnection(db_conn))
+            {
+                conn.Execute(sql_string);
+            }
+        }
+
+
+        public void ExecuteHashSQL(string sql_string, string table_name)
+        {
+            try
+            {
+                int rec_count = GetRecordCount(table_name);
+                int rec_batch = 500000;
+                // int rec_batch = 10000;  // for testing 
+                if (rec_count > rec_batch)
+                {
+                    for (int r = 1; r <= rec_count; r += rec_batch)
+                    {
+                        string batch_sql_string = sql_string + " where id >= " + r.ToString() + " and id < " + (r + rec_batch).ToString();
+                        ExecuteSQL(batch_sql_string);
+                    }
+                }
+                else
+                {
+                    ExecuteSQL(sql_string);
+                }
+            }
+            catch (Exception e)
+            {
+                string res = e.Message;
+            }
+        }
+
+
+        public void CreateCompositeOjectHashes(string top_sql_string)
+        {
+            try
+            {
+                int rec_count = GetRecordCount("data_objects");
+                int rec_batch = 50000;
+                // int rec_batch = 1000;  // for testing 
+                if (rec_count > rec_batch)
+                {
+                    for (int r = 1; r <= rec_count; r += rec_batch)
+                    {
+                        string where_sql_string = " where d.id >= " + r.ToString() + " and d.id < " + (r + rec_batch).ToString();
+
+                        string batch_sql_string = top_sql_string + @" t 
+                                 inner join sd.data_objects d 
+                                 on d.sd_oid = t.sd_oid 
+                                 " + where_sql_string + " group by t.sd_oid;";
+                        ExecuteSQL(batch_sql_string);
+                    }
+                }
+                else
+                {
+                    string sql_string = top_sql_string + @" t group by t.sd_oid;";
+                    ExecuteSQL(sql_string);
+                }
+
+            }
+            catch (Exception e)
+            {
+                string res = e.Message;
+            }
+        }
+
+        public void CreateFullDataObjectHashes(string top_sql_string)
+        {
+            try
+            {
+                int rec_count = GetRecordCount("data_objects");
+                int rec_batch = 50000;
+                // int rec_batch = 1000;  // for testing 
+                if (rec_count > rec_batch)
+                {
+                    for (int r = 1; r <= rec_count; r += rec_batch)
+                    {
+                        string where_sql_string = " and d.id >= " + r.ToString() + " and d.id < " + (r + rec_batch).ToString();
+                        string batch_sql_string = top_sql_string + where_sql_string;
+                        ExecuteSQL(batch_sql_string);
+                    }
+                }
+                else
+                {
+                    ExecuteSQL(top_sql_string);
+                }
+
+            }
+            catch (Exception e)
+            {
+                string res = e.Message;
+            }
+        }
+
+
+        public void CreateCompositeStudyHashes(string top_sql_string)
+        {
+            try
+            {
+                int rec_count = GetRecordCount("studies");
+                int rec_batch = 50000;
+                //int rec_batch = 1000;  // for testing 
+                if (rec_count > rec_batch)
+                {
+                    for (int r = 1; r <= rec_count; r += rec_batch)
+                    {
+                        string where_sql_string = " where s.id >= " + r.ToString() + " and s.id < " + (r + rec_batch).ToString();
+
+                        string batch_sql_string = top_sql_string + @" t 
+                                 inner join sd.studies s 
+                                 on s.sd_sid = t.sd_sid 
+                                 " + where_sql_string + " group by t.sd_sid;";
+                        ExecuteSQL(batch_sql_string);
+                    }
+                }
+                else
+                {
+                    string sql_string = top_sql_string + @" t group by t.sd_sid;";
+                    ExecuteSQL(sql_string);
+                }
+
+            }
+            catch (Exception e)
+            {
+                string res = e.Message;
+            }
+        }
+
+        public void CreateFullStudyHashes(string top_sql_string)
+        {
+            try
+            {
+                int rec_count = GetRecordCount("studies");
+                int rec_batch = 50000;
+                //int rec_batch = 1000;  // for testing 
+                if (rec_count > rec_batch)
+                {
+                    for (int r = 1; r <= rec_count; r += rec_batch)
+                    {
+                        string where_sql_string = " and s.id >= " + r.ToString() + " and s.id < " + (r + rec_batch).ToString();
+                        string batch_sql_string = top_sql_string + where_sql_string;
+                        ExecuteSQL(batch_sql_string);
+                    }
+                }
+                else
+                {
+                    ExecuteSQL(top_sql_string);
+                }
+
+            }
+            catch (Exception e)
+            {
+                string res = e.Message;
+            }
+        }
+
+    }
+
+
+        public class StudyHashCreators
+     {
+        string db_conn;
+        HashHelper h;
+
+        public StudyHashCreators(string _db_conn)
+        {
+            db_conn = _db_conn;
+            h = new HashHelper(db_conn);
+        }
 
         public void create_study_record_hashes()
         {
@@ -22,12 +206,9 @@ namespace DataHarvester
               set record_hash = md5(json_build_array(display_title, brief_description, bd_contains_html,
               data_sharing_statement, dss_contains_html, study_start_year, study_start_month, study_type_id,
               study_status_id, study_enrolment, study_gender_elig_id, min_age,
-              min_age_units_id, max_age, max_age_units_id)::varchar);";
+              min_age_units_id, max_age, max_age_units_id)::varchar)";
 
-            using (var conn = new NpgsqlConnection(db_conn))
-            {
-                conn.Execute(sql_string);
-            }
+            h.ExecuteHashSQL(sql_string, "studies");
         }
 
 
@@ -35,12 +216,9 @@ namespace DataHarvester
         {
             string sql_string = @"Update sd.study_identifiers
               set record_hash = md5(json_build_array(identifier_value, identifier_type_id, identifier_org_id,
-              identifier_org, identifier_date, identifier_link)::varchar);";
+              identifier_org, identifier_date, identifier_link)::varchar)";
 
-            using (var conn = new NpgsqlConnection(db_conn))
-            {
-                conn.Execute(sql_string);
-            }
+            h.ExecuteHashSQL(sql_string, "study_identifiers");
         }
 
 
@@ -48,12 +226,9 @@ namespace DataHarvester
         {
             string sql_string = @"Update sd.study_titles
               set record_hash = md5(json_build_array(title_text, title_type_id, lang_code,
-              lang_usage_id, is_default, comments)::varchar);";
+              lang_usage_id, is_default, comments)::varchar)";
 
-            using (var conn = new NpgsqlConnection(db_conn))
-            {
-                conn.Execute(sql_string);
-            }
+            h.ExecuteHashSQL(sql_string, "study_titles");
         }
 
 
@@ -63,12 +238,9 @@ namespace DataHarvester
               set record_hash = md5(json_build_array(contrib_type_id, is_individual, organisation_id,
               organisation_name, person_id, person_given_name, person_family_name, person_full_name,
               person_identifier, identifier_type, person_affiliation, 
-              affil_org_id, affil_org_id_type)::varchar);";
+              affil_org_id, affil_org_id_type)::varchar)";
 
-            using (var conn = new NpgsqlConnection(db_conn))
-            {
-                 conn.Execute(sql_string);
-            }
+            h.ExecuteHashSQL(sql_string, "study_contributors");
         }
 
 
@@ -78,72 +250,54 @@ namespace DataHarvester
               set record_hash = md5(json_build_array(topic_type_id, topic_value, 
               mesh_coded, topic_code, topic_value, topic_qualcode,
 		      topic_qualvalue, original_ct_id, original_ct_code,
-		      original_value, comments)::varchar);";
+		      original_value, comments)::varchar)";
 
-            using (var conn = new NpgsqlConnection(db_conn))
-            {
-                conn.Execute(sql_string);
-            }
+            h.ExecuteHashSQL(sql_string, "study_topics");
         }
 
 
         public void create_study_feature_hashes()
         {
             string sql_string = @"Update sd.study_features
-              set record_hash = md5(json_build_array(feature_type_id, feature_value_id)::varchar);";
+              set record_hash = md5(json_build_array(feature_type_id, feature_value_id)::varchar)";
 
-            using (var conn = new NpgsqlConnection(db_conn))
-            {
-                conn.Execute(sql_string);
-            }
+            h.ExecuteHashSQL(sql_string, "study_features");
         }
 
 
         public void create_study_reference_hashes()
         {
             string sql_string = @"Update sd.study_references
-              set record_hash = md5(json_build_array(pmid, citation, doi, comments)::varchar);";
+              set record_hash = md5(json_build_array(pmid, citation, doi, comments)::varchar)";
 
-            using (var conn = new NpgsqlConnection(db_conn))
-            {
-                conn.Execute(sql_string);
-            }
+            h.ExecuteHashSQL(sql_string, "study_references");
         }
 
 
         public void create_study_relationship_hashes()
         {
             string sql_string = @"Update sd.study_relationships
-              set record_hash = md5(json_build_array(relationship_type_id, target_sd_sid)::varchar);";
-
-            using (var conn = new NpgsqlConnection(db_conn))
-            {
-                conn.Execute(sql_string);
-            }
+              set record_hash = md5(json_build_array(relationship_type_id, target_sd_sid)::varchar)";
+           
+            h.ExecuteHashSQL(sql_string, "study_relationships");
         }
 
 
         public void create_study_link_hashes()
         {
             string sql_string = @"Update sd.study_links
-              set record_hash = md5(json_build_array(link_label, link_url)::varchar);";
+              set record_hash = md5(json_build_array(link_label, link_url)::varchar)";
 
-            using (var conn = new NpgsqlConnection(db_conn))
-            {
-                conn.Execute(sql_string);
-            }
+            h.ExecuteHashSQL(sql_string, "study_links");
         }
 
 
         public void create_ipd_available_hashes()
         {
             string sql_string = @"Update sd.study_ipd_available
-              set record_hash = md5(json_build_array(ipd_id, ipd_type, ipd_url, ipd_comment)::varchar);";
+              set record_hash = md5(json_build_array(ipd_id, ipd_type, ipd_url, ipd_comment)::varchar)";
 
-            using (var conn = new NpgsqlConnection(db_conn))
-            {
-                conn.Execute(sql_string);
-            }
+            h.ExecuteHashSQL(sql_string, "study_ipd_available");
         }
 
     }
@@ -153,42 +307,25 @@ namespace DataHarvester
     public class StudyCompositeHashCreators
     {
         string db_conn;
+        HashHelper h;
 
         public StudyCompositeHashCreators(string _db_conn)
         {
             db_conn = _db_conn;
+            h = new HashHelper(db_conn);
         }
 
         public void create_composite_study_hashes(int hash_type_id, string hash_type, string table_name)
         {
-              string sql_string = @"Insert into sd.study_hashes 
-              (sd_sid, hash_type_id, hash_type, composite_hash)
-              select sd_sid, " + hash_type_id.ToString() + ", '" + hash_type + @"',  
-              md5(to_json(array_agg(record_hash ORDER BY record_hash))::varchar)
-              from sd." + table_name + " group by sd_sid;";
+            string top_sql_string = @"Insert into sd.study_hashes 
+                    (sd_sid, hash_type_id, hash_type, composite_hash)
+                    select t.sd_sid, " + hash_type_id.ToString() + ", '" + hash_type + @"',  
+                    md5(to_json(array_agg(t.record_hash ORDER BY t.record_hash))::varchar)
+                    from sd." + table_name;
 
-            using (var conn = new NpgsqlConnection(db_conn))
-            {
-                conn.Execute(sql_string);
-            }
+            h.CreateCompositeStudyHashes(top_sql_string);
+
         }
-
-        /*
-        public void create_composite_dataobject_hashes()
-        {
-            string sql_string = @"Insert into sd.study_hashes 
-              (sd_sid, hash_type_id, hash_type, composite_hash)
-              select sd_sid, 10, 'data objects', 
-              md5(to_json(array_agg(object_full_hash ORDER BY object_full_hash))::varchar)
-              from sd.data_objects
-              group by sd_sid;";
-
-            using (var conn = new NpgsqlConnection(db_conn))
-            {
-                conn.Execute(sql_string);
-            }
-        }
-        */
 
         public void create_full_study_hashes()
         {
@@ -205,10 +342,7 @@ namespace DataHarvester
             where 
             s.sd_sid = b.sd_sid";
 
-            using (var conn = new NpgsqlConnection(db_conn))
-            {
-                conn.Execute(sql_string);
-            }
+            h.CreateFullStudyHashes(sql_string);
         }
     }
 
@@ -216,11 +350,14 @@ namespace DataHarvester
     public class ObjectHashCreators
     {
         string db_conn;
+        HashHelper h;
 
         public ObjectHashCreators(string _db_conn)
         {
             db_conn = _db_conn;
+            h = new HashHelper(db_conn);
         }
+
 
         public void create_object_record_hashes()
         {
@@ -228,12 +365,9 @@ namespace DataHarvester
               set record_hash = md5(json_build_array(display_title, version, doi, doi_status_id, publication_year,
               object_class_id, object_type_id, managing_org_id, managing_org, access_type_id,
               access_details, access_details_url, url_last_checked, eosc_category, add_study_contribs,
-              add_study_topics)::varchar);";
+              add_study_topics)::varchar)";
 
-            using (var conn = new NpgsqlConnection(db_conn))
-            {
-                conn.Execute(sql_string);
-            }
+            h.ExecuteHashSQL(sql_string, "data_objects");
         }
 
 
@@ -244,12 +378,9 @@ namespace DataHarvester
               deident_type_id, deident_direct, deident_hipaa,
               deident_dates, deident_nonarr, deident_kanon, deident_details,
               consent_type_id, consent_noncommercial, consent_geog_restrict,
-              consent_research_type, consent_genetic_only, consent_no_methods, consent_details)::varchar);";
+              consent_research_type, consent_genetic_only, consent_no_methods, consent_details)::varchar)";
 
-            using (var conn = new NpgsqlConnection(db_conn))
-            {
-                conn.Execute(sql_string);
-            }
+            h.ExecuteHashSQL(sql_string, "dataset_properties");
         }
 
 
@@ -258,48 +389,40 @@ namespace DataHarvester
             string sql_string = @"Update sd.object_dates
               set record_hash = md5(json_build_array(date_type_id, is_date_range, date_as_string, 
               start_year, start_month, start_day, end_year, end_month, end_day,
-              details)::varchar);";
+              details)::varchar)";
 
-            using (var conn = new NpgsqlConnection(db_conn))
-            {
-                conn.Execute(sql_string);
-            }
+            h.ExecuteHashSQL(sql_string, "object_dates");
         }
+
 
         public void create_object_instance_hashes()
         {
             string sql_string = @"Update sd.object_instances
               set record_hash = md5(json_build_array(instance_type_id, repository_org_id, 
               repository_org, url, url_accessible, url_last_checked, 
-              resource_type_id, resource_size, resource_size_units, resource_comments)::varchar);";
+              resource_type_id, resource_size, resource_size_units, resource_comments)::varchar)";
 
-            using (var conn = new NpgsqlConnection(db_conn))
-            {
-                conn.Execute(sql_string);
-            }
+            h.ExecuteHashSQL(sql_string, "object_instances");
         }
+
 
         public void create_object_title_hashes()
         {
             string sql_string = @"Update sd.object_titles
               set record_hash = md5(json_build_array(title_text, title_type_id, lang_code, 
-              lang_usage_id, is_default, comments)::varchar);";
+              lang_usage_id, is_default, comments)::varchar)";
 
-            using (var conn = new NpgsqlConnection(db_conn))
-            {
-                conn.Execute(sql_string);
-            }
+            h.ExecuteHashSQL(sql_string, "object_titles");
+
         }
+
 
         public void create_object_language_hashes()
         {
             string sql_string = @"Update sd.object_languages
-              set record_hash = md5(json_build_array(lang_code)::varchar);";
+              set record_hash = md5(json_build_array(lang_code)::varchar)";
 
-            using (var conn = new NpgsqlConnection(db_conn))
-            {
-                conn.Execute(sql_string);
-            }
+            h.ExecuteHashSQL(sql_string, "object_languages");
         }
 
 
@@ -309,13 +432,11 @@ namespace DataHarvester
               set record_hash = md5(json_build_array(contrib_type_id, is_individual, organisation_id,
               organisation_name, person_id, person_given_name, person_family_name, person_full_name,
               person_identifier, identifier_type, person_affiliation, 
-              affil_org_id, affil_org_id_type)::varchar);";
+              affil_org_id, affil_org_id_type)::varchar)";
 
-            using (var conn = new NpgsqlConnection(db_conn))
-            {
-                conn.Execute(sql_string);
-            }
+            h.ExecuteHashSQL(sql_string, "object_contributors");
         }
+
 
         public void create_object_topic_hashes()
         {
@@ -323,98 +444,78 @@ namespace DataHarvester
               set record_hash = md5(json_build_array(topic_type_id, topic_value,
               mesh_coded, topic_code, topic_value, topic_qualcode,
               topic_qualvalue, original_ct_id, original_ct_code,
-              original_value, comments)::varchar);";
+              original_value, comments)::varchar)";
 
-            using (var conn = new NpgsqlConnection(db_conn))
-            {
-                conn.Execute(sql_string);
-            }
+            h.ExecuteHashSQL(sql_string, "object_topics");
         }
+
 
         public void create_object_comment_hashes()
         {
             string sql_string = @"Update sd.object_comments
               set record_hash = md5(json_build_array(ref_type, ref_source, pmid, pmid_version,
-              notes)::varchar);";
+              notes)::varchar)";
 
-            using (var conn = new NpgsqlConnection(db_conn))
-            {
-                conn.Execute(sql_string);
-            }
+            h.ExecuteHashSQL(sql_string, "object_comments"); 
         }
+
 
         public void create_object_description_hashes()
         {
             string sql_string = @"Update sd.object_descriptions
               set record_hash = md5(json_build_array(description_type_id, label, description_text, lang_code,
-              contains_html)::varchar);";
+              contains_html)::varchar)";
 
-            using (var conn = new NpgsqlConnection(db_conn))
-            {
-                conn.Execute(sql_string);
-            }
+            h.ExecuteHashSQL(sql_string, "object_descriptions");
         }
+
 
         public void create_object_identifier_hashes()
         {
             string sql_string = @"Update sd.object_identifiers
               set record_hash = md5(json_build_array(identifier_value, identifier_type_id, 
-                                identifier_org_id, identifier_org, identifier_date)::varchar);";
+                                identifier_org_id, identifier_org, identifier_date)::varchar)";
 
-            using (var conn = new NpgsqlConnection(db_conn))
-            {
-                conn.Execute(sql_string);
-            }
+            h.ExecuteHashSQL(sql_string, "object_identifiers");
         }
+
 
         public void create_object_db_link_hashes()
         {
             string sql_string = @"Update sd.object_db_links
               set record_hash = md5(json_build_array(db_sequence, db_name, 
-              id_in_db)::varchar);";
+              id_in_db)::varchar)";
 
-            using (var conn = new NpgsqlConnection(db_conn))
-            {
-                conn.Execute(sql_string);
-            }
+            h.ExecuteHashSQL(sql_string, "object_db_links");
         }
 
 
         public void create_object_publication_type_hashes()
         {
             string sql_string = @"Update sd.object_publication_types
-              set record_hash = md5(json_build_array(type_name)::varchar);";
+              set record_hash = md5(json_build_array(type_name)::varchar)";
 
-            using (var conn = new NpgsqlConnection(db_conn))
-            {
-                conn.Execute(sql_string);
-            }
+            h.ExecuteHashSQL(sql_string, "publication_types");
         }
 
 
         public void create_object_relationship_hashes()
         {
-            string sql_string = @"Update sd.object_publication_types
+            string sql_string = @"Update sd.object_relationships
               set record_hash = md5(json_build_array(relationship_type_id,
-                                target_sd_oid)::varchar);";
+                                target_sd_oid)::varchar)";
 
-            using (var conn = new NpgsqlConnection(db_conn))
-            {
-                conn.Execute(sql_string);
-            }
+            h.ExecuteHashSQL(sql_string, "object_relationships");
         }
 
 
         public void create_object_right_hashes()
         {
-            string sql_string = @"Update sd.object_publication_types
+            string sql_string = @"Update sd.object_rights
               set record_hash = md5(json_build_array(right_name, 
-                                right_uri, notes)::varchar);";
+                                right_uri, notes)::varchar)";
 
-            using (var conn = new NpgsqlConnection(db_conn))
-            {
-                conn.Execute(sql_string);
-            }
+            h.ExecuteHashSQL(sql_string, "object_rights");
         }
 
     }
@@ -423,24 +524,23 @@ namespace DataHarvester
     public class ObjectCompositeHashCreators
     {
         string db_conn;
+        HashHelper h;
 
         public ObjectCompositeHashCreators(string _db_conn)
         {
             db_conn = _db_conn;
+            h = new HashHelper(db_conn);
         }
 
         public void create_composite_object_hashes(int hash_type_id, string hash_type, string table_name)
         {
-            string sql_string = @"Insert into sd.object_hashes 
-              (sd_oid, hash_type_id, hash_type, composite_hash)
-              select sd_oid, " + hash_type_id.ToString() + ", '" + hash_type + @"',  
-              md5(to_json(array_agg(record_hash ORDER BY record_hash))::varchar)
-              from sd." + table_name + " group by sd_oid;";
+            string top_sql_string = @"Insert into sd.object_hashes 
+                    (sd_oid, hash_type_id, hash_type, composite_hash)
+                    select t.sd_oid, " + hash_type_id.ToString() + ", '" + hash_type + @"',  
+                    md5(to_json(array_agg(t.record_hash ORDER BY t.record_hash))::varchar)
+                    from sd." + table_name;
 
-            using (var conn = new NpgsqlConnection(db_conn))
-            {
-                conn.Execute(sql_string);
-            }
+            h.CreateCompositeOjectHashes(top_sql_string);
         }
 
 
@@ -460,13 +560,11 @@ namespace DataHarvester
                 select sd_oid, record_hash as hash
                 from sd.data_objects) h
              group by sd_oid) b
-             where d.sd_oid = b.sd_oid;";
+             where d.sd_oid = b.sd_oid";
 
-            using (var conn = new NpgsqlConnection(db_conn))
-            {
-                conn.Execute(sql_string);
-            }
+            h.CreateFullDataObjectHashes(sql_string);
         }
     }
+
 
 }

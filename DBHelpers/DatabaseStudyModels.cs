@@ -131,6 +131,7 @@ namespace DataHarvester
 			title_text = _title_text;
 			title_type_id = _title_type_id;
 			title_type = _title_type;
+			lang_code = "en";
 			is_default = _is_default;
 		}
 
@@ -140,6 +141,7 @@ namespace DataHarvester
 			title_text = _title_text;
 			title_type_id = _title_type_id;
 			title_type = _title_type;
+			lang_code = "en";
 			is_default = _is_default;
 			comments = _comments;
 		}
@@ -289,7 +291,25 @@ namespace DataHarvester
 		public string original_value { get; set; }
 		public string comments { get; set; }
 
-	    public StudyTopic(string _sd_sid, int _topic_type_id, 
+		// used for a mesh coded topic (no qualifiers for study topic codes)
+
+		public StudyTopic(string _sd_sid, int _topic_type_id, string _topic_type,
+					 bool _mesh_coded, string _topic_code, string _topic_value, string _comments)
+		{
+			sd_sid = _sd_sid;
+			topic_type_id = _topic_type_id;
+			topic_type = _topic_type;
+			mesh_coded = _mesh_coded;
+			topic_code = _topic_code;
+			topic_value = _topic_value;
+			original_ct_id = 14;
+			original_value = _topic_value;
+			comments = _comments;
+		}
+
+		// non mesh coded topic - topic type and name only
+
+		public StudyTopic(string _sd_sid, int _topic_type_id, 
 			              string _topic_type, string _topic_value)
 		{
 			sd_sid = _sd_sid;
@@ -301,9 +321,27 @@ namespace DataHarvester
 			original_value = _topic_value;
 		}
 
+		// non mesh coded topic - topic type and name with comments
+
+		public StudyTopic(string _sd_sid, int _topic_type_id,
+						  string _topic_type, string _topic_value, string _comments)
+		{
+			sd_sid = _sd_sid;
+			topic_type_id = _topic_type_id;
+			topic_type = _topic_type;
+			mesh_coded = false;
+			topic_value = _topic_value;
+			original_ct_id = 0;
+			original_value = _topic_value;
+			comments = _comments;
+		}
+
+
+		// non mesh coded topic - but coded using another system - comments also possible
+
 		public StudyTopic(string _sd_sid, int _topic_type_id, string _topic_type,
-					 string _topic_value, int? _original_ct_id, string _original_ct_code,
-					 string _comments)
+					      string _topic_value, int? _original_ct_id, 
+						  string _original_ct_code, string _comments)
 		{
 			sd_sid = _sd_sid;
 			topic_type_id = _topic_type_id;
@@ -316,57 +354,6 @@ namespace DataHarvester
 			comments = _comments;
 	    }
 
-		public StudyTopic(string _sd_sid, int _topic_type_id, string _topic_type,
-					 string _topic_value, int? _original_ct_id, string _original_ct_code)
-		{
-			sd_sid = _sd_sid;
-			topic_type_id = _topic_type_id;
-			topic_type = _topic_type;
-			mesh_coded = false;
-			topic_value = _topic_value;
-			original_ct_id = _original_ct_id;
-			original_ct_code = _original_ct_code;
-			original_value = _topic_value;
-		}
-
-		public StudyTopic(string _sd_sid, int _topic_type_id, string _topic_type,
-					 bool _mesh_coded, string _topic_code, string _topic_value, string _comments)
-		{
-			sd_sid = _sd_sid;
-			topic_type_id = _topic_type_id;
-			topic_type = _topic_type;
-			mesh_coded = _mesh_coded;
-			topic_code = _topic_code;
-			topic_value = _topic_value;
-			original_ct_id = 14;
-			comments = _comments;
-		}
-
-
-		public StudyTopic(string _sd_sid, int _topic_type_id, string _topic_type,
-					  string _topic_code, string _topic_value, int? _original_ct_id)
-		{
-			sd_sid = _sd_sid;
-			topic_type_id = _topic_type_id;
-			topic_type = _topic_type;
-            topic_code = _topic_code;
-			topic_value = _topic_value;
-			original_ct_id = _original_ct_id;
-		}
-
-
-		public StudyTopic(string _sd_sid, int _topic_type_id, string _topic_type,
-					 string _topic_code, string _topic_value, int? _original_ct_id, 
-				     string _comments)
-		{ 
-			sd_sid = _sd_sid;
-			topic_type_id = _topic_type_id;
-			topic_type = _topic_type;
-			topic_code = _topic_code;
-			topic_value = _topic_value;
-			original_ct_id = _original_ct_id;
-			comments = _comments;
-		}
 	}
 
 
