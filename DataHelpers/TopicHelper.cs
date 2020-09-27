@@ -15,23 +15,29 @@ namespace DataHarvester
             db_conn = _db_conn;
         }
 
+        public void ExecuteSQL(string sql_string)
+        {
+            using (var conn = new NpgsqlConnection(db_conn))
+            {
+                conn.Execute(sql_string);
+            }
+        }
 
         // delete humans as subjects - as clinical research on humans...
-    
+
         public void delete_humans_as_topic(string source_type)
         {
             string sql_string = @"delete from ";
             sql_string += source_type.ToLower() == "study"
                                 ? "sd.study_topics "
                                 : "sd.object_topics ";
-            sql_string += @" where topic_value = 'Human' 
-                             or topic_value = 'Humans';";
-           
-
-            using (var conn = new NpgsqlConnection(db_conn))
-            {
-                conn.Execute(sql_string);
-            }
+            sql_string += @" where lower(topic_value) = 'human' 
+                             or lower(topic_value) = 'humans'
+                             or lower(topic_value) = 'other'
+                             or lower(topic_value) = 'studies'
+                             or lower(topic_value) = 'evaluation';";
+            ExecuteSQL(sql_string);
+            StringHelpers.SendFeedback("Updating topic codes, deleting meanngless categories");
         }
 
 
@@ -47,70 +53,60 @@ namespace DataHarvester
                                   from context_ctx.geog_entities g
                                   where t.topic_value = g.name
                                   and topic_type is null;";
-
-            using (var conn = new NpgsqlConnection(db_conn))
-            {
-                conn.Execute(sql_string);
-            }
+            ExecuteSQL(sql_string);
+            StringHelpers.SendFeedback("Updating topic codes - labelling geographic entities");
         }
 
-
-        // indicates if the relevant topics table has any mesh coded values
-
-        public bool topics_have_codes(string source_type)
-        {
-            string sql_string = @"select count(*) from ";
-            sql_string += source_type.ToLower() == "study"
-                                ? "sd.study_topics "
-                                : "sd.object_topics ";
-            sql_string += @" where topic_code is not null";
-            
-            int res = 0;
-            using (var conn = new NpgsqlConnection(db_conn))
-            {
-                res = conn.ExecuteScalar<int>(sql_string);
-            }
-            return (res > 0);
-        }
-
-
-        // take distinct mesh code / value pairs and 
-        // add them if not already present
-
-        public void add_mesh_codes(string source_type)
-        {
-            string sql_string = @"Insert into context_ctx.topics_in_mesh(mesh_code, topic_value)
-                   select distinct t.topic_code, t.topic_value from ";
-            sql_string += source_type.ToLower() == "study"
-                                ? "sd.study_topics t"
-                                : "sd.object_topics t";
-            sql_string += @" left join context_ctx.topics_in_mesh m
-                             on t.topic_code = m.mesh_code
-                             where t.topic_code is not null
-                             and m.mesh_code is null";
-
-            using (var conn = new NpgsqlConnection(db_conn))
-            {
-                conn.Execute(sql_string);
-            }
-
-        }
 
         public void update_topics(string source_type)
         {
-            string sql_string = @"Update ";
+            // can be difficult to do ths with large datasets
+            int rec_count = 0;
+            int rec_batch = 500000;
+            string sql_string = @"select count(*) from sd.";
             sql_string += source_type.ToLower() == "study"
-                                ? "sd.study_topics t"
-                                : "sd.object_topics t";
-            sql_string += @" set topic_code = m.mesh_code,
-                             mesh_coded = true
-                             from context_ctx.topics_in_mesh m
-                             where t.topic_code is null
-                             and t.topic_value = m.topic_value";
+                                ? "study_topics;"
+                                : "object_topics;";
 
             using (var conn = new NpgsqlConnection(db_conn))
             {
-                conn.Execute(sql_string);
+                rec_count = conn.ExecuteScalar<int>(sql_string);
+            }
+
+            // in some cases mesh codes may be overwritten if 
+            // they do not conform entirely (in format) with the mesh list
+
+            sql_string = @"Update ";
+            sql_string += source_type.ToLower() == "study"
+                                ? "sd.study_topics t "
+                                : "sd.object_topics t ";
+            sql_string += @" set topic_code = m.code,
+                             topic_value = m.term,
+                             mesh_coded = true
+                             from context_ctx.mesh_lookup m
+                             where lower(t.topic_value) = m.entry";
+            try
+            {
+                if (rec_count > rec_batch)
+                {
+                    for (int r = 1; r <= rec_count; r += rec_batch)
+                    {
+                        string batch_sql_string = sql_string + " and id >= " + r.ToString() + " and id < " + (r + rec_batch).ToString();
+                        ExecuteSQL(batch_sql_string);
+                        string feedback = "Updating topic codes, " + r.ToString() + " to ";
+                        feedback += (r + rec_batch < rec_count) ? (r + rec_batch).ToString() : rec_count.ToString();
+                        StringHelpers.SendFeedback(feedback);
+                    }
+                }
+                else
+                {
+                    ExecuteSQL(sql_string);
+                    StringHelpers.SendFeedback("Updating topic codes - as a single batch");
+                }
+            }
+            catch (Exception e)
+            {
+                string res = e.Message;
             }
         }
 
@@ -127,11 +123,7 @@ namespace DataHarvester
                                 : " from sd.object_topics t";
             sql_string += @" where t.topic_code is null 
                              group by t.topic_value;";
-            using (var conn = new NpgsqlConnection(db_conn))
-            {
-                conn.Execute(sql_string);
-            }
-
+            ExecuteSQL(sql_string); 
         }
     }
 }

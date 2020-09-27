@@ -303,6 +303,7 @@ namespace DataHarvester
 			topic_code = _topic_code;
 			topic_value = _topic_value;
 			original_ct_id = 14;
+			original_ct_code = _topic_code;
 			original_value = _topic_value;
 			comments = _comments;
 		}

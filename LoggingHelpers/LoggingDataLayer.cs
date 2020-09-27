@@ -11,9 +11,10 @@ namespace DataHarvester
 	public class LoggingDataLayer
 	{
 		private string connString;
+		private string context_connString;
 		private Source source;
 		private string sql_file_select_string;
-
+		
 
 		/// <summary>
 		/// Parameterless constructor is used to automatically build
@@ -35,6 +36,9 @@ namespace DataHarvester
 
 			builder.Database = "mon";
 			connString = builder.ConnectionString;
+
+			builder.Database = "context";
+			context_connString = builder.ConnectionString;
 
 			sql_file_select_string = "select id, source_id, sd_id, remote_url, last_revised, ";
 			sql_file_select_string += " assume_complete, download_status, local_path, last_saf_id, last_downloaded, ";
@@ -233,6 +237,19 @@ namespace DataHarvester
 				conn.Insert<ExtractionNote>(ext_note);
 			}
 		}
+
+
+		// gets a 2 letter language code rather than thean the original 3
+		public string lang_3_to_2(string lang_code_3)
+		{
+			using (NpgsqlConnection Conn = new NpgsqlConnection(context_connString))
+			{
+				string sql_string = "select code from lup.language_codes where ";
+				sql_string += " marc_code = '" + lang_code_3 + "';";
+				return Conn.Query<string>(sql_string).FirstOrDefault();
+			}
+		}
+
 
 	}
 

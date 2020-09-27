@@ -52,7 +52,6 @@ namespace DataHarvester
 			object_tablebuilder.drop_table("object_titles");
 			object_tablebuilder.drop_table("object_contributors");
 			object_tablebuilder.drop_table("object_topics");
-			object_tablebuilder.drop_table("object_languages");
 			object_tablebuilder.drop_table("object_comments");
 			object_tablebuilder.drop_table("object_descriptions");
 			object_tablebuilder.drop_table("object_identifiers");
@@ -99,7 +98,6 @@ namespace DataHarvester
 
 			if (source.has_dataset_properties) object_tablebuilder.create_table_dataset_properties();
 			if (source.has_object_dates) object_tablebuilder.create_table_object_dates();
-			if (source.has_object_languages) object_tablebuilder.create_table_object_languages();
 			if (source.has_object_relationships) object_tablebuilder.create_table_object_relationships();
 			if (source.has_object_rights) object_tablebuilder.create_table_object_rights();
 			if (source.has_object_pubmed_set)

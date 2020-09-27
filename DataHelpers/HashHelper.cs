@@ -6,7 +6,6 @@ using System.Text;
 
 namespace DataHarvester
 {
-
     public class HashHelper
     {
         string db_conn;
@@ -49,11 +48,15 @@ namespace DataHarvester
                     {
                         string batch_sql_string = sql_string + " where id >= " + r.ToString() + " and id < " + (r + rec_batch).ToString();
                         ExecuteSQL(batch_sql_string);
+                        string feedback = "Creating " + table_name + " hash codes, " + r.ToString() + " to ";
+                        feedback += (r + rec_batch < rec_count) ? (r + rec_batch).ToString() : rec_count.ToString();
+                        StringHelpers.SendFeedback(feedback);
                     }
                 }
                 else
                 {
                     ExecuteSQL(sql_string);
+                    StringHelpers.SendFeedback("Creating " + table_name + " hash codes - as a single batch");
                 }
             }
             catch (Exception e)
@@ -63,7 +66,7 @@ namespace DataHarvester
         }
 
 
-        public void CreateCompositeOjectHashes(string top_sql_string)
+        public void CreateCompositeOjectHashes(string top_sql_string, string hash_type)
         {
             try
             {
@@ -81,12 +84,16 @@ namespace DataHarvester
                                  on d.sd_oid = t.sd_oid 
                                  " + where_sql_string + " group by t.sd_oid;";
                         ExecuteSQL(batch_sql_string);
+                        string feedback = "Creating composite object hash codes (" + hash_type + "), " + r.ToString() + " to ";
+                        feedback += (r + rec_batch < rec_count) ? (r + rec_batch).ToString() : rec_count.ToString();
+                        StringHelpers.SendFeedback(feedback);
                     }
                 }
                 else
                 {
                     string sql_string = top_sql_string + @" t group by t.sd_oid;";
                     ExecuteSQL(sql_string);
+                    StringHelpers.SendFeedback("Creating composite object hash codes (" + hash_type + ") as a single batch");
                 }
 
             }
@@ -110,11 +117,15 @@ namespace DataHarvester
                         string where_sql_string = " and d.id >= " + r.ToString() + " and d.id < " + (r + rec_batch).ToString();
                         string batch_sql_string = top_sql_string + where_sql_string;
                         ExecuteSQL(batch_sql_string);
+                        string feedback = "Creating full object hash codes, " + r.ToString() + " to ";
+                        feedback += (r + rec_batch < rec_count) ? (r + rec_batch).ToString() : rec_count.ToString();
+                        StringHelpers.SendFeedback(feedback);
                     }
                 }
                 else
                 {
                     ExecuteSQL(top_sql_string);
+                    StringHelpers.SendFeedback("Creating full object hash codes - as a single batch");
                 }
 
             }
@@ -125,7 +136,7 @@ namespace DataHarvester
         }
 
 
-        public void CreateCompositeStudyHashes(string top_sql_string)
+        public void CreateCompositeStudyHashes(string top_sql_string, string hash_type)
         {
             try
             {
@@ -143,12 +154,16 @@ namespace DataHarvester
                                  on s.sd_sid = t.sd_sid 
                                  " + where_sql_string + " group by t.sd_sid;";
                         ExecuteSQL(batch_sql_string);
+                        string feedback = "Creating composite study hash codes (" + hash_type + "), " + r.ToString() + " to ";
+                        feedback += (r + rec_batch < rec_count) ? (r + rec_batch).ToString() : rec_count.ToString();
+                        StringHelpers.SendFeedback(feedback);
                     }
                 }
                 else
                 {
                     string sql_string = top_sql_string + @" t group by t.sd_sid;";
                     ExecuteSQL(sql_string);
+                    StringHelpers.SendFeedback("Creating composite study hash codes (" + hash_type + ") as a single batch");
                 }
 
             }
@@ -172,11 +187,15 @@ namespace DataHarvester
                         string where_sql_string = " and s.id >= " + r.ToString() + " and s.id < " + (r + rec_batch).ToString();
                         string batch_sql_string = top_sql_string + where_sql_string;
                         ExecuteSQL(batch_sql_string);
+                        string feedback = "Creating full study hash codes, " + r.ToString() + " to ";
+                        feedback += (r + rec_batch < rec_count) ? (r + rec_batch).ToString() : rec_count.ToString();
+                        StringHelpers.SendFeedback(feedback);
                     }
                 }
                 else
                 {
                     ExecuteSQL(top_sql_string);
+                    StringHelpers.SendFeedback("Creating full study hash codes - as a single batch");
                 }
 
             }
@@ -323,7 +342,7 @@ namespace DataHarvester
                     md5(to_json(array_agg(t.record_hash ORDER BY t.record_hash))::varchar)
                     from sd." + table_name;
 
-            h.CreateCompositeStudyHashes(top_sql_string);
+            h.CreateCompositeStudyHashes(top_sql_string, hash_type);
 
         }
 
@@ -363,8 +382,8 @@ namespace DataHarvester
         {
             string sql_string = @"Update sd.data_objects
               set record_hash = md5(json_build_array(display_title, version, doi, doi_status_id, publication_year,
-              object_class_id, object_type_id, managing_org_id, managing_org, access_type_id,
-              access_details, access_details_url, url_last_checked, eosc_category, add_study_contribs,
+              object_class_id, object_type_id, managing_org_id, managing_org, lang_code, access_type_id,
+              access_details, access_details_url, eosc_category, add_study_contribs,
               add_study_topics)::varchar)";
 
             h.ExecuteHashSQL(sql_string, "data_objects");
@@ -399,7 +418,7 @@ namespace DataHarvester
         {
             string sql_string = @"Update sd.object_instances
               set record_hash = md5(json_build_array(instance_type_id, repository_org_id, 
-              repository_org, url, url_accessible, url_last_checked, 
+              repository_org, url, url_accessible,  
               resource_type_id, resource_size, resource_size_units, resource_comments)::varchar)";
 
             h.ExecuteHashSQL(sql_string, "object_instances");
@@ -414,15 +433,6 @@ namespace DataHarvester
 
             h.ExecuteHashSQL(sql_string, "object_titles");
 
-        }
-
-
-        public void create_object_language_hashes()
-        {
-            string sql_string = @"Update sd.object_languages
-              set record_hash = md5(json_build_array(lang_code)::varchar)";
-
-            h.ExecuteHashSQL(sql_string, "object_languages");
         }
 
 
@@ -540,7 +550,7 @@ namespace DataHarvester
                     md5(to_json(array_agg(t.record_hash ORDER BY t.record_hash))::varchar)
                     from sd." + table_name;
 
-            h.CreateCompositeOjectHashes(top_sql_string);
+            h.CreateCompositeOjectHashes(top_sql_string, hash_type);
         }
 
 

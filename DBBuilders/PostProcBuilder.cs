@@ -100,11 +100,6 @@ namespace DataHarvester
 			{
 				topic_helper.delete_humans_as_topic(source_type);
 				topic_helper.update_geographic_topics(source_type);
-
-				if (topic_helper.topics_have_codes(source_type))
-				{
-					topic_helper.add_mesh_codes(source_type);
-				}
 				topic_helper.update_topics(source_type);
 				topic_helper.store_unmatched_topic_values(source_type, source.id);
 			}

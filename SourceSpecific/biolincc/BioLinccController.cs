@@ -57,7 +57,7 @@ namespace DataHarvester.biolincc
 					identity_processor.ProcessData(studyRegEntry, common_repo);
 				}
 
-				if (n % 10 == 0) Console.WriteLine(n.ToString());
+				if (n % 10 == 0) StringHelpers.SendFeedback(n.ToString());
 			}
 
 			identity_processor.CreateMultNCTsTable(biolincc_repo);
@@ -102,7 +102,7 @@ namespace DataHarvester.biolincc
 
 				}
 
-				if (n % 10 == 0) Console.WriteLine(n.ToString());
+				if (n % 10 == 0) StringHelpers.SendFeedback(n.ToString());
 			}
 
 			return n;

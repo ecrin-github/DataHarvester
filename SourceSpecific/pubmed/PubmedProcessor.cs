@@ -42,7 +42,6 @@ namespace DataHarvester.pubmed
             List<ObjectTopic> topics = new List<ObjectTopic>();
             List<ObjectPublicationType> pubtypes = new List<ObjectPublicationType>();
             List<ObjectDescription> descriptions = new List<ObjectDescription>();
-            List<ObjectLanguage> object_languages = new List<ObjectLanguage>();
             List<ObjectContributor> contributors = new List<ObjectContributor>();
             List<ObjectComment> comments = new List<ObjectComment>();
             List<ObjectDBLink> db_ids = new List<ObjectDBLink>();
@@ -136,10 +135,26 @@ namespace DataHarvester.pubmed
             if (languages.Count() > 0)
             {
                 c.language_list = languages.Select(g => GetElementAsString(g)).ToList();
+                string lang_list = "";
                 foreach (string g in languages)
                 {
-                    object_languages.Add(new ObjectLanguage(sdoid, g));
+                    string lang_2code;
+                    if (g == "eng")
+                    {
+                        lang_2code = "en";
+                    }
+                    else
+                    {
+                        lang_2code = StringHelpers.lang_3_to_2(g);
+                        if (lang_2code == "??")
+                        {
+                            // need to use the database
+                            lang_2code = logging_repo.lang_3_to_2(g);
+                        }
+                    }
+                    lang_list += ", " + lang_2code;
                 }
+                c.lang_code = lang_list.Substring(2);
             }
 
 
@@ -268,7 +283,13 @@ namespace DataHarvester.pubmed
                     {
                         if (s != "eng")
                         {
-                            vlang_code = s; // though may not be first non-english language if there are more than one
+                            string lang_2code = StringHelpers.lang_3_to_2(s);
+                            if (lang_2code == "??")
+                            {
+                                // need to use the database
+                                lang_2code = logging_repo.lang_3_to_2(s);
+                            }
+                            vlang_code = lang_2code;
                             break;
                         }
                     }
@@ -282,32 +303,38 @@ namespace DataHarvester.pubmed
                             string country = GetElementAsString(JournalInfo.Element("Country"));
                             switch (country)
                             {
-                                case "Canada": vlang_code = "fre"; break;
-                                case "France": vlang_code = "fre"; break;
-                                case "Germany": vlang_code = "ger"; break;
-                                case "Spain": vlang_code = "spa"; break;
-                                case "Mexico": vlang_code = "spa"; break;
-                                case "Argentina": vlang_code = "spa"; break;
-                                case "Chile": vlang_code = "spa"; break;
-                                case "Peru": vlang_code = "spa"; break;
-                                case "Portugal": vlang_code = "por"; break;
-                                case "Brazil": vlang_code = "por"; break;
-                                case "Italy": vlang_code = "ita"; break;
-                                case "Russia": vlang_code = "rus"; break;
-                                case "Turkey": vlang_code = "tur"; break;
-                                    // need to add more...
+                                case "Canada": vlang_code = "fr"; break;
+                                case "France": vlang_code = "fr"; break;
+                                case "Germany": vlang_code = "de"; break;
+                                case "Spain": vlang_code = "es"; break;
+                                case "Mexico": vlang_code = "es"; break;
+                                case "Argentina": vlang_code = "es"; break;
+                                case "Chile": vlang_code = "es"; break;
+                                case "Peru": vlang_code = "es"; break;
+                                case "Portugal": vlang_code = "pt"; break;
+                                case "Brazil": vlang_code = "pt"; break;
+                                case "Italy": vlang_code = "it"; break;
+                                case "Russia": vlang_code = "ru"; break;
+                                case "Turkey": vlang_code = "tr"; break;
+                                case "Hungary": vlang_code = "hu"; break;
+                                case "Poland": vlang_code = "pl"; break;
+                                case "Sweden": vlang_code = "sv"; break;
+                                case "Norway": vlang_code = "no"; break;
+                                case "Denmark": vlang_code = "da"; break;
+                                case "Finland": vlang_code = "fi"; break;
+                                // may need to add more...
                             }
                         }
                     }
 
                     if (vlang_code == "")
                     {
-                        // Some Canadian journals are published in the US
+                        // If still blank, some Canadian journals are published in the US
                         // and often have a French alternate title.
 
                         if (journal_title.Contains("Canada") || journal_title.Contains("Canadian"))
                         {
-                            vlang_code = "fre";
+                            vlang_code = "fr";
                         }
 
                     }
@@ -409,13 +436,13 @@ namespace DataHarvester.pubmed
 
                         // Add the article title, without the brackets and with any comments - as the only title present it becomes the default.
 
-                        titles.Add(new ObjectTitle(sdoid, atitle, 19, "Journal article title", "eng", 11, true, poss_comment));
+                        titles.Add(new ObjectTitle(sdoid, atitle, 19, "Journal article title", "en", 11, true, poss_comment));
                     }
                     else
                     {
                         // Both titles are present, add them both, with the vernacular title as the default.
 
-                        titles.Add(new ObjectTitle(sdoid, atitle, 19, "Journal article title", "eng", 12, false, poss_comment));
+                        titles.Add(new ObjectTitle(sdoid, atitle, 19, "Journal article title", "en", 12, false, poss_comment));
 
                         titles.Add(new ObjectTitle(sdoid, vtitle, 19, "Journal article title", vlang_code, 21, true, ""));
                     }
@@ -441,7 +468,7 @@ namespace DataHarvester.pubmed
 
                     // The most common, default situation - simply add only title as the default title record in English.
 
-                    titles.Add(new ObjectTitle(sdoid, atitle, 19, "Journal article title", "eng", 11, true, ""));
+                    titles.Add(new ObjectTitle(sdoid, atitle, 19, "Journal article title", "en", 11, true, ""));
                 }
             }
             else
@@ -1375,7 +1402,7 @@ namespace DataHarvester.pubmed
                     description_type_id = 18,
                     description_type = "Journal Source String",
                     description_text = journal_source,
-                    lang_code = "eng"
+                    lang_code = "en"
                 });
             }
 
@@ -1567,16 +1594,13 @@ namespace DataHarvester.pubmed
             c.article_dates = dates;
             c.article_titles = titles;
             c.article_identifiers = identifiers;
-            c.article_languages = object_languages;
             c.article_contributors = contributors;
             c.article_descriptions = descriptions;
             c.article_pubtypes = pubtypes;
             c.article_topics = topics;
             c.article_db_ids = db_ids;
             c.article_comments = comments;
-
             return c;
-
         }
 
 
@@ -1622,12 +1646,6 @@ namespace DataHarvester.pubmed
             {
                 repo.StoreObjectIdentifiers(ObjectCopyHelpers.object_identifier_copyhelper, 
                     c.article_identifiers);
-            }
-
-            if (c.article_languages.Count > 0)
-            {
-                repo.StoreObjectLanguages(ObjectCopyHelpers.object_language_copyhelper, 
-                    c.article_languages);
             }
 
             if (c.article_descriptions.Count > 0)

@@ -48,7 +48,6 @@ namespace DataHarvester
 		public string ConnString => connString;
 		public string CTGConnString => ctg_connString;
 
-
 		public string Username => username;
 		public string Password => password;
 
@@ -197,18 +196,6 @@ namespace DataHarvester
 
 		public ulong StoreObjectInstances(PostgreSQLCopyHelper<ObjectInstance> copyHelper,
 						IEnumerable<ObjectInstance> entities)
-		{
-			using (var conn = new NpgsqlConnection(connString))
-			{
-				conn.Open();
-				return copyHelper.SaveAll(conn, entities);
-			}
-		}
-
-
-		// Inserts the set of language records associated with each Data.
-
-		public ulong StoreObjectLanguages(PostgreSQLCopyHelper<ObjectLanguage> copyHelper, IEnumerable<ObjectLanguage> entities)
 		{
 			using (var conn = new NpgsqlConnection(connString))
 			{

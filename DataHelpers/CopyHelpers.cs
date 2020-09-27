@@ -126,6 +126,7 @@ namespace DataHarvester
 				.MapVarchar("object_type", x => x.object_type)
 				.MapInteger("managing_org_id", x => x.managing_org_id)
 				.MapVarchar("managing_org", x => x.managing_org)
+				.MapVarchar("lang_code", x => x.lang_code)
 				.MapInteger("access_type_id", x => x.access_type_id)
 				.MapVarchar("access_type", x => x.access_type)
 				.MapVarchar("access_details", x => x.access_details)
@@ -278,12 +279,6 @@ namespace DataHarvester
 				.MapVarchar("original_ct_code", x => x.original_ct_code)
 				.MapVarchar("original_value", x => x.original_value)
 				.MapVarchar("comments", x => x.comments);
-
-
-		public static PostgreSQLCopyHelper<ObjectLanguage> object_language_copyhelper =
-			new PostgreSQLCopyHelper<ObjectLanguage>("sd", "object_languages")
-				.MapVarchar("sd_oid", x => x.sd_oid)
-				.MapVarchar("lang_code", x => x.lang_code);
 
 
 		public static PostgreSQLCopyHelper<ObjectRight> object_right_copyhelper =

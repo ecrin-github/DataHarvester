@@ -21,6 +21,7 @@ namespace DataHarvester
 		public string object_type { get; set; }
 		public int? managing_org_id { get; set; }
 		public string managing_org { get; set; }
+		public string lang_code { get; set; }
 		public int? access_type_id { get; set; }
 		public string access_type { get; set; }
 		public string access_details { get; set; }
@@ -48,6 +49,7 @@ namespace DataHarvester
 			object_type = _object_type;
 			managing_org_id = _managing_org_id;
 			managing_org = _managing_org;
+			lang_code = "en";
 			access_type_id = _access_type_id;
 			if (_access_type_id == 11) access_type = "Public on-screen access and download";
 			if (_access_type_id == 12) access_type = "Public on-screen access (open)";
@@ -76,6 +78,7 @@ namespace DataHarvester
 			object_type = _object_type;
 			managing_org_id = _managing_org_id;
 			managing_org = _managing_org;
+			lang_code = "en";
 			access_type_id = _access_type_id;
 			access_type = _access_type;
 			access_details = _access_details;
@@ -90,7 +93,7 @@ namespace DataHarvester
 
 		public DataObject(string _sd_oid, string _sd_sid, string _display_title, int? _publication_year, int _object_class_id,
 							string _object_class, int _object_type_id, string _object_type,
-							int? _managing_org_id, string _managing_org,
+							int? _managing_org_id, string _managing_org, string _lang_code,
 							int? _access_type_id, string _access_type, string _access_details,
 							string _access_details_url, DateTime? _url_last_checked,
 							int? _eosc_category, DateTime? _datetime_of_data_fetch)
@@ -106,6 +109,7 @@ namespace DataHarvester
 			object_type = _object_type;
 			managing_org_id = _managing_org_id;
 			managing_org = _managing_org;
+			lang_code = _lang_code;
 			access_type_id = _access_type_id;
 			access_type = _access_type;
 			access_details = _access_details;
@@ -512,6 +516,7 @@ namespace DataHarvester
 			topic_code = _topic_code;
 			topic_value = _topic_value;
 			original_ct_id = 14;
+			original_ct_code = _topic_code;
 			original_value = _topic_value;
 			comments = _comments;
 		}
@@ -531,6 +536,7 @@ namespace DataHarvester
 			topic_qualcode = _topic_qualcode;
 			topic_qualvalue = _topic_qualvalue;
 			original_ct_id = 14;
+			original_ct_code = _topic_code + "/" + _topic_qualcode;
 			original_value = _topic_value + '/' + _topic_qualvalue;
 			comments = _comments;
 		}
@@ -659,21 +665,7 @@ namespace DataHarvester
 		}
 	}
 
-
-	// The Object language class, essentially just
-	// a string language code attached to the source data Id
-
-	public class ObjectLanguage
-	{
-		public string sd_oid { get; set; }
-		public string lang_code { get; set; }
-
-		public ObjectLanguage(string _sd_oid, string _lang_code)
-		{
-			sd_oid = _sd_oid;
-			lang_code = _lang_code;
-		}
-	}
+	
 	public class CitationObject
 	{
 		public string sd_oid { get; set; }
@@ -684,6 +676,7 @@ namespace DataHarvester
 		public int? publication_year { get; set; }
 		public int? managing_org_id { get; set; }
 		public string managing_org { get; set; }
+		public string lang_code { get; set; }
 		public int? access_type_id { get; set; }
 		public string access_type { get; set; }
 		public string access_details { get; set; }
@@ -696,8 +689,8 @@ namespace DataHarvester
 		public string journal_title { get; set; }
 		public string pissn { get; set; }
 		public string eissn { get; set; }
-		public List<string> language_list { get; set; }
 
+		public List<string> language_list { get; set; }
 		public List<ObjectDate> article_dates { get; set; }
 		public List<ObjectTitle> article_titles { get; set; }
 		public List<ObjectIdentifier> article_identifiers { get; set; }
@@ -705,7 +698,6 @@ namespace DataHarvester
 		public List<ObjectPublicationType> article_pubtypes { get; set; }
 		public List<ObjectDescription> article_descriptions { get; set; }
 		public List<ObjectInstance> article_instances { get; set; }
-		public List<ObjectLanguage> article_languages { get; set; }
 		public List<ObjectContributor> article_contributors { get; set; }
 		public List<ObjectComment> article_comments { get; set; }
 		public List<ObjectDBLink> article_db_ids { get; set; }
@@ -737,6 +729,7 @@ namespace DataHarvester
 		public string object_type { get; set; }
 		public int? managing_org_id { get; set; }
 		public string managing_org { get; set; }
+		public string lang_code { get; set; }
 		public int? access_type_id { get; set; }
 		public string access_type { get; set; }
 		public string access_details { get; set; }
@@ -764,7 +757,8 @@ namespace DataHarvester
 			object_type = "Journal Article";
 			access_type_id = c.access_type_id;
 			access_type = c.access_type;
-			access_details = c.access_details;
+			lang_code = c.lang_code;
+		    access_details = c.access_details;
 			access_details_url = c.access_details_url;
 			url_last_checked = c.url_last_checked;
 			eosc_category = 0;

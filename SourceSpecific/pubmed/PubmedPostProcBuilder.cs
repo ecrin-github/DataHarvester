@@ -79,14 +79,6 @@ namespace DataHarvester
 			pub_helper.transfer_citation_objects_to_data_objects();
 		}
 
-
-		public void UpdateLanguageCodes()
-		{
-			pub_helper.update_language_codes_in_languages();
-			pub_helper.update_language_codes_in_titles();
-			pub_helper.update_language_codes_in_derscriptions();
-		}
-
 		public void CreateTotalLinksTable()
         {
 			pub_helper.store_bank_links_in_pp_schema();

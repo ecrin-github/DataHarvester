@@ -61,10 +61,10 @@ namespace DataHarvester.pubmed
                         logging_repo.UpdateFileRecLastHarvested(rec.id, "object", harvest_id);
                     }
 
-                    if (k % 100 == 0) Console.WriteLine(k.ToString());
+                    if (k % 100 == 0) StringHelpers.SendFeedback(k.ToString());
                 }
 
-                //if (k > 1990) break;  // testing only
+                // if (k > 9990) break;  // testing only
             }
 
             return k;
@@ -79,7 +79,6 @@ namespace DataHarvester.pubmed
             ppb.UpdatePublisherOrgIds();
             ppb.UpdateIdentifierPublisherData();
             ppb.CreateDataObjectsTable();
-            ppb.UpdateLanguageCodes();
             ppb.CreateTotalLinksTable();
 
             ppb.DropContextForeignTables();

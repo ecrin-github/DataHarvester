@@ -26,8 +26,6 @@ namespace DataHarvester
 		public bool has_study_links { get; set; }
 		public bool has_study_ipd_available { get; set; }
 		public bool has_dataset_properties { get; set; }
-		public bool uses_language_default { get; set; }
-		public bool has_object_languages { get; set; }
 		public bool has_object_dates { get; set; }
 		public bool has_object_rights { get; set; }
 		public bool has_object_relationships { get; set; }

@@ -211,16 +211,19 @@ namespace DataHarvester.isrctn
 								{
 									c.contrib_type_id = 51;
 									c.contrib_type = "Study Lead";
+									c.is_individual = true;
 								}
 								else if (i.item_value == "Public")
 								{
 									c.contrib_type_id = 56;
 									c.contrib_type = "Public contact";
+									c.is_individual = true;
 								}
 								else
 								{
 									c.contrib_type_id = 0;
 									c.contrib_type = i.item_value;
+									c.is_individual = true;
 								}
 								break;
 							}

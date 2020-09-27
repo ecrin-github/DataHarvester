@@ -111,7 +111,7 @@ namespace DataHarvester
 
             catch(Exception e)
             {
-				Console.WriteLine(e.Message);
+				StringHelpers.SendFeedback(e.Message);
 				return null;
             }
 		}

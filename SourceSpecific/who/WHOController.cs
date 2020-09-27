@@ -69,7 +69,7 @@ namespace DataHarvester.who
 					logging_repo.UpdateFileRecLastHarvested(rec.id, "study", last_harvest_id);
 				}
 
-				if (n % 10 == 0) Console.WriteLine(n.ToString());
+				if (n % 10 == 0) StringHelpers.SendFeedback(n.ToString());
 			}
 			return n;
 		}

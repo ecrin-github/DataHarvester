@@ -317,6 +317,7 @@ namespace DataHarvester
 			  , object_type            VARCHAR         NULL
 			  , managing_org_id        INT             NULL
 			  , managing_org           VARCHAR         NULL
+              , lang_code              VARCHAR         NULL
 			  , access_type_id         INT             NULL
 			  , access_type            VARCHAR         NULL
 			  , access_details         VARCHAR         NULL
@@ -510,22 +511,6 @@ namespace DataHarvester
 		}
 
 
-		public void create_table_object_languages()
-		{
-			string sql_string = @"CREATE TABLE sd.object_languages(
-                id                     INT             GENERATED ALWAYS AS IDENTITY PRIMARY KEY
-			  , sd_oid                 CHAR(24)        NOT NULL
-			  , lang_code              VARCHAR         NULL default 'en'
-              , record_hash            CHAR(32)        NULL
-			);
-            CREATE INDEX object_languages_sd_oid ON sd.object_languages(sd_oid);";
-
-			using (var conn = new NpgsqlConnection(db_conn))
-			{
-				conn.Execute(sql_string);
-			}
-		}
-
         public void create_table_object_comments()
 		{
 			string sql_string = @"CREATE TABLE sd.object_comments(
@@ -696,6 +681,7 @@ namespace DataHarvester
 			  , object_type            VARCHAR         NULL
 			  , managing_org_id        INT             NULL
 			  , managing_org           VARCHAR         NULL
+              , lang_code              VARCHAR         NULL
 			  , access_type_id         INT             NULL
 			  , access_type            VARCHAR         NULL
 			  , access_details         VARCHAR         NULL

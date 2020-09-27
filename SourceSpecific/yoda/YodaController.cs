@@ -60,7 +60,7 @@ namespace DataHarvester.yoda
 
 				}
 
-				if (n % 10 == 0) Console.WriteLine(n.ToString());
+				if (n % 10 == 0) StringHelpers.SendFeedback(n.ToString());
 			}
 
 			return n;

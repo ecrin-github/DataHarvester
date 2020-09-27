@@ -211,14 +211,14 @@ namespace DataHarvester
                         (sd_oid, sd_sid, 
                          display_title, version, doi, doi_status_id, publication_year,
                          object_class_id, object_class, object_type_id, object_type, 
-                         managing_org_id, managing_org, access_type_id, access_type,
+                         managing_org_id, managing_org, lang_code, access_type_id, access_type,
                          access_details, access_details_url, url_last_checked, eosc_category, add_study_contribs,
                          add_study_topics, datetime_of_data_fetch)
                         SELECT 
                          sd_oid, sd_sid, 
                          display_title, version, doi, doi_status_id, publication_year,
                          object_class_id, object_class, object_type_id, object_type, 
-                         managing_org_id, managing_org, access_type_id, access_type,
+                         managing_org_id, managing_org, lang_code, access_type_id, access_type,
                          access_details, access_details_url, url_last_checked, eosc_category, add_study_contribs,
                          add_study_topics, datetime_of_data_fetch
                         FROM sd.citation_objects;";
@@ -264,47 +264,6 @@ namespace DataHarvester
             }
         }
 
-
-        public void update_language_codes_in_languages()
-        {
-            string sql_string = @"UPDATE sd.object_languages s
-                                  SET lang_code = c.code
-                                  FROM context_lup.language_codes c
-                                  where s.lang_code = c.marc_code";
-
-            using (var conn = new NpgsqlConnection(db_conn))
-            {
-                conn.Execute(sql_string);
-            }
-
-        }
-
-        public void update_language_codes_in_titles()
-        {
-            string sql_string = @"UPDATE sd.object_titles s
-                                 SET lang_code = c.code
-                                 FROM context_lup.language_codes c
-                                 where s.lang_code = c.marc_code";
-
-            using (var conn = new NpgsqlConnection(db_conn))
-            {
-                conn.Execute(sql_string);
-            }
-        }
-
-
-        public void update_language_codes_in_derscriptions()
-        {
-            string sql_string = @"UPDATE sd.object_descriptions s
-                                  SET lang_code = c.code
-                                  FROM context_lup.language_codes c
-                                  where s.lang_code = c.marc_code";
-
-            using (var conn = new NpgsqlConnection(db_conn))
-            {
-                conn.Execute(sql_string);
-            }
-        }
     }
 
 }

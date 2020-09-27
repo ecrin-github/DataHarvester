@@ -66,7 +66,6 @@ namespace DataHarvester
 			// these are database dependent		
 			if (source.has_dataset_properties) hashcreator.create_recordset_properties_hashes();
 			if (source.has_object_dates) hashcreator.create_object_date_hashes();
-			if (source.has_object_languages) hashcreator.create_object_language_hashes();
 			if (source.has_object_relationships) hashcreator.create_object_relationship_hashes();
 			if (source.has_object_rights) hashcreator.create_object_right_hashes();
 			if (source.has_object_pubmed_set)
@@ -91,7 +90,6 @@ namespace DataHarvester
 			// these are database dependent		
 			if (source.has_dataset_properties) hashcreator.create_composite_object_hashes(50, "datasets", "dataset_properties");
 			if (source.has_object_dates) hashcreator.create_composite_object_hashes(53, "dates", "object_dates");
-			if (source.has_object_languages) hashcreator.create_composite_object_hashes(58, "languages", "object_languages");
 			if (source.has_object_relationships) hashcreator.create_composite_object_hashes(56, "relationships", "object_relationships");
 			if (source.has_object_rights) hashcreator.create_composite_object_hashes(59, "rights", "object_rights");
 			if (source.has_object_pubmed_set)

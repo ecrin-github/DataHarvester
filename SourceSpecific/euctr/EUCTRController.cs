@@ -73,12 +73,12 @@ namespace DataHarvester.euctr
 
 					catch (Exception e)
 					{
-						Console.WriteLine(n.ToString() + ": " + e.Message);
+						StringHelpers.SendFeedback(n.ToString() + ": " + e.Message);
 					}
 
 				}
 
-				if (n % 10 == 0) Console.WriteLine(n.ToString());
+				if (n % 10 == 0) StringHelpers.SendFeedback(n.ToString());
 			}
 			return n;
 		}

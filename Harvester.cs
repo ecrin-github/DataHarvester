@@ -19,17 +19,17 @@ namespace DataHarvester
 
 			// Identify source type and location, destination folder
 
-			Console.WriteLine("source_id is " + source.id.ToString());
-			Console.WriteLine("type_id is " + harvest_type_id.ToString());
+			StringHelpers.SendFeedback("source_id is " + source.id.ToString());
+			StringHelpers.SendFeedback("type_id is " + harvest_type_id.ToString());
 			if (cutoff_date == null)
             {
-				Console.WriteLine("cutoff_date is not provided");
+				StringHelpers.SendFeedback("cutoff_date is not provided");
 			}
             else 
 			{
-				Console.WriteLine("cutoff_date is " + cutoff_date.ToString());
+				StringHelpers.SendFeedback("cutoff_date is " + cutoff_date.ToString());
 			}
-			Console.WriteLine("Update org ids only is " + org_update_only);
+			StringHelpers.SendFeedback("Update org ids only is " + org_update_only);
 
 			LoggingDataLayer logging_repo = new LoggingDataLayer();
 			DataLayer repo = new DataLayer(source.database_name);
@@ -133,19 +133,19 @@ namespace DataHarvester
 			if (source.has_study_tables)
 			{
 				ppb.UpdateStudyIdentifierOrgs();
-				Console.WriteLine("study identifier orgs updated");
+				StringHelpers.SendFeedback("study identifier orgs updated");
 				ppb.UpdateStudyContributorOrgs();
-				Console.WriteLine("study contributor orgs updated");
+				StringHelpers.SendFeedback("study contributor orgs updated");
 			}
 			ppb.UpdateDataObjectOrgs();
-			Console.WriteLine("data object managing orgs updated");
+			StringHelpers.SendFeedback("data object managing orgs updated");
 			ppb.StoreUnMatchedNames();
-			Console.WriteLine("unmatched org names stored");
+			StringHelpers.SendFeedback("unmatched org names stored");
 
 			// Update and standardise topic ids and names
 			string source_type = source.has_study_tables ? "study" : "object";
 			ppb.UpdateTopics(source_type);
-			Console.WriteLine("topic data updated");
+			StringHelpers.SendFeedback("topic data updated");
 
 			ppb.DropContextForeignTables();
 
@@ -157,14 +157,14 @@ namespace DataHarvester
 			if (source.has_study_tables)
 			{
 				hb.CreateStudyHashes();
-				Console.WriteLine("study hashes created");
+				StringHelpers.SendFeedback("study hashes created");
 				hb.CreateStudyCompositeHashes();
-				Console.WriteLine("study composite hashes created");
+				StringHelpers.SendFeedback("study composite hashes created");
 			}
 			hb.CreateDataObjectHashes();
-			Console.WriteLine("data object hashes created");
+			StringHelpers.SendFeedback("data object hashes created");
 			hb.CreateObjectCompositeHashes();
-			Console.WriteLine("data object composite hashes created");
+			StringHelpers.SendFeedback("data object composite hashes created");
 		}
 	}
 }

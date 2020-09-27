@@ -39,7 +39,7 @@ namespace DataHarvester
 		{
 			try
 			{
-     			int apos_pos = apos_name.IndexOf("'");
+				int apos_pos = apos_name.IndexOf("'");
 				int alen = apos_name.Length;
 				if (apos_pos != -1)
 				{
@@ -66,12 +66,12 @@ namespace DataHarvester
 				}
 				return apos_name;
 			}
-			catch(Exception e)
-            {
-				Console.WriteLine(e.Message);
+			catch (Exception e)
+			{
+				StringHelpers.SendFeedback(e.Message);
 				return apos_name;
-            }
-			
+			}
+
 		}
 
 		public static string CheckTitle(string in_title)
@@ -80,7 +80,7 @@ namespace DataHarvester
 			if (!string.IsNullOrEmpty(in_title))
 			{
 				string lower_title = in_title.ToLower().Trim();
-				if (lower_title != "n.a." && lower_title != "na" 
+				if (lower_title != "n.a." && lower_title != "na"
 					&& lower_title != "n.a" && lower_title != "n/a"
 					&& lower_title != "no disponible" && lower_title != "not available")
 				{
@@ -127,21 +127,21 @@ namespace DataHarvester
 
 				if (name.ToLower().Contains("newcastle") && name.ToLower().Contains("university")
 					&& !name.Contains("hospital"))
-                {
+				{
 					if (name.ToLower().Contains("nsw") || name.ToLower().Contains("australia"))
-                    {
+					{
 						name = "University of Newcastle (Australia)";
-                    }
+					}
 					else if (name.ToLower().Contains("uk") || name.ToLower().Contains("tyne"))
 					{
 						name = "University of Newcastle (UK)";
 					}
 					else if (sid.StartsWith("ACTRN"))
-                    {
+					{
 						name = "University of Newcastle (Australia)";
 					}
-                    else
-                    {
+					else
+					{
 						name = "University of Newcastle (UK)";
 					}
 				}
@@ -155,12 +155,12 @@ namespace DataHarvester
 
 
 		public static string FilterOut_Null_OrgNames(string in_name)
-        {
+		{
 			string out_name = in_name;
 			// in_name should be in lower case...
-            if (in_name == "-" || in_name == "n.a." || in_name == "n a" || in_name == "n/a" ||
+			if (in_name == "-" || in_name == "n.a." || in_name == "n a" || in_name == "n/a" ||
 				in_name == "na" || in_name == "nil" || in_name == "nill" || in_name == "no" || in_name == "non")
-            {
+			{
 				out_name = "";
 			}
 			else if (in_name.StartsWith("no ") || in_name == "not applicable" || in_name.StartsWith("not prov"))
@@ -178,12 +178,12 @@ namespace DataHarvester
 				out_name = "";
 			}
 			else
-            {
+			{
 				out_name = in_name;
 			}
 
 			return out_name;
-        }
+		}
 
 
 		public static string TidyORCIDId(string input_identifier)
@@ -209,5 +209,37 @@ namespace DataHarvester
 
 			return identifier;
 		}
+
+
+		public static string lang_3_to_2(string input_lang_code)
+		{
+			string lang_code = "";
+			switch (input_lang_code)
+			{
+				// covers most of the non English cases
+
+				case "fre": lang_code = "fr"; break;
+				case "ger": lang_code = "de"; break;
+				case "spa": lang_code = "es"; break;
+				case "ita": lang_code = "it"; break;
+				case "por": lang_code = "pt"; break;
+				case "rus": lang_code = "ru"; break;
+				case "tur": lang_code = "tr"; break;
+				case "hun": lang_code = "hu"; break;
+				case "pol": lang_code = "pl"; break;
+				case "swe": lang_code = "sv"; break;
+				case "nor": lang_code = "no"; break;
+				case "dan": lang_code = "da"; break;
+				case "fin": lang_code = "fi"; break;
+				default: lang_code = "??"; break;
+			}
+			return lang_code;
+		}
+
+		public static void SendFeedback(string message, string identifier = "")
+		{
+			string dt_string = DateTime.Now.ToShortDateString() + " : " + DateTime.Now.ToShortTimeString() + " :   ";
+			System.Console.WriteLine(dt_string + message + identifier);
+		}
 	}
-}
+} 
