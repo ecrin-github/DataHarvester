@@ -49,9 +49,9 @@ namespace DataHarvester.biolincc
 						inputString += streamReader.ReadToEnd();
 					}
 
-					XmlSerializer serializer = new XmlSerializer(typeof(BioLinccRecord));
+					XmlSerializer serializer = new XmlSerializer(typeof(BioLincc_Record));
 					StringReader rdr = new StringReader(inputString);
-					BioLinccRecord studyRegEntry = (BioLinccRecord)serializer.Deserialize(rdr);
+					BioLincc_Record studyRegEntry = (BioLincc_Record)serializer.Deserialize(rdr);
 
 					// processing here focuses on the listed secondary identifiers...
 					identity_processor.ProcessData(studyRegEntry, common_repo);
@@ -87,9 +87,9 @@ namespace DataHarvester.biolincc
 						inputString += streamReader.ReadToEnd();
 					}
 
-                    XmlSerializer serializer = new XmlSerializer(typeof(BioLinccRecord));
+                    XmlSerializer serializer = new XmlSerializer(typeof(BioLincc_Record));
                     StringReader rdr = new StringReader(inputString);
-					BioLinccRecord studyRegEntry = (BioLinccRecord)serializer.Deserialize(rdr);
+					BioLincc_Record studyRegEntry = (BioLincc_Record)serializer.Deserialize(rdr);
 
                     // break up the file into relevant data classes
                     Study s = processor.ProcessData(studyRegEntry, rec.last_downloaded, common_repo, biolincc_repo);

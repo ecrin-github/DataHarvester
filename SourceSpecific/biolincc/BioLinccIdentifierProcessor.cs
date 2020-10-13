@@ -6,10 +6,10 @@ namespace DataHarvester.biolincc
 {
 	public class BioLinccIdentifierProcessor
 	{
-		public void ProcessData(BioLinccRecord st, DataLayer common_repo)
+		public void ProcessData(BioLincc_Record st, DataLayer common_repo)
 		{
 			List<StudyIdentifier> study_identifiers = new List<StudyIdentifier>();
-			string sid = st.sd_id;
+			string sid = st.sd_sid;
 
 			// identifier type = NHBLI ID, id = 42, org = National Heart, Lung, and Blood Institute, id = 100167.
 

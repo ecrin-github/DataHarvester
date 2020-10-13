@@ -111,7 +111,7 @@ namespace DataHarvester
 
             catch(Exception e)
             {
-				StringHelpers.SendFeedback(e.Message);
+				StringHelpers.SendError("In replace_tags: " + e.Message +" (Input was '" + input_string + "')");
 				return null;
             }
 		}

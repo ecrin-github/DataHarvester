@@ -7,7 +7,7 @@ namespace DataHarvester.yoda
     public class YodaProcessor
 	{
 
-		public Study ProcessData(YodaRecord st, DateTime? download_datetime)
+		public Study ProcessData(Yoda_Record st, DateTime? download_datetime)
 		{
 			Study s = new Study();
 
@@ -22,7 +22,7 @@ namespace DataHarvester.yoda
 
 
 			List<DataObject> data_objects = new List<DataObject>();
-			List<DataSetProperties> dataset_properties = new List<DataSetProperties>();
+			List<ObjectDataset> object_datasets = new List<ObjectDataset>();
 			List<ObjectTitle> data_object_titles = new List<ObjectTitle>();
 			List<ObjectInstance> data_object_instances = new List<ObjectInstance>();
 
@@ -34,18 +34,22 @@ namespace DataHarvester.yoda
 
 			// transfer features of main study object
 			// In most cases study will have already been registered in CGT.
-			string sid = st.sd_id;
+			string sid = st.sd_sid;
 			s.sd_sid = sid;
 			s.datetime_of_data_fetch = download_datetime;
-
-			if (st.display_title.Contains("<"))
+            if (st.yoda_title.Contains("<"))
 			{
-				s.display_title = HtmlHelpers.replace_tags(st.display_title);
-				s.display_title = HtmlHelpers.strip_tags(s.display_title);
+				st.yoda_title = HtmlHelpers.replace_tags(st.yoda_title);
+				st.yoda_title = HtmlHelpers.strip_tags(st.yoda_title);
 			}
-			else
-			{
+
+			if (st.display_title != null)
+            {
 				s.display_title = st.display_title;
+            }
+			else
+            {
+				s.display_title = st.yoda_title;
 			}
 
 			/*
@@ -125,6 +129,7 @@ namespace DataHarvester.yoda
 			}
 
 			// transfer title data
+			// Normally just one - the 'yoda title'
 			if (st.study_titles.Count > 0)
 			{
 				foreach(Title t in st.study_titles)
@@ -192,12 +197,10 @@ namespace DataHarvester.yoda
 				}
 			}
 
-
 			if (!string.IsNullOrEmpty(st.conditions_studied))
 			{
 				study_topics.Add(new StudyTopic(sid, 13, "condition", st.conditions_studied));
 			}
-
 
 			// create study references (pmids)
 			if (st.study_references.Count > 0)
@@ -212,7 +215,7 @@ namespace DataHarvester.yoda
 		
 			// data objects...
 
-			string name_base = string.IsNullOrEmpty(st.public_title) ? s.display_title : st.public_title;
+			string name_base = s.display_title;  // will be the NCT display title in most cases, otherwise the yoda title
 			
 			// do the yoda web page itself first...
 			string object_display_title = name_base + " :: " + "Yoda web page";
@@ -337,7 +340,7 @@ namespace DataHarvester.yoda
 					// for datasets also add dataset properties - even if they are largely unknown
 					if (object_type_id == 80)
 					{
-						dataset_properties.Add(new DataSetProperties(sd_oid, 0, "Not known", "",
+						object_datasets.Add(new ObjectDataset(sd_oid, 0, "Not known", "",
 												  2, "De-identification applied",
 												  "Yoda states that '...researchers will be granted access to participant-level study data that are devoid of personally identifiable information; current best guidelines for de-identification of data will be used.'",
 												  0, "Not known", ""));
@@ -353,7 +356,7 @@ namespace DataHarvester.yoda
 			s.topics = study_topics;
 
 			s.data_objects = data_objects;
-			s.dataset_properties = dataset_properties;
+			s.object_datasets = object_datasets;
 			s.object_titles = data_object_titles;
 			s.object_instances = data_object_instances;
 
@@ -406,10 +409,10 @@ namespace DataHarvester.yoda
 										 s.data_objects);
 			}
 
-			if (s.dataset_properties.Count > 0)
+			if (s.object_datasets.Count > 0)
 			{
-				repo.StoreDatasetProperties(ObjectCopyHelpers.dataset_properties_helper,
-										 s.dataset_properties);
+				repo.StoreDatasetProperties(ObjectCopyHelpers.object_datasets_helper,
+										 s.object_datasets);
 			}
 
 			// store data object attributes

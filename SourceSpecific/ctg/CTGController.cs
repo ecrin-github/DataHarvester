@@ -14,17 +14,15 @@ namespace DataHarvester.ctg
 		CTGProcessor processor;
 		Source source;
 		int harvest_type_id;
-		DateTime? cutoff_date;
 		int last_harvest_id;
 
-		public CTGController(int _last_harvest_id, Source _source, DataLayer _common_repo, LoggingDataLayer _logging_repo, int _harvest_type_id, DateTime? _cutoff_date)
+		public CTGController(int _last_harvest_id, Source _source, DataLayer _common_repo, LoggingDataLayer _logging_repo, int _harvest_type_id)
 		{
 			source = _source;
 			processor = new CTGProcessor();
 			common_repo = _common_repo;
 			logging_repo = _logging_repo;
 			harvest_type_id = _harvest_type_id;
-			cutoff_date = _cutoff_date;
 			last_harvest_id = _last_harvest_id;
 		}
 
@@ -34,12 +32,12 @@ namespace DataHarvester.ctg
 			// First get the total number of records in the system for this source
 
 			// Set up the outer limit and get the relevant records for each pass
-			int total_amount = logging_repo.FetchFileRecordsCount(source.id, "study", harvest_type_id, cutoff_date);
+			int total_amount = logging_repo.FetchFileRecordsCount(source.id, "study", harvest_type_id);
 			int chunk = 1000;
 			int k = 0;
 			for (int m = 0; m < total_amount; m += chunk)
 			{
-				IEnumerable<StudyFileRecord> file_list = logging_repo.FetchStudyFileRecordsByOffset(source.id, m, chunk, harvest_type_id, cutoff_date);
+				IEnumerable<StudyFileRecord> file_list = logging_repo.FetchStudyFileRecordsByOffset(source.id, m, chunk, harvest_type_id);
 
 				int n = 0; string filePath = "";
 				foreach (StudyFileRecord rec in file_list)

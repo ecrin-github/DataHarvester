@@ -14,10 +14,9 @@ namespace DataHarvester.who
 		WHOProcessor processor;
 		Source source;
 		int harvest_type_id;
-		DateTime? cutoff_date;
 		int last_harvest_id;
 
-		public WHOController(int _last_harvest_id, Source _source, DataLayer _common_repo, LoggingDataLayer _logging_repo, int _harvest_type_id, DateTime? _cutoff_date)
+		public WHOController(int _last_harvest_id, Source _source, DataLayer _common_repo, LoggingDataLayer _logging_repo, int _harvest_type_id)
 		{
 			source = _source;
 			processor = new WHOProcessor();
@@ -25,7 +24,6 @@ namespace DataHarvester.who
 			logging_repo = _logging_repo;
 			who_repo = new WHODataLayer();
 			harvest_type_id = _harvest_type_id;
-			cutoff_date = _cutoff_date;
 			last_harvest_id = _last_harvest_id;
 		}
 
@@ -37,9 +35,10 @@ namespace DataHarvester.who
 			// to use the sf records to get a list of files
 			// and local paths...
 
-			IEnumerable<StudyFileRecord> file_list = logging_repo.FetchStudyFileRecords(source.id, harvest_type_id, cutoff_date);
+			IEnumerable<StudyFileRecord> file_list = logging_repo.FetchStudyFileRecords(source.id, harvest_type_id);
 			int n = 0; string filePath = "";
 			XmlSerializer serializer = new XmlSerializer(typeof(WHORecord));
+			StringHelpers.SendHeader("Harvesting Files");
 
 			foreach (StudyFileRecord rec in file_list)
 			{
@@ -69,7 +68,7 @@ namespace DataHarvester.who
 					logging_repo.UpdateFileRecLastHarvested(rec.id, "study", last_harvest_id);
 				}
 
-				if (n % 10 == 0) StringHelpers.SendFeedback(n.ToString());
+				if (n % 10 == 0) StringHelpers.SendFeedback("Records harvested: " + n.ToString());
 			}
 			return n;
 		}

@@ -25,7 +25,7 @@ namespace DataHarvester
 		public bool has_study_relationships { get; set; }
 		public bool has_study_links { get; set; }
 		public bool has_study_ipd_available { get; set; }
-		public bool has_dataset_properties { get; set; }
+		public bool has_object_datasets { get; set; }
 		public bool has_object_dates { get; set; }
 		public bool has_object_rights { get; set; }
 		public bool has_object_relationships { get; set; }
@@ -67,16 +67,14 @@ namespace DataHarvester
 		public DateTime? time_ended { get; set; }
 		public int? num_records_available { get; set; }
 		public int? num_records_harvested { get; set; }
-		public DateTime? cut_off_date { get; set; }
 		public string comments { get; set; }
 
-		public HarvestEvent(int _id, int _source_id, int _type_id, DateTime? _cut_off_date)
+		public HarvestEvent(int _id, int _source_id, int _type_id)
 		{
 			id = _id;
 			source_id = _source_id;
 			type_id = _type_id;
 			time_started = DateTime.Now;
-			cut_off_date = _cut_off_date;
 		}
 
 		public HarvestEvent() { }

@@ -24,7 +24,7 @@ namespace DataHarvester.ctg
 			List<StudyRelationship> relationships = new List<StudyRelationship>();
 
 			List<DataObject> data_objects = new List<DataObject>();
-			List<DataSetProperties> dataset_properties = new List<DataSetProperties>();
+			List<ObjectDataset> object_datasets = new List<ObjectDataset>();
 			List<ObjectTitle> object_titles = new List<ObjectTitle>();
 			List<ObjectDate> object_dates = new List<ObjectDate>();
 			List<ObjectInstance> object_instances = new List<ObjectInstance>();
@@ -1154,14 +1154,14 @@ namespace DataHarvester.ctg
 									{
 										if (sponsor_name == "GlaxoSmithKline" || sponsor_name == "GSK")
 										{
-											dataset_properties.Add(new DataSetProperties(sd_oid, 
+											object_datasets.Add(new ObjectDataset(sd_oid, 
 												        3, "Anonymised", "GSK states that... 'researchers are provided access to anonymized patient-level data '",
 														2, "De-identification applied", "",
 														0, "Not known", ""));
 										}
 										else
 										{
-											dataset_properties.Add(new DataSetProperties(sd_oid, 
+											object_datasets.Add(new ObjectDataset(sd_oid, 
 												        0, "Not known", "",
 														0, "Not known", "",
 														0, "Not known", ""));
@@ -1232,7 +1232,7 @@ namespace DataHarvester.ctg
 
 									if (object_type_id == 80)
 									{
-										dataset_properties.Add(new DataSetProperties(sd_oid,
+										object_datasets.Add(new ObjectDataset(sd_oid,
 													3, "Anonymised", "Sevier states that... 'Servier will provide anonymized patient-level and study-level clinical trial data'",
 													2, "De-identification applied", "",
 													0, "Not known", ""));
@@ -1515,7 +1515,7 @@ namespace DataHarvester.ctg
 			s.relationships = relationships;
 
 			s.data_objects = data_objects;
-			s.dataset_properties = dataset_properties;
+			s.object_datasets = object_datasets;
 			s.object_titles = object_titles;
 			s.object_dates = object_dates;
 			s.object_instances = object_instances;
@@ -1604,10 +1604,10 @@ namespace DataHarvester.ctg
 										  s.data_objects);
 			}
 
-			if (s.dataset_properties.Count > 0)
+			if (s.object_datasets.Count > 0)
 			{
-				repo.StoreDatasetProperties(ObjectCopyHelpers.dataset_properties_helper,
-										 s.dataset_properties);
+				repo.StoreDatasetProperties(ObjectCopyHelpers.object_datasets_helper,
+										 s.object_datasets);
 			}
 
 			if (s.object_instances.Count > 0)

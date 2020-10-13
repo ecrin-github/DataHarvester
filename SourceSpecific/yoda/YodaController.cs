@@ -45,9 +45,9 @@ namespace DataHarvester.yoda
 						inputString += streamReader.ReadToEnd();
 					}
 
-					XmlSerializer serializer = new XmlSerializer(typeof(YodaRecord));
+					XmlSerializer serializer = new XmlSerializer(typeof(Yoda_Record));
 					StringReader rdr = new StringReader(inputString);
-					YodaRecord studyRegEntry = (YodaRecord)serializer.Deserialize(rdr);
+					Yoda_Record studyRegEntry = (Yoda_Record)serializer.Deserialize(rdr);
 
 					// break up the file into relevant data classes
 					Study s = processor.ProcessData(studyRegEntry, rec.last_downloaded);

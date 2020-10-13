@@ -12,14 +12,16 @@ namespace DataHarvester.isrctn
 		LoggingDataLayer logging_repo;
 		ISRCTNProcessor processor;
 		Source source;
+		int harvest_type_id;
 		int last_harvest_id;
 
-		public ISRCTNController(int _last_harvest_id, Source _source, DataLayer _common_repo, LoggingDataLayer _logging_repo, int harvest_type_id, DateTime? cutoff_date)
+		public ISRCTNController(int _last_harvest_id, Source _source, DataLayer _common_repo, LoggingDataLayer _logging_repo, int _harvest_type_id)
 		{
 			source = _source;
 			processor = new ISRCTNProcessor();
 			common_repo = _common_repo;
 			logging_repo = _logging_repo;
+			harvest_type_id = _harvest_type_id;
 			last_harvest_id = _last_harvest_id;
 		}
 
@@ -34,7 +36,7 @@ namespace DataHarvester.isrctn
 			// to use the sf records to get a list of files
 			// and local paths...
 
-			IEnumerable<StudyFileRecord> file_list = logging_repo.FetchStudyFileRecords(source.id);
+			IEnumerable<StudyFileRecord> file_list = logging_repo.FetchStudyFileRecords(source.id, harvest_type_id);
 			int n = 0; string filePath = "";
 			foreach (StudyFileRecord rec in file_list)
 			{

@@ -14,7 +14,6 @@ namespace DataHarvester
 		private string context_connString;
 		private Source source;
 		private string sql_file_select_string;
-		
 
 		/// <summary>
 		/// Parameterless constructor is used to automatically build
@@ -69,11 +68,11 @@ namespace DataHarvester
 
 		}
 
-		public IEnumerable<StudyFileRecord> FetchStudyFileRecords(int source_id, int harvest_type_id = 1, DateTime? cutoff_date = null)
+		public IEnumerable<StudyFileRecord> FetchStudyFileRecords(int source_id, int harvest_type_id = 1)
 		{
 			string sql_string = sql_file_select_string;
 			sql_string += " from sf.source_data_studies ";
-			sql_string += GetWhereClause(source_id, harvest_type_id, cutoff_date);
+			sql_string += GetWhereClause(source_id, harvest_type_id);
 			sql_string += " order by local_path";
 
 			using (NpgsqlConnection Conn = new NpgsqlConnection(connString))
@@ -82,11 +81,11 @@ namespace DataHarvester
 			}
 		}
 
-		public IEnumerable<ObjectFileRecord> FetchObjectFileRecords(int source_id, int harvest_type_id = 1, DateTime? cutoff_date = null)
+		public IEnumerable<ObjectFileRecord> FetchObjectFileRecords(int source_id, int harvest_type_id = 1)
 		{
 			string sql_string = sql_file_select_string;
 			sql_string += " from sf.source_data_objects";
-			sql_string += GetWhereClause(source_id, harvest_type_id, cutoff_date);
+			sql_string += GetWhereClause(source_id, harvest_type_id);
 			sql_string += " order by local_path";
 
 			using (NpgsqlConnection Conn = new NpgsqlConnection(connString))
@@ -102,7 +101,7 @@ namespace DataHarvester
 			string sql_string = "select count(*) ";
 			sql_string += source_type.ToLower() == "study" ? "from sf.source_data_studies"
 												 : "from sf.source_data_objects";
-			sql_string += GetWhereClause(source_id, harvest_type_id, cutoff_date);
+			sql_string += GetWhereClause(source_id, harvest_type_id);
 
 			using (NpgsqlConnection Conn = new NpgsqlConnection(connString))
 			{
@@ -127,11 +126,11 @@ namespace DataHarvester
 
 
 		public IEnumerable<StudyFileRecord> FetchStudyFileRecordsByOffset(int source_id, int offset_num,
-									  int amount, int harvest_type_id = 1, DateTime? cutoff_date = null)
+									  int amount, int harvest_type_id = 1)
 		{
 			string sql_string = sql_file_select_string;
 			sql_string += " from sf.source_data_studies ";
-			sql_string += GetWhereClause(source_id, harvest_type_id, cutoff_date);
+			sql_string += GetWhereClause(source_id, harvest_type_id);
 			sql_string += " order by local_path ";
 			sql_string += " offset " + offset_num.ToString() + " limit " + amount.ToString();
 
@@ -142,11 +141,11 @@ namespace DataHarvester
 		}
 
 		public IEnumerable<ObjectFileRecord> FetchObjectFileRecordsByOffset(int source_id, int offset_num,
-									 int amount, int harvest_type_id = 1, DateTime? cutoff_date = null)
+									 int amount, int harvest_type_id = 1)
 		{
 			string sql_string = sql_file_select_string;
 			sql_string += " from sf.source_data_objects ";
-			sql_string += GetWhereClause(source_id, harvest_type_id, cutoff_date);
+			sql_string += GetWhereClause(source_id, harvest_type_id);
 			sql_string += " order by local_path ";
 			sql_string += " offset " + offset_num.ToString() + " limit " + amount.ToString();
 
@@ -156,7 +155,7 @@ namespace DataHarvester
 			}
 		}
 
-		private string GetWhereClause(int source_id, int harvest_type_id, DateTime? cutoff_date = null)
+		private string GetWhereClause(int source_id, int harvest_type_id)
 		{
 			string where_clause = "";
 			if (harvest_type_id == 1)
@@ -166,16 +165,17 @@ namespace DataHarvester
 			}
 			else if (harvest_type_id == 2)
 			{
-				// Count only those files that have been revised (or added) on or since the cutoff date.
-				where_clause = " where source_id = " + source_id.ToString() + " and last_revised >= '" + cutoff_date + "'";
-			}
-			else if (harvest_type_id == 3)
-			{
-				// For sources with no revision date - Count files unless assumed complete has been set
-				// as true (default is null) in which case no further change is expected.
-				where_clause = " where source_id = " + source_id.ToString() + " and assume_complete is null";
-			}
+				// Harvest files that have been downloaded since the last import, 
+				// NOTE - not since the last harvest, as multiple harvests may have
+				// been carried out. A file should be harvested for import if it 
+				// has not yet been imported, or a new download (possible a new version) 
+				// has taken place since the import.
+				// So files needed where their download date > import date, or they are new
+				// and therefore have a null import date
 
+				where_clause = " where source_id = " + source_id.ToString() +
+							   " and (last_downloaded >= last_imported or last_imported is null) ";
+			}
 			where_clause += " and local_path is not null";
 			
 			return where_clause;

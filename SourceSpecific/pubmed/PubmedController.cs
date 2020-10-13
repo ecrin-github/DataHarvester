@@ -14,9 +14,8 @@ namespace DataHarvester.pubmed
         Source source;
         int harvest_id;
         int harvest_type_id;
-        DateTime? cutoff_date;
 
-        public PubmedController(int _harvest_id, Source _source, DataLayer _repo, LoggingDataLayer _logging_repo, int _harvest_type_id, DateTime? _cutoff_date)
+        public PubmedController(int _harvest_id, Source _source, DataLayer _repo, LoggingDataLayer _logging_repo, int _harvest_type_id)
         {
             source = _source;
             processor = new PubmedProcessor();
@@ -24,7 +23,6 @@ namespace DataHarvester.pubmed
             logging_repo = _logging_repo;
             harvest_id = _harvest_id;
             harvest_type_id = _harvest_type_id;
-            cutoff_date = _cutoff_date;
         }
 
 
@@ -38,13 +36,13 @@ namespace DataHarvester.pubmed
             string fileBase = source.local_folder;
 
             // harvest_type_id can be 1 (all), 2 (use cutoff date) or 3 (harvest_type_id only 'incomplete' files)
-            int total_amount = logging_repo.FetchFileRecordsCount(source.id, "object", harvest_type_id, cutoff_date);
+            int total_amount = logging_repo.FetchFileRecordsCount(source.id, "object", harvest_type_id);
             int chunk = 1000;
             int k = 0;
 
             for (int m = 0; m < total_amount; m += chunk)
             {
-                IEnumerable<ObjectFileRecord> file_list = logging_repo.FetchObjectFileRecordsByOffset(source.id, m, chunk, harvest_type_id, cutoff_date);
+                IEnumerable<ObjectFileRecord> file_list = logging_repo.FetchObjectFileRecordsByOffset(source.id, m, chunk, harvest_type_id);
                 int n = 0; string filePath = "";
                 foreach (ObjectFileRecord rec in file_list)
                 {

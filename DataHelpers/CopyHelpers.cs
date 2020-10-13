@@ -138,8 +138,8 @@ namespace DataHarvester
 			    .MapTimeStampTz("datetime_of_data_fetch", x => x.datetime_of_data_fetch);
 
 
-		public static PostgreSQLCopyHelper<DataSetProperties> dataset_properties_helper =
-			new PostgreSQLCopyHelper<DataSetProperties>("sd", "dataset_properties")
+		public static PostgreSQLCopyHelper<ObjectDataset> object_datasets_helper =
+			new PostgreSQLCopyHelper<ObjectDataset>("sd", "object_datasets")
 				.MapVarchar("sd_oid", x => x.sd_oid)
 				.MapInteger("record_keys_type_id", x => x.record_keys_type_id)
 				.MapVarchar("record_keys_type", x => x.record_keys_type)

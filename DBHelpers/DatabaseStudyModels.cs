@@ -46,7 +46,7 @@ namespace DataHarvester
 		public List<AvailableIPD> ipd_info { get; set; }
 
 		public List<DataObject> data_objects { get; set; }
-		public List<DataSetProperties> dataset_properties { get; set; }
+		public List<ObjectDataset> object_datasets { get; set; }
 		public List<ObjectTitle> object_titles { get; set; }
 		public List<ObjectDate> object_dates { get; set; }
 		public List<ObjectInstance> object_instances { get; set; }

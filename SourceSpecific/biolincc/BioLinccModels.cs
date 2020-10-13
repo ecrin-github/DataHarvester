@@ -3,12 +3,12 @@ using System.Collections.Generic;
 
 namespace DataHarvester.biolincc
 {
-	public class BioLinccRecord
+	public class BioLincc_Record
 	{
 		public int id { get; set; }
-		public string sd_id { get; set; }
+		public string sd_sid { get; set; }
 		public string remote_url { get; set; }
-		public string display_title { get; set; }
+		public string title { get; set; }
 		public string acronym { get; set; }
 		public int? study_type_id { get; set; }
 		public string study_type { get; set; }
@@ -33,12 +33,12 @@ namespace DataHarvester.biolincc
 		public List<Resource> resources { get; set; }
 		public List<AssocDoc> assoc_docs { get; set; }
 
-		public BioLinccRecord(int _id)
+		public BioLincc_Record(int _id)
 		{
 			id = _id;
 		}
 
-		public BioLinccRecord()
+		public BioLincc_Record()
 		{}
 	}
 	

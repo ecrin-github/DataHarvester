@@ -5,14 +5,13 @@ using Dapper.Contrib.Extensions;
 
 namespace DataHarvester.yoda
 {
-
-	public class YodaRecord
+	public class Yoda_Record
 	{
-		public int id { get; set; }
-		public string nct_number { get; set; }
-		public string sd_id { get; set; }
+		public string id { get; set; }
+		public string registry_id { get; set; }
+		public string sd_sid { get; set; }
+		public string yoda_title { get; set; }
 		public string display_title { get; set; }
-		public string public_title { get; set; }
 		public bool is_yoda_only { get; set; }
 		public string remote_url { get; set; }
 		public int? sponsor_id { get; set; }

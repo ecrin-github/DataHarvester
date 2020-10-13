@@ -340,9 +340,9 @@ namespace DataHarvester
 		}
 
 
-		public void create_table_dataset_properties()
+		public void create_table_object_datasets()
 		{
-			string sql_string = @"CREATE TABLE sd.dataset_properties(
+			string sql_string = @"CREATE TABLE sd.object_datasets(
                 id                     INT             GENERATED ALWAYS AS IDENTITY PRIMARY KEY
 			  , sd_oid                 CHAR(24)        NOT NULL
 			  , record_keys_type_id    INT             NULL 
@@ -366,7 +366,7 @@ namespace DataHarvester
 			  , consent_details        VARCHAR         NULL 
               , record_hash            CHAR(32)        NULL
 			);
-            CREATE INDEX dataset_properties_sd_oid ON sd.dataset_properties(sd_oid);";
+            CREATE INDEX object_datasets_sd_oid ON sd.object_datasets(sd_oid);";
 
 			using (var conn = new NpgsqlConnection(db_conn))
 			{

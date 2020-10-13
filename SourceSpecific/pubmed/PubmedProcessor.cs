@@ -170,7 +170,6 @@ namespace DataHarvester.pubmed
             string atitle = "";
             string vtitle = "";
             string vlang_code = "";
-            bool vernacular_title_expected = false;
 
             // get some basic journal information, as this is useful for helping to 
             // determine the country of origin, and for identifying the publisher,
@@ -225,11 +224,6 @@ namespace DataHarvester.pubmed
                 {
                     if (atitle.Contains("<"))
                     {
-                        // Log this in extraction_notes and strip tags apart from super and subscripts.
-                        string qText = "The article title may include embedded html (" + atitle + ")";
-                        logging_repo.StoreExtractionNote(new ExtractionNote(100135, sdoid,
-                            "Harvest", harvest_id, 17, qText));
-
                         atitle = HtmlHelpers.replace_tags(atitle);
                         atitle = HtmlHelpers.strip_tags(atitle);
                     }
@@ -267,11 +261,6 @@ namespace DataHarvester.pubmed
                 {
                     if (atitle.Contains("<"))
                     {
-                        // Log this in extraction_notes and strip tags apart from super and subscripts.
-                        string qText = "The vernacular title may include embedded html (" + vtitle + ")";
-                        logging_repo.StoreExtractionNote(new ExtractionNote(100135, sdoid,
-                                                            "Harvest", harvest_id, 17, qText));
-
                         vtitle = HtmlHelpers.replace_tags(vtitle);
                         vtitle = HtmlHelpers.strip_tags(vtitle);
                     }
@@ -381,7 +370,6 @@ namespace DataHarvester.pubmed
                         // Get the article title without brackets and expect a vernacular title.
 
                         atitle = atitle.Substring(1, atitle.Length - 2);  // remove the square brackets at each end
-                        vernacular_title_expected = true;
                     }
                     else if (atitle.EndsWith(")"))
                     {
@@ -399,7 +387,6 @@ namespace DataHarvester.pubmed
                             {
                                 poss_comment = atitle.Substring(i + 1, atitle.Length - i - 2);
                                 atitle = atitle.Substring(1, i - 2);
-                                vernacular_title_expected = true;
                                 break;
                             }
                         }
@@ -408,14 +395,12 @@ namespace DataHarvester.pubmed
                             string qText = "The title starts with '[', end with ')', but unable to match parentheses. Title = " + atitle;
                             logging_repo.StoreExtractionNote(new ExtractionNote(100135, sdoid,
                             "Harvest", harvest_id, 18, qText));
-                            vernacular_title_expected = false;
                         }
                     }
                     else
                     {
                         // Log if a square bracket at the start is not matched by an ending bracket or paranthesis.
 
-                        vernacular_title_expected = false;
                         string qText = "The title starts with a '[' but there is no matching ']' or ')' at the end of the title. Title = " + atitle;
                         logging_repo.StoreExtractionNote(new ExtractionNote(100135, sdoid,
                             "Harvest", harvest_id, 18, qText));
@@ -425,15 +410,6 @@ namespace DataHarvester.pubmed
 
                     if (!vernacular_title_present)
                     {
-                        if (vernacular_title_expected)
-                        {
-                            // Something odd, no vernacular title but one was expected.
-
-                            string qText = "There is no vernacular title but the article title appears to be translated";
-                            logging_repo.StoreExtractionNote(new ExtractionNote(100135, sdoid,
-                            "Harvest", harvest_id, 18, qText));
-                        }
-
                         // Add the article title, without the brackets and with any comments - as the only title present it becomes the default.
 
                         titles.Add(new ObjectTitle(sdoid, atitle, 19, "Journal article title", "en", 11, true, poss_comment));
@@ -443,7 +419,6 @@ namespace DataHarvester.pubmed
                         // Both titles are present, add them both, with the vernacular title as the default.
 
                         titles.Add(new ObjectTitle(sdoid, atitle, 19, "Journal article title", "en", 12, false, poss_comment));
-
                         titles.Add(new ObjectTitle(sdoid, vtitle, 19, "Journal article title", vlang_code, 21, true, ""));
                     }
 
@@ -456,11 +431,6 @@ namespace DataHarvester.pubmed
                     if (vernacular_title_present)
                     {
                         // Possibly something odd, vernacular title but no indication of translation in article title.
-
-                        string qText = "There is a vernacular title but the article title does not indicate it is translated";
-                        logging_repo.StoreExtractionNote(new ExtractionNote(100135, sdoid,
-                            "Harvest", harvest_id, 18, qText));
-
                         // Add the vernacular title, will not be the default in this case.
 
                         titles.Add(new ObjectTitle(sdoid, vtitle, 19, "Journal article title", vlang_code, 21, false, ""));
@@ -529,21 +499,6 @@ namespace DataHarvester.pubmed
                                     db_name = bnkname,
                                     id_in_db = GetElementAsString(a)
                                 }).ToList();
-
-                        // Extra work if the databank is clinicaltrials.gov
-                        // and more than 1 link - in this case log it.
-
-                        if (bnkname.ToLower() == "clinicaltrials.gov")
-                        {
-                            int num_nct_links = db_ids.Count();
-                            if (num_nct_links > 1)
-                            {
-                                string qText = "This study has " + num_nct_links.ToString() + " clinicalTrials.gov ids. ";
-                                qText += "All should be stored in the db links table.";
-                                logging_repo.StoreExtractionNote(new ExtractionNote(100135, sdoid,
-                                "Harvest", harvest_id, 13, qText));
-                            }
-                        }
                     }
                 }
             }
@@ -693,7 +648,7 @@ namespace DataHarvester.pubmed
                                 default:
                                     {
                                         date_type = 0;
-                                        string qText = "A unexpexted status (" + pub_status + ") found a date in the history section";
+                                        string qText = "An unexpexted status (" + pub_status + ") found a date in the history section";
                                         logging_repo.StoreExtractionNote(new ExtractionNote(100135, sdoid,
                                                     "Harvest", harvest_id, 20, qText));
                                         break;
@@ -923,12 +878,6 @@ namespace DataHarvester.pubmed
                         else if (source == "NRCBL")
                         {
                             identifiers.Add(new ObjectIdentifier(sdoid, 33, "NRCBL", other_id, 100447, "Georgetown University"));
-                        }
-                        else
-                        {
-                            string qText = "Unexpected source code (" + source + ") found in 'other IDs'";
-                            logging_repo.StoreExtractionNote(new ExtractionNote(100135, sdoid,
-                            "Harvest", harvest_id, 21, qText));
                         }
                     }
                 }
@@ -1218,10 +1167,6 @@ namespace DataHarvester.pubmed
                                 if (affil_identifier != "")
                                 {
                                     affil_ident_source = GetAttributeAsString(e.Element("Identifier").Attribute("Source"));
-                                    string qText = "person " + full_name + "(linked to " + sdoid + ") affiliation given ";
-                                    qText += "as Id and Id source  (" + affil_identifier + " (source =" + affil_ident_source + ")";
-                                    logging_repo.StoreExtractionNote(new ExtractionNote(100135, sdoid,
-                                                                    "Harvest", harvest_id, 25, qText));
                                 }
                             }
 

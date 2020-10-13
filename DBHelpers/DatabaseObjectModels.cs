@@ -124,7 +124,7 @@ namespace DataHarvester
 	}
 
 
-	public class DataSetProperties
+	public class ObjectDataset
 	{
 		public string sd_oid { get; set; }
 		public int? record_keys_type_id { get; set; }
@@ -147,7 +147,7 @@ namespace DataHarvester
 		public bool? consent_no_methods { get; set; }
 		public string consent_details { get; set; }
 
-		public DataSetProperties(string _sd_oid,
+		public ObjectDataset(string _sd_oid,
 							int? _record_keys_type_id, string _record_keys_type, string _record_keys_details,
 							int? _deident_type_id, string _deident_type, string _deident_details,
 							int? _consent_type_id, string _consent_type, string _consent_details)
@@ -164,7 +164,7 @@ namespace DataHarvester
 			consent_details = _consent_details;
 		}
 
-		public DataSetProperties(string _sd_oid,
+		public ObjectDataset(string _sd_oid,
 							int? _record_keys_type_id, string _record_keys_type, string _record_keys_details,
 							int? _deident_type_id, string _deident_type,
 							bool? _deident_direct, bool? _deident_hipaa, bool? _deident_dates,

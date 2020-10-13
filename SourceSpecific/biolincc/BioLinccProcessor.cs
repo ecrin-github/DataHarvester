@@ -7,7 +7,7 @@ namespace DataHarvester.biolincc
 	public class BioLinccProcessor
 	{
 
-		public Study ProcessData(BioLinccRecord st, DateTime? download_datetime, DataLayer common_repo, BioLinccDataLayer biolincc_repo)
+		public Study ProcessData(BioLincc_Record st, DateTime? download_datetime, DataLayer common_repo, BioLinccDataLayer biolincc_repo)
 		{
 			Study s = new Study();
 
@@ -19,7 +19,7 @@ namespace DataHarvester.biolincc
 			List<StudyReference> study_references = new List<StudyReference>();
 
 			List<DataObject> data_objects = new List<DataObject>();
-			List<DataSetProperties> dataset_properties = new List<DataSetProperties>();
+			List<ObjectDataset> object_datasets = new List<ObjectDataset>();
 			List<ObjectTitle> data_object_titles = new List<ObjectTitle>();
 			List<ObjectDate> data_object_dates = new List<ObjectDate>();
 			List<ObjectInstance> data_object_instances = new List<ObjectInstance>();
@@ -42,18 +42,18 @@ namespace DataHarvester.biolincc
 			// transfer features of main study object
 			// In most cases study will have already been registered in CGT
 
-			string sid = st.sd_id;
+			string sid = st.sd_sid;
 			s.sd_sid = sid;
 			s.datetime_of_data_fetch = download_datetime;
 
-			if (st.display_title.Contains("<"))
+			if (st.title.Contains("<"))
 			{
-				s.display_title = HtmlHelpers.replace_tags(st.display_title);
+				s.display_title = HtmlHelpers.replace_tags(st.title);
 				s.display_title = HtmlHelpers.strip_tags(s.display_title);
 			}
 			else
 			{
-				s.display_title = st.display_title;
+				s.display_title = st.title;
 			}
 			
 			if (st.brief_description.Contains("<"))
@@ -143,7 +143,7 @@ namespace DataHarvester.biolincc
 			// For the study, set up two titles, acronym and display title
 			// NHLBI title not always exactly the same as the trial registry entry.
 
-			study_titles.Add(new StudyTitle(sid, st.display_title, 15, "Public Title", true, "From study page on BioLINCC web site"));
+			study_titles.Add(new StudyTitle(sid, st.title, 15, "Public Title", true, "From study page on BioLINCC web site"));
 			if (!string.IsNullOrEmpty(st.acronym))
 			{
 				study_titles.Add(new StudyTitle(sid, st.acronym, 14, "Acronym or Abbreviation", false,""));
@@ -248,7 +248,7 @@ namespace DataHarvester.biolincc
 				}
 
 				// do dataset object separately
-				dataset_properties.Add(new DataSetProperties(sd_oid,
+				object_datasets.Add(new ObjectDataset(sd_oid,
 										 0, "Not known", "",
 										 2, "De-identification applied", de_identification, 
 					                     consent_type_id, consent_type, restrictions));
@@ -327,7 +327,7 @@ namespace DataHarvester.biolincc
 			s.references = study_references2;
 
 			s.data_objects = data_objects;
-			s.dataset_properties = dataset_properties;
+			s.object_datasets = object_datasets;
 			s.object_titles = data_object_titles;
 			s.object_dates = data_object_dates;
 			s.object_instances = data_object_instances;
@@ -371,10 +371,10 @@ namespace DataHarvester.biolincc
 										 s.data_objects);
 			}
 
-			if (s.dataset_properties.Count > 0)
+			if (s.object_datasets.Count > 0)
 			{
-				repo.StoreDatasetProperties(ObjectCopyHelpers.dataset_properties_helper,
-										 s.dataset_properties);
+				repo.StoreDatasetProperties(ObjectCopyHelpers.object_datasets_helper,
+										 s.object_datasets);
 			}
 
 			// store data object attributes

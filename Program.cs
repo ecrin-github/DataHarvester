@@ -1,15 +1,14 @@
-﻿using System;
-using static System.Console;
-using System.Text.RegularExpressions;
-using CommandLine;
+﻿using CommandLine;
+using System;
 using System.Collections.Generic;
-using System.Threading.Tasks;
-using System.Runtime.CompilerServices;
 using System.Linq;
+using System.Text.RegularExpressions;
+using System.Threading.Tasks;
+using static System.Console;
 
 namespace DataHarvester
 {
-	class Program
+    class Program
 	{
 
 		static async Task Main(string[] args)
@@ -21,17 +20,16 @@ namespace DataHarvester
 
 		static async Task<int> RunOptionsAndReturnExitCodeAsync(Options opts)
 		{
-
 			// Check harvest type id is valid. 
 
 			int harvest_type_id = opts.harvest_type_id;
-			if (harvest_type_id != 1 && harvest_type_id != 2 && harvest_type_id != 3)
+			if (harvest_type_id != 1 && harvest_type_id != 2)
 			{
-				WriteLine("Sorry - the harvest type argument does not correspond to 1, 2 or 3");
+				WriteLine("Sorry - the harvest type argument does not correspond to 1 or 2");
 				return -1;
 			}
 
-
+			/*
 			// If a date is required check one is present and is valid. 
 			// It should be in the ISO YYYY-MM-DD format.
 			DateTime? cutoff_date = null;
@@ -56,6 +54,7 @@ namespace DataHarvester
 					return -1;
 				}
 			}
+			*/
 
 			Harvester dl = new Harvester();
 
@@ -74,7 +73,7 @@ namespace DataHarvester
 					}
 					else
 					{
-						await dl.HarvestDataAsync(source, harvest_type_id, cutoff_date, opts.org_update_only);
+						await dl.HarvestDataAsync(source, harvest_type_id, opts.org_update_only);
 					}
 				}
 			}
@@ -98,11 +97,11 @@ namespace DataHarvester
 		[Option('s', "source_ids", Required = true, Separator = ',', HelpText = "Comma separated list of Integer ids of data sources.")]
 		public IEnumerable<int> source_ids { get; set; }
 
-		[Option('t', "harvest_type_id", Required = true, HelpText = "Integer representing type of harvest (1 = full, 2 = with cutoff date, 3 = incomplete files only).")]
+		[Option('t', "harvest_type_id", Required = true, HelpText = "Integer representing type of harvest (1 = full, i.e. all available files, 2 = only files downloaded since last harvest.")]
 		public int harvest_type_id { get; set; }
 
-		[Option('d', "cutoff_date", Required = false, HelpText = "Only data revised or added since this date will be considered")]
-		public string cutoff_date { get; set; }
+		//[Option('d', "cutoff_date", Required = false, HelpText = "Only data revised or added since this date will be considered")]
+		//public string cutoff_date { get; set; }
 
 		[Option('G', "organisation_update_only", Required = false, HelpText = "If present does not recreate Sd tables - only updates organisation ids")]
 		public bool org_update_only { get; set; }

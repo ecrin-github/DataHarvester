@@ -46,7 +46,7 @@ namespace DataHarvester
 			// dropping routines include 'if exists'
 			// therefore can attempt to drop all of them
 			object_tablebuilder.drop_table("data_objects");
-			object_tablebuilder.drop_table("dataset_properties");
+			object_tablebuilder.drop_table("object_datasets");
 			object_tablebuilder.drop_table("object_dates");
 			object_tablebuilder.drop_table("object_instances");
 			object_tablebuilder.drop_table("object_titles");
@@ -96,7 +96,7 @@ namespace DataHarvester
 
 			// these are database dependent		
 
-			if (source.has_dataset_properties) object_tablebuilder.create_table_dataset_properties();
+			if (source.has_object_datasets) object_tablebuilder.create_table_object_datasets();
 			if (source.has_object_dates) object_tablebuilder.create_table_object_dates();
 			if (source.has_object_relationships) object_tablebuilder.create_table_object_relationships();
 			if (source.has_object_rights) object_tablebuilder.create_table_object_rights();

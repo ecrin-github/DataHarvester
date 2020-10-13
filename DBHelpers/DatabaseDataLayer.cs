@@ -162,7 +162,7 @@ namespace DataHarvester
 		}
 
 
-		public ulong StoreDatasetProperties(PostgreSQLCopyHelper<DataSetProperties> copyHelper, IEnumerable<DataSetProperties> entities)
+		public ulong StoreDatasetProperties(PostgreSQLCopyHelper<ObjectDataset> copyHelper, IEnumerable<ObjectDataset> entities)
 		{
 			using (var conn = new NpgsqlConnection(connString))
 			{

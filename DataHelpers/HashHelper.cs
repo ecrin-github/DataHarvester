@@ -26,6 +26,19 @@ namespace DataHarvester
             return res;
         }
 
+        public int GetHashRecordCount(string table_name, int hash_type_id)
+        {
+            int res = 0;
+            string sql_string = @"select count(*) from sd." + table_name + 
+                " where hash_type_id = " + hash_type_id.ToString();
+            using (var conn = new NpgsqlConnection(db_conn))
+            {
+                res = conn.ExecuteScalar<int>(sql_string);
+            }
+            return res;
+        }
+
+
         public void ExecuteSQL(string sql_string)
         {
             using (var conn = new NpgsqlConnection(db_conn))
@@ -49,7 +62,7 @@ namespace DataHarvester
                         string batch_sql_string = sql_string + " where id >= " + r.ToString() + " and id < " + (r + rec_batch).ToString();
                         ExecuteSQL(batch_sql_string);
                         string feedback = "Creating " + table_name + " hash codes, " + r.ToString() + " to ";
-                        feedback += (r + rec_batch < rec_count) ? (r + rec_batch).ToString() : rec_count.ToString();
+                        feedback += (r + rec_batch < rec_count) ? (r + rec_batch - 1).ToString() : rec_count.ToString();
                         StringHelpers.SendFeedback(feedback);
                     }
                 }
@@ -62,18 +75,31 @@ namespace DataHarvester
             catch (Exception e)
             {
                 string res = e.Message;
+                StringHelpers.SendError("In hash creation (" + table_name + "): " + res);
             }
         }
 
 
-        public void CreateCompositeOjectHashes(string top_sql_string, string hash_type)
+        public void CreateCompositeOjectHashes(string top_sql_string, int hash_type_id, string hash_type)
         {
             try
             {
                 int rec_count = GetRecordCount("data_objects");
-                int rec_batch = 50000;
-                // int rec_batch = 1000;  // for testing 
-                if (rec_count > rec_batch)
+                int hash_count = GetHashRecordCount("object_hashes", hash_type_id);
+                int num_recs_per_entity = hash_count / rec_count;
+                bool use_batch = false;
+                int rec_batch = 0;
+                if (rec_count > 50000)
+                {
+                    use_batch = true;
+                    rec_batch = 50000;
+                    if (num_recs_per_entity > 2)
+                    {
+                        rec_batch = 50000 / (2 * num_recs_per_entity);
+                    }
+                }
+                
+                if (use_batch)
                 {
                     for (int r = 1; r <= rec_count; r += rec_batch)
                     {
@@ -85,7 +111,7 @@ namespace DataHarvester
                                  " + where_sql_string + " group by t.sd_oid;";
                         ExecuteSQL(batch_sql_string);
                         string feedback = "Creating composite object hash codes (" + hash_type + "), " + r.ToString() + " to ";
-                        feedback += (r + rec_batch < rec_count) ? (r + rec_batch).ToString() : rec_count.ToString();
+                        feedback += (r + rec_batch < rec_count) ? (r + rec_batch - 1).ToString() : rec_count.ToString();
                         StringHelpers.SendFeedback(feedback);
                     }
                 }
@@ -100,6 +126,7 @@ namespace DataHarvester
             catch (Exception e)
             {
                 string res = e.Message;
+                StringHelpers.SendError("In object composite hash creation (" + hash_type + "): " + res);
             }
         }
 
@@ -118,7 +145,7 @@ namespace DataHarvester
                         string batch_sql_string = top_sql_string + where_sql_string;
                         ExecuteSQL(batch_sql_string);
                         string feedback = "Creating full object hash codes, " + r.ToString() + " to ";
-                        feedback += (r + rec_batch < rec_count) ? (r + rec_batch).ToString() : rec_count.ToString();
+                        feedback += (r + rec_batch < rec_count) ? (r + rec_batch - 1).ToString() : rec_count.ToString();
                         StringHelpers.SendFeedback(feedback);
                     }
                 }
@@ -132,16 +159,17 @@ namespace DataHarvester
             catch (Exception e)
             {
                 string res = e.Message;
+                StringHelpers.SendError("In full hash creation for data objects: " + res);
             }
         }
 
 
-        public void CreateCompositeStudyHashes(string top_sql_string, string hash_type)
+        public void CreateCompositeStudyHashes(string top_sql_string, int hash_type_id, string hash_type)
         {
             try
             {
                 int rec_count = GetRecordCount("studies");
-                int rec_batch = 50000;
+                int rec_batch = 10000;
                 //int rec_batch = 1000;  // for testing 
                 if (rec_count > rec_batch)
                 {
@@ -155,7 +183,7 @@ namespace DataHarvester
                                  " + where_sql_string + " group by t.sd_sid;";
                         ExecuteSQL(batch_sql_string);
                         string feedback = "Creating composite study hash codes (" + hash_type + "), " + r.ToString() + " to ";
-                        feedback += (r + rec_batch < rec_count) ? (r + rec_batch).ToString() : rec_count.ToString();
+                        feedback += (r + rec_batch < rec_count) ? (r + rec_batch - 1).ToString() : rec_count.ToString();
                         StringHelpers.SendFeedback(feedback);
                     }
                 }
@@ -170,6 +198,7 @@ namespace DataHarvester
             catch (Exception e)
             {
                 string res = e.Message;
+                StringHelpers.SendError("In study composite hash creation: " + res);
             }
         }
 
@@ -188,7 +217,7 @@ namespace DataHarvester
                         string batch_sql_string = top_sql_string + where_sql_string;
                         ExecuteSQL(batch_sql_string);
                         string feedback = "Creating full study hash codes, " + r.ToString() + " to ";
-                        feedback += (r + rec_batch < rec_count) ? (r + rec_batch).ToString() : rec_count.ToString();
+                        feedback += (r + rec_batch < rec_count) ? (r + rec_batch - 1).ToString() : rec_count.ToString();
                         StringHelpers.SendFeedback(feedback);
                     }
                 }
@@ -202,6 +231,7 @@ namespace DataHarvester
             catch (Exception e)
             {
                 string res = e.Message;
+                StringHelpers.SendError("In full hash creation for studies: " + res);
             }
         }
 
@@ -342,7 +372,7 @@ namespace DataHarvester
                     md5(to_json(array_agg(t.record_hash ORDER BY t.record_hash))::varchar)
                     from sd." + table_name;
 
-            h.CreateCompositeStudyHashes(top_sql_string, hash_type);
+            h.CreateCompositeStudyHashes(top_sql_string, hash_type_id, hash_type);
 
         }
 
@@ -392,14 +422,14 @@ namespace DataHarvester
 
         public void create_recordset_properties_hashes()
         {
-            string sql_string = @"Update sd.dataset_properties
+            string sql_string = @"Update sd.object_datasets
               set record_hash = md5(json_build_array(record_keys_type_id, record_keys_details,
               deident_type_id, deident_direct, deident_hipaa,
               deident_dates, deident_nonarr, deident_kanon, deident_details,
               consent_type_id, consent_noncommercial, consent_geog_restrict,
               consent_research_type, consent_genetic_only, consent_no_methods, consent_details)::varchar)";
 
-            h.ExecuteHashSQL(sql_string, "dataset_properties");
+            h.ExecuteHashSQL(sql_string, "object_datasets");
         }
 
 
@@ -505,7 +535,7 @@ namespace DataHarvester
             string sql_string = @"Update sd.object_publication_types
               set record_hash = md5(json_build_array(type_name)::varchar)";
 
-            h.ExecuteHashSQL(sql_string, "publication_types");
+            h.ExecuteHashSQL(sql_string, "object_publication_types");
         }
 
 
@@ -550,7 +580,7 @@ namespace DataHarvester
                     md5(to_json(array_agg(t.record_hash ORDER BY t.record_hash))::varchar)
                     from sd." + table_name;
 
-            h.CreateCompositeOjectHashes(top_sql_string, hash_type);
+            h.CreateCompositeOjectHashes(top_sql_string, hash_type_id, hash_type);
         }
 
 

@@ -107,6 +107,7 @@ namespace DataHarvester
             catch (Exception e)
             {
                 string res = e.Message;
+                StringHelpers.SendError("In update_topics: " + res);
             }
         }
 
