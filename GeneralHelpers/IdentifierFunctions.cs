@@ -365,16 +365,29 @@ namespace DataHarvester
 
 
 			// is it a Dutch registry id?
-			if (Regex.Match(id_value, @"^NTR(\d{2}|\d{3}|\d{4})").Success)
-            {
+			if (Regex.Match(id_value, @"^NTR\d{2}").Success)
+			{
 				id.id_org_id = 100132;
 				id.id_org = "The Netherlands National Trial Register";
 				id.id_type_id = 11;
 				id.id_type = "Trial Registry ID";
-				id.id_value = Regex.Match(id_value, @"^NTR(\d{2}|\d{3}|\d{4})").Value;
+				// can be a 4, 3 or 2 digit number
+				if (Regex.Match(id_value, @"^NTR\d{4}$").Success)
+				{
+					id.id_value = Regex.Match(id_value, @"^NTR\d{4}$").Value;
+				}
+				else if (Regex.Match(id_value, @"^NTR\d{3}$").Success)
+				{
+					id.id_value = Regex.Match(id_value, @"^NTR\d{3}$").Value;
+				}
+				else if (Regex.Match(id_value, @"^NTR\d{2}$").Success)
+				{
+					id.id_value = Regex.Match(id_value, @"^NTR\d{2}$").Value;
+				}
 			}
-
-            // a Eudract number?
+			
+			
+			// a Eudract number?
 			if (Regex.Match(id_value, @"[0-9]{4}-[0-9]{6}-[0-9]{2}").Success)
 			{
 				id.id_org_id = 100123;
