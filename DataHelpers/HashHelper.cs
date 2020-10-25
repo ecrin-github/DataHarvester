@@ -1,8 +1,6 @@
 ﻿using Dapper;
 using Npgsql;
 using System;
-using System.Collections.Generic;
-using System.Text;
 
 namespace DataHarvester
 {
@@ -298,8 +296,8 @@ namespace DataHarvester
             string sql_string = @"Update sd.study_topics
               set record_hash = md5(json_build_array(topic_type_id, topic_value, 
               mesh_coded, topic_code, topic_value, topic_qualcode,
-		      topic_qualvalue, original_ct_id, original_ct_code,
-		      original_value, comments)::varchar)";
+              topic_qualvalue, original_ct_id, original_ct_code,
+              original_value, comments)::varchar)";
 
             h.ExecuteHashSQL(sql_string, "study_topics");
         }
@@ -387,7 +385,7 @@ namespace DataHarvester
                       union
                       select sd_sid, record_hash as hash
                       from sd.studies) h
-	              group by sd_sid) b
+                  group by sd_sid) b
             where 
             s.sd_sid = b.sd_sid";
 

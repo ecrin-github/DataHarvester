@@ -1,12 +1,11 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.IO;
 using System.Threading.Tasks;
 using System.Xml.Serialization;
 
 namespace DataHarvester.isrctn
 {
-	class ISRCTNController
+    class ISRCTNController
 	{
 		DataLayer common_repo;
 		LoggingDataLayer logging_repo;

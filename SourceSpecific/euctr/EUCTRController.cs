@@ -1,12 +1,11 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.IO;
-using System.Threading.Tasks;
 using System.Xml.Serialization;
 
 namespace DataHarvester.euctr
 {
-	class EUCTRController
+    class EUCTRController
 	{
 		DataLayer common_repo;
 		LoggingDataLayer logging_repo;

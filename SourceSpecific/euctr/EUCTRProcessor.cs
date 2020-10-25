@@ -1,12 +1,10 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Globalization;
-using System.Net.Http;
-using System.Threading.Tasks;
 
 namespace DataHarvester.euctr
 {
-	public class EUCTRProcessor
+    public class EUCTRProcessor
 	{
 		public Study ProcessData(EUCTR_Record fs, DateTime? download_datetime, DataLayer common_repo)
 		{

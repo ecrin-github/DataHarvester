@@ -1,15 +1,12 @@
-﻿using Dapper.Contrib.Extensions;
-using Dapper;
+﻿using Dapper;
+using Microsoft.Extensions.Configuration;
 using Npgsql;
 using System;
-using Microsoft.Extensions.Configuration;
 using System.Linq;
-using System.Collections.Generic;
-using PostgreSQLCopyHelper;
 
 namespace DataHarvester.who
 {
-	public class WHODataLayer
+    public class WHODataLayer
 	{
 		private string bio_connString;
 		private string ctg_connString;

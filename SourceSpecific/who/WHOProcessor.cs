@@ -1,13 +1,10 @@
-﻿using DataHarvester.who;
-using Npgsql;
-using System;
+﻿using System;
 using System.Collections.Generic;
-using System.Linq;
 using System.Text.RegularExpressions;
 
 namespace DataHarvester.who
 {
-	public class WHOProcessor
+    public class WHOProcessor
 	{
 
 		public Study ProcessData(WHORecord st, DateTime? download_datetime, DataLayer common_repo, WHODataLayer who_repo)

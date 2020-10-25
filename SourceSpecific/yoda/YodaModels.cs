@@ -1,11 +1,11 @@
-﻿using System;
+﻿using Dapper.Contrib.Extensions;
+using System;
 using System.Collections.Generic;
-using Dapper.Contrib.Extensions;
 
 
 namespace DataHarvester.yoda
 {
-	public class Yoda_Record
+    public class Yoda_Record
 	{
 		public string id { get; set; }
 		public string registry_id { get; set; }

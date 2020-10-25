@@ -1,39 +1,8 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
+﻿using System.Collections.Generic;
 using System.Xml.Serialization;
 
 namespace DataHarvester.euctr
 {
-    /*
-    public class FileRecord
-    {
-        public int source_id { get; set; }
-        public string sd_id { get; set; }
-        public string remote_url { get; set; }
-        public int remote_lastsf_id { get; set; }
-        public DateTime? remote_last_revised { get; set; }
-        public int download_status { get; set; }
-        public DateTime? download_datetime { get; set; }
-        public string local_path { get; set; }
-        public DateTime? local_last_revised { get; set; }
-
-        public FileRecord(string _sd_id, string _remote_url, DateTime? _remote_last_revised, string _local_path)
-        {
-            source_id = 100123;
-            sd_id = _sd_id;
-            remote_url = _remote_url;
-            remote_lastsf_id = 100002;
-            remote_last_revised = _remote_last_revised;
-            download_status = 2;
-            download_datetime = DateTime.Now;
-            local_path = _local_path;
-            local_last_revised = DateTime.Now;
-        }
-    }
-
-    */
-
     public class EUCTR_Record
     {
         public int id { get; set; }

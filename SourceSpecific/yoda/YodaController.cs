@@ -1,11 +1,10 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.IO;
 using System.Xml.Serialization;
 
 namespace DataHarvester.yoda
 {
-	class YodaController
+    class YodaController
 	{
 		DataLayer common_repo;
 		LoggingDataLayer logging_repo;
