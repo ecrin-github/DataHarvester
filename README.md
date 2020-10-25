@@ -1,7 +1,10 @@
 # DataHarvester
 Takes downloaded source files and loads their data into databases for further inspection and processing.
 
-The program uses XML files in a data source folder (one is designated for each source) - the files have been previously downloaded using the DataDownloader system. The XML files are converted into data in the 'sd' schema (= session data) tables within each MDR database. Note that on each run the sd tables are dropped and created anew, and thus only ever contain the data from the most recent harvest. The tables present will vary in different databases, though if a table *is* present it will have a consistent structure in every database. The conversion to sd data trherefore represents the second and final stage of the source data into a consistent schema. 
+The program uses the XML files already downloaded for a data into a source folder (one is designated for each source). The XML files, or a subset as controlled by the parameters - see below - are converted into data in the 'sd' schema (= session data) tables within each source database. Note that on each run the sd tables are dropped and created anew, and thus only ever contain the data from the most recent harvest. The tables present will vary in different databases, though if a table *is* present it will have a consistent structure in every database. The conversion to sd data therefore represents the second and final stage of the conversion of the source data into the consistent ECRIN schema. For that reason the detailed code for different sources can vary widely. <br/><br/>
+The program represents the second stage in the 4 stage MDR extraction process:<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Download => **Harvest** => Import => Aggregation<br/><br/>
+For a much more detailed explanation of the extraction process,and the MDR system as a whole, please see the project wiki (landing page at https://ecrin-mdr.online/index.php/Project_Overview).<br/>
 
 ### Parameters
 The system is currently a consiole app, and takes up to 3 parameters
