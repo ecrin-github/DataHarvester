@@ -7,22 +7,16 @@ The program represents the second stage in the 4 stage MDR extraction process:<b
 For a much more detailed explanation of the extraction process,and the MDR system as a whole, please see the project wiki (landing page at https://ecrin-mdr.online/index.php/Project_Overview).<br/>
 
 ### Parameters
-The system is currently a consiole app, and takes up to 3 parameters
-* A 6 digit integer representing the source (e.g. 100120 is Clinical Trials,gov)
-* A single digit integer representing the harvest type (see listing below). If not provided the default harvest type will be read from the database.
-* A cut-off date for those harvest types that are date dependent. In such cases only files that have been revised since the cutoff data provided will be harvested into the sd tables.
+The system is currently a console app, and takes the folowing parameters:<br/>
+-s, followed by a comma delimited string of integer ids, each represnting a source: The source systems to be harvested.<br/>
+-t, followed by 1 or 2: indicates the type of harvesting to be carried out. If 1, the harvesting will be of all files in the source folder , repreesentging 100% of the data that has been downloaded. If 2, the harvest is only of files that have been re-downloaded (becuase they represent new or changed source data) after the datetimer of the last import process. Note that it si the last *import* event (for that source) which is important here, not the last *harvest* event. Multiple harvests between imports do not therefore affect the files that are harvested.
+-G: is a flag that can be applied that prevents a normal harvest occuring, so that the sd tables are not recreated and reloaded. Instead they are updated using revised contextual data, so that - for example - orgabnisation Ids and topic data codes can be re-applied. The option provides a relatively efficient way of updating data, though works better if preceded with a t1 full harvest of all data.
+	
+### Overview
 
-The plan is to wrap a UI around the app at some point.
 
-### Harvest Types
-1: Harvest all<br/>
-*All files in the source data folder will be converted into data in the sd tables. Used for relatively small sources and / or those that have no 'last revised date'*
+### Logging
 
-2: Harvest revised since (cutoff date)<br/>
-*Processes only files that have a 'last revised date' greater than the cutoff date given. Harvests of this type therefore require a third parameter to be supplied.*
-
-3: Harvest those considered not completed<br/>
-*Processes those files thast are marked as 'incomplete' in the logging system and ignores those marked as 'comnplete'. The latter designation is sometimes given to files that, whilst they do not contain a date last revised attribute, are old enough and seem to contain sufficient data that any further editing seems very unlikely. Note that even files that are 'complete', however, can ne periodically examined (e.g. on an annual basis) by over-riding the default download and harvest ssettings.*
 
 ### Provenance
 * Author: Steve Canham
