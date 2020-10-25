@@ -8,9 +8,9 @@ For a much more detailed explanation of the extraction process,and the MDR syste
 
 ### Parameters
 The system is currently a console app, and takes the folowing parameters:<br/>
--s, followed by a comma delimited string of integer ids, each represnting a source: The source systems to be harvested.<br/>
--t, followed by 1 or 2: indicates the type of harvesting to be carried out. If 1, the harvesting will be of all files in the source folder , repreesentging 100% of the data that has been downloaded. If 2, the harvest is only of files that have been re-downloaded (becuase they represent new or changed source data) after the datetimer of the last import process. Note that it si the last *import* event (for that source) which is important here, not the last *harvest* event. Multiple harvests between imports do not therefore affect the files that are harvested.
--G: is a flag that can be applied that prevents a normal harvest occuring, so that the sd tables are not recreated and reloaded. Instead they are updated using revised contextual data, so that - for example - orgabnisation Ids and topic data codes can be re-applied. The option provides a relatively efficient way of updating data, though works better if preceded with a t1 full harvest of all data.
+**-s**, followed by a comma delimited string of integer ids, each represnting a source: The source systems to be harvested.<br/>
+**-t**, followed by 1 or 2: indicates the type of harvesting to be carried out. If 1, the harvesting will be of all files in the source folder , repreesentging 100% of the data that has been downloaded. If 2, the harvest is only of files that have been re-downloaded (becuase they represent new or changed source data) after the datetimer of the last import process. Note that it si the last *import* event (for that source) which is important here, not the last *harvest* event. Multiple harvests between imports do not therefore affect the files that are harvested.<br/>
+**-G**: is a flag that can be applied that prevents a normal harvest occuring, so that the sd tables are not recreated and reloaded. Instead they are updated using revised contextual data, so that - for example - organisation Ids and topic data codes can be re-applied. The option provides a relatively efficient way of updating data, though obviously works better if preceded with a t1 full harvest of all data.<br/>
 	
 ### Overview
 
