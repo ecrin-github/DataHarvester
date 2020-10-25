@@ -1504,12 +1504,12 @@ namespace DataHarvester.pubmed
             }
             c.display_title = (author_string != "" ? author_string + ". " : "") + art_title + journal_source;
 
+            // Tidy up doi status.
 
-            // Tidy up doi status
             c.doi_status_id = (c.doi != null) ? 1 : 5;
 
+            // Tidy up access type.
 
-            // Tidy up access type
             Boolean PMC_present = false;
             foreach (ObjectInstance i in instances)
             {

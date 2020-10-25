@@ -6,9 +6,7 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <Compile Remove="DataHelpers\ImportHelper.cs" />
     <Compile Remove="DataHelpers\TableBuildersAD.cs" />
-    <Compile Remove="DBBuilders\ImportBuilder.cs" />
   </ItemGroup>
 
   <ItemGroup>
