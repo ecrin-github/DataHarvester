@@ -4,10 +4,16 @@ using System.Xml.Linq;
 
 namespace DataHarvester
 {
-    public static class DateHelpers
+    public class DateHelpers
     {
+        LoggingDataLayer logging_repo;
 
-        public static SplitDate GetDateParts(string dateString)
+        public DateHelpers(LoggingDataLayer _logging_repo)
+        {
+            logging_repo = _logging_repo;
+        }
+
+        public SplitDate GetDateParts(string dateString)
         {
             // input date string is in the form of "<month name> day, year"
             // or in some cases in the form "<month name> year"
@@ -63,7 +69,7 @@ namespace DataHarvester
         }
 
 
-        public static SplitDate GetDatePartsFromISOString(string dateString)
+        public SplitDate GetDatePartsFromISOString(string dateString)
         {
             try
             {
@@ -131,7 +137,7 @@ namespace DataHarvester
         // parts, and returns an ObjectDate classs, which also indicates if the date was partial, and which includes
         // a standardised string repreesentation as well as Y, M, D integer components.
 
-        public static ObjectDate ProcessDate(string sd_oid, XElement composite_date, int date_type_id, string date_type)
+        public ObjectDate ProcessDate(string sd_oid, XElement composite_date, int date_type_id, string date_type)
         {
             //composite_date should normnally have year, month and day entries but these may not all be present
             int? year = (composite_date.Element("Year") == null) ? null : (int?)composite_date.Element("Year");
@@ -191,7 +197,7 @@ namespace DataHarvester
         // ProcessMedlineDate tries to extractr as much information as possible from 
         // a non-standard 'Medline' date entry. 
 
-        public static ObjectDate ProcessMedlineDate(string sd_oid, string date_string, int date_type_id, string date_type)
+        public ObjectDate ProcessMedlineDate(string sd_oid, string date_string, int date_type_id, string date_type)
         {
 
             int? pub_year = null;
@@ -321,14 +327,14 @@ namespace DataHarvester
         }
 
 
-        public static string StandardiseDateFormat(string inputDate)
+        public string StandardiseDateFormat(string inputDate)
         {
             SplitDate SD = GetDateParts(inputDate);
             return SD.date_string;
         }
 
 
-        public static int GetMonthAsInt(string month_name)
+        public int GetMonthAsInt(string month_name)
         {
             try
             {

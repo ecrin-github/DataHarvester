@@ -6,7 +6,7 @@ namespace DataHarvester.biolincc
     public class BioLinccProcessor
     {
 
-        public Study ProcessData(BioLincc_Record st, DateTime? download_datetime, DataLayer common_repo, BioLinccDataLayer biolincc_repo)
+        public Study ProcessData(BioLincc_Record st, DateTime? download_datetime, DataLayer common_repo, BioLinccDataLayer biolincc_repo, LoggingDataLayer logging_repo)
         {
             Study s = new Study();
 
@@ -22,6 +22,9 @@ namespace DataHarvester.biolincc
             List<ObjectTitle> data_object_titles = new List<ObjectTitle>();
             List<ObjectDate> data_object_dates = new List<ObjectDate>();
             List<ObjectInstance> data_object_instances = new List<ObjectInstance>();
+
+            HashHelpers hh = new HashHelpers(logging_repo);
+            HtmlHelpers mh = new HtmlHelpers(logging_repo);
 
             // need study relationships... possibly not at this stage but after links have been examined...
 
@@ -47,8 +50,8 @@ namespace DataHarvester.biolincc
 
             if (st.title.Contains("<"))
             {
-                s.display_title = HtmlHelpers.replace_tags(st.title);
-                s.display_title = HtmlHelpers.strip_tags(s.display_title);
+                s.display_title = mh.replace_tags(st.title);
+                s.display_title = mh.strip_tags(s.display_title);
             }
             else
             {
@@ -57,8 +60,8 @@ namespace DataHarvester.biolincc
             
             if (st.brief_description.Contains("<"))
             {
-                s.brief_description = HtmlHelpers.replace_tags(st.brief_description);
-                s.bd_contains_html = HtmlHelpers.check_for_tags(s.brief_description);
+                s.brief_description = mh.replace_tags(st.brief_description);
+                s.bd_contains_html = mh.check_for_tags(s.brief_description);
             }
             else
             {
@@ -157,7 +160,7 @@ namespace DataHarvester.biolincc
             string object_display_title = name_base + " :: " + "NHLBI web page";
 
             // create hash Id for the data object
-            string sd_oid = HashHelpers.CreateMD5(sid + object_display_title);
+            string sd_oid = hh.CreateMD5(sid + object_display_title);
 
             data_objects.Add(new DataObject(sd_oid, sid, object_display_title, pub_year, 23, "Text", 38, "Study Overview",
                 100167, "National Heart, Lung, and Blood Institute (US)", 12, download_datetime));
@@ -193,7 +196,7 @@ namespace DataHarvester.biolincc
             if (!string.IsNullOrEmpty(st.study_website))
             {
                 object_display_title = name_base + " :: " + "Study web site";
-                sd_oid = HashHelpers.CreateMD5(sid + object_display_title);
+                sd_oid = hh.CreateMD5(sid + object_display_title);
 
                 data_objects.Add(new DataObject(sd_oid, sid, object_display_title, null, 23, "Text", 134, "Website",
                                     sponsor_org_id, sponsor_org, 12, download_datetime));
@@ -211,7 +214,7 @@ namespace DataHarvester.biolincc
             if (st.resources_available.ToLower().Contains("datasets"))
             {
                 object_display_title = name_base + " :: " + "IPD Datasets";
-                sd_oid = HashHelpers.CreateMD5(sid + object_display_title);
+                sd_oid = hh.CreateMD5(sid + object_display_title);
 
                 data_objects.Add(new DataObject(sd_oid, sid, object_display_title, null, 14, "Datasets",
                         80, "Individual Participant Data", 100167, "National Heart, Lung, and Blood Institute (US)",
@@ -269,7 +272,7 @@ namespace DataHarvester.biolincc
                 {
                     // for the resource, set up new data object, object title, object instance
                     object_display_title = name_base + " :: " + r.doc_name;
-                    sd_oid = HashHelpers.CreateMD5(sid + object_display_title);
+                    sd_oid = hh.CreateMD5(sid + object_display_title);
 
                     data_objects.Add(new DataObject(sd_oid, sid, object_display_title, pub_year, 23, "Text", r.object_type_id, r.object_type,
                                         sponsor_org_id, sponsor_org, r.access_type_id, download_datetime));
@@ -335,64 +338,56 @@ namespace DataHarvester.biolincc
         }
 
 
-        public void StoreData(DataLayer repo, Study s)
+        public void StoreData(DataLayer repo, Study s, LoggingDataLayer logging_repo)
         {
             // store study
             StudyInDB st = new StudyInDB(s);
             repo.StoreStudy(st);
 
+            StudyCopyHelpers sch = new StudyCopyHelpers(logging_repo);
+            ObjectCopyHelpers och = new ObjectCopyHelpers(logging_repo);
 
             // store study attributes
             if (s.identifiers.Count > 0)
             {
-                repo.StoreStudyIdentifiers(StudyCopyHelpers.study_ids_helper,
-                                          s.identifiers);
+                repo.StoreStudyIdentifiers(sch.study_ids_helper, s.identifiers);
             }
 
             if (s.titles.Count > 0)
             {
-                repo.StoreStudyTitles(StudyCopyHelpers.study_titles_helper,
-                                          s.titles);
+                repo.StoreStudyTitles(sch.study_titles_helper, s.titles);
             }
-
 
             if (s.references.Count > 0)
             {
-                repo.StoreStudyReferences(StudyCopyHelpers.study_references_helper, 
-                                          s.references);
+                repo.StoreStudyReferences(sch.study_references_helper, s.references);
             }
-
 
             // store data objects and dataset properties
             if (s.data_objects.Count > 0)
             {
-                repo.StoreDataObjects(ObjectCopyHelpers.data_objects_helper,
-                                         s.data_objects);
+                repo.StoreDataObjects(och.data_objects_helper, s.data_objects);
             }
 
             if (s.object_datasets.Count > 0)
             {
-                repo.StoreDatasetProperties(ObjectCopyHelpers.object_datasets_helper,
-                                         s.object_datasets);
+                repo.StoreDatasetProperties(och.object_datasets_helper, s.object_datasets);
             }
 
             // store data object attributes
             if (s.object_dates.Count > 0)
             {
-                repo.StoreObjectDates(ObjectCopyHelpers.object_dates_helper,
-                                         s.object_dates);
+                repo.StoreObjectDates(och.object_dates_helper, s.object_dates);
             }
 
             if (s.object_instances.Count > 0)
             {
-                repo.StoreObjectInstances(ObjectCopyHelpers.object_instances_helper,
-                                         s.object_instances);
+                repo.StoreObjectInstances(och.object_instances_helper, s.object_instances);
             }
 
             if (s.object_titles.Count > 0)
             {
-                repo.StoreObjectTitles(ObjectCopyHelpers.object_titles_helper,
-                                         s.object_titles);
+                repo.StoreObjectTitles(och.object_titles_helper, s.object_titles);
             }
         }
     }

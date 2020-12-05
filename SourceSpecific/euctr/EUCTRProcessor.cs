@@ -6,7 +6,7 @@ namespace DataHarvester.euctr
 {
     public class EUCTRProcessor
 	{
-		public Study ProcessData(EUCTR_Record fs, DateTime? download_datetime, DataLayer common_repo)
+		public Study ProcessData(EUCTR_Record fs, DateTime? download_datetime, DataLayer common_repo, LoggingDataLayer logging_repo)
 		{
 			Study s = new Study();
 			List<StudyIdentifier> identifiers = new List<StudyIdentifier>();
@@ -18,6 +18,10 @@ namespace DataHarvester.euctr
 			List<DataObject> data_objects = new List<DataObject>();
 			List<ObjectTitle> object_titles = new List<ObjectTitle>();
 			List<ObjectInstance> object_instances = new List<ObjectInstance>();
+
+			HashHelpers hh = new HashHelpers(logging_repo);
+			StringHelpers sh = new StringHelpers(logging_repo);
+    		HtmlHelpers mh = new HtmlHelpers(logging_repo);
 
 			// STUDY AND ATTRIBUTES
 
@@ -83,9 +87,9 @@ namespace DataHarvester.euctr
 			// contributor - sponsor
 			string sponsor_name = "No organisation name provided in source data";
 
-			if (StringHelpers.FilterOut_Null_OrgNames(fs.sponsor_name?.ToLower()) != "")
+			if (sh.FilterOut_Null_OrgNames(fs.sponsor_name?.ToLower()) != "")
 			{
-				sponsor_name = StringHelpers.TidyOrgName(fs.sponsor_name, sid);
+				sponsor_name = sh.TidyOrgName(fs.sponsor_name, sid);
 				string sponsor = sponsor_name.ToLower();
 				if (!string.IsNullOrEmpty(sponsor) && sponsor.Length > 1
 					&& sponsor != "dr" && sponsor != "no profit")
@@ -104,9 +108,9 @@ namespace DataHarvester.euctr
 						case "Name of organisation providing support":
 							{
 								// check a funder is not simply the sponsor...
-								if (StringHelpers.FilterOut_Null_OrgNames(i.item_values[0].value?.ToLower()) != "")
+								if (sh.FilterOut_Null_OrgNames(i.item_values[0].value?.ToLower()) != "")
 								{
-									string funder = StringHelpers.TidyOrgName(i.item_values[0].value, sid);
+									string funder = sh.TidyOrgName(i.item_values[0].value, sid);
 									if (funder != sponsor_name)
 									{
 										string fund = funder.ToLower();
@@ -731,7 +735,7 @@ namespace DataHarvester.euctr
 			string object_display_title = s.display_title + " :: EU CTR registry entry";
 
 			// create hash Id for the data object
-			string sd_oid = HashHelpers.CreateMD5(sid + object_display_title);
+			string sd_oid = hh.CreateMD5(sid + object_display_title);
 
 			data_objects.Add(new DataObject(sd_oid, sid, object_display_title, s.study_start_year,
 				  23, "Text", 13, "Trial Registry entry", 100123, "EU Clinical Trials Register", 
@@ -750,7 +754,7 @@ namespace DataHarvester.euctr
 			if (!string.IsNullOrEmpty(fs.results_url))
 			{
 				object_display_title = s.display_title + " :: EU CTR results entry";
-				sd_oid = HashHelpers.CreateMD5(sid + object_display_title);
+				sd_oid = hh.CreateMD5(sid + object_display_title);
 
 				data_objects.Add(new DataObject(sd_oid, sid, object_display_title, s.study_start_year,
 					  23, "Text", 28, "Trial registry results summary", 100123, 
@@ -769,8 +773,8 @@ namespace DataHarvester.euctr
 			// Check brief description for html
 			// after getting rid of any sup / subs, divs and spans.
 
-			s.brief_description = HtmlHelpers.replace_tags(s.brief_description);
-			s.bd_contains_html = HtmlHelpers.check_for_tags(s.brief_description);
+			s.brief_description = mh.replace_tags(s.brief_description);
+			s.bd_contains_html = mh.check_for_tags(s.brief_description);
 
 			s.identifiers = identifiers;
 			s.titles = titles;
@@ -787,7 +791,7 @@ namespace DataHarvester.euctr
 		}
 
 			
-		public void StoreData(DataLayer repo, Study s)
+		public void StoreData(DataLayer repo, Study s, LoggingDataLayer logging_repo)
 		{
 			// construct database study instance
 			StudyInDB dbs = new StudyInDB(s);
@@ -805,52 +809,47 @@ namespace DataHarvester.euctr
 
 			repo.StoreStudy(dbs);
 
+			StudyCopyHelpers sch = new StudyCopyHelpers(logging_repo);
+			ObjectCopyHelpers och = new ObjectCopyHelpers(logging_repo);
+
 			if (s.identifiers.Count > 0)
 			{
-				repo.StoreStudyIdentifiers(StudyCopyHelpers.study_ids_helper,
-										  s.identifiers);
+				repo.StoreStudyIdentifiers(sch.study_ids_helper, s.identifiers);
 			}
 
 			if (s.titles.Count > 0)
 			{
-				repo.StoreStudyTitles(StudyCopyHelpers.study_titles_helper,
-										  s.titles);
+				repo.StoreStudyTitles(sch.study_titles_helper, s.titles);
 			}
 
 			if (s.contributors.Count > 0)
 			{
-				repo.StoreStudyContributors(StudyCopyHelpers.study_contributors_helper,
-										  s.contributors);
+				repo.StoreStudyContributors(sch.study_contributors_helper, s.contributors);
 			}
 
 			if (s.topics.Count > 0)
 			{
-				repo.StoreStudyTopics(StudyCopyHelpers.study_topics_helper,
-										  s.topics);
+				repo.StoreStudyTopics(sch.study_topics_helper, s.topics);
 			}
 
 			if (s.features.Count > 0)
 			{
-				repo.StoreStudyFeatures(StudyCopyHelpers.study_features_helper,
-										  s.features);
+				repo.StoreStudyFeatures(sch.study_features_helper, s.features);
 			}
 
 			if (s.data_objects.Count > 0)
 			{
-				repo.StoreDataObjects(ObjectCopyHelpers.data_objects_helper,
-										  s.data_objects);
+				repo.StoreDataObjects(och.data_objects_helper, s.data_objects);
 			}
 
 			if (s.object_instances.Count > 0)
-			{
-				repo.StoreObjectInstances(ObjectCopyHelpers.object_instances_helper,
-										  s.object_instances);
+			{ 
+				repo.StoreObjectInstances(och.object_instances_helper, s.object_instances);
 			}
 
 			if (s.object_titles.Count > 0)
 			{
-				repo.StoreObjectTitles(ObjectCopyHelpers.object_titles_helper,
-										  s.object_titles);
+				repo.StoreObjectTitles(och.object_titles_helper, s.object_titles);
 			}
 
 		}

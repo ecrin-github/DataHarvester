@@ -7,7 +7,7 @@ namespace DataHarvester.yoda
     public class YodaProcessor
     {
 
-        public Study ProcessData(Yoda_Record st, DateTime? download_datetime)
+        public Study ProcessData(Yoda_Record st, DateTime? download_datetime, LoggingDataLayer logging_repo)
         {
             Study s = new Study();
 
@@ -31,6 +31,9 @@ namespace DataHarvester.yoda
             access_details += "1) the scientific purpose is clearly described; 2) the data requested will be used to enhance scientific and/or medical knowledge; and ";
             access_details += "3) the proposed research can be reasonably addressed using the requested data.";
 
+            StringHelpers sh = new StringHelpers(logging_repo);
+            HashHelpers hh = new HashHelpers(logging_repo);
+            HtmlHelpers mh = new HtmlHelpers(logging_repo);
 
             // transfer features of main study object
             // In most cases study will have already been registered in CGT.
@@ -39,8 +42,8 @@ namespace DataHarvester.yoda
             s.datetime_of_data_fetch = download_datetime;
             if (st.yoda_title.Contains("<"))
             {
-                st.yoda_title = HtmlHelpers.replace_tags(st.yoda_title);
-                st.yoda_title = HtmlHelpers.strip_tags(st.yoda_title);
+                st.yoda_title = mh.replace_tags(st.yoda_title);
+                st.yoda_title = mh.strip_tags(st.yoda_title);
             }
 
             if (st.display_title != null)
@@ -156,7 +159,7 @@ namespace DataHarvester.yoda
             if (!string.IsNullOrEmpty(st.sponsor))
             {
                 sponsor_org_id = st.sponsor_id;
-                sponsor_org = StringHelpers.TidyOrgName(st.sponsor, sid);
+                sponsor_org = sh.TidyOrgName(st.sponsor, sid);
             }
             else
             {
@@ -221,7 +224,7 @@ namespace DataHarvester.yoda
             string object_display_title = name_base + " :: " + "Yoda web page";
 
             // create hash Id for the data object
-            string sd_oid = HashHelpers.CreateMD5(sid + object_display_title);
+            string sd_oid = hh.CreateMD5(sid + object_display_title);
 
             data_objects.Add(new DataObject(sd_oid, sid, object_display_title, null, 23, "Text", 38, "Study Overview",
                               101901, "Yoda", 12, download_datetime));
@@ -300,7 +303,7 @@ namespace DataHarvester.yoda
                     }
 
                     object_display_title = name_base + " :: " + object_type;
-                    sd_oid = HashHelpers.CreateMD5(sid + object_display_title);
+                    sd_oid = hh.CreateMD5(sid + object_display_title);
 
                     if (sd.comment == "Available now")
                     {
@@ -364,68 +367,61 @@ namespace DataHarvester.yoda
         }
 
 
-        public void StoreData(DataLayer repo, Study s)
+        public void StoreData(DataLayer repo, Study s, LoggingDataLayer logging_repo)
         {
             // store study
             StudyInDB st = new StudyInDB(s);
             repo.StoreStudy(st);
 
+            StudyCopyHelpers sch = new StudyCopyHelpers(logging_repo);
+            ObjectCopyHelpers och = new ObjectCopyHelpers(logging_repo);
+
             // store study attributes
             if (s.identifiers.Count > 0)
             {
-                repo.StoreStudyIdentifiers(StudyCopyHelpers.study_ids_helper,
-                                          s.identifiers);
+                repo.StoreStudyIdentifiers(sch.study_ids_helper, s.identifiers);
             }
 
             if (s.titles.Count > 0)
             {
-                repo.StoreStudyTitles(StudyCopyHelpers.study_titles_helper,
-                                          s.titles);
+                repo.StoreStudyTitles(sch.study_titles_helper, s.titles);
             }
 
             if (s.references.Count > 0)
             {
-                repo.StoreStudyReferences(StudyCopyHelpers.study_references_helper,
-                                          s.references);
+                repo.StoreStudyReferences(sch.study_references_helper, s.references);
             }
 
             if (s.contributors.Count > 0)
             {
-                repo.StoreStudyContributors(StudyCopyHelpers.study_contributors_helper, 
-                                          s.contributors);
+                repo.StoreStudyContributors(sch.study_contributors_helper, s.contributors);
             }
 
             if (s.topics.Count > 0)
             {
-                repo.StoreStudyTopics(StudyCopyHelpers.study_topics_helper,
-                                          s.topics);
+                repo.StoreStudyTopics(sch.study_topics_helper, s.topics);
             }
-
 
             // store data objects and dataset properties
             if (s.data_objects.Count > 0)
             {
-                repo.StoreDataObjects(ObjectCopyHelpers.data_objects_helper,
-                                         s.data_objects);
+                repo.StoreDataObjects(och.data_objects_helper, s.data_objects);
             }
 
             if (s.object_datasets.Count > 0)
             {
-                repo.StoreDatasetProperties(ObjectCopyHelpers.object_datasets_helper,
-                                         s.object_datasets);
+                repo.StoreDatasetProperties(och.object_datasets_helper, s.object_datasets);
             }
 
             // store data object attributes
             if (s.object_instances.Count > 0)
             {
-                repo.StoreObjectInstances(ObjectCopyHelpers.object_instances_helper,
-                                         s.object_instances);
+                repo.StoreObjectInstances(och.object_instances_helper, s.object_instances);
             }
 
             if (s.object_titles.Count > 0)
             {
-                repo.StoreObjectTitles(ObjectCopyHelpers.object_titles_helper,
-                                         s.object_titles);
+                repo.StoreObjectTitles(och.object_titles_helper, s.object_titles);
             }
         }
     }

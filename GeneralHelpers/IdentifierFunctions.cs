@@ -3,13 +3,19 @@ using System.Text.RegularExpressions;
 
 namespace DataHarvester
 {
-    public static class IdentifierHelpers
+    public class IdentifierHelpers
     {
+        LoggingDataLayer logging_repo;
+
+        public IdentifierHelpers(LoggingDataLayer _logging_repo)
+        {
+            logging_repo = _logging_repo;
+        }
 
         // Two check routines that scan previously extracted Identifiers or Dates, to 
         // indicate if the input Id / Date type has already beenm extracted.
 
-        public static bool IdNotPresent(List<ObjectIdentifier> ids, int id_type, string id_value)
+        public bool IdNotPresent(List<ObjectIdentifier> ids, int id_type, string id_value)
         {
             bool to_add = true;
             if (ids.Count > 0)
@@ -26,7 +32,7 @@ namespace DataHarvester
             return to_add;
         }
 
-        public static bool DateNotPresent(List<ObjectDate> dates, int datetype_id, int? year, int? month, int? day)
+        public bool DateNotPresent(List<ObjectDate> dates, int datetype_id, int? year, int? month, int? day)
         {
             bool to_add = true;
             if (dates.Count > 0)
@@ -50,7 +56,7 @@ namespace DataHarvester
         // It tries to make the data as complete as possible, depending on the typem of 
         // secondary id that is being processed.
 
-        public static IdentifierDetails GetIdentifierProps(string id_type, string id_org, string id_value)
+        public IdentifierDetails GetIdentifierProps(string id_type, string id_org, string id_value)
         {
             // use initial values
             // to create id details object
@@ -307,7 +313,7 @@ namespace DataHarvester
         }
 
 
-        public static IdentifierDetails GetISRCTNIdentifierProps(string id_value, string study_sponsor)
+        public IdentifierDetails GetISRCTNIdentifierProps(string id_value, string study_sponsor)
         {
             // use initial values to create id details object
 
@@ -451,7 +457,7 @@ namespace DataHarvester
         }
 
 
-        public static bool CheckIfIndividual(string orgname)
+        public bool CheckIfIndividual(string orgname)
         {
             bool make_individual = false;
 

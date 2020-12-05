@@ -10,12 +10,12 @@ namespace DataHarvester
         private OrgHelper org_helper;
         private TopicHelper topic_helper;
 
-        public PostProcBuilder(string _connString, Source _source)
+        public PostProcBuilder(string _connString, Source _source, LoggingDataLayer _logging_repo)
         {
             connString = _connString;
             source = _source;
-            org_helper = new OrgHelper(connString);
-            topic_helper = new TopicHelper(connString);
+            org_helper = new OrgHelper(connString, _logging_repo);
+            topic_helper = new TopicHelper(connString, _logging_repo );
         }
 
 

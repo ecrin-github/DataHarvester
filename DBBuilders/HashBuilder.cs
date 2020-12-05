@@ -4,16 +4,18 @@
     {
         private string connString;
         private Source source;
+        private LoggingDataLayer logging_repo;
 
-        public HashBuilder(string _connString, Source _source)
+        public HashBuilder(string _connString, Source _source, LoggingDataLayer _logging_repo)
         {
             connString = _connString;
             source = _source;
+            logging_repo = _logging_repo;
         }
 
         public void CreateStudyHashes()
         {
-            StudyHashCreators hashcreator = new StudyHashCreators(connString);
+            StudyHashCreators hashcreator = new StudyHashCreators(connString, logging_repo);
             hashcreator.create_study_record_hashes();
             hashcreator.create_study_identifier_hashes();
             hashcreator.create_study_title_hashes();
@@ -30,7 +32,7 @@
 
         public void CreateStudyCompositeHashes()
         {
-            StudyCompositeHashCreators hashcreator = new StudyCompositeHashCreators(connString);
+            StudyCompositeHashCreators hashcreator = new StudyCompositeHashCreators(connString, logging_repo);
             hashcreator.create_composite_study_hashes(11, "identifiers", "study_identifiers");
             hashcreator.create_composite_study_hashes(12, "titles", "study_titles");
 
@@ -49,7 +51,7 @@
 
         public void CreateDataObjectHashes()
         {
-            ObjectHashCreators hashcreator = new ObjectHashCreators(connString);
+            ObjectHashCreators hashcreator = new ObjectHashCreators(connString, logging_repo);
             hashcreator.create_object_record_hashes();
             hashcreator.create_object_instance_hashes();
             hashcreator.create_object_title_hashes();
@@ -74,7 +76,7 @@
 
         public void CreateObjectCompositeHashes()
         {
-            ObjectCompositeHashCreators hashcreator = new ObjectCompositeHashCreators(connString);
+            ObjectCompositeHashCreators hashcreator = new ObjectCompositeHashCreators(connString, logging_repo);
             hashcreator.create_composite_object_hashes(51, "instances", "object_instances");
             hashcreator.create_composite_object_hashes(52, "titles", "object_titles");
 

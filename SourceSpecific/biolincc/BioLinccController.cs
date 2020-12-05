@@ -53,10 +53,10 @@ namespace DataHarvester.biolincc
                     BioLincc_Record studyRegEntry = (BioLincc_Record)serializer.Deserialize(rdr);
 
                     // processing here focuses on the listed secondary identifiers...
-                    identity_processor.ProcessData(studyRegEntry, common_repo);
+                    identity_processor.ProcessData(studyRegEntry, common_repo, logging_repo);
                 }
 
-                if (n % 10 == 0) StringHelpers.SendFeedback(n.ToString());
+                if (n % 10 == 0) logging_repo.LogLine(n.ToString());
             }
 
             identity_processor.CreateMultNCTsTable(biolincc_repo);
@@ -91,17 +91,17 @@ namespace DataHarvester.biolincc
                     BioLincc_Record studyRegEntry = (BioLincc_Record)serializer.Deserialize(rdr);
 
                     // break up the file into relevant data classes
-                    Study s = processor.ProcessData(studyRegEntry, rec.last_downloaded, common_repo, biolincc_repo);
+                    Study s = processor.ProcessData(studyRegEntry, rec.last_downloaded, common_repo, biolincc_repo, logging_repo);
 
                     // store the data in the database			
-                    processor.StoreData(common_repo, s);
+                    processor.StoreData(common_repo, s, logging_repo);
 
                     // update file record with last processed datetime
                     logging_repo.UpdateFileRecLastHarvested(rec.id, "study", last_harvest_id);
 
                 }
 
-                if (n % 10 == 0) StringHelpers.SendFeedback(n.ToString());
+                if (n % 10 == 0) logging_repo.LogLine(n.ToString());
             }
 
             return n;

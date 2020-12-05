@@ -12,16 +12,15 @@ namespace DataHarvester
 {
     class Harvester
     {
-        public async Task HarvestDataAsync (Source source, int harvest_type_id, bool org_update_only)
+        public async Task HarvestDataAsync (Source source, int harvest_type_id, bool org_update_only, LoggingDataLayer logging_repo)
         {
 
             // Identify source type and location, destination folder
-            StringHelpers.SendHeader("Setup");
-            StringHelpers.SendFeedback("Source_id is " + source.id.ToString());
-            StringHelpers.SendFeedback("Type_id is " + harvest_type_id.ToString());
-            StringHelpers.SendFeedback("Update org ids only is " + org_update_only);
+            logging_repo.LogHeader("Setup");
+            logging_repo.LogLine("Source_id is " + source.id.ToString());
+            logging_repo.LogLine("Type_id is " + harvest_type_id.ToString());
+            logging_repo.LogLine("Update org ids only is " + org_update_only);
 
-            LoggingDataLayer logging_repo = new LoggingDataLayer();
             DataLayer repo = new DataLayer(source.database_name);
 
             // Create sd tables. 
@@ -113,47 +112,47 @@ namespace DataHarvester
             // harvest is 'org_update_only', as well as when the 
             // sd tables are constructed in the normal way
 
-            PostProcBuilder ppb = new PostProcBuilder(repo.ConnString, source);
+            PostProcBuilder ppb = new PostProcBuilder(repo.ConnString, source, logging_repo);
             ppb.EstablishContextForeignTables(repo.Username, repo.Password);
 
             // Update and standardise organisation ids and names
-            StringHelpers.SendHeader("Update Orgs and Topics");
+            logging_repo.LogHeader("Update Orgs and Topics");
             if (source.has_study_tables)
             {
                 ppb.UpdateStudyIdentifierOrgs();
-                StringHelpers.SendFeedback("Study identifier orgs updated");
+                logging_repo.LogLine("Study identifier orgs updated");
                 ppb.UpdateStudyContributorOrgs();
-                StringHelpers.SendFeedback("Study contributor orgs updated");
+                logging_repo.LogLine("Study contributor orgs updated");
             }
             ppb.UpdateDataObjectOrgs();
-            StringHelpers.SendFeedback("Data object managing orgs updated");
+            logging_repo.LogLine("Data object managing orgs updated");
             ppb.StoreUnMatchedNames();
-            StringHelpers.SendFeedback("Unmatched org names stored");
+            logging_repo.LogLine("Unmatched org names stored");
 
             // Update and standardise topic ids and names
             string source_type = source.has_study_tables ? "study" : "object";
             ppb.UpdateTopics(source_type);
-            StringHelpers.SendFeedback("Topic data updated");
+            logging_repo.LogLine("Topic data updated");
 
             ppb.DropContextForeignTables();
 
             // Note the hashes can only be done after all the
             // data is complete, including the organisation 
             // codes and names derived above
-            StringHelpers.SendHeader("Create Record Hashes");
-            HashBuilder hb = new HashBuilder(repo.ConnString, source);
+            logging_repo.LogHeader("Create Record Hashes");
+            HashBuilder hb = new HashBuilder(repo.ConnString, source, logging_repo);
             if (source.has_study_tables)
             {
                 hb.CreateStudyHashes();
-                StringHelpers.SendFeedback("Study hashes created");
+                logging_repo.LogLine("Study hashes created");
                 hb.CreateStudyCompositeHashes();
-                StringHelpers.SendFeedback("Study composite hashes created");
+                logging_repo.LogLine("Study composite hashes created");
             }
-            StringHelpers.SendHeader("Create Composite Hashes");
+            logging_repo.LogHeader("Create Composite Hashes");
             hb.CreateDataObjectHashes();
-            StringHelpers.SendFeedback("Data object hashes created");
+            logging_repo.LogLine("Data object hashes created");
             hb.CreateObjectCompositeHashes();
-            StringHelpers.SendFeedback("Data object composite hashes created");
+            logging_repo.LogLine("Data object composite hashes created");
         }
     }
 }

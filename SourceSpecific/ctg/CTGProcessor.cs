@@ -8,7 +8,7 @@ namespace DataHarvester.ctg
     public class CTGProcessor
     {
 
-        public Study ProcessData(FullStudy fs, DateTime? download_datetime, DataLayer common_repo)
+        public Study ProcessData(FullStudy fs, DateTime? download_datetime, DataLayer common_repo, LoggingDataLayer logging_repo)
         {
             Study s = new Study();
             List<StudyIdentifier> identifiers = new List<StudyIdentifier>();
@@ -50,6 +50,12 @@ namespace DataHarvester.ctg
             StructType LargeDocumentModule = null;
             StructType ConditionBrowseModule = null;
             StructType InterventionBrowseModule = null;
+
+            StringHelpers sh = new StringHelpers(logging_repo);
+            DateHelpers dh = new DateHelpers(logging_repo);
+            TypeHelpers th = new TypeHelpers(logging_repo);
+            HashHelpers hh = new HashHelpers(logging_repo);
+            IdentifierHelpers ih = new IdentifierHelpers(logging_repo);
 
             var Sections = Array.ConvertAll(fs.Struct.Items, item => (StructType)item);
 
@@ -114,13 +120,13 @@ namespace DataHarvester.ctg
                 s.datetime_of_data_fetch = download_datetime;
 
                 s.study_status = FieldValue(status_items, "OverallStatus");
-                s.study_status_id = TypeHelpers.GetStatusId(s.study_status);
+                s.study_status_id = th.GetStatusId(s.study_status);
                 status_verified_date = FieldValue(status_items, "StatusVerifiedDate");
 
                 submissionDate = FieldValue(status_items, "StudyFirstSubmitDate");
 
                 // add the NCT identifier record - 100120 is the id of ClinicalTrials.gov
-                submissionDate = DateHelpers.StandardiseDateFormat(submissionDate);
+                submissionDate = dh.StandardiseDateFormat(submissionDate);
                 identifiers.Add(new StudyIdentifier(sid, sid, 11, "Trial Registry ID", 100120,
                                                     "ClinicalTrials.gov", submissionDate, null));
 
@@ -154,10 +160,10 @@ namespace DataHarvester.ctg
                 s.display_title = (brief_title != null) ? brief_title : official_title;
 
                 // get the sponsor id information
-                string org = StringHelpers.TidyOrgName(StructFieldValue(id_items, "Organization", "OrgFullName"), sid);
+                string org = sh.TidyOrgName(StructFieldValue(id_items, "Organization", "OrgFullName"), sid);
                 string org_study_id = StructFieldValue(id_items, "OrgStudyIdInfo", "OrgStudyId");
                 string org_id_type = StructFieldValue(id_items, "OrgStudyIdInfo", "OrgStudyIdType");
-                string org_id_domain = StringHelpers.TidyOrgName(StructFieldValue(id_items, "OrgStudyIdInfo", "OrgStudyIdDomain"), sid);
+                string org_id_domain = sh.TidyOrgName(StructFieldValue(id_items, "OrgStudyIdInfo", "OrgStudyIdDomain"), sid);
                 string org_id_link = StructFieldValue(id_items, "OrgStudyIdInfo", "OrgStudyIdLink");
 
                 // add the sponsor's identifier
@@ -199,8 +205,8 @@ namespace DataHarvester.ctg
                             if (org_study_id == null || id_value.Trim().ToLower() != org_study_id.Trim().ToLower())
                             {
                                 string identifier_type = FieldValue(sec_items, "SecondaryIdType");
-                                string identifier_org = StringHelpers.TidyOrgName(FieldValue(sec_items, "SecondaryIdDomain"), sid);
-                                IdentifierDetails idd = IdentifierHelpers.GetIdentifierProps(identifier_type, identifier_org, id_value);
+                                string identifier_org = sh.TidyOrgName(FieldValue(sec_items, "SecondaryIdDomain"), sid);
+                                IdentifierDetails idd = ih.GetIdentifierProps(identifier_type, identifier_org, id_value);
 
                                 // add the secondary identifier
                                 identifiers.Add(new StudyIdentifier(sid, idd.id_value, idd.id_type_id, idd.id_type,
@@ -218,7 +224,7 @@ namespace DataHarvester.ctg
                     if (firstpost_type != "Anticipated")
                     {
                         string firstpost_date = FieldValue(FirstPostDate.Items, "StudyFirstPostDate");
-                        firstpost = DateHelpers.GetDateParts(firstpost_date);
+                        firstpost = dh.GetDateParts(firstpost_date);
                         if (firstpost_type.ToLower() == "estimate") firstpost.date_string += " (est.)";
                     }
                 }
@@ -230,7 +236,7 @@ namespace DataHarvester.ctg
                     if (results_type != "Anticipated")
                     {
                         string resultspost_date = FieldValue(ResultsPostDate.Items, "ResultsFirstPostDate");
-                        resultspost = DateHelpers.GetDateParts(resultspost_date);
+                        resultspost = dh.GetDateParts(resultspost_date);
                         if (results_type.ToLower() == "estimate") resultspost.date_string += " (est.)";
                     }
                 }
@@ -242,7 +248,7 @@ namespace DataHarvester.ctg
                     if (update_type != "Anticipated")
                     {
                         string updatepost_date = FieldValue(LastUpdateDate.Items, "LastUpdatePostDate");
-                        updatepost = DateHelpers.GetDateParts(updatepost_date);
+                        updatepost = dh.GetDateParts(updatepost_date);
                         if (update_type.ToLower() == "estimate") updatepost.date_string += " (est.)";
                     }
                 }
@@ -261,7 +267,7 @@ namespace DataHarvester.ctg
                 if (StudyStartDate != null)
                 {
                     string studystart_date = FieldValue(StudyStartDate.Items, "StartDate");
-                    startdate = DateHelpers.GetDateParts(studystart_date);
+                    startdate = dh.GetDateParts(studystart_date);
                     s.study_start_year = startdate.year;
                     s.study_start_month = startdate.month;
                 }
@@ -283,9 +289,9 @@ namespace DataHarvester.ctg
                 if (sponsor != null)
                 {
                     string sponsor_candidate = FieldValue(sponsor.Items, "LeadSponsorName");
-                    if (StringHelpers.FilterOut_Null_OrgNames(sponsor_candidate) != "")
+                    if (sh.FilterOut_Null_OrgNames(sponsor_candidate) != "")
                     {
-                        sponsor_name = StringHelpers.TidyOrgName(sponsor_candidate, sid);
+                        sponsor_name = sh.TidyOrgName(sponsor_candidate, sid);
                         if (sponsor_name == "[Redacted]") sponsor_name = "(sponsor name redacted in registry record)";
                         contributors.Add(new StudyContributor(sid, 54, "Trial Sponsor", null, sponsor_name,
                                                                 null, null));
@@ -311,7 +317,7 @@ namespace DataHarvester.ctg
 
                         if (rp_name != null && rp_name != "[Redacted]")
                         {
-                            rp_name = StringHelpers.TidyName(rp_name);
+                            rp_name = sh.TidyName(rp_name);
 
                             if (rp_type == "Principal Investigator")
                             {
@@ -338,9 +344,9 @@ namespace DataHarvester.ctg
                         {
                             StructType collab = collabs[i] as StructType;
                             string collab_candidate = FieldValue(collab.Items, "CollaboratorName");
-                            if (StringHelpers.FilterOut_Null_OrgNames(collab_candidate) != "")
+                            if (sh.FilterOut_Null_OrgNames(collab_candidate) != "")
                             {
-                                string collab_name = StringHelpers.TidyOrgName(collab_candidate, sid);
+                                string collab_name = sh.TidyOrgName(collab_candidate, sid);
                                 contributors.Add(new StudyContributor(sid, 69, "Collaborating organisation", null, collab_name,
                                                             null, null));
                             }
@@ -478,7 +484,7 @@ namespace DataHarvester.ctg
                 if (items != null)
                 {
                     s.study_type = FieldValue(items, "StudyType");
-                    s.study_type_id = TypeHelpers.GetTypeId(s.study_type);
+                    s.study_type_id = th.GetTypeId(s.study_type);
 
                     if (s.study_type == "Interventional")
                     {
@@ -493,13 +499,13 @@ namespace DataHarvester.ctg
                                 for (int p = 0; p < phases.Length; p++)
                                 {
                                     this_phase = (phases[p] as FieldType).Value;
-                                    features.Add(new StudyFeature(sid, 20, "phase", TypeHelpers.GetPhaseId(this_phase), this_phase));
+                                    features.Add(new StudyFeature(sid, 20, "phase", th.GetPhaseId(this_phase), this_phase));
                                 }
                             }
                         }
                         else
                         {
-                            features.Add(new StudyFeature(sid, 20, "phase", TypeHelpers.GetPhaseId("Not provided"), "Not provided"));
+                            features.Add(new StudyFeature(sid, 20, "phase", th.GetPhaseId("Not provided"), "Not provided"));
                         }
 
 
@@ -509,24 +515,24 @@ namespace DataHarvester.ctg
                             var design_items = design_info.Items;
 
                             string design_allocation = FieldValue(design_items, "DesignAllocation") ?? "Not provided";
-                            features.Add(new StudyFeature(sid, 22, "allocation type", TypeHelpers.GetAllocationTypeId(design_allocation), design_allocation));
+                            features.Add(new StudyFeature(sid, 22, "allocation type", th.GetAllocationTypeId(design_allocation), design_allocation));
 
                             string design_intervention_model = FieldValue(design_items, "DesignInterventionModel") ?? "Not provided";
-                            features.Add(new StudyFeature(sid, 23, "intervention model", TypeHelpers.GetDesignTypeId(design_intervention_model), design_intervention_model));
+                            features.Add(new StudyFeature(sid, 23, "intervention model", th.GetDesignTypeId(design_intervention_model), design_intervention_model));
 
                             string design_primary_purpose = FieldValue(design_items, "DesignPrimaryPurpose") ?? "Not provided";
-                            features.Add(new StudyFeature(sid, 21, "primary purpose", TypeHelpers.GetPrimaryPurposeId(design_primary_purpose), design_primary_purpose));
+                            features.Add(new StudyFeature(sid, 21, "primary purpose", th.GetPrimaryPurposeId(design_primary_purpose), design_primary_purpose));
 
                             StructType masking_details = FindStruct(design_items, "DesignMaskingInfo");
                             if (masking_details != null)
                             {
                                 var masking_items = masking_details.Items;
                                 string design_masking = FieldValue(masking_items, "DesignMasking") ?? "Not provided";
-                                features.Add(new StudyFeature(sid, 24, "masking", TypeHelpers.GetMaskingTypeId(design_masking), design_masking));
+                                features.Add(new StudyFeature(sid, 24, "masking", th.GetMaskingTypeId(design_masking), design_masking));
                             }
                             else
                             {
-                                features.Add(new StudyFeature(sid, 24, "masking", TypeHelpers.GetMaskingTypeId("Not provided"), "Not provided"));
+                                features.Add(new StudyFeature(sid, 24, "masking", th.GetMaskingTypeId("Not provided"), "Not provided"));
                             }
                         }
                     }
@@ -556,13 +562,13 @@ namespace DataHarvester.ctg
                                     for (int p = 0; p < obsmodels.Length; p++)
                                     {
                                         this_obsmodel = (obsmodels[p] as FieldType).Value;
-                                        features.Add(new StudyFeature(sid, 30, "observational model", TypeHelpers.GetObsModelTypeId(this_obsmodel), this_obsmodel));
+                                        features.Add(new StudyFeature(sid, 30, "observational model", th.GetObsModelTypeId(this_obsmodel), this_obsmodel));
                                     }
                                 }
                             }
                             else
                             {
-                                features.Add(new StudyFeature(sid, 30, "observational model", TypeHelpers.GetObsModelTypeId("Not provided"), "Not provided"));
+                                features.Add(new StudyFeature(sid, 30, "observational model", th.GetObsModelTypeId("Not provided"), "Not provided"));
                             }
 
 
@@ -576,13 +582,13 @@ namespace DataHarvester.ctg
                                     for (int p = 0; p < timepersps.Length; p++)
                                     {
                                         this_persp = (timepersps[p] as FieldType).Value;
-                                        features.Add(new StudyFeature(sid, 31, "time perspective", TypeHelpers.GetTimePerspectiveId(this_persp), this_persp));
+                                        features.Add(new StudyFeature(sid, 31, "time perspective", th.GetTimePerspectiveId(this_persp), this_persp));
                                     }
                                 }
                             }
                             else
                             {
-                                features.Add(new StudyFeature(sid, 31, "time perspective", TypeHelpers.GetTimePerspectiveId("Not provided"), "Not provided"));
+                                features.Add(new StudyFeature(sid, 31, "time perspective", th.GetTimePerspectiveId("Not provided"), "Not provided"));
                             }
                         }
 
@@ -591,7 +597,7 @@ namespace DataHarvester.ctg
                         {
                             var biospec_items = biospec_details.Items;
                             string biospec_retention = FieldValue(biospec_items, "BioSpecRetention") ?? "Not provided";
-                            features.Add(new StudyFeature(sid, 32, "biospecimens retained", TypeHelpers.GetSpecimentRetentionId(biospec_retention), biospec_retention));
+                            features.Add(new StudyFeature(sid, 32, "biospecimens retained", th.GetSpecimentRetentionId(biospec_retention), biospec_retention));
                         }
 
                     }
@@ -638,7 +644,7 @@ namespace DataHarvester.ctg
                     {
                         s.study_gender_elig = "Both";
                     }
-                    s.study_gender_elig_id = TypeHelpers.GetGenderEligId(s.study_gender_elig);
+                    s.study_gender_elig_id = th.GetGenderEligId(s.study_gender_elig);
 
                     string min_age = FieldValue(items, "MinimumAge");
                     if (min_age != null)
@@ -651,7 +657,7 @@ namespace DataHarvester.ctg
                             s.min_age = minage;
                             if (!RHS.EndsWith("s")) RHS += "s";
                             s.min_age_units = RHS;
-                            s.min_age_units_id = TypeHelpers.GetTimeUnitsId(RHS);
+                            s.min_age_units_id = th.GetTimeUnitsId(RHS);
                         }
                     }
 
@@ -665,7 +671,7 @@ namespace DataHarvester.ctg
                             s.max_age = maxage;
                             if (!RHS.EndsWith("s")) RHS += "s";
                             s.max_age_units = RHS;
-                            s.max_age_units_id = TypeHelpers.GetTimeUnitsId(RHS);
+                            s.max_age_units_id = th.GetTimeUnitsId(RHS);
                         }
                     }
                 }
@@ -689,7 +695,7 @@ namespace DataHarvester.ctg
                                 string official_name = FieldValue(collab.Items, "OverallOfficialName");
                                 if (official_name != null)
                                 {
-                                    official_name = StringHelpers.TidyName(official_name);
+                                    official_name = sh.TidyName(official_name);
                                     string official_affiliation = FieldValue(collab.Items, "OverallOfficialAffiliation");
                                     contributors.Add(new StudyContributor(sid, 51, "Study Lead", null,
                                                             null, official_name, official_affiliation));
@@ -795,7 +801,7 @@ namespace DataHarvester.ctg
             string object_display_title = title_base + " :: CTG Registry entry";
 
             // create hash Id for the data object
-            string sd_oid = HashHelpers.CreateMD5(sid + object_display_title);
+            string sd_oid = hh.CreateMD5(sid + object_display_title);
 
             int object_type_id = 13, object_class_id = 23;
 
@@ -828,7 +834,7 @@ namespace DataHarvester.ctg
             if (resultspost != null && results_data_present)
             {
                 object_display_title = title_base + " :: CTG Results entry";
-                sd_oid = HashHelpers.CreateMD5(sid + object_display_title);
+                sd_oid = hh.CreateMD5(sid + object_display_title);
 
                 data_objects.Add(new DataObject(sd_oid, sid, object_display_title, resultspost.year,
                                     23, "Text", 28, "Trial registry results summary", 100120,
@@ -888,7 +894,7 @@ namespace DataHarvester.ctg
                                 SplitDate docdate = null;
                                 if (doc_date != null)
                                 {
-                                    docdate = DateHelpers.GetDateParts(doc_date);
+                                    docdate = dh.GetDateParts(doc_date);
                                 }
 
                                 switch (type_abbrev)
@@ -948,7 +954,7 @@ namespace DataHarvester.ctg
                                 {
                                     object_display_title += "_" + next_num.ToString();
                                 }
-                                sd_oid = HashHelpers.CreateMD5(sid + object_display_title);
+                                sd_oid = hh.CreateMD5(sid + object_display_title);
 
                                 data_objects.Add(new DataObject(sd_oid, sid, object_display_title, docdate.year,
                                 23, "Text", object_type_id, object_type, 100120,
@@ -1134,7 +1140,7 @@ namespace DataHarvester.ctg
                                         object_display_title += "_" + next_num.ToString();
                                     }
 
-                                    sd_oid = HashHelpers.CreateMD5(sid + object_display_title);
+                                    sd_oid = hh.CreateMD5(sid + object_display_title);
 
                                     // add data object
                                     data_objects.Add(new DataObject(sd_oid, sid, object_display_title, null,
@@ -1216,7 +1222,7 @@ namespace DataHarvester.ctg
                                         object_display_title += "_" + next_num.ToString();
                                     }
 
-                                    sd_oid = HashHelpers.CreateMD5(sid + object_display_title);
+                                    sd_oid = hh.CreateMD5(sid + object_display_title);
 
                                     data_objects.Add(new DataObject(sd_oid, sid, object_display_title, null,
                                     object_class_id, object_class, object_type_id, object_type, 101418, "Servier",
@@ -1261,7 +1267,7 @@ namespace DataHarvester.ctg
                                             object_display_title += "_" + next_num.ToString();
                                         }
 
-                                        sd_oid = HashHelpers.CreateMD5(sid + object_display_title);
+                                        sd_oid = hh.CreateMD5(sid + object_display_title);
 
                                         data_objects.Add(new DataObject(sd_oid, sid, object_display_title, null,
                                         object_class_id, object_class, object_type_id, object_type,
@@ -1321,7 +1327,7 @@ namespace DataHarvester.ctg
                                             object_display_title += "_" + next_num.ToString();
                                         }
 
-                                        sd_oid = HashHelpers.CreateMD5(sid + object_display_title);
+                                        sd_oid = hh.CreateMD5(sid + object_display_title);
 
                                         data_objects.Add(new DataObject(sd_oid, sid, object_display_title, null,
                                         object_class_id, object_class, object_type_id, object_type, 100360,
@@ -1415,7 +1421,7 @@ namespace DataHarvester.ctg
                                                 object_display_title += "_" + next_num.ToString();
                                             }
 
-                                            sd_oid = HashHelpers.CreateMD5(sid + object_display_title);
+                                            sd_oid = hh.CreateMD5(sid + object_display_title);
                                             // check here not a previous data object of the same type
                                             // It may have the same url. If so ignore it.
                                             // If it appears to be different, add a suffix to the data object name
@@ -1486,7 +1492,7 @@ namespace DataHarvester.ctg
                     if (!sc.is_individual)
                     {
                         string orgname = sc.organisation_name.ToLower();
-                        if (IdentifierHelpers.CheckIfIndividual(orgname))
+                        if (ih.CheckIfIndividual(orgname))
                         {
                             sc.person_full_name = sc.organisation_name;
                             sc.organisation_name = null;
@@ -1523,7 +1529,7 @@ namespace DataHarvester.ctg
         }
 
 
-        public void StoreData(DataLayer repo, Study s)
+        public void StoreData(DataLayer repo, Study s, LoggingDataLayer logging_repo)
         {
             // construct database study instance
             StudyInDB dbs = new StudyInDB(s);
@@ -1541,89 +1547,77 @@ namespace DataHarvester.ctg
 
             repo.StoreStudy(dbs);
 
+            StudyCopyHelpers sch = new StudyCopyHelpers(logging_repo);
+            ObjectCopyHelpers och = new ObjectCopyHelpers(logging_repo);
 
             if (s.identifiers.Count > 0)
             {
-                repo.StoreStudyIdentifiers(StudyCopyHelpers.study_ids_helper,
-                                          s.identifiers);
+                repo.StoreStudyIdentifiers(sch.study_ids_helper, s.identifiers);
             }
 
             if (s.titles.Count > 0)
             {
-                repo.StoreStudyTitles(StudyCopyHelpers.study_titles_helper,
-                                          s.titles);
+                repo.StoreStudyTitles(sch.study_titles_helper, s.titles);
             }
 
             if (s.references.Count > 0)
             {
-                repo.StoreStudyReferences(StudyCopyHelpers.study_references_helper,
-                                          s.references);
+                repo.StoreStudyReferences(sch.study_references_helper, s.references);
             }
 
             if (s.contributors.Count > 0)
             {
-                repo.StoreStudyContributors(StudyCopyHelpers.study_contributors_helper,
-                                          s.contributors);
+                repo.StoreStudyContributors(sch.study_contributors_helper, s.contributors);
             }
 
             if (s.studylinks.Count > 0)
             {
-                repo.StoreStudyLinks(StudyCopyHelpers.study_links_helper,
-                                          s.studylinks);
+                repo.StoreStudyLinks(sch.study_links_helper, s.studylinks);
             }
 
             if (s.topics.Count > 0)
             {
-                repo.StoreStudyTopics(StudyCopyHelpers.study_topics_helper,
-                                          s.topics);
+                repo.StoreStudyTopics(sch.study_topics_helper, s.topics);
             }
 
             if (s.features.Count > 0)
             {
-                repo.StoreStudyFeatures(StudyCopyHelpers.study_features_helper,
-                                          s.features);
+                repo.StoreStudyFeatures(sch.study_features_helper, s.features);
             }
 
             if (s.relationships.Count > 0)
             {
-                repo.StoreStudyRelationships(StudyCopyHelpers.study_relationship_helper,
-                                          s.relationships);
+                repo.StoreStudyRelationships(sch.study_relationship_helper, s.relationships);
             }
 
             if (s.ipd_info.Count > 0)
             {
-                repo.StoreStudyIpdInfo(StudyCopyHelpers.study_ipd_copyhelper,
-                                          s.ipd_info);
+                repo.StoreStudyIpdInfo(sch.study_ipd_copyhelper, s.ipd_info);
             }
 
             if (s.data_objects.Count > 0)
             {
-                repo.StoreDataObjects(ObjectCopyHelpers.data_objects_helper,
-                                          s.data_objects);
+                repo.StoreDataObjects(och.data_objects_helper, s.data_objects);
             }
 
             if (s.object_datasets.Count > 0)
             {
-                repo.StoreDatasetProperties(ObjectCopyHelpers.object_datasets_helper,
-                                         s.object_datasets);
+                repo.StoreDatasetProperties(och.object_datasets_helper, s.object_datasets);
             }
 
             if (s.object_instances.Count > 0)
             {
-                repo.StoreObjectInstances(ObjectCopyHelpers.object_instances_helper,
-                                          s.object_instances);
+                repo.StoreObjectInstances(och.object_instances_helper, s.object_instances);
             }
 
             if (s.object_titles.Count > 0)
             {
-                repo.StoreObjectTitles(ObjectCopyHelpers.object_titles_helper,
-                                          s.object_titles);
+                repo.StoreObjectTitles(och.object_titles_helper, s.object_titles);
             }
 
             if (s.object_dates.Count > 0)
             {
-                repo.StoreObjectDates(ObjectCopyHelpers.object_dates_helper,
-                                          s.object_dates);
+                repo.StoreObjectDates(och.object_dates_helper, s.object_dates);
             }
 
         }

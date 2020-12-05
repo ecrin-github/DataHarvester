@@ -5,9 +5,16 @@ using System.Threading.Tasks;
 
 namespace DataHarvester
 {
-    public static class HtmlHelpers
+    public class HtmlHelpers
     {
-        public static string replace_tags(string input_string)
+        LoggingDataLayer logging_repo;
+
+        public HtmlHelpers(LoggingDataLayer _logging_repo)
+        {
+            logging_repo = _logging_repo;
+        }
+
+        public string replace_tags(string input_string)
         {
             try
             {
@@ -105,13 +112,13 @@ namespace DataHarvester
 
             catch(Exception e)
             {
-                StringHelpers.SendError("In replace_tags: " + e.Message +" (Input was '" + input_string + "')");
+                logging_repo.LogError("In replace_tags: " + e.Message +" (Input was '" + input_string + "')");
                 return null;
             }
         }
 
 
-        private static char ChangeToSupUnicode(char a)
+        private char ChangeToSupUnicode(char a)
         {
             char unicode = a;
             switch (a)
@@ -137,7 +144,7 @@ namespace DataHarvester
             return unicode;
         }
 
-        private static char ChangeToSubUnicode(char a)
+        private char ChangeToSubUnicode(char a)
         {
             char unicode = a;
             switch (a)
@@ -174,7 +181,7 @@ namespace DataHarvester
             return unicode;
         }
 
-        public static bool check_for_tags(string input_string)
+        public bool check_for_tags(string input_string)
         {
             if (input_string == null)
             {
@@ -197,7 +204,7 @@ namespace DataHarvester
         }
 
 
-        public static string strip_tags(string input_string)
+        public string strip_tags(string input_string)
         {
             string output_string = input_string.Replace("<ol>", "").Replace("<ul>", "").Replace("</ol>", "").Replace("</ul>", "");
             output_string = output_string.Replace("<li>", "* ").Replace("</li>", "");
@@ -207,7 +214,7 @@ namespace DataHarvester
             return output_string;
         }
 
-        public static async Task CheckURLsAsync(List<ObjectInstance> web_resources)
+        public async Task CheckURLsAsync(List<ObjectInstance> web_resources)
         {
             HttpClient Client = new HttpClient();
             DateTime today = DateTime.Today;
@@ -229,7 +236,7 @@ namespace DataHarvester
             }
         }
 
-        public static async Task<bool> CheckURLAsync(string url_to_check)
+        public async Task<bool> CheckURLAsync(string url_to_check)
         {
             HttpClient Client = new HttpClient();
             DateTime today = DateTime.Today;

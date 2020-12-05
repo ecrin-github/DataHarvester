@@ -7,10 +7,12 @@ namespace DataHarvester
     public class TopicHelper
     {
         string db_conn;
+        LoggingDataLayer logging_repo;
 
-        public TopicHelper(string _db_conn)
+        public TopicHelper(string _db_conn, LoggingDataLayer _logging_repo)
         {
             db_conn = _db_conn;
+            logging_repo = _logging_repo;
         }
 
         public void ExecuteSQL(string sql_string)
@@ -35,7 +37,7 @@ namespace DataHarvester
                              or lower(topic_value) = 'studies'
                              or lower(topic_value) = 'evaluation';";
             ExecuteSQL(sql_string);
-            StringHelpers.SendFeedback("Updating topic codes, deleting meanngless categories");
+            logging_repo.LogLine("Updating topic codes, deleting meanngless categories");
         }
 
 
@@ -52,13 +54,14 @@ namespace DataHarvester
                                   where t.topic_value = g.name
                                   and topic_type is null;";
             ExecuteSQL(sql_string);
-            StringHelpers.SendFeedback("Updating topic codes - labelling geographic entities");
+            logging_repo.LogLine("Updating topic codes - labelling geographic entities");
         }
 
 
         public void update_topics(string source_type)
         {
-            // can be difficult to do ths with large datasets
+            // Can be difficult to do ths with large datasets.
+
             int rec_count = 0;
             int rec_batch = 500000;
             string sql_string = @"select count(*) from sd.";
@@ -71,8 +74,8 @@ namespace DataHarvester
                 rec_count = conn.ExecuteScalar<int>(sql_string);
             }
 
-            // in some cases mesh codes may be overwritten if 
-            // they do not conform entirely (in format) with the mesh list
+            // In some cases mesh codes may be overwritten if 
+            // they do not conform entirely (in format) with the mesh list.
 
             sql_string = @"Update ";
             sql_string += source_type.ToLower() == "study"
@@ -93,19 +96,19 @@ namespace DataHarvester
                         ExecuteSQL(batch_sql_string);
                         string feedback = "Updating topic codes, " + r.ToString() + " to ";
                         feedback += (r + rec_batch < rec_count) ? (r + rec_batch).ToString() : rec_count.ToString();
-                        StringHelpers.SendFeedback(feedback);
+                        logging_repo.LogLine(feedback);
                     }
                 }
                 else
                 {
                     ExecuteSQL(sql_string);
-                    StringHelpers.SendFeedback("Updating topic codes - as a single batch");
+                    logging_repo.LogLine("Updating topic codes - as a single batch");
                 }
             }
             catch (Exception e)
             {
                 string res = e.Message;
-                StringHelpers.SendError("In update_topics: " + res);
+                logging_repo.LogError("In update_topics: " + res);
             }
         }
 

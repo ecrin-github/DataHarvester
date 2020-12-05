@@ -2,10 +2,18 @@
 
 namespace DataHarvester
 {
-    public static class StringHelpers
+    public class StringHelpers
     {
+        HtmlHelpers mh;
+        LoggingDataLayer logging_repo;
 
-        public static string TidyName(string in_name)
+        public StringHelpers(LoggingDataLayer _logging_repo)
+        {
+            mh = new HtmlHelpers(_logging_repo);
+            logging_repo = _logging_repo;
+        }
+
+        public string TidyName(string in_name)
         {
 
             string name = in_name.Replace(".", "");
@@ -32,7 +40,7 @@ namespace DataHarvester
         }
 
 
-        public static string ReplaceApos(string apos_name)
+        public string ReplaceApos(string apos_name)
         {
             try
             {
@@ -65,13 +73,13 @@ namespace DataHarvester
             }
             catch (Exception e)
             {
-                StringHelpers.SendError("In ReplaceApos: " + e.Message + " (input was '" + apos_name + "')");
+                logging_repo.LogError("In ReplaceApos: " + e.Message + " (input was '" + apos_name + "')");
                 return apos_name;
             }
 
         }
 
-        public static string CheckTitle(string in_title)
+        public string CheckTitle(string in_title)
         {
             string out_title = "";
             if (!string.IsNullOrEmpty(in_title))
@@ -83,8 +91,8 @@ namespace DataHarvester
                 {
                     if (in_title.Contains("<"))
                     {
-                        out_title = HtmlHelpers.replace_tags(in_title);
-                        out_title = HtmlHelpers.strip_tags(out_title);
+                        out_title = mh.replace_tags(in_title);
+                        out_title = mh.strip_tags(out_title);
                     }
                     else
                     {
@@ -96,7 +104,7 @@ namespace DataHarvester
         }
 
 
-        public static string TidyOrgName(string in_name, string sid)
+        public string TidyOrgName(string in_name, string sid)
         {
             string name = in_name;
             if (name != null)
@@ -145,13 +153,11 @@ namespace DataHarvester
 
             }
 
-
-
             return name;
         }
 
 
-        public static string FilterOut_Null_OrgNames(string in_name)
+        public string FilterOut_Null_OrgNames(string in_name)
         {
             string out_name = in_name;
             // in_name should be in lower case...
@@ -183,7 +189,7 @@ namespace DataHarvester
         }
 
 
-        public static string TidyORCIDId(string input_identifier)
+        public string TidyORCIDId(string input_identifier)
         {
             string identifier = input_identifier.Replace("https://orcid.org/", "");
             identifier = identifier.Replace("http://orcid.org/", "");
@@ -193,7 +199,7 @@ namespace DataHarvester
         }
 
 
-        public static string TidyORCIDId2(string input_identifier)
+        public string TidyORCIDId2(string input_identifier)
         {
             string identifier = input_identifier;
             if (identifier.Length == 16)
@@ -208,7 +214,7 @@ namespace DataHarvester
         }
 
 
-        public static string lang_3_to_2(string input_lang_code)
+        public string lang_3_to_2(string input_lang_code)
         {
             string lang_code = "";
             switch (input_lang_code)
@@ -231,29 +237,6 @@ namespace DataHarvester
                 default: lang_code = "??"; break;
             }
             return lang_code;
-        }
-
-        public static void SendFeedback(string message, string identifier = "")
-        {
-            string dt_string = DateTime.Now.ToShortDateString() + " : " + DateTime.Now.ToShortTimeString() + " :   ";
-            System.Console.WriteLine(dt_string + message + identifier);
-        }
-
-        public static void SendHeader(string message)
-        {
-            string dt_string = DateTime.Now.ToShortDateString() + " : " + DateTime.Now.ToShortTimeString() + " :   ";
-            System.Console.WriteLine("");
-            System.Console.WriteLine(dt_string + "**** " + message + " ****");
-        }
-
-        public static void SendError(string message)
-        {
-            string dt_string = DateTime.Now.ToShortDateString() + " : " + DateTime.Now.ToShortTimeString() + " :   ";
-            System.Console.WriteLine("");
-            System.Console.WriteLine("+++++++++++++++++++++++++++++++++++++++");
-            System.Console.WriteLine(dt_string + "***ERROR*** " + message);
-            System.Console.WriteLine("+++++++++++++++++++++++++++++++++++++++");
-            System.Console.WriteLine("");
         }
     }
 } 

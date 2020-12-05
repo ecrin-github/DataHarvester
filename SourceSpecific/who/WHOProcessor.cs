@@ -7,7 +7,7 @@ namespace DataHarvester.who
     public class WHOProcessor
 	{
 
-		public Study ProcessData(WHORecord st, DateTime? download_datetime, DataLayer common_repo, WHODataLayer who_repo)
+		public Study ProcessData(WHORecord st, DateTime? download_datetime, DataLayer common_repo, WHODataLayer who_repo, LoggingDataLayer logging_repo)
 		{
 			Study s = new Study();
 
@@ -25,8 +25,15 @@ namespace DataHarvester.who
 			List<ObjectDate> data_object_dates = new List<ObjectDate>();
 			List<ObjectInstance> data_object_instances = new List<ObjectInstance>();
 
+			StringHelpers sh = new StringHelpers(logging_repo);
+			DateHelpers dh = new DateHelpers(logging_repo);
+			TypeHelpers th = new TypeHelpers(logging_repo);
+			HashHelpers hh = new HashHelpers(logging_repo);
+			HtmlHelpers mh = new HtmlHelpers(logging_repo);
+			IdentifierHelpers ih = new IdentifierHelpers(logging_repo);
+
+
 			// transfer features of main study object
-			// In most cases study will have already been registered in CGT
 
 			string sid = st.sd_sid;
 			s.sd_sid = sid;
@@ -35,15 +42,15 @@ namespace DataHarvester.who
 			SplitDate registration_date = null;
 			if (!string.IsNullOrEmpty(st.date_registration))
 			{
-				registration_date = DateHelpers.GetDatePartsFromISOString(st.date_registration);
+				registration_date = dh.GetDatePartsFromISOString(st.date_registration);
 			}
 
 			study_identifiers.Add(new StudyIdentifier(sid, sid, 11, "Trial Registry ID", st.source_id,
 									 get_source_name(st.source_id), registration_date?.date_string, null));
 
 			// titles
-			string public_title = StringHelpers.CheckTitle(st.public_title);
-			string scientific_title = StringHelpers.CheckTitle(st.scientific_title);
+			string public_title = sh.CheckTitle(st.public_title);
+			string scientific_title = sh.CheckTitle(st.scientific_title);
 
 			if (public_title == "")
 			{
@@ -137,8 +144,8 @@ namespace DataHarvester.who
 			s.brief_description = (interventions + " " + primary_outcome + " " + study_design).Trim();
 			if (s.brief_description.Contains("<"))
 			{
-				s.brief_description = HtmlHelpers.replace_tags(s.brief_description);
-				s.bd_contains_html = HtmlHelpers.check_for_tags(s.brief_description);
+				s.brief_description = mh.replace_tags(s.brief_description);
+				s.bd_contains_html = mh.check_for_tags(s.brief_description);
 			}
 
 			// data sharing statement
@@ -152,14 +159,14 @@ namespace DataHarvester.who
 				s.data_sharing_statement = st.ipd_description;
 				if (s.data_sharing_statement.Contains("<"))
 				{
-					s.data_sharing_statement = HtmlHelpers.replace_tags(s.data_sharing_statement);
-					s.dss_contains_html = HtmlHelpers.check_for_tags(s.data_sharing_statement);
+					s.data_sharing_statement = mh.replace_tags(s.data_sharing_statement);
+					s.dss_contains_html = mh.check_for_tags(s.data_sharing_statement);
 				}
 			}
 
 			if (!string.IsNullOrEmpty(st.date_enrolment))
 			{
-				SplitDate enrolment_date = DateHelpers.GetDatePartsFromISOString(st.date_enrolment);
+				SplitDate enrolment_date = dh.GetDatePartsFromISOString(st.date_enrolment);
 				if (enrolment_date?.year > 1960)
 				{
 					s.study_start_year = enrolment_date.year;
@@ -178,7 +185,7 @@ namespace DataHarvester.who
 				else
 				{
 					s.study_type = st.study_type; ;
-					s.study_type_id = TypeHelpers.GetTypeId(s.study_type);
+					s.study_type_id = th.GetTypeId(s.study_type);
 				}
 			}
 
@@ -193,7 +200,7 @@ namespace DataHarvester.who
 				else
 				{
 					s.study_status = st.study_status;
-					s.study_status_id = TypeHelpers.GetStatusId(s.study_status);
+					s.study_status_id = th.GetStatusId(s.study_status);
 				}
 			}
 
@@ -238,7 +245,7 @@ namespace DataHarvester.who
 				if (st.agemin_units.StartsWith("Other"))
 				{
 					// was not classified previously...
-					s.min_age_units = TypeHelpers.GetTimeUnits(st.agemin_units);
+					s.min_age_units = th.GetTimeUnits(st.agemin_units);
 				}
 				else
 				{
@@ -246,7 +253,7 @@ namespace DataHarvester.who
 				}
 				if (s.min_age_units != null)
 				{
-					s.min_age_units_id = TypeHelpers.GetTimeUnitsId(s.min_age_units);
+					s.min_age_units_id = th.GetTimeUnitsId(s.min_age_units);
 				}
 			}
 
@@ -259,7 +266,7 @@ namespace DataHarvester.who
 					if (st.agemax_units.StartsWith("Other"))
 					{
 						// was not classified previously...
-						s.max_age_units = TypeHelpers.GetTimeUnits(st.agemax_units);
+						s.max_age_units = th.GetTimeUnits(st.agemax_units);
 					}
 					else
 					{
@@ -267,7 +274,7 @@ namespace DataHarvester.who
 					}
 					if (s.max_age_units != null)
 					{
-						s.max_age_units_id = TypeHelpers.GetTimeUnitsId(s.max_age_units);
+						s.max_age_units_id = th.GetTimeUnitsId(s.max_age_units);
 					}
 				}
 			}
@@ -279,7 +286,7 @@ namespace DataHarvester.who
 			}
 
             s.study_gender_elig = st.gender;
-			s.study_gender_elig_id = TypeHelpers.GetGenderEligId(st.gender);
+			s.study_gender_elig_id = th.GetGenderEligId(st.gender);
 
 
 			// Add study attribute records.
@@ -289,9 +296,9 @@ namespace DataHarvester.who
 
 			if (!string.IsNullOrEmpty(st.primary_sponsor))
 			{
-				sponsor_name = StringHelpers.TidyOrgName(st.primary_sponsor, sid);
+				sponsor_name = sh.TidyOrgName(st.primary_sponsor, sid);
 				string sponsor = sponsor_name.ToLower();
-				if (StringHelpers.FilterOut_Null_OrgNames(sponsor) != "")
+				if (sh.FilterOut_Null_OrgNames(sponsor) != "")
 				{
 					if (sponsor.StartsWith("dr ") || sponsor.StartsWith("dr. ")
 						|| sponsor.StartsWith("prof ") || sponsor.StartsWith("prof. ")
@@ -399,7 +406,7 @@ namespace DataHarvester.who
 			// registry entry
 			string name_base = s.display_title;
 			string object_display_title = name_base + " :: " + "Registry web page";
-			string sd_oid = HashHelpers.CreateMD5(sid + object_display_title);
+			string sd_oid = hh.CreateMD5(sid + object_display_title);
 
 			int? pub_year = registration_date?.year;
 
@@ -421,7 +428,7 @@ namespace DataHarvester.who
 
 			if (st.record_date != null)
             {
-				SplitDate record_date = DateHelpers.GetDatePartsFromISOString(st.record_date);
+				SplitDate record_date = dh.GetDatePartsFromISOString(st.record_date);
 				data_object_dates.Add(new ObjectDate(sd_oid, 18, "Updated", record_date.year,
 						  record_date.month, record_date.day, record_date.date_string));
 
@@ -434,11 +441,11 @@ namespace DataHarvester.who
 				if (st.results_url_link.Contains("http") && !st.results_url_link.ToLower().Contains("clinicaltrials.gov"))
                 {
 					object_display_title = name_base + " :: " + "Results summary";
-					sd_oid = HashHelpers.CreateMD5(sid + object_display_title);
+					sd_oid = hh.CreateMD5(sid + object_display_title);
 					SplitDate results_date = null;
 					if (st.results_date_posted != null)
 					{
-						results_date = DateHelpers.GetDatePartsFromISOString(st.results_date_posted);
+						results_date = dh.GetDatePartsFromISOString(st.results_date_posted);
 					}
 
 					int? posted_year = results_date?.year;
@@ -519,7 +526,7 @@ namespace DataHarvester.who
 					}
 
 					object_display_title = name_base + " :: " + object_type;
-					sd_oid = HashHelpers.CreateMD5(sid + object_display_title);
+					sd_oid = hh.CreateMD5(sid + object_display_title);
 
 					// almost certainly not in the registry
 					data_objects.Add(new DataObject(sd_oid, sid, object_display_title, pub_year, 23, "Text", object_type_id, object_type,
@@ -543,7 +550,7 @@ namespace DataHarvester.who
 					if (!sc.is_individual)
 					{
 						string orgname = sc.organisation_name.ToLower();
-						if (IdentifierHelpers.CheckIfIndividual(orgname))
+						if (ih.CheckIfIndividual(orgname))
 						{
 							sc.person_full_name = sc.organisation_name;
 							sc.organisation_name = null;
@@ -569,69 +576,61 @@ namespace DataHarvester.who
 		}
 
 
-		public void StoreData(DataLayer repo, Study s)
+		public void StoreData(DataLayer repo, Study s, LoggingDataLayer logging_repo)
 		{
 			// store study
 			StudyInDB st = new StudyInDB(s);
 			repo.StoreStudy(st);
 
+			StudyCopyHelpers sch = new StudyCopyHelpers(logging_repo);
+			ObjectCopyHelpers och = new ObjectCopyHelpers(logging_repo);
 
 			// store study attributes
 			if (s.identifiers.Count > 0)
 			{
-				repo.StoreStudyIdentifiers(StudyCopyHelpers.study_ids_helper,
-										  s.identifiers);
+				repo.StoreStudyIdentifiers(sch.study_ids_helper, s.identifiers);
 			}
 
 			if (s.titles.Count > 0)
 			{
-				repo.StoreStudyTitles(StudyCopyHelpers.study_titles_helper,
-										  s.titles);
+				repo.StoreStudyTitles(sch.study_titles_helper, s.titles);
 			}
 
 			if (s.features.Count > 0)
 			{
-				repo.StoreStudyFeatures(StudyCopyHelpers.study_features_helper,
-										  s.features);
+				repo.StoreStudyFeatures(sch.study_features_helper, s.features);
 			}
 
 			if (s.topics.Count > 0)
 			{
-				repo.StoreStudyTopics(StudyCopyHelpers.study_topics_helper,
-										  s.topics);
+				repo.StoreStudyTopics(sch.study_topics_helper, s.topics);
 			}
 
 			if (s.contributors.Count > 0)
 			{
-				repo.StoreStudyContributors(StudyCopyHelpers.study_contributors_helper,
-										  s.contributors);
+				repo.StoreStudyContributors(sch.study_contributors_helper, s.contributors);
 			}
-
 
 			// store data objects and dataset properties
 			if (s.data_objects.Count > 0)
 			{
-				repo.StoreDataObjects(ObjectCopyHelpers.data_objects_helper,
-										 s.data_objects);
+				repo.StoreDataObjects(och.data_objects_helper, s.data_objects);
 			}
 
 			// store data object attributes
 			if (s.object_dates.Count > 0)
 			{
-				repo.StoreObjectDates(ObjectCopyHelpers.object_dates_helper,
-										 s.object_dates);
+				repo.StoreObjectDates(och.object_dates_helper, s.object_dates);
 			}
 
 			if (s.object_instances.Count > 0)
 			{
-				repo.StoreObjectInstances(ObjectCopyHelpers.object_instances_helper,
-										 s.object_instances);
+				repo.StoreObjectInstances(och.object_instances_helper, s.object_instances);
 			}
 
 			if (s.object_titles.Count > 0)
 			{
-				repo.StoreObjectTitles(ObjectCopyHelpers.object_titles_helper,
-										 s.object_titles);
+				repo.StoreObjectTitles(och.object_titles_helper, s.object_titles);
 			}
 		}
 

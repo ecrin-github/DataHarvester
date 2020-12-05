@@ -49,17 +49,17 @@ namespace DataHarvester.yoda
 					Yoda_Record studyRegEntry = (Yoda_Record)serializer.Deserialize(rdr);
 
 					// break up the file into relevant data classes
-					Study s = processor.ProcessData(studyRegEntry, rec.last_downloaded);
+					Study s = processor.ProcessData(studyRegEntry, rec.last_downloaded, logging_repo);
 
 					// store the data in the database			
-					processor.StoreData(common_repo, s);  
+					processor.StoreData(common_repo, s, logging_repo);  
 
 					// update file record with last processed datetime
 					logging_repo.UpdateFileRecLastHarvested(rec.id, "study", last_harvest_id);
 
 				}
 
-				if (n % 10 == 0) StringHelpers.SendFeedback(n.ToString());
+				if (n % 10 == 0) logging_repo.LogLine(n.ToString());
 			}
 
 			return n;

@@ -26,14 +26,8 @@ namespace DataHarvester.pubmed
 
         public int? LoopThroughFiles()
         {
-            // ***************************************************
-            // set up pp local extraction errors folder .....
-            // or better to use centtral sf mon....
-            // **************************************************
-
             string fileBase = source.local_folder;
 
-            // harvest_type_id can be 1 (all), 2 (use cutoff date) or 3 (harvest_type_id only 'incomplete' files)
             int total_amount = logging_repo.FetchFileRecordsCount(source.id, "object", harvest_type_id);
             int chunk = 1000;
             int k = 0;
@@ -50,14 +44,14 @@ namespace DataHarvester.pubmed
                     {
                         XmlDocument xdoc = new XmlDocument();
                         xdoc.Load(filePath);
-                        CitationObject c = processor.ProcessData(logging_repo, rec.sd_id, xdoc, rec.last_downloaded, harvest_id);
-                        processor.StoreData(repo, c);
+                        CitationObject c = processor.ProcessData(rec.sd_id, xdoc, rec.last_downloaded, harvest_id, logging_repo);
+                        processor.StoreData(repo, c, logging_repo);
 
                         // update file record with last processed datetime
                         logging_repo.UpdateFileRecLastHarvested(rec.id, "object", harvest_id);
                     }
 
-                    if (k % 100 == 0) StringHelpers.SendFeedback(k.ToString());
+                    if (k % 100 == 0) logging_repo.LogLine(k.ToString());
                 }
 
                 // if (k > 9990) break;  // testing only

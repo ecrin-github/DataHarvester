@@ -36,7 +36,7 @@ namespace DataHarvester.who
 			IEnumerable<StudyFileRecord> file_list = logging_repo.FetchStudyFileRecords(source.id, harvest_type_id);
 			int n = 0; string filePath = "";
 			XmlSerializer serializer = new XmlSerializer(typeof(WHORecord));
-			StringHelpers.SendHeader("Harvesting Files");
+			logging_repo.LogHeader("Harvesting Files");
 
 			foreach (StudyFileRecord rec in file_list)
 			{
@@ -57,16 +57,16 @@ namespace DataHarvester.who
 					WHORecord studyRegEntry = (WHORecord)serializer.Deserialize(rdr);
 
                     // break up the file into relevant data classes
-                    Study s = processor.ProcessData(studyRegEntry, rec.last_downloaded, common_repo, who_repo);
+                    Study s = processor.ProcessData(studyRegEntry, rec.last_downloaded, common_repo, who_repo, logging_repo);
 
                     // store the data in the database			
-                    processor.StoreData(common_repo, s);
+                    processor.StoreData(common_repo, s, logging_repo);
 
 					// update file record with last processed datetime
 					logging_repo.UpdateFileRecLastHarvested(rec.id, "study", last_harvest_id);
 				}
 
-				if (n % 10 == 0) StringHelpers.SendFeedback("Records harvested: " + n.ToString());
+				if (n % 10 == 0) logging_repo.LogLine("Records harvested: " + n.ToString());
 			}
 			return n;
 		}

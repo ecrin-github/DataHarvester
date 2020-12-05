@@ -14,7 +14,7 @@ namespace DataHarvester.isrctn
             //checker = new URLChecker(); 
         }
 
-        public async Task<Study> ProcessDataAsync(ISCTRN_Record fs, DateTime? download_datetime, DataLayer common_repo)
+        public async Task<Study> ProcessDataAsync(ISCTRN_Record fs, DateTime? download_datetime, DataLayer common_repo, LoggingDataLayer logging_repo)
         {
             Study s = new Study();
 
@@ -30,7 +30,13 @@ namespace DataHarvester.isrctn
             List<ObjectTitle> object_titles = new List<ObjectTitle>();
             List<ObjectDate> object_dates = new List<ObjectDate>();
             List<ObjectInstance> object_instances = new List<ObjectInstance>();
-            
+
+            HashHelpers hh = new HashHelpers(logging_repo);
+            StringHelpers sh = new StringHelpers(logging_repo);
+            DateHelpers dh = new DateHelpers(logging_repo);
+            TypeHelpers th = new TypeHelpers(logging_repo);
+            HtmlHelpers mh = new HtmlHelpers(logging_repo);
+            IdentifierHelpers ih = new IdentifierHelpers(logging_repo);
 
             //List<AvailableIPD> ipd_info = new List<AvailableIPD>();
             //List<StudyRelationship> relationships = new List<StudyRelationship>();
@@ -151,9 +157,9 @@ namespace DataHarvester.isrctn
                                 {
                                     contributors.Add(c);
                                 }
-                                if (StringHelpers.FilterOut_Null_OrgNames(i.item_value.ToLower()) != "")
+                                if (sh.FilterOut_Null_OrgNames(i.item_value.ToLower()) != "")
                                 {
-                                    c = new StudyContributor(sid, 54, "Trial Sponsor", null, StringHelpers.TidyOrgName(i.item_value, sid), null, null);
+                                    c = new StudyContributor(sid, 54, "Trial Sponsor", null, sh.TidyOrgName(i.item_value, sid), null, null);
                                 }
                                 break;
                             }
@@ -167,7 +173,6 @@ namespace DataHarvester.isrctn
                                 // Ignore...
                                 break;
                             }
-
                     }
                 }
 
@@ -287,10 +292,10 @@ namespace DataHarvester.isrctn
                             }
                         case "Funder name":
                             {
-                                if (StringHelpers.FilterOut_Null_OrgNames(i.item_value.ToLower()) != "")
+                                if (sh.FilterOut_Null_OrgNames(i.item_value.ToLower()) != "")
                                 {
                                     // check a funder is not simply the sponsor...
-                                    string funder = StringHelpers.TidyOrgName(i.item_value, sid);
+                                    string funder = sh.TidyOrgName(i.item_value, sid);
                                     if (funder != study_sponsor)
                                     {
                                         contributors.Add(new StudyContributor(sid, 58, "Study Funder", null, funder, null, null));
@@ -349,7 +354,7 @@ namespace DataHarvester.isrctn
                                     foreach (string item in items)
                                     {
                                         string item2 = item.Trim();
-                                        idd = IdentifierHelpers.GetISRCTNIdentifierProps(item2, study_sponsor);
+                                        idd = ih.GetISRCTNIdentifierProps(item2, study_sponsor);
                                         if (idd.id_type != "Protocol version")
                                         {
                                             identifiers.Add(new StudyIdentifier(sid, idd.id_value, idd.id_type_id, idd.id_type, 
@@ -364,7 +369,7 @@ namespace DataHarvester.isrctn
                                     foreach (string item in items)
                                     {
                                         string item2 = item.Trim();
-                                        idd = IdentifierHelpers.GetISRCTNIdentifierProps(item2, study_sponsor);
+                                        idd = ih.GetISRCTNIdentifierProps(item2, study_sponsor);
                                         if (idd.id_type != "Protocol version")
                                         {
                                             identifiers.Add(new StudyIdentifier(sid, idd.id_value, idd.id_type_id, idd.id_type,
@@ -374,7 +379,7 @@ namespace DataHarvester.isrctn
                                 }
                                 else
                                 {
-                                    idd = IdentifierHelpers.GetISRCTNIdentifierProps(i.item_value, study_sponsor);
+                                    idd = ih.GetISRCTNIdentifierProps(i.item_value, study_sponsor);
                                     if (idd.id_type != "Protocol version")
                                     {
                                         identifiers.Add(new StudyIdentifier(sid, idd.id_value, idd.id_type_id, idd.id_type, 
@@ -835,7 +840,7 @@ namespace DataHarvester.isrctn
             string object_display_title = s.display_title + " :: ISRCTN registry entry";
 
             // create hash Id for the data object
-            string sd_oid = HashHelpers.CreateMD5(sid + object_display_title);
+            string sd_oid = hh.CreateMD5(sid + object_display_title);
 
             DataObject d = new DataObject(sd_oid, sid, object_display_title, pub_year,
                   23, "Text", 13, "Trial Registry entry", 100126, "ISRCTN", 12, download_datetime);
@@ -889,7 +894,7 @@ namespace DataHarvester.isrctn
                     }
 
                     object_display_title = s.display_title + " :: patient information sheet";
-                    sd_oid = HashHelpers.CreateMD5(sid + object_display_title);
+                    sd_oid = hh.CreateMD5(sid + object_display_title);
 
                     data_objects.Add(new DataObject(sd_oid, sid, object_display_title, s.study_start_year,
                       23, "Text", 19, "Patient information sheets", null, study_sponsor, 12, download_datetime));
@@ -1048,7 +1053,7 @@ namespace DataHarvester.isrctn
                                             }
 
                                             object_display_title = s.display_title + " :: " + object_type;
-                                            sd_oid = HashHelpers.CreateMD5(sid + object_display_title);
+                                            sd_oid = hh.CreateMD5(sid + object_display_title);
 
                                             data_objects.Add(new DataObject(sd_oid, sid, s.display_title + " :: " + object_type, s.study_start_year, 
                                                         23, "Text", object_type_id, object_type, 
@@ -1146,7 +1151,7 @@ namespace DataHarvester.isrctn
                     }
 
                     object_display_title = i.item_name;
-                    sd_oid = HashHelpers.CreateMD5(sid + object_display_title);
+                    sd_oid = hh.CreateMD5(sid + object_display_title);
 
                     data_objects.Add(new DataObject(sd_oid, sid, object_display_title, s.study_start_year,
                                 23, "Text", object_type_id, object_type, 100126, "ISRCTN", 11, download_datetime));
@@ -1167,7 +1172,7 @@ namespace DataHarvester.isrctn
                 if (true) //await HtmlHelpers.CheckURLAsync(fs.trial_website))
                 {
                     object_display_title = s.display_title + " :: website";
-                    sd_oid = HashHelpers.CreateMD5(sid + object_display_title);
+                    sd_oid = hh.CreateMD5(sid + object_display_title);
 
                     data_objects.Add(new DataObject(sd_oid, sid, object_display_title, s.study_start_year,
                             23, "Text", 134, "Website", null, study_sponsor, 12, download_datetime));
@@ -1185,11 +1190,11 @@ namespace DataHarvester.isrctn
             // data sharing statement for html
             // after getting rid of any sup / subs, divs and spans.
 
-            s.brief_description = HtmlHelpers.replace_tags(s.brief_description);
-            s.bd_contains_html = HtmlHelpers.check_for_tags(s.brief_description);
+            s.brief_description = mh.replace_tags(s.brief_description);
+            s.bd_contains_html = mh.check_for_tags(s.brief_description);
 
-            s.data_sharing_statement = HtmlHelpers.replace_tags(s.data_sharing_statement);
-            s.dss_contains_html = HtmlHelpers.check_for_tags(s.data_sharing_statement);
+            s.data_sharing_statement = mh.replace_tags(s.data_sharing_statement);
+            s.dss_contains_html = mh.check_for_tags(s.data_sharing_statement);
 
 
             s.identifiers = identifiers;
@@ -1210,7 +1215,7 @@ namespace DataHarvester.isrctn
         }
 
                 
-        public void StoreData(DataLayer repo, Study s)
+        public void StoreData(DataLayer repo, Study s, LoggingDataLayer logging_repo)
         {
             // construct database study instance
             StudyInDB dbs = new StudyInDB(s);
@@ -1228,74 +1233,59 @@ namespace DataHarvester.isrctn
 
             repo.StoreStudy(dbs);
 
+            StudyCopyHelpers sch = new StudyCopyHelpers(logging_repo);
+            ObjectCopyHelpers och = new ObjectCopyHelpers(logging_repo);
+
             if (s.identifiers.Count > 0)
             {
-                repo.StoreStudyIdentifiers(StudyCopyHelpers.study_ids_helper,
-                                          s.identifiers);
+                repo.StoreStudyIdentifiers(sch.study_ids_helper, s.identifiers);
             }
 
             if (s.titles.Count > 0)
             {
-                repo.StoreStudyTitles(StudyCopyHelpers.study_titles_helper,
-                                          s.titles);
+                repo.StoreStudyTitles(sch.study_titles_helper, s.titles);
             }
 
             if (s.references.Count > 0)
             {
-                repo.StoreStudyReferences(StudyCopyHelpers.study_references_helper,
-                                          s.references);
+                repo.StoreStudyReferences(sch.study_references_helper, s.references);
             }
-
 
             if (s.contributors.Count > 0)
             {
-                repo.StoreStudyContributors(StudyCopyHelpers.study_contributors_helper,
+                repo.StoreStudyContributors(sch.study_contributors_helper,
                                           s.contributors);
             }
 
-            /*
-            if (s.studylinks.Count > 0)
-            {
-                repo.StoreStudyLinks(StudyCopyHelpers.study_links_helper,
-                                          s.studylinks);
-            }
-            */
-
             if (s.topics.Count > 0)
             {
-                repo.StoreStudyTopics(StudyCopyHelpers.study_topics_helper,
+                repo.StoreStudyTopics(sch.study_topics_helper,
                                           s.topics);
             }
 
             if (s.features.Count > 0)
             {
-                repo.StoreStudyFeatures(StudyCopyHelpers.study_features_helper,
-                                          s.features);
+                repo.StoreStudyFeatures(sch.study_features_helper,s.features);
             }
-
 
             if (s.data_objects.Count > 0)
             {
-                repo.StoreDataObjects(ObjectCopyHelpers.data_objects_helper,
-                                          s.data_objects);
+                repo.StoreDataObjects(och.data_objects_helper, s.data_objects);
             }
 
             if (s.object_instances.Count > 0)
             {
-                repo.StoreObjectInstances(ObjectCopyHelpers.object_instances_helper,
-                                          s.object_instances);
+                repo.StoreObjectInstances(och.object_instances_helper, s.object_instances);
             }
 
             if (s.object_titles.Count > 0)
             {
-                repo.StoreObjectTitles(ObjectCopyHelpers.object_titles_helper,
-                                          s.object_titles);
+                repo.StoreObjectTitles(och.object_titles_helper, s.object_titles);
             }
 
             if (s.object_dates.Count > 0)
             {
-                repo.StoreObjectDates(ObjectCopyHelpers.object_dates_helper,
-                                          s.object_dates);
+                repo.StoreObjectDates(och.object_dates_helper, s.object_dates);
             }
 
         }

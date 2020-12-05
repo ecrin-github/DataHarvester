@@ -55,21 +55,21 @@ namespace DataHarvester.ctg
                         FullStudy studyRegEntry = (FullStudy)serializer.Deserialize(rdr);
 
                         // break up the file into relevant data classes
-                        Study s = processor.ProcessData(studyRegEntry, rec.last_downloaded, common_repo);
+                        Study s = processor.ProcessData(studyRegEntry, rec.last_downloaded, common_repo, logging_repo);
 
                         // check and store data object links - just pdfs for now
                         // (commented out for the moment to save time during extraction).
                         // await HtmlHelpers.CheckURLsAsync(s.object_instances);
 
                         // store the data in the database
-                        processor.StoreData(common_repo, s);
+                        processor.StoreData(common_repo, s, logging_repo);
 
                         // update file record with last processed datetime
                         logging_repo.UpdateFileRecLastHarvested(rec.id, "study", last_harvest_id);
 
                     }
                     
-                    if (k % 100 == 0) StringHelpers.SendFeedback(m.ToString() + ": " + n.ToString());
+                    if (k % 100 == 0) logging_repo.LogLine(m.ToString() + ": " + n.ToString());
                 }
             }
 

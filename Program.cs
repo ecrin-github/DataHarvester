@@ -27,34 +27,7 @@ namespace DataHarvester
 				return -1;
 			}
 
-			/*
-			// If a date is required check one is present and is valid. 
-			// It should be in the ISO YYYY-MM-DD format.
-			DateTime? cutoff_date = null;
-			if (harvest_type_id == 2)
-			{
-				string cutoff_string = opts.cutoff_date;
-				if (!string.IsNullOrEmpty(cutoff_string))
-				{
-					if (Regex.Match(cutoff_string, @"^20\d{2}-[0,1]\d{1}-[0, 1, 2, 3]\d{1}$").Success)
-					{
-						cutoff_date = new DateTime(
-									Int32.Parse(cutoff_string.Substring(0, 4)),
-									Int32.Parse(cutoff_string.Substring(5, 2)),
-									Int32.Parse(cutoff_string.Substring(8, 2)));
-					}
-				}
-
-				if (cutoff_date == null)
-				{
-					WriteLine("Sorry - this harvest type requires a date"); ;
-					WriteLine("in the format YYYY-MM-DD and this is missing");
-					return -1;
-				}
-			}
-			*/
-
-			Harvester dl = new Harvester();
+			Harvester dh = new Harvester();
 
 			// Check each source id is valid and run the program if it is... 
 
@@ -71,7 +44,8 @@ namespace DataHarvester
 					}
 					else
 					{
-						await dl.HarvestDataAsync(source, harvest_type_id, opts.org_update_only);
+						logging_repo.OpenLogFile(source.database_name);
+						await dh.HarvestDataAsync(source, harvest_type_id, opts.org_update_only, logging_repo);
 					}
 				}
 			}
@@ -95,7 +69,7 @@ namespace DataHarvester
 		[Option('s', "source_ids", Required = true, Separator = ',', HelpText = "Comma separated list of Integer ids of data sources.")]
 		public IEnumerable<int> source_ids { get; set; }
 
-		[Option('t', "harvest_type_id", Required = true, HelpText = "Integer representing type of harvest (1 = full, i.e. all available files, 2 = only files downloaded since last harvest.")]
+		[Option('t', "harvest_type_id", Required = true, HelpText = "Integer representing type of harvest (1 = full, i.e. all available files, 2 = only files downloaded since last import.")]
 		public int harvest_type_id { get; set; }
 
 		//[Option('d', "cutoff_date", Required = false, HelpText = "Only data revised or added since this date will be considered")]

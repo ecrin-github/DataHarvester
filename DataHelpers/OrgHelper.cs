@@ -6,10 +6,12 @@ namespace DataHarvester
     public class OrgHelper
     {
         string db_conn;
+        LoggingDataLayer logging_repo;
 
-        public OrgHelper(string _db_conn)
+        public OrgHelper(string _db_conn, LoggingDataLayer _logging_repo)
         {
             db_conn = _db_conn;
+            logging_repo = _logging_repo;
         }
 
         public void update_study_identifiers_using_default_name()
@@ -42,8 +44,6 @@ namespace DataHarvester
                 conn.Execute(sql_string);
             }
         }
-
-
 
         public void update_study_identifiers_using_other_name()
         {

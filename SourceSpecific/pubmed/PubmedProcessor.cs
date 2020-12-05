@@ -14,9 +14,14 @@ namespace DataHarvester.pubmed
         // Its inputs include a single XML document representing the citation
         // as well as the currrent PMID and a refrence to the data layer.
 
-        public CitationObject ProcessData(LoggingDataLayer logging_repo, string sdoid, XmlDocument d,
-                                          DateTime? download_datetime, int harvest_id)
+        public CitationObject ProcessData(string sdoid, XmlDocument d, DateTime? download_datetime, int harvest_id, LoggingDataLayer logging_repo)
         {
+            StringHelpers sh = new StringHelpers(logging_repo);
+            DateHelpers dh = new DateHelpers(logging_repo);
+            TypeHelpers th = new TypeHelpers(logging_repo);
+            HtmlHelpers mh = new HtmlHelpers(logging_repo);
+            IdentifierHelpers ih = new IdentifierHelpers(logging_repo);
+
             // First convert the XML document to a Linq XML Document.
 
             XDocument xDoc = XDocument.Load(new XmlNodeReader(d));
@@ -145,7 +150,7 @@ namespace DataHarvester.pubmed
                     }
                     else
                     {
-                        lang_2code = StringHelpers.lang_3_to_2(g);
+                        lang_2code = sh.lang_3_to_2(g);
                         if (lang_2code == "??")
                         {
                             // need to use the database
@@ -224,8 +229,8 @@ namespace DataHarvester.pubmed
                 {
                     if (atitle.Contains("<"))
                     {
-                        atitle = HtmlHelpers.replace_tags(atitle);
-                        atitle = HtmlHelpers.strip_tags(atitle);
+                        atitle = mh.replace_tags(atitle);
+                        atitle = mh.strip_tags(atitle);
                     }
                 }
                 else
@@ -261,8 +266,8 @@ namespace DataHarvester.pubmed
                 {
                     if (atitle.Contains("<"))
                     {
-                        vtitle = HtmlHelpers.replace_tags(vtitle);
-                        vtitle = HtmlHelpers.strip_tags(vtitle);
+                        vtitle = mh.replace_tags(vtitle);
+                        vtitle = mh.strip_tags(vtitle);
                     }
 
                     // Try and get vernacular code language - not explicitly given so
@@ -272,7 +277,7 @@ namespace DataHarvester.pubmed
                     {
                         if (s != "eng")
                         {
-                            string lang_2code = StringHelpers.lang_3_to_2(s);
+                            string lang_2code = sh.lang_3_to_2(s);
                             if (lang_2code == "??")
                             {
                                 // need to use the database
@@ -529,7 +534,7 @@ namespace DataHarvester.pubmed
                     // split any range.
 
                     string date_string = pub_date.Element("MedlineDate").Value;
-                    publication_date = DateHelpers.ProcessMedlineDate(sdoid, date_string, 12, "Available");
+                    publication_date = dh.ProcessMedlineDate(sdoid, date_string, 12, "Available");
                 }
                 else
                 {
@@ -537,7 +542,7 @@ namespace DataHarvester.pubmed
                     // ProcessDate is a helper function that splits the date components, 
                     //  identifies partial dates, and creates the date as a string.
 
-                    publication_date = DateHelpers.ProcessDate(sdoid, pub_date, 12, "Available");
+                    publication_date = dh.ProcessDate(sdoid, pub_date, 12, "Available");
                 }
                 dates.Add(publication_date);
                 c.publication_year = publication_date.start_year;
@@ -549,19 +554,19 @@ namespace DataHarvester.pubmed
             var date_citation_created = citation.Element("DateCreated");
             if (date_citation_created != null)
             {
-                dates.Add(DateHelpers.ProcessDate(sdoid, date_citation_created, 52, "Pubmed citation created"));
+                dates.Add(dh.ProcessDate(sdoid, date_citation_created, 52, "Pubmed citation created"));
             }
 
             var date_citation_revised = citation.Element("DateRevised");
             if (date_citation_revised != null)
             {
-                dates.Add(DateHelpers.ProcessDate(sdoid, date_citation_revised, 53, "Pubmed citation revised"));
+                dates.Add(dh.ProcessDate(sdoid, date_citation_revised, 53, "Pubmed citation revised"));
             }
 
             var date_citation_completed = citation.Element("DateCompleted");
             if (date_citation_completed != null)
             {
-                dates.Add(DateHelpers.ProcessDate(sdoid, date_citation_completed, 54, "Pubmed citation completed"));
+                dates.Add(dh.ProcessDate(sdoid, date_citation_completed, 54, "Pubmed citation completed"));
             }
 
 
@@ -582,7 +587,7 @@ namespace DataHarvester.pubmed
                         if (date_type.ToLower() == "electronic")
                         {
                             // = epublish, type id 55
-                            ObjectDate electronic_date = DateHelpers.ProcessDate(sdoid, e, 55, "Epublish");
+                            ObjectDate electronic_date = dh.ProcessDate(sdoid, e, 55, "Epublish");
                             dates.Add(electronic_date);
                             electronic_date_string = electronic_date.date_as_string;
                         }
@@ -628,7 +633,7 @@ namespace DataHarvester.pubmed
                                         int? year = GetElementAsInt(e.Element("Year"));
                                         int? month = GetElementAsInt(e.Element("Month"));
                                         int? day = GetElementAsInt(e.Element("Day"));
-                                        if (IdentifierHelpers.DateNotPresent(dates, 55, year, month, day))
+                                        if (ih.DateNotPresent(dates, 55, year, month, day))
                                         {
                                             date_type = 55;
                                             date_type_name = "Epublish";
@@ -657,7 +662,7 @@ namespace DataHarvester.pubmed
 
                             if (date_type != 0)
                             {
-                                dates.Add(DateHelpers.ProcessDate(sdoid, e, date_type, date_type_name));
+                                dates.Add(dh.ProcessDate(sdoid, e, date_type, date_type_name));
                             }
                         }
                     }
@@ -925,7 +930,7 @@ namespace DataHarvester.pubmed
                                     }
                                 case "pii":
                                     {
-                                        if (IdentifierHelpers.IdNotPresent(identifiers, 34, other_id))
+                                        if (ih.IdNotPresent(identifiers, 34, other_id))
                                         {
                                             identifiers.Add(new ObjectIdentifier(sdoid, 34, "Publisher article ID", other_id, null, null));
                                         }
@@ -942,7 +947,7 @@ namespace DataHarvester.pubmed
 
                                 case "pubmed":
                                     {
-                                        if (IdentifierHelpers.IdNotPresent(identifiers, 16, other_id))
+                                        if (ih.IdNotPresent(identifiers, 16, other_id))
                                         {
                                             // should be present already! - if a different value log it a a query
                                             string qText = "Two different values for pmid found: record pmiod is " + sdoid + ", but in article ids the value " + other_id + " is listed";
@@ -954,7 +959,7 @@ namespace DataHarvester.pubmed
                                     }
                                 case "mid":
                                     {
-                                        if (IdentifierHelpers.IdNotPresent(identifiers, 32, other_id))
+                                        if (ih.IdNotPresent(identifiers, 32, other_id))
                                         {
                                             identifiers.Add(new ObjectIdentifier(sdoid, 32, "NIH Manuscript ID", other_id, 100134, "National Institutes of Health"));
                                         }
@@ -963,7 +968,7 @@ namespace DataHarvester.pubmed
 
                                 case "pmc":
                                     {
-                                        if (IdentifierHelpers.IdNotPresent(identifiers, 31, other_id))
+                                        if (ih.IdNotPresent(identifiers, 31, other_id))
                                         {
                                             identifiers.Add(new ObjectIdentifier(sdoid, 31, "PMCID", other_id, 100133, "National Library of Medicine"));
 
@@ -976,7 +981,7 @@ namespace DataHarvester.pubmed
 
                                 case "pmcid":
                                     {
-                                        if (IdentifierHelpers.IdNotPresent(identifiers, 31, other_id))
+                                        if (ih.IdNotPresent(identifiers, 31, other_id))
                                         {
                                             identifiers.Add(new ObjectIdentifier(sdoid, 31, "PMCID", other_id, 100133, "National Library of Medicine"));
 
@@ -1133,13 +1138,13 @@ namespace DataHarvester.pubmed
                                 // should only ever be a single ORCID identifier
                                 if (identifier_source == "ORCID")
                                 {
-                                    identifier = StringHelpers.TidyORCIDId(identifier);
+                                    identifier = sh.TidyORCIDId(identifier);
                                     if (identifier.Length != 19)
                                     {
                                         string qText = "ORCID identifier for person " + sdoid + " is " + identifier + " and has non standard length'";
                                         logging_repo.StoreExtractionNote(new ExtractionNote(100135, sdoid,
                                                                         "Harvest", harvest_id, 24, qText));
-                                        identifier = StringHelpers.TidyORCIDId2(identifier);
+                                        identifier = sh.TidyORCIDId2(identifier);
                                     }
                                     break;  // no need to look for more
                                 }
@@ -1550,7 +1555,7 @@ namespace DataHarvester.pubmed
 
 
 
-        public void StoreData(DataLayer repo, CitationObject c)
+        public void StoreData(DataLayer repo, CitationObject c, LoggingDataLayer logging_repo)
         {
             // A routine called by the main program that runs through the 
             // Citation object - the singleton properties followed by each of the 
@@ -1561,66 +1566,58 @@ namespace DataHarvester.pubmed
             CitationObjectInDB cdb = new CitationObjectInDB(c);
             repo.StoreCitationObject(cdb);
 
+            ObjectCopyHelpers och = new ObjectCopyHelpers(logging_repo);
+
             // Store the contributors, their identifiers and attributions. 
 
             if (c.article_instances.Count > 0)
             {
-                repo.StoreObjectInstances(ObjectCopyHelpers.object_instances_helper,
-                                            c.article_instances);
+                repo.StoreObjectInstances(och.object_instances_helper, c.article_instances);
             }
 
             if (c.article_titles.Count > 0)
             {
-                repo.StoreObjectTitles(ObjectCopyHelpers.object_titles_helper,
-                                            c.article_titles);
+                repo.StoreObjectTitles(och.object_titles_helper, c.article_titles);
             }
 
             if (c.article_dates.Count > 0)
             {
-                repo.StoreObjectDates(ObjectCopyHelpers.object_dates_helper,
-                                            c.article_dates);
+                repo.StoreObjectDates(och.object_dates_helper, c.article_dates);
             }
 
             if (c.article_contributors.Count > 0)
             {
-                repo.StoreObjectContributors(ObjectCopyHelpers.object_contributor_copyhelper, 
-                    c.article_contributors);
+                repo.StoreObjectContributors(och.object_contributor_copyhelper, c.article_contributors);
             }
 
             if (c.article_identifiers.Count > 0)
             {
-                repo.StoreObjectIdentifiers(ObjectCopyHelpers.object_identifier_copyhelper, 
-                    c.article_identifiers);
+                repo.StoreObjectIdentifiers(och.object_identifier_copyhelper, c.article_identifiers);
             }
 
             if (c.article_descriptions.Count > 0)
             {
-                repo.StoreObjectDescriptions(ObjectCopyHelpers.object_description_copyhelper, 
-                    c.article_descriptions);
+                repo.StoreObjectDescriptions(och.object_description_copyhelper, c.article_descriptions);
             }
 
             if (c.article_topics.Count > 0)
             {
-                repo.StoreObjectTopics(ObjectCopyHelpers.object_topic_copyhelper, 
-                    c.article_topics);
+                repo.StoreObjectTopics(och.object_topic_copyhelper, c.article_topics);
             }
 
             if (c.article_db_ids.Count > 0)
             {
-                repo.StoreObjectAcessionNumbers(ObjectCopyHelpers.object_db_link_copyhelper, 
-                    c.article_db_ids);
+                repo.StoreObjectAcessionNumbers(och.object_db_link_copyhelper, c.article_db_ids);
             }
 
             if (c.article_pubtypes.Count > 0)
             {
-                repo.StorePublicationTypes(ObjectCopyHelpers.publication_type_copyhelper, 
-                    c.article_pubtypes);
+                repo.StorePublicationTypes(och.publication_type_copyhelper, c.article_pubtypes);
             }
 
             if (c.article_comments.Count > 0)
             {
-                repo.StoreObjectComments(ObjectCopyHelpers.object_comment_copyhelper, 
-                    c.article_comments);
+                repo.StoreObjectComments(och.object_comment_copyhelper, c.article_comments);
             }
         }
 

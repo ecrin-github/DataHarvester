@@ -7,10 +7,12 @@ namespace DataHarvester
     public class HashHelper
     {
         string db_conn;
+        LoggingDataLayer logging_repo;
 
-        public HashHelper(string _db_conn)
+        public HashHelper(string _db_conn, LoggingDataLayer _logging_repo)
         {
             db_conn = _db_conn;
+            logging_repo = _logging_repo;
         }
 
         public int GetRecordCount(string table_name)
@@ -61,19 +63,19 @@ namespace DataHarvester
                         ExecuteSQL(batch_sql_string);
                         string feedback = "Creating " + table_name + " hash codes, " + r.ToString() + " to ";
                         feedback += (r + rec_batch < rec_count) ? (r + rec_batch - 1).ToString() : rec_count.ToString();
-                        StringHelpers.SendFeedback(feedback);
+                        logging_repo.LogLine(feedback);
                     }
                 }
                 else
                 {
                     ExecuteSQL(sql_string);
-                    StringHelpers.SendFeedback("Creating " + table_name + " hash codes - as a single batch");
+                    logging_repo.LogLine("Creating " + table_name + " hash codes - as a single batch");
                 }
             }
             catch (Exception e)
             {
                 string res = e.Message;
-                StringHelpers.SendError("In hash creation (" + table_name + "): " + res);
+                logging_repo.LogError("In hash creation (" + table_name + "): " + res);
             }
         }
 
@@ -110,21 +112,21 @@ namespace DataHarvester
                         ExecuteSQL(batch_sql_string);
                         string feedback = "Creating composite object hash codes (" + hash_type + "), " + r.ToString() + " to ";
                         feedback += (r + rec_batch < rec_count) ? (r + rec_batch - 1).ToString() : rec_count.ToString();
-                        StringHelpers.SendFeedback(feedback);
+                        logging_repo.LogLine(feedback);
                     }
                 }
                 else
                 {
                     string sql_string = top_sql_string + @" t group by t.sd_oid;";
                     ExecuteSQL(sql_string);
-                    StringHelpers.SendFeedback("Creating composite object hash codes (" + hash_type + ") as a single batch");
+                    logging_repo.LogLine("Creating composite object hash codes (" + hash_type + ") as a single batch");
                 }
 
             }
             catch (Exception e)
             {
                 string res = e.Message;
-                StringHelpers.SendError("In object composite hash creation (" + hash_type + "): " + res);
+                logging_repo.LogError("In object composite hash creation (" + hash_type + "): " + res);
             }
         }
 
@@ -144,20 +146,20 @@ namespace DataHarvester
                         ExecuteSQL(batch_sql_string);
                         string feedback = "Creating full object hash codes, " + r.ToString() + " to ";
                         feedback += (r + rec_batch < rec_count) ? (r + rec_batch - 1).ToString() : rec_count.ToString();
-                        StringHelpers.SendFeedback(feedback);
+                        logging_repo.LogLine(feedback);
                     }
                 }
                 else
                 {
                     ExecuteSQL(top_sql_string);
-                    StringHelpers.SendFeedback("Creating full object hash codes - as a single batch");
+                    logging_repo.LogLine("Creating full object hash codes - as a single batch");
                 }
 
             }
             catch (Exception e)
             {
                 string res = e.Message;
-                StringHelpers.SendError("In full hash creation for data objects: " + res);
+                logging_repo.LogError("In full hash creation for data objects: " + res);
             }
         }
 
@@ -182,21 +184,21 @@ namespace DataHarvester
                         ExecuteSQL(batch_sql_string);
                         string feedback = "Creating composite study hash codes (" + hash_type + "), " + r.ToString() + " to ";
                         feedback += (r + rec_batch < rec_count) ? (r + rec_batch - 1).ToString() : rec_count.ToString();
-                        StringHelpers.SendFeedback(feedback);
+                        logging_repo.LogLine(feedback);
                     }
                 }
                 else
                 {
                     string sql_string = top_sql_string + @" t group by t.sd_sid;";
                     ExecuteSQL(sql_string);
-                    StringHelpers.SendFeedback("Creating composite study hash codes (" + hash_type + ") as a single batch");
+                    logging_repo.LogLine("Creating composite study hash codes (" + hash_type + ") as a single batch");
                 }
 
             }
             catch (Exception e)
             {
                 string res = e.Message;
-                StringHelpers.SendError("In study composite hash creation: " + res);
+                logging_repo.LogError("In study composite hash creation: " + res);
             }
         }
 
@@ -216,35 +218,35 @@ namespace DataHarvester
                         ExecuteSQL(batch_sql_string);
                         string feedback = "Creating full study hash codes, " + r.ToString() + " to ";
                         feedback += (r + rec_batch < rec_count) ? (r + rec_batch - 1).ToString() : rec_count.ToString();
-                        StringHelpers.SendFeedback(feedback);
+                        logging_repo.LogLine(feedback);
                     }
                 }
                 else
                 {
                     ExecuteSQL(top_sql_string);
-                    StringHelpers.SendFeedback("Creating full study hash codes - as a single batch");
+                    logging_repo.LogLine("Creating full study hash codes - as a single batch");
                 }
 
             }
             catch (Exception e)
             {
                 string res = e.Message;
-                StringHelpers.SendError("In full hash creation for studies: " + res);
+                logging_repo.LogError("In full hash creation for studies: " + res);
             }
         }
 
     }
 
 
-        public class StudyHashCreators
+     public class StudyHashCreators
      {
         string db_conn;
         HashHelper h;
 
-        public StudyHashCreators(string _db_conn)
+        public StudyHashCreators(string _db_conn, LoggingDataLayer _logging_repo)
         {
             db_conn = _db_conn;
-            h = new HashHelper(db_conn);
+            h = new HashHelper(db_conn, _logging_repo);
         }
 
         public void create_study_record_hashes()
@@ -356,10 +358,10 @@ namespace DataHarvester
         string db_conn;
         HashHelper h;
 
-        public StudyCompositeHashCreators(string _db_conn)
+        public StudyCompositeHashCreators(string _db_conn, LoggingDataLayer _logging_repo)
         {
             db_conn = _db_conn;
-            h = new HashHelper(db_conn);
+            h = new HashHelper(db_conn, _logging_repo);
         }
 
         public void create_composite_study_hashes(int hash_type_id, string hash_type, string table_name)
@@ -399,10 +401,10 @@ namespace DataHarvester
         string db_conn;
         HashHelper h;
 
-        public ObjectHashCreators(string _db_conn)
+        public ObjectHashCreators(string _db_conn, LoggingDataLayer _logging_repo)
         {
             db_conn = _db_conn;
-            h = new HashHelper(db_conn);
+            h = new HashHelper(db_conn, _logging_repo);
         }
 
 
@@ -564,10 +566,10 @@ namespace DataHarvester
         string db_conn;
         HashHelper h;
 
-        public ObjectCompositeHashCreators(string _db_conn)
+        public ObjectCompositeHashCreators(string _db_conn, LoggingDataLayer _logging_repo)
         {
             db_conn = _db_conn;
-            h = new HashHelper(db_conn);
+            h = new HashHelper(db_conn, _logging_repo);
         }
 
         public void create_composite_object_hashes(int hash_type_id, string hash_type, string table_name)

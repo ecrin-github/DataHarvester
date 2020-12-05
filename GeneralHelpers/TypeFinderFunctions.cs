@@ -2,10 +2,16 @@
 
 namespace DataHarvester
 {
-    public static class TypeHelpers
+    public class TypeHelpers
     {
+        LoggingDataLayer logging_repo;
 
-        public static int? GetStatusId(string study_status)
+        public TypeHelpers(LoggingDataLayer _logging_repo)
+        {
+            logging_repo = _logging_repo;
+        }
+
+        public int? GetStatusId(string study_status)
         {
             int? type_id = null;
             switch (study_status.ToLower())
@@ -27,7 +33,7 @@ namespace DataHarvester
             return type_id;
         }
 
-        public static int? GetTypeId(string study_type)
+        public int? GetTypeId(string study_type)
         {
             int? type_id = null;
             switch (study_type.ToLower())
@@ -42,7 +48,7 @@ namespace DataHarvester
             return type_id;
         }
 
-        public static int? GetGenderEligId(string gender_elig)
+        public int? GetGenderEligId(string gender_elig)
         {
             int? type_id = null;
             switch (gender_elig.ToLower())
@@ -55,7 +61,7 @@ namespace DataHarvester
             return type_id;
         }
 
-        public static int? GetTimeUnitsId(string time_units)
+        public int? GetTimeUnitsId(string time_units)
         {
             int? type_id = null;
             switch (time_units.ToLower())
@@ -72,7 +78,7 @@ namespace DataHarvester
             return type_id;
         }
 
-        public static int? GetPhaseId(string phase)
+        public int? GetPhaseId(string phase)
         {
             int? type_id = null;
             switch (phase.ToLower())
@@ -91,7 +97,7 @@ namespace DataHarvester
             return type_id;
         }
 
-        public static int? GetPrimaryPurposeId(string primary_purpose)
+        public int? GetPrimaryPurposeId(string primary_purpose)
         {
             int? type_id = null;
             switch (primary_purpose.ToLower())
@@ -111,7 +117,7 @@ namespace DataHarvester
             return type_id;
         }
 
-        public static int? GetAllocationTypeId(string allocation_type)
+        public int? GetAllocationTypeId(string allocation_type)
         {
             int? type_id = null;
             switch (allocation_type.ToLower())
@@ -124,7 +130,7 @@ namespace DataHarvester
             return type_id;
         }
 
-        public static int? GetDesignTypeId(string design_type)
+        public int? GetDesignTypeId(string design_type)
         {
             int? type_id = null;
             switch (design_type.ToLower())
@@ -139,7 +145,7 @@ namespace DataHarvester
             return type_id;
         }
 
-        public static int? GetMaskingTypeId(string masking_type)
+        public int? GetMaskingTypeId(string masking_type)
         {
             int? type_id = null;
             switch (masking_type.ToLower())
@@ -154,7 +160,7 @@ namespace DataHarvester
             return type_id;
         }
 
-        public static int? GetObsModelTypeId(string obsmodel_type)
+        public int? GetObsModelTypeId(string obsmodel_type)
         {
             int? type_id = null;
             switch (obsmodel_type.ToLower())
@@ -174,7 +180,7 @@ namespace DataHarvester
             return type_id;
         }
 
-        public static int? GetTimePerspectiveId(string time_perspective)
+        public int? GetTimePerspectiveId(string time_perspective)
         {
             int? type_id = null;
             switch (time_perspective.ToLower())
@@ -190,7 +196,7 @@ namespace DataHarvester
             return type_id;
         }
 
-        public static int? GetSpecimentRetentionId(string specimen_retention)
+        public int? GetSpecimentRetentionId(string specimen_retention)
         {
             int? type_id = null;
             switch (specimen_retention.ToLower())
@@ -204,7 +210,7 @@ namespace DataHarvester
         }
 
 
-        public static string GetTimeUnits(string time_units)
+        public string GetTimeUnits(string time_units)
         {
             // was not classified previously...
             // starts with "Other" and has brackets around the text

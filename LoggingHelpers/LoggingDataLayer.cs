@@ -4,6 +4,7 @@ using Microsoft.Extensions.Configuration;
 using Npgsql;
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 
 namespace DataHarvester
@@ -14,6 +15,8 @@ namespace DataHarvester
         private string context_connString;
         private Source source;
         private string sql_file_select_string;
+        private string logfilepath;
+        private StreamWriter sw;
 
         /// <summary>
         /// Parameterless constructor is used to automatically build
@@ -46,6 +49,57 @@ namespace DataHarvester
         }
 
         public Source SourceParameters => source;
+
+        public void OpenLogFile(string database_name)
+        {
+            string dt_string = DateTime.Now.ToString("s", System.Globalization.CultureInfo.InvariantCulture)
+                              .Replace("-", "").Replace(":", "").Replace("T", " ");
+            logfilepath += "HV " + database_name + " " + dt_string + ".log";
+            sw = new StreamWriter(logfilepath, true, System.Text.Encoding.UTF8);
+        }
+
+        public void LogLine(string message, string identifier = "")
+        {
+            string dt_string = DateTime.Now.ToShortDateString() + " : " + DateTime.Now.ToShortTimeString() + " :   ";
+            sw.WriteLine(dt_string + message + identifier);
+        }
+
+        public void LogHeader(string message)
+        {
+            string dt_string = DateTime.Now.ToShortDateString() + " : " + DateTime.Now.ToShortTimeString() + " :   ";
+            sw.WriteLine("");
+            sw.WriteLine(dt_string + "**** " + message + " ****");
+        }
+
+        public void LogError(string message)
+        {
+            string dt_string = DateTime.Now.ToShortDateString() + " : " + DateTime.Now.ToShortTimeString() + " :   ";
+            sw.WriteLine("");
+            sw.WriteLine("+++++++++++++++++++++++++++++++++++++++");
+            sw.WriteLine(dt_string + "***ERROR*** " + message);
+            sw.WriteLine("+++++++++++++++++++++++++++++++++++++++");
+            sw.WriteLine("");
+        }
+
+        /*
+        public void LogRes(HarvestResult res)
+        {
+            string dt_string = DateTime.Now.ToShortDateString() + " : " + DateTime.Now.ToShortTimeString() + " :   ";
+            sw.WriteLine("");
+            sw.WriteLine(dt_string + "**** " + "Download Result" + " ****");
+            sw.WriteLine(dt_string + "**** " + "Records checked: " + res.num_checked.ToString() + " ****");
+            sw.WriteLine(dt_string + "**** " + "Records downloaded: " + res.num_downloaded.ToString() + " ****");
+            sw.WriteLine(dt_string + "**** " + "Records added: " + res.num_added.ToString() + " ****");
+        }
+        */
+
+        public void CloseLog()
+        {
+            LogHeader("Closing Log");
+            sw.Close();
+        }
+
+
 
         public Source FetchSourceParameters(int source_id)
         {
