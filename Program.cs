@@ -27,11 +27,11 @@ namespace DataHarvester
 				return -1;
 			}
 
-			Harvester dh = new Harvester();
+			LoggingDataLayer logging_repo = new LoggingDataLayer();
+			Harvester dh = new Harvester(logging_repo);
 
 			// Check each source id is valid and run the program if it is... 
 
-			LoggingDataLayer logging_repo = new LoggingDataLayer();
 			if (opts.source_ids.Count() > 0)
             {
 				foreach (int source_id in opts.source_ids)
@@ -44,8 +44,7 @@ namespace DataHarvester
 					}
 					else
 					{
-						logging_repo.OpenLogFile(source.database_name);
-						await dh.HarvestDataAsync(source, harvest_type_id, opts.org_update_only, logging_repo);
+						await dh.HarvestDataAsync(source, harvest_type_id, opts.org_update_only);
 					}
 				}
 			}
@@ -72,11 +71,8 @@ namespace DataHarvester
 		[Option('t', "harvest_type_id", Required = true, HelpText = "Integer representing type of harvest (1 = full, i.e. all available files, 2 = only files downloaded since last import.")]
 		public int harvest_type_id { get; set; }
 
-		//[Option('d', "cutoff_date", Required = false, HelpText = "Only data revised or added since this date will be considered")]
-		//public string cutoff_date { get; set; }
-
 		[Option('G', "organisation_update_only", Required = false, HelpText = "If present does not recreate Sd tables - only updates organisation ids")]
-		public bool org_update_only { get; set; }
+		public bool? org_update_only { get; set; }
 
 	}
 }

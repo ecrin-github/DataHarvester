@@ -10,6 +10,7 @@ namespace DataHarvester.biolincc
         public string remote_url { get; set; }
         public string title { get; set; }
         public string acronym { get; set; }
+        public string accession_number { get; set; }
         public int? study_type_id { get; set; }
         public string study_type { get; set; }
         public string brief_description { get; set; }

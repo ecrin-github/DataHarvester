@@ -12,20 +12,21 @@ namespace DataHarvester
 {
     class Harvester
     {
-        public async Task HarvestDataAsync (Source source, int harvest_type_id, bool org_update_only, LoggingDataLayer logging_repo)
+        LoggingDataLayer logging_repo;
+
+        public Harvester(LoggingDataLayer _logging_repo)
         {
+            logging_repo = _logging_repo;
+        }
 
-            // Identify source type and location, destination folder
-            logging_repo.LogHeader("Setup");
-            logging_repo.LogLine("Source_id is " + source.id.ToString());
-            logging_repo.LogLine("Type_id is " + harvest_type_id.ToString());
-            logging_repo.LogLine("Update org ids only is " + org_update_only);
-
+        public async Task HarvestDataAsync (Source source, int harvest_type_id, bool? org_update_only)
+        {
+            logging_repo.LogParameters(source, harvest_type_id, org_update_only);
             DataLayer repo = new DataLayer(source.database_name);
 
             // Create sd tables. 
             // (Some sources may be data objects only.)
-            if (!org_update_only)
+            if (org_update_only != true)
             {
                 // Construct the sd tables.
 
@@ -153,6 +154,7 @@ namespace DataHarvester
             logging_repo.LogLine("Data object hashes created");
             hb.CreateObjectCompositeHashes();
             logging_repo.LogLine("Data object composite hashes created");
+            logging_repo.CloseLog();
         }
     }
 }

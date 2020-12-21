@@ -31,9 +31,6 @@ namespace DataHarvester.biolincc
             // Allows trials that equate to more than one NCT registry tro be identified
             // Allows groups of Biolinnc trials that equate to a single NCT registry to be identified
 
-            // Construct a list of the files using the sf records to get a list of files
-            // the sf records to get a list of files and local paths...
-
             IEnumerable<StudyFileRecord> file_list = logging_repo.FetchStudyFileRecords(source.id);
             int n = 0; string filePath = "";
             foreach (StudyFileRecord rec in file_list)

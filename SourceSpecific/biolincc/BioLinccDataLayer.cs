@@ -62,11 +62,14 @@ namespace DataHarvester.biolincc
 
         public void CreateMultNCTsTable()
         {
+            // inner subquery identifies biolincc records 
+            // that have more than one linked NCT identifier
+            
             string sql_string = @"Drop table if exists pp.multiple_ncts;
-             create table pp.multiple_ncts as 
+            create table pp.multiple_ncts as 
             select si.sd_sid, si.identifier_value
             from sd.study_identifiers si inner join
-                (select sd_sid, count(identifier_value)
+                (select sd_sid
                  from sd.study_identifiers
                  where identifier_org_id = 100120
                  group by sd_sid
@@ -83,17 +86,20 @@ namespace DataHarvester.biolincc
 
         public void CreateMultHBLIsTable()
         {
+            // inner subquery identifies NCT identifiers 
+            // that are linked to more than one Biolinnc studies
 
             string sql_string = @"Drop table if exists pp.multiple_hlbis;
             create table pp.multiple_hlbis as
             select si.sd_sid, si.identifier_value 
             from sd.study_identifiers si inner join
-               (select identifier_value, count(sd_sid)
+               (select identifier_value
                 from sd.study_identifiers
                 where identifier_org_id = 100120
                 group by identifier_value
                 having count(sd_sid) > 1) ncts
-            on si.identifier_value = ncts.identifier_value;";
+            on si.identifier_value = ncts.identifier_value
+            where si.identifier_org_id = 100120;";
 
             using (var conn = new NpgsqlConnection(bio_connString))
             {
@@ -101,6 +107,18 @@ namespace DataHarvester.biolincc
             }
         }
 
+        public string FetchFirstNCTId(string sid)
+        {
+            string sql_string = @"select identifier_value from sd.study_identifiers 
+                                  where sd_sid = '" + sid + @"' and 
+                                  identifier_org_id = 100120;";
+
+            using (var conn = new NpgsqlConnection(bio_connString))
+            {
+                return conn.Query<string>(sql_string).FirstOrDefault(); 
+            }
+
+        }
 
         public bool InMultipleHBLIGroup(string sid)
         {

@@ -13,7 +13,7 @@ namespace DataHarvester.biolincc
             // get date retrieved in object fetch
             // transfer to study and data object records
 
-            List<StudyIdentifier> study_identifiers = new List<StudyIdentifier>();
+            //List<StudyIdentifier> study_identifiers = new List<StudyIdentifier>();
             List<StudyTitle> study_titles = new List<StudyTitle>();
             List<StudyReference> study_references = new List<StudyReference>();
 
@@ -122,15 +122,13 @@ namespace DataHarvester.biolincc
 
             // Add study attribute records.
 
-            // HBLI identifier already added
+            // Identifiers already added to DB
             // If there is a NCT ID (there usually is...).
-            // that has been added as well but the first can be used to obtain further details
-
-            if (st.registry_ids.Count > 0)
+            // that has been added as well, but the first can be used to obtain further details
+            string nct_id = biolincc_repo.FetchFirstNCTId(sid);
+            if (nct_id != null)
             {
-                RegistryId reg_id = st.registry_ids[0];
-            
-                var sponsor_details = biolincc_repo.FetchBioLINCCSponsorFromNCT(common_repo.CTGConnString, reg_id.nct_id);
+                var sponsor_details = biolincc_repo.FetchBioLINCCSponsorFromNCT(common_repo.CTGConnString, nct_id);
                 sponsor_org_id = sponsor_details.org_id;
                 sponsor_org = sponsor_details.org_name;
 
@@ -138,7 +136,7 @@ namespace DataHarvester.biolincc
                 // that are in a group, corresponding to a single NCT entry and public title
                 if (!biolincc_repo.InMultipleHBLIGroup(sid))
                 {
-                    s.display_title = biolincc_repo.FetchStudyTitle(common_repo.CTGConnString, reg_id.nct_id);
+                    s.display_title = biolincc_repo.FetchStudyTitle(common_repo.CTGConnString, nct_id);
                 }
             }
 
@@ -324,7 +322,6 @@ namespace DataHarvester.biolincc
             }
 
             // add in the study properties
-            s.identifiers = study_identifiers;
             s.titles = study_titles;
             s.references = study_references2;
 
@@ -348,11 +345,7 @@ namespace DataHarvester.biolincc
             ObjectCopyHelpers och = new ObjectCopyHelpers(logging_repo);
 
             // store study attributes
-            if (s.identifiers.Count > 0)
-            {
-                repo.StoreStudyIdentifiers(sch.study_ids_helper, s.identifiers);
-            }
-
+           
             if (s.titles.Count > 0)
             {
                 repo.StoreStudyTitles(sch.study_titles_helper, s.titles);
@@ -364,6 +357,7 @@ namespace DataHarvester.biolincc
             }
 
             // store data objects and dataset properties
+
             if (s.data_objects.Count > 0)
             {
                 repo.StoreDataObjects(och.data_objects_helper, s.data_objects);

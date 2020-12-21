@@ -15,7 +15,8 @@ namespace DataHarvester
         private string context_connString;
         private Source source;
         private string sql_file_select_string;
-        private string logfilepath;
+        private string logfile_startofpath;
+        private string logfile_path;
         private StreamWriter sw;
 
         /// <summary>
@@ -42,6 +43,8 @@ namespace DataHarvester
             builder.Database = "context";
             context_connString = builder.ConnectionString;
 
+            logfile_startofpath = settings["logfilepath"];
+
             sql_file_select_string = "select id, source_id, sd_id, remote_url, last_revised, ";
             sql_file_select_string += " assume_complete, download_status, local_path, last_saf_id, last_downloaded, ";
             sql_file_select_string += " last_harvest_id, last_harvested, last_import_id, last_imported ";
@@ -54,52 +57,59 @@ namespace DataHarvester
         {
             string dt_string = DateTime.Now.ToString("s", System.Globalization.CultureInfo.InvariantCulture)
                               .Replace("-", "").Replace(":", "").Replace("T", " ");
-            logfilepath += "HV " + database_name + " " + dt_string + ".log";
-            sw = new StreamWriter(logfilepath, true, System.Text.Encoding.UTF8);
+            logfile_path = logfile_startofpath + "HV " + database_name + " " + dt_string + ".log";
+            sw = new StreamWriter(logfile_path, true, System.Text.Encoding.UTF8);
         }
 
         public void LogLine(string message, string identifier = "")
         {
             string dt_string = DateTime.Now.ToShortDateString() + " : " + DateTime.Now.ToShortTimeString() + " :   ";
-            sw.WriteLine(dt_string + message + identifier);
+            string feedback = dt_string + message + identifier;
+            Transmit(feedback);
         }
 
         public void LogHeader(string message)
         {
             string dt_string = DateTime.Now.ToShortDateString() + " : " + DateTime.Now.ToShortTimeString() + " :   ";
-            sw.WriteLine("");
-            sw.WriteLine(dt_string + "**** " + message + " ****");
+            string header = dt_string + "**** " + message + " ****";
+            Transmit("");
+            Transmit(header);
         }
 
         public void LogError(string message)
         {
             string dt_string = DateTime.Now.ToShortDateString() + " : " + DateTime.Now.ToShortTimeString() + " :   ";
-            sw.WriteLine("");
-            sw.WriteLine("+++++++++++++++++++++++++++++++++++++++");
-            sw.WriteLine(dt_string + "***ERROR*** " + message);
-            sw.WriteLine("+++++++++++++++++++++++++++++++++++++++");
-            sw.WriteLine("");
+            string error_message = dt_string + "***ERROR*** " + message;
+            Transmit("");
+            Transmit("+++++++++++++++++++++++++++++++++++++++");
+            Transmit(error_message);
+            Transmit("+++++++++++++++++++++++++++++++++++++++");
+            Transmit("");
         }
-
-        /*
-        public void LogRes(HarvestResult res)
-        {
-            string dt_string = DateTime.Now.ToShortDateString() + " : " + DateTime.Now.ToShortTimeString() + " :   ";
-            sw.WriteLine("");
-            sw.WriteLine(dt_string + "**** " + "Download Result" + " ****");
-            sw.WriteLine(dt_string + "**** " + "Records checked: " + res.num_checked.ToString() + " ****");
-            sw.WriteLine(dt_string + "**** " + "Records downloaded: " + res.num_downloaded.ToString() + " ****");
-            sw.WriteLine(dt_string + "**** " + "Records added: " + res.num_added.ToString() + " ****");
-        }
-        */
 
         public void CloseLog()
         {
             LogHeader("Closing Log");
+            sw.Flush();
             sw.Close();
         }
 
+        private void Transmit(string message)
+        {
+            sw.WriteLine(message);
+            Console.WriteLine(message);
+        }
 
+        public void LogParameters(Source source, int harvest_type_id, bool? org_update_only)
+        {
+            OpenLogFile(source.database_name);
+            LogLine("****** HARVEST ******");
+            LogHeader("Setup");
+            LogLine("Source_id is " + source.id.ToString());
+            LogLine("Type_id is " + harvest_type_id.ToString());
+            string org_update = (org_update_only == null) ? " was not provided" : " is " + org_update_only;
+            LogLine("Update org ids only" + org_update);
+        }
 
         public Source FetchSourceParameters(int source_id)
         {
@@ -109,7 +119,6 @@ namespace DataHarvester
                 return source;
             }
         }
-
 
         public int GetNextHarvestEventId()
         {

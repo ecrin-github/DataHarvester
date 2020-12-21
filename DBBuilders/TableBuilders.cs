@@ -182,7 +182,7 @@ namespace DataHarvester
         {
             string sql_string = @"CREATE TABLE sd.study_topics(
                 id                     INT             GENERATED ALWAYS AS IDENTITY PRIMARY KEY
-              , sd_sid                 CHAR(24)        NOT NULL
+              , sd_sid                 VARCHAR         NOT NULL
               , topic_type_id          INT             NULL
               , topic_type             VARCHAR         NULL
               , mesh_coded             BOOLEAN         NULL
