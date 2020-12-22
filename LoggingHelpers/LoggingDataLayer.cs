@@ -17,6 +17,9 @@ namespace DataHarvester
         private string sql_file_select_string;
         private string logfile_startofpath;
         private string logfile_path;
+        private string host;
+        private string user;
+        private string password;
         private StreamWriter sw;
 
         /// <summary>
@@ -33,9 +36,13 @@ namespace DataHarvester
                 .Build();
 
             NpgsqlConnectionStringBuilder builder = new NpgsqlConnectionStringBuilder();
-            builder.Host = settings["host"];
-            builder.Username = settings["user"];
-            builder.Password = settings["password"];
+            host = settings["host"];
+            user = settings["user"];
+            password = settings["password"];
+
+            builder.Host = host;
+            builder.Username = user;
+            builder.Password = password;
 
             builder.Database = "mon";
             connString = builder.ConnectionString;
@@ -110,6 +117,109 @@ namespace DataHarvester
             string org_update = (org_update_only == null) ? " was not provided" : " is " + org_update_only;
             LogLine("Update org ids only" + org_update);
         }
+
+
+        public void LogTableStatistics(Source s)
+        {
+            // Gets and logs record count for each table in the sd schema of the database
+            // Start by obtaining conection string, then construct log line for each by 
+            // calling db interrogation for each applicable table
+            NpgsqlConnectionStringBuilder builder = new NpgsqlConnectionStringBuilder();
+            builder.Host = host;
+            builder.Username = user;
+            builder.Password =password;
+            builder.Database = source.database_name;
+            string db_conn = builder.ConnectionString;
+
+            LogHeader("Results");
+            if (source.has_study_tables)
+            {
+                LogLine(GetTableRecordCount(db_conn, "studies"));
+                LogLine(GetTableRecordCount(db_conn, "study_identifiers"));
+                LogLine(GetTableRecordCount(db_conn, "study_titles"));
+
+                // these are database dependent
+                if (source.has_study_topics) LogLine(GetTableRecordCount(db_conn, "study_topics")); 
+                if (source.has_study_features) LogLine(GetTableRecordCount(db_conn, "study_features")); 
+                if (source.has_study_contributors) LogLine(GetTableRecordCount(db_conn, "study_contributors"));
+                if (source.has_study_references) LogLine(GetTableRecordCount(db_conn, "study_references")); 
+                if (source.has_study_relationships) LogLine(GetTableRecordCount(db_conn, "study_relationships")); 
+                if (source.has_study_links) LogLine(GetTableRecordCount(db_conn, "study_links")); 
+                if (source.has_study_ipd_available) LogLine(GetTableRecordCount(db_conn, "study_ipd_available")); 
+            }
+
+            LogLine(GetTableRecordCount(db_conn, "study_hashes"));
+            IEnumerable<hash_stat> study_hash_stats = (GetHashStats(db_conn, "study_hashes"));
+            if (study_hash_stats.Count() > 0)
+            {
+                LogLine("from the hashes");
+                foreach (hash_stat hs in study_hash_stats)
+                {
+                    LogLine(hs.num.ToString() + " study records have " + hs.hash_type + " (" + hs.hash_type_id.ToString() + ")");
+                }
+            }
+
+            // these common to all databases
+            LogLine("");
+            LogLine(GetTableRecordCount(db_conn, "data_objects"));
+            LogLine(GetTableRecordCount(db_conn, "object_instances"));
+            LogLine(GetTableRecordCount(db_conn, "object_titles"));
+
+            // these are database dependent		
+
+            if (source.has_object_datasets) LogLine(GetTableRecordCount(db_conn, "object_datasets")); 
+            if (source.has_object_dates) LogLine(GetTableRecordCount(db_conn, "object_dates"));
+            if (source.has_object_relationships) LogLine(GetTableRecordCount(db_conn, "object_relationships")); 
+            if (source.has_object_rights) LogLine(GetTableRecordCount(db_conn, "object_rights")); 
+            if (source.has_object_pubmed_set)
+            {
+                LogLine(GetTableRecordCount(db_conn, "citation_objects"));
+                LogLine(GetTableRecordCount(db_conn, "object_contributors")); 
+                LogLine(GetTableRecordCount(db_conn, "study_topics"));
+                LogLine(GetTableRecordCount(db_conn, "object_comments")); 
+                LogLine(GetTableRecordCount(db_conn, "object_descriptions"));
+                LogLine(GetTableRecordCount(db_conn, "object_identifiers")); 
+                LogLine(GetTableRecordCount(db_conn, "object_db_links")); 
+                LogLine(GetTableRecordCount(db_conn, "object_publication_types")); 
+            }
+
+            LogLine(GetTableRecordCount(db_conn, "object_hashes"));
+            IEnumerable<hash_stat> object_hash_stats = (GetHashStats(db_conn, "object_hashes"));
+            if (object_hash_stats.Count() > 0)
+            {
+                LogLine("from the hashes");
+                foreach (hash_stat hs in object_hash_stats)
+                {
+                    LogLine(hs.num.ToString() + " object records have " + hs.hash_type + " (" + hs.hash_type_id.ToString() + ")");
+                }
+            }
+        }
+
+
+        private string GetTableRecordCount(string db_conn, string table_name)
+        {
+            string sql_string = "select count(*) from sd." + table_name;
+            
+            using (NpgsqlConnection conn = new NpgsqlConnection(db_conn))
+            {
+                int res = conn.ExecuteScalar<int>(sql_string);
+                return res.ToString() + " records found in sd." + table_name;
+            }
+        }
+
+
+        private IEnumerable<hash_stat> GetHashStats(string db_conn, string table_name)
+        {
+            string sql_string = "select hash_type_id, hash_type, count(id) as num from sd." + table_name;
+            sql_string += " group by hash_type_id, hash_type order by hash_type_id;";
+
+            using (NpgsqlConnection conn = new NpgsqlConnection(db_conn))
+            {
+                return conn.Query<hash_stat>(sql_string);
+            }
+        }
+
+
 
         public Source FetchSourceParameters(int source_id)
         {

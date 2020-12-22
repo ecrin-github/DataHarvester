@@ -29,7 +29,6 @@
             study_tablebuilder.drop_table("study_references");
             study_tablebuilder.drop_table("study_links");
             study_tablebuilder.drop_table("study_ipd_available");
-            study_tablebuilder.drop_table("study_hashes");
         }
 
         public void DeleteSDObjectTables()
@@ -51,7 +50,6 @@
             object_tablebuilder.drop_table("object_relationships");
             object_tablebuilder.drop_table("object_rights");
             object_tablebuilder.drop_table("citation_objects");
-            object_tablebuilder.drop_table("object_hashes");
         }
 
 
@@ -62,7 +60,6 @@
             study_tablebuilder.create_table_studies();
             study_tablebuilder.create_table_study_identifiers();
             study_tablebuilder.create_table_study_titles();
-            study_tablebuilder.create_table_study_hashes();
 
             // these are database dependent
             if (source.has_study_topics) study_tablebuilder.create_table_study_topics();
@@ -83,7 +80,6 @@
             object_tablebuilder.create_table_data_objects();
             object_tablebuilder.create_table_object_instances();
             object_tablebuilder.create_table_object_titles();
-            object_tablebuilder.create_table_object_hashes();
 
             // these are database dependent		
 

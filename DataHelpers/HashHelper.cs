@@ -364,6 +364,31 @@ namespace DataHarvester
             h = new HashHelper(db_conn, _logging_repo);
         }
 
+
+        public void recreate_table()
+        {
+            string sql_string = @"DROP TABLE IF EXISTS sd.study_hashes;";
+            using (var conn = new NpgsqlConnection(db_conn))
+            {
+                conn.Execute(sql_string);
+            }
+
+            sql_string = @"CREATE TABLE sd.study_hashes(
+                id                     INT             GENERATED ALWAYS AS IDENTITY PRIMARY KEY
+              , sd_sid                 VARCHAR         NOT NULL
+              , hash_type_id           INT             NULL
+              , hash_type              VARCHAR         NULL
+              , composite_hash         CHAR(32)        NULL
+            );
+            CREATE INDEX study_hashes_sd_sid ON sd.study_hashes(sd_sid);";
+
+            using (var conn = new NpgsqlConnection(db_conn))
+            {
+                conn.Execute(sql_string);
+            }
+        }
+
+
         public void create_composite_study_hashes(int hash_type_id, string hash_type, string table_name)
         {
             string top_sql_string = @"Insert into sd.study_hashes 
@@ -565,12 +590,37 @@ namespace DataHarvester
     {
         string db_conn;
         HashHelper h;
-
+        
         public ObjectCompositeHashCreators(string _db_conn, LoggingDataLayer _logging_repo)
         {
             db_conn = _db_conn;
             h = new HashHelper(db_conn, _logging_repo);
         }
+
+
+        public void recreate_table()
+        {
+            string sql_string = @"DROP TABLE IF EXISTS sd.object_hashes;";
+            using (var conn = new NpgsqlConnection(db_conn))
+            {
+                conn.Execute(sql_string);
+            }
+
+            sql_string = @"CREATE TABLE sd.object_hashes(
+                id                     INT             GENERATED ALWAYS AS IDENTITY PRIMARY KEY
+              , sd_oid                 CHAR(24)        NOT NULL
+              , hash_type_id           INT             NULL
+              , hash_type              VARCHAR         NULL
+              , composite_hash         CHAR(32)        NULL
+            );
+            CREATE INDEX object_hashes_sd_oid ON sd.object_hashes(sd_oid);";
+
+            using (var conn = new NpgsqlConnection(db_conn))
+            {
+                conn.Execute(sql_string);
+            }
+        }
+
 
         public void create_composite_object_hashes(int hash_type_id, string hash_type, string table_name)
         {

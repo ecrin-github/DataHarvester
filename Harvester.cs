@@ -146,14 +146,18 @@ namespace DataHarvester
             {
                 hb.CreateStudyHashes();
                 logging_repo.LogLine("Study hashes created");
+                logging_repo.LogHeader("Create Study Composite Hashes");
                 hb.CreateStudyCompositeHashes();
                 logging_repo.LogLine("Study composite hashes created");
             }
-            logging_repo.LogHeader("Create Composite Hashes");
             hb.CreateDataObjectHashes();
             logging_repo.LogLine("Data object hashes created");
+            logging_repo.LogHeader("Create Object Composite Hashes");
             hb.CreateObjectCompositeHashes();
             logging_repo.LogLine("Data object composite hashes created");
+
+            logging_repo.LogTableStatistics(source);
+
             logging_repo.CloseLog();
         }
     }

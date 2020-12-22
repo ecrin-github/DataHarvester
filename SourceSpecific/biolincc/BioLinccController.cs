@@ -31,6 +31,7 @@ namespace DataHarvester.biolincc
             // Allows trials that equate to more than one NCT registry tro be identified
             // Allows groups of Biolinnc trials that equate to a single NCT registry to be identified
 
+            logging_repo.LogLine("Obtaining initial ID data to identify NCT matches");
             IEnumerable<StudyFileRecord> file_list = logging_repo.FetchStudyFileRecords(source.id);
             int n = 0; string filePath = "";
             foreach (StudyFileRecord rec in file_list)
@@ -57,7 +58,9 @@ namespace DataHarvester.biolincc
             }
 
             identity_processor.CreateMultNCTsTable(biolincc_repo);
+            logging_repo.LogLine("Table listing biolincc studies with multiple NCT numbers created");
             identity_processor.CreateMultHBLIsTable(biolincc_repo);
+            logging_repo.LogLine("Table listing NCT records with multiple biolilncc studies created");
         }
 
 
@@ -66,6 +69,7 @@ namespace DataHarvester.biolincc
             // Construct a list of the files using the sf records to get 
             // a list of files and local paths...
 
+            logging_repo.LogLine("Obtaining main study data from web page");
             IEnumerable<StudyFileRecord> file_list = logging_repo.FetchStudyFileRecords(source.id);
             int n = 0; string filePath = "";
             foreach (StudyFileRecord rec in file_list)

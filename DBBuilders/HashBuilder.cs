@@ -33,6 +33,7 @@
         public void CreateStudyCompositeHashes()
         {
             StudyCompositeHashCreators hashcreator = new StudyCompositeHashCreators(connString, logging_repo);
+            hashcreator.recreate_table();   // ensure hash table is (re)created
             hashcreator.create_composite_study_hashes(11, "identifiers", "study_identifiers");
             hashcreator.create_composite_study_hashes(12, "titles", "study_titles");
 
@@ -77,6 +78,7 @@
         public void CreateObjectCompositeHashes()
         {
             ObjectCompositeHashCreators hashcreator = new ObjectCompositeHashCreators(connString, logging_repo);
+            hashcreator.recreate_table();   // ensure hash table is (re)created
             hashcreator.create_composite_object_hashes(51, "instances", "object_instances");
             hashcreator.create_composite_object_hashes(52, "titles", "object_titles");
 

@@ -182,4 +182,11 @@ namespace DataHarvester
         { }
 
     }
+
+    public class hash_stat
+    {
+        public int hash_type_id { get; set; }
+        public string hash_type { get; set; }
+        public int num { get; set; }
+    }
 }
