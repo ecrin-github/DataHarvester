@@ -19,21 +19,20 @@ namespace DataHarvester
 
         static async Task<int> RunOptionsAndReturnExitCodeAsync(Options opts)
         {
-            // Check harvest type id is valid. 
-
-            int harvest_type_id = opts.harvest_type_id;
-            if (harvest_type_id != 1 && harvest_type_id != 2)
-            {
-                WriteLine("Sorry - the harvest type argument does not correspond to 1 or 2");
-                return -1;
-            }
-
             LoggingDataLayer logging_repo = new LoggingDataLayer();
-            Harvester dh = new Harvester(logging_repo);
-
-            // Check each source id is valid and run the program if it is... 
             try
             {
+                // Check harvest type id is valid. 
+
+                int harvest_type_id = opts.harvest_type_id;
+                if (harvest_type_id != 1 && harvest_type_id != 2)
+                {
+                    throw new ArgumentException("The harvest type argument does not correspond to 1 or 2");
+                }
+
+                // Check each source id is valid and run the program if it is... 
+
+                Harvester dh = new Harvester(logging_repo);
                 if (opts.source_ids.Count() > 0)
                 {
                     foreach (int source_id in opts.source_ids)
@@ -41,8 +40,7 @@ namespace DataHarvester
                         Source source = logging_repo.FetchSourceParameters(source_id);
                         if (source == null)
                         {
-                            WriteLine("Sorry - the first argument does not correspond to a known source");
-                            return -1;
+                            throw new ArgumentException("One of the source arguments does not correspond to a known source");
                         }
                         else
                         {
@@ -53,6 +51,20 @@ namespace DataHarvester
 
                 return 0;
             }
+
+            catch (ArgumentException a)
+            {
+                if (logging_repo.LogFilePath == null)
+                {
+                    // create a log file without the source parameter
+                    logging_repo.OpenNoSourceLogFile();
+
+                }
+                logging_repo.LogError("Parameter exception: " + a.Message);
+                logging_repo.CloseLog();
+                return -1;
+            }
+
             catch (Exception e)
             {
                 logging_repo.LogError("Unhandled exception: " + e.Message);

@@ -58,13 +58,22 @@ namespace DataHarvester
 
         }
 
-        public Source SourceParameters => source;
+        // Used to check if a log file with a named source has been created
+        public string LogFilePath => logfile_path;
 
         public void OpenLogFile(string database_name)
         {
             string dt_string = DateTime.Now.ToString("s", System.Globalization.CultureInfo.InvariantCulture)
                               .Replace("-", "").Replace(":", "").Replace("T", " ");
             logfile_path = logfile_startofpath + "HV " + database_name + " " + dt_string + ".log";
+            sw = new StreamWriter(logfile_path, true, System.Text.Encoding.UTF8);
+        }
+
+        public void OpenNoSourceLogFile()
+        {
+            string dt_string = DateTime.Now.ToString("s", System.Globalization.CultureInfo.InvariantCulture)
+                              .Replace("-", "").Replace(":", "").Replace("T", " ");
+            logfile_path += logfile_startofpath + "HV No Source " + dt_string + ".log";
             sw = new StreamWriter(logfile_path, true, System.Text.Encoding.UTF8);
         }
 
@@ -139,23 +148,23 @@ namespace DataHarvester
                 LogLine(GetTableRecordCount(db_conn, "study_titles"));
 
                 // these are database dependent
-                if (source.has_study_topics) LogLine(GetTableRecordCount(db_conn, "study_topics")); 
-                if (source.has_study_features) LogLine(GetTableRecordCount(db_conn, "study_features")); 
+                if (source.has_study_topics) LogLine(GetTableRecordCount(db_conn, "study_topics"));
+                if (source.has_study_features) LogLine(GetTableRecordCount(db_conn, "study_features"));
                 if (source.has_study_contributors) LogLine(GetTableRecordCount(db_conn, "study_contributors"));
-                if (source.has_study_references) LogLine(GetTableRecordCount(db_conn, "study_references")); 
-                if (source.has_study_relationships) LogLine(GetTableRecordCount(db_conn, "study_relationships")); 
-                if (source.has_study_links) LogLine(GetTableRecordCount(db_conn, "study_links")); 
-                if (source.has_study_ipd_available) LogLine(GetTableRecordCount(db_conn, "study_ipd_available")); 
-            }
+                if (source.has_study_references) LogLine(GetTableRecordCount(db_conn, "study_references"));
+                if (source.has_study_relationships) LogLine(GetTableRecordCount(db_conn, "study_relationships"));
+                if (source.has_study_links) LogLine(GetTableRecordCount(db_conn, "study_links"));
+                if (source.has_study_ipd_available) LogLine(GetTableRecordCount(db_conn, "study_ipd_available"));
 
-            LogLine(GetTableRecordCount(db_conn, "study_hashes"));
-            IEnumerable<hash_stat> study_hash_stats = (GetHashStats(db_conn, "study_hashes"));
-            if (study_hash_stats.Count() > 0)
-            {
-                LogLine("from the hashes");
-                foreach (hash_stat hs in study_hash_stats)
+                LogLine(GetTableRecordCount(db_conn, "study_hashes"));
+                IEnumerable<hash_stat> study_hash_stats = (GetHashStats(db_conn, "study_hashes"));
+                if (study_hash_stats.Count() > 0)
                 {
-                    LogLine(hs.num.ToString() + " study records have " + hs.hash_type + " (" + hs.hash_type_id.ToString() + ")");
+                    LogLine("from the hashes");
+                    foreach (hash_stat hs in study_hash_stats)
+                    {
+                        LogLine(hs.num.ToString() + " study records have " + hs.hash_type + " (" + hs.hash_type_id.ToString() + ")");
+                    }
                 }
             }
 
@@ -175,7 +184,7 @@ namespace DataHarvester
             {
                 LogLine(GetTableRecordCount(db_conn, "citation_objects"));
                 LogLine(GetTableRecordCount(db_conn, "object_contributors")); 
-                LogLine(GetTableRecordCount(db_conn, "study_topics"));
+                LogLine(GetTableRecordCount(db_conn, "object_topics"));
                 LogLine(GetTableRecordCount(db_conn, "object_comments")); 
                 LogLine(GetTableRecordCount(db_conn, "object_descriptions"));
                 LogLine(GetTableRecordCount(db_conn, "object_identifiers")); 
@@ -195,7 +204,7 @@ namespace DataHarvester
             }
         }
 
-
+        
         private string GetTableRecordCount(string db_conn, string table_name)
         {
             string sql_string = "select count(*) from sd." + table_name;
