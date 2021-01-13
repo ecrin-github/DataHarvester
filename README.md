@@ -7,7 +7,7 @@ The program represents the second stage in the 4 stage MDR extraction process:<b
 For a much more detailed explanation of the extraction process,and the MDR system as a whole, please see the project wiki (landing page at https://ecrin-mdr.online/index.php/Project_Overview).<br/>
 In particular, for the harvesting process, please see<br/>
 http://ecrin-mdr.online/index.php/Harvesting_Data, and <br/>
-http://ecrin-mdr.online/index.php/Missing_PIDs_and_Hashing<br/>
+https://ecrin-mdr.online/index.php/Contextual_Data<br/>
 and linked pages
 
 ### Provenance
