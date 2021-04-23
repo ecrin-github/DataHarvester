@@ -25,9 +25,9 @@ namespace DataHarvester
                 // Check harvest type id is valid. 
 
                 int harvest_type_id = opts.harvest_type_id;
-                if (harvest_type_id != 1 && harvest_type_id != 2)
+                if (harvest_type_id != 1 && harvest_type_id != 2 && harvest_type_id != 3)
                 {
-                    throw new ArgumentException("The harvest type argument does not correspond to 1 or 2");
+                    throw new ArgumentException("The harvest type argument does not correspond to 1, 2 or 3");
                 }
 
                 // Check each source id is valid and run the program if it is... 
@@ -92,10 +92,10 @@ namespace DataHarvester
         [Option('s', "source_ids", Required = true, Separator = ',', HelpText = "Comma separated list of Integer ids of data sources.")]
         public IEnumerable<int> source_ids { get; set; }
 
-        [Option('t', "harvest_type_id", Required = true, HelpText = "Integer representing type of harvest (1 = full, i.e. all available files, 2 = only files downloaded since last import.")]
+        [Option('t', "harvest_type_id", Required = true, HelpText = "Integer representing type of harvest (1 = full, i.e. all available files, 2 = only files downloaded since last import, 3 = test data only.")]
         public int harvest_type_id { get; set; }
 
-        [Option('G', "organisation_update_only", Required = false, HelpText = "If present does not recreate Sd tables - only updates organisation ids")]
+        [Option('G', "organisation_update_only", Required = false, HelpText = "If present does not recreate sd tables - only updates organisation ids")]
         public bool org_update_only { get; set; }
 
     }

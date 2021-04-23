@@ -22,7 +22,7 @@ namespace DataHarvester
         public async Task HarvestDataAsync (Source source, int harvest_type_id, bool? org_update_only)
         {
             logging_repo.LogParameters(source, harvest_type_id, org_update_only);
-            DataLayer repo = new DataLayer(source.database_name);
+            DataLayer repo = new DataLayer(source.database_name, harvest_type_id);
 
             // Create sd tables. 
             // (Some sources may be data objects only.)
@@ -48,7 +48,7 @@ namespace DataHarvester
                 if (source.uses_who_harvest)
                 {
                     WHOController c = new WHOController(harvest_id, source, repo, logging_repo, harvest_type_id);
-                    harvest.num_records_available = logging_repo.FetchFullFileCount(source.id, "study");
+                    harvest.num_records_available = logging_repo.FetchFullFileCount(source.id, "study", harvest_type_id);
                     harvest.num_records_harvested = c.LoopThroughFiles();
                 }
                 else
@@ -59,42 +59,42 @@ namespace DataHarvester
                             {
                                 BioLinccController c = new BioLinccController(harvest_id, source, repo, logging_repo);
                                 c.GetInitialIDData();
-                                harvest.num_records_available = logging_repo.FetchFullFileCount(source.id, "study");
+                                harvest.num_records_available = logging_repo.FetchFullFileCount(source.id, "study", harvest_type_id);
                                 harvest.num_records_harvested = c.LoopThroughFiles();
                                 break;
                             }
                         case 101901:
                             {
                                 YodaController c = new YodaController(harvest_id, source, repo, logging_repo);
-                                harvest.num_records_available = logging_repo.FetchFullFileCount(source.id, "study");
+                                harvest.num_records_available = logging_repo.FetchFullFileCount(source.id, "study", harvest_type_id);
                                 harvest.num_records_harvested = c.LoopThroughFiles();
                                 break;
                             }
                         case 100120:
                             {
                                 CTGController c = new CTGController(harvest_id, source, repo, logging_repo, harvest_type_id);
-                                harvest.num_records_available = logging_repo.FetchFullFileCount(source.id, "study");
+                                harvest.num_records_available = logging_repo.FetchFullFileCount(source.id, "study", harvest_type_id);
                                 harvest.num_records_harvested = c.LoopThroughFiles();
                                 break;
                             }
                         case 100123:
                             {
                                 EUCTRController c = new EUCTRController(harvest_id, source, repo, logging_repo, harvest_type_id);
-                                harvest.num_records_available = logging_repo.FetchFullFileCount(source.id, "study");
+                                harvest.num_records_available = logging_repo.FetchFullFileCount(source.id, "study", harvest_type_id);
                                 harvest.num_records_harvested = c.LoopThroughFiles();
                                 break;
                             }
                         case 100126:
                             {
                                 ISRCTNController c = new ISRCTNController(harvest_id, source, repo, logging_repo, harvest_type_id);
-                                harvest.num_records_available = logging_repo.FetchFullFileCount(source.id, "study");
+                                harvest.num_records_available = logging_repo.FetchFullFileCount(source.id, "study", harvest_type_id);
                                 harvest.num_records_harvested = await c.LoopThroughFilesAsync();
                                 break;
                             }
                         case 100135:
                             {
                                 PubmedController c = new PubmedController(harvest_id, source, repo, logging_repo, harvest_type_id);
-                                harvest.num_records_available = logging_repo.FetchFullFileCount(source.id, "object");
+                                harvest.num_records_available = logging_repo.FetchFullFileCount(source.id, "object", harvest_type_id);
                                 harvest.num_records_harvested = c.LoopThroughFiles();
 
                                 // For pubmed necessary to do additional processing afterwards 
@@ -127,7 +127,7 @@ namespace DataHarvester
             }
             ppb.UpdateDataObjectOrgs();
             logging_repo.LogLine("Data object managing orgs updated");
-            ppb.StoreUnMatchedNames();
+            ppb.StoreUnMatchedNames();  
             logging_repo.LogLine("Unmatched org names stored");
 
             // Update and standardise topic ids and names

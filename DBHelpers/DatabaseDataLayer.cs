@@ -20,7 +20,7 @@ namespace DataHarvester
         /// has the relevant credentials (but which is not stored in GitHub).
         /// </summary>
         /// 
-        public DataLayer(string database_name)
+        public DataLayer(string database_name, int harvest_type_id)
         {
                 IConfigurationRoot settings = new ConfigurationBuilder()
                 .SetBasePath(AppContext.BaseDirectory)
@@ -31,7 +31,7 @@ namespace DataHarvester
             builder.Host = settings["host"];
             builder.Username = settings["user"];
             builder.Password = settings["password"];
-            builder.Database = database_name;
+            builder.Database = (harvest_type_id == 3) ? "test" : database_name;
 
             connString = builder.ConnectionString;
 

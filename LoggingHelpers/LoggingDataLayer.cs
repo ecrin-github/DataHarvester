@@ -292,13 +292,17 @@ namespace DataHarvester
         }
 
 
-        public int FetchFullFileCount(int source_id, string source_type)
+        public int FetchFullFileCount(int source_id, string source_type, int harvest_type_id)
         {
             string sql_string = "select count(*) ";
             sql_string += source_type.ToLower() == "study" ? "from sf.source_data_studies"
                                                  : "from sf.source_data_objects";
             sql_string += " where source_id = " + source_id.ToString();
             sql_string += " and local_path is not null";
+            if (harvest_type_id ==3)
+            {
+                sql_string += " and for_testing = true";
+            }
 
             using (NpgsqlConnection Conn = new NpgsqlConnection(connString))
             {
@@ -358,8 +362,13 @@ namespace DataHarvester
                 where_clause = " where source_id = " + source_id.ToString() +
                                " and (last_downloaded >= last_imported or last_imported is null) ";
             }
+            else if (harvest_type_id == 3)
+            {
+                // use records marked for testing only
+                where_clause = " where source_id = " + source_id.ToString() +
+                               " and for_testing = true ";
+            }
             where_clause += " and local_path is not null";
-            
             return where_clause;
         }
 

@@ -65,8 +65,10 @@ namespace DataHarvester.ctg
                         processor.StoreData(common_repo, s, logging_repo);
 
                         // update file record with last processed datetime
-                        logging_repo.UpdateFileRecLastHarvested(rec.id, "study", last_harvest_id);
-
+                        // (if not in test mode)
+                        if(harvest_type_id != 3) {
+                            logging_repo.UpdateFileRecLastHarvested(rec.id, "study", last_harvest_id);
+                        }
                     }
                     
                     if (k % 100 == 0) logging_repo.LogLine(m.ToString() + ": " + n.ToString());
