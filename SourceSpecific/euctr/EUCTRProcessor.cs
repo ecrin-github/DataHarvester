@@ -1,12 +1,13 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Globalization;
+using Serilog;
 
 namespace DataHarvester.euctr
 {
     public class EUCTRProcessor
 	{
-		public Study ProcessData(EUCTR_Record fs, DateTime? download_datetime, DataLayer common_repo, LoggingDataLayer logging_repo)
+		public Study ProcessData(EUCTR_Record fs, DateTime? download_datetime, IStorageDataLayer storage_repo, IMonitorDataLayer mon_repo, ILogger logger)
 		{
 			Study s = new Study();
 			List<StudyIdentifier> identifiers = new List<StudyIdentifier>();
@@ -19,9 +20,9 @@ namespace DataHarvester.euctr
 			List<ObjectTitle> object_titles = new List<ObjectTitle>();
 			List<ObjectInstance> object_instances = new List<ObjectInstance>();
 
-			HashHelpers hh = new HashHelpers(logging_repo);
-			StringHelpers sh = new StringHelpers(logging_repo);
-    		HtmlHelpers mh = new HtmlHelpers(logging_repo);
+			MD5Helpers hh = new MD5Helpers();
+			StringHelpers sh = new StringHelpers(logger, mon_repo);
+    		HtmlHelpers mh = new HtmlHelpers(logger);
 
 			// STUDY AND ATTRIBUTES
 
@@ -791,7 +792,7 @@ namespace DataHarvester.euctr
 		}
 
 			
-		public void StoreData(DataLayer repo, Study s, LoggingDataLayer logging_repo)
+		public void StoreData(IStorageDataLayer repo, Study s, IMonitorDataLayer mon_repo)
 		{
 			// construct database study instance
 			StudyInDB dbs = new StudyInDB(s);
@@ -809,8 +810,8 @@ namespace DataHarvester.euctr
 
 			repo.StoreStudy(dbs);
 
-			StudyCopyHelpers sch = new StudyCopyHelpers(logging_repo);
-			ObjectCopyHelpers och = new ObjectCopyHelpers(logging_repo);
+			StudyCopyHelpers sch = new StudyCopyHelpers();
+			ObjectCopyHelpers och = new ObjectCopyHelpers();
 
 			if (s.identifiers.Count > 0)
 			{

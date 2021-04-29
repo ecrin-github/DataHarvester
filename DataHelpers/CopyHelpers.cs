@@ -4,13 +4,6 @@ namespace DataHarvester
 {
     public class StudyCopyHelpers
     {
-        LoggingDataLayer logging_repo;
-
-        public StudyCopyHelpers(LoggingDataLayer _logging_repo)
-        {
-            logging_repo = _logging_repo;
-        }
-
         public PostgreSQLCopyHelper<StudyIdentifier> study_ids_helper =
             new PostgreSQLCopyHelper<StudyIdentifier>("sd", "study_identifiers")
                 .MapVarchar("sd_sid", x => x.sd_sid)
@@ -115,13 +108,6 @@ namespace DataHarvester
 
     public class ObjectCopyHelpers
     {
-        LoggingDataLayer logging_repo;
-
-        public ObjectCopyHelpers(LoggingDataLayer _logging_repo)
-        {
-            logging_repo = _logging_repo;
-        }
-
         public PostgreSQLCopyHelper<DataObject> data_objects_helper =
             new PostgreSQLCopyHelper<DataObject>("sd", "data_objects")
                 .MapVarchar("sd_oid", x => x.sd_oid)

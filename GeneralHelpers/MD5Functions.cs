@@ -3,15 +3,8 @@ using System.Security.Cryptography;
 
 namespace DataHarvester
 {
-    public class HashHelpers
+    public class MD5Helpers
     {
-        LoggingDataLayer logging_repo;
-
-        public HashHelpers(LoggingDataLayer _logging_repo)
-        {
-            logging_repo = _logging_repo;
-        }
-        
         public string CreateMD5(string input)
         {
             // Use input string to calculate MD5 hash
@@ -27,5 +20,4 @@ namespace DataHarvester
             }
         }
     }
-
 }

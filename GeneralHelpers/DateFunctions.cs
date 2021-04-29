@@ -6,13 +6,6 @@ namespace DataHarvester
 {
     public class DateHelpers
     {
-        LoggingDataLayer logging_repo;
-
-        public DateHelpers(LoggingDataLayer _logging_repo)
-        {
-            logging_repo = _logging_repo;
-        }
-
         public SplitDate GetDateParts(string dateString)
         {
             // input date string is in the form of "<month name> day, year"

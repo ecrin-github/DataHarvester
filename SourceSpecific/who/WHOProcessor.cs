@@ -1,13 +1,14 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Text.RegularExpressions;
+using Serilog;
 
 namespace DataHarvester.who
 {
     public class WHOProcessor
     {
 
-        public Study ProcessData(WHORecord st, DateTime? download_datetime, DataLayer common_repo, WHODataLayer who_repo, LoggingDataLayer logging_repo)
+        public Study ProcessData(WHORecord st, DateTime? download_datetime, IStorageDataLayer storage_repo, WHODataLayer who_repo, IMonitorDataLayer mon_repo, ILogger logger)
         {
             Study s = new Study();
 
@@ -25,12 +26,12 @@ namespace DataHarvester.who
             List<ObjectDate> data_object_dates = new List<ObjectDate>();
             List<ObjectInstance> data_object_instances = new List<ObjectInstance>();
 
-            StringHelpers sh = new StringHelpers(logging_repo);
-            DateHelpers dh = new DateHelpers(logging_repo);
-            TypeHelpers th = new TypeHelpers(logging_repo);
-            HashHelpers hh = new HashHelpers(logging_repo);
-            HtmlHelpers mh = new HtmlHelpers(logging_repo);
-            IdentifierHelpers ih = new IdentifierHelpers(logging_repo);
+            StringHelpers sh = new StringHelpers(logger, mon_repo);
+            DateHelpers dh = new DateHelpers();
+            TypeHelpers th = new TypeHelpers();
+            MD5Helpers hh = new MD5Helpers();
+            HtmlHelpers mh = new HtmlHelpers(logger);
+            IdentifierHelpers ih = new IdentifierHelpers();
 
 
             // transfer features of main study object
@@ -226,7 +227,7 @@ namespace DataHarvester.who
                     else
                     {
                         // what is going on?
-                        logging_repo.LogError("Odd enrolment string: " + enrolment_as_string + " for " + sid);
+                        logger.Error("Odd enrolment string: " + enrolment_as_string + " for " + sid);
                     }
                 }
             }
@@ -248,7 +249,7 @@ namespace DataHarvester.who
                     else
                     {
                         // what is going on?
-                        logging_repo.LogError("Odd enrolment string: " + enrolment_as_string + " for " + sid);
+                        logger.Error("Odd enrolment string: " + enrolment_as_string + " for " + sid);
                     }
                 }
             }
@@ -592,14 +593,14 @@ namespace DataHarvester.who
         }
 
 
-        public void StoreData(DataLayer repo, Study s, LoggingDataLayer logging_repo)
+        public void StoreData(IStorageDataLayer repo, Study s, IMonitorDataLayer mon_repo)
         {
             // store study
             StudyInDB st = new StudyInDB(s);
             repo.StoreStudy(st);
 
-            StudyCopyHelpers sch = new StudyCopyHelpers(logging_repo);
-            ObjectCopyHelpers och = new ObjectCopyHelpers(logging_repo);
+            StudyCopyHelpers sch = new StudyCopyHelpers();
+            ObjectCopyHelpers och = new ObjectCopyHelpers();
 
             // store study attributes
             if (s.identifiers.Count > 0)

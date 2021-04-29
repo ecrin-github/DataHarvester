@@ -5,13 +5,6 @@ namespace DataHarvester
 {
     public class IdentifierHelpers
     {
-        LoggingDataLayer logging_repo;
-
-        public IdentifierHelpers(LoggingDataLayer _logging_repo)
-        {
-            logging_repo = _logging_repo;
-        }
-
         // Two check routines that scan previously extracted Identifiers or Dates, to 
         // indicate if the input Id / Date type has already beenm extracted.
 

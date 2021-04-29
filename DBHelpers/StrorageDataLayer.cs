@@ -7,30 +7,26 @@ using System.Collections.Generic;
 
 namespace DataHarvester
 {
-    public class DataLayer
+    public class StorageDataLayer : IStorageDataLayer
     {
         private string connString;
         private string ctg_connString;
-        private string username;
-        private string password;
+        Credentials _credentials;
 
         /// <summary>
-        /// Parameterless constructor is used to automatically build
-        /// the connection string, using an appsettings.json file that 
-        /// has the relevant credentials (but which is not stored in GitHub).
+        /// Constructor is used to build the connection string, 
+        /// using a credentials object that has the relevant credentials 
+        /// from the app settings, themselves derived from a json file.
         /// </summary>
         /// 
-        public DataLayer(string database_name, int harvest_type_id)
+        public StorageDataLayer(string database_name, Credentials credentials, int harvest_type_id)
         {
-                IConfigurationRoot settings = new ConfigurationBuilder()
-                .SetBasePath(AppContext.BaseDirectory)
-                .AddJsonFile("appsettings.json")
-                .Build();
-
             NpgsqlConnectionStringBuilder builder = new NpgsqlConnectionStringBuilder();
-            builder.Host = settings["host"];
-            builder.Username = settings["user"];
-            builder.Password = settings["password"];
+
+            builder.Host = credentials.Host;
+            builder.Username = credentials.Username;
+            builder.Password = credentials.Password;
+
             builder.Database = (harvest_type_id == 3) ? "test" : database_name;
 
             connString = builder.ConnectionString;
@@ -38,15 +34,12 @@ namespace DataHarvester
             builder.Database = "ctg";
             ctg_connString = builder.ConnectionString;
 
-            username = builder.Username;
-            password = builder.Password;
+            _credentials = credentials;
         }
 
         public string ConnString => connString;
         public string CTGConnString => ctg_connString;
-
-        public string Username => username;
-        public string Password => password;
+        public Credentials Credentials => _credentials;
 
 
         // Inserts the base Studyobject, i.e. with all the  
@@ -309,7 +302,7 @@ namespace DataHarvester
             }
         }
 
-        
+
         public void StoreCitationObject(CitationObjectInDB ctob)
         {
             using (var conn = new NpgsqlConnection(connString))

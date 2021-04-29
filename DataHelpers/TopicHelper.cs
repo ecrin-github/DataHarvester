@@ -1,18 +1,19 @@
 ﻿using Dapper;
 using Npgsql;
 using System;
+using Serilog;
 
 namespace DataHarvester
-{
+{ 
     public class TopicHelper
     {
         string db_conn;
-        LoggingDataLayer logging_repo;
+        ILogger _logger;
 
-        public TopicHelper(string _db_conn, LoggingDataLayer _logging_repo)
+        public TopicHelper(string _db_conn, ILogger logger)
         {
             db_conn = _db_conn;
-            logging_repo = _logging_repo;
+            _logger = logger;
         }
 
         public void ExecuteSQL(string sql_string)
@@ -37,7 +38,7 @@ namespace DataHarvester
                              or lower(topic_value) = 'studies'
                              or lower(topic_value) = 'evaluation';";
             ExecuteSQL(sql_string);
-            logging_repo.LogLine("Updating topic codes, deleting meanngless categories");
+            _logger.Information("Updating topic codes, deleting meanngless categories");
         }
 
 
@@ -54,7 +55,7 @@ namespace DataHarvester
                                   where t.topic_value = g.name
                                   and topic_type is null;";
             ExecuteSQL(sql_string);
-            logging_repo.LogLine("Updating topic codes - labelling geographic entities");
+            _logger.Information("Updating topic codes - labelling geographic entities");
         }
 
 
@@ -96,19 +97,19 @@ namespace DataHarvester
                         ExecuteSQL(batch_sql_string);
                         string feedback = "Updating topic codes, " + r.ToString() + " to ";
                         feedback += (r + rec_batch < rec_count) ? (r + rec_batch).ToString() : rec_count.ToString();
-                        logging_repo.LogLine(feedback);
+                        _logger.Information(feedback);
                     }
                 }
                 else
                 {
                     ExecuteSQL(sql_string);
-                    logging_repo.LogLine("Updating topic codes - as a single batch");
+                    _logger.Information("Updating topic codes - as a single batch");
                 }
             }
             catch (Exception e)
             {
                 string res = e.Message;
-                logging_repo.LogError("In update_topics: " + res);
+                _logger.Error("In update_topics: " + res);
             }
         }
 

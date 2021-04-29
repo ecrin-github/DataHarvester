@@ -2,16 +2,18 @@
 using System.Collections.Generic;
 using System.Net.Http;
 using System.Threading.Tasks;
+using Serilog;
 
 namespace DataHarvester
 {
     public class HtmlHelpers
     {
-        LoggingDataLayer logging_repo;
+        //private readonly IMonitorDataLayer mon_repo;
+        private readonly ILogger _logger;
 
-        public HtmlHelpers(LoggingDataLayer _logging_repo)
+        public HtmlHelpers(ILogger logger)
         {
-            logging_repo = _logging_repo;
+            _logger = logger; 
         }
 
         public string replace_tags(string input_string)
@@ -112,7 +114,7 @@ namespace DataHarvester
 
             catch(Exception e)
             {
-                logging_repo.LogError("In replace_tags: " + e.Message +" (Input was '" + input_string + "')");
+                _logger.Error("In replace_tags: " + e.Message +" (Input was '" + input_string + "')");
                 return null;
             }
         }

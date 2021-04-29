@@ -2,13 +2,14 @@
 using System.Collections.Generic;
 using System.Globalization;
 using System.Text.RegularExpressions;
+using Serilog;
 
 namespace DataHarvester.ctg
 {
     public class CTGProcessor
     {
 
-        public Study ProcessData(FullStudy fs, DateTime? download_datetime, DataLayer common_repo, LoggingDataLayer logging_repo)
+        public Study ProcessData(FullStudy fs, DateTime? download_datetime, IStorageDataLayer storage_repo, IMonitorDataLayer mon_repo, ILogger logger)
         {
             Study s = new Study();
             List<StudyIdentifier> identifiers = new List<StudyIdentifier>();
@@ -51,11 +52,11 @@ namespace DataHarvester.ctg
             StructType ConditionBrowseModule = null;
             StructType InterventionBrowseModule = null;
 
-            StringHelpers sh = new StringHelpers(logging_repo);
-            DateHelpers dh = new DateHelpers(logging_repo);
-            TypeHelpers th = new TypeHelpers(logging_repo);
-            HashHelpers hh = new HashHelpers(logging_repo);
-            IdentifierHelpers ih = new IdentifierHelpers(logging_repo);
+            StringHelpers sh = new StringHelpers(logger, mon_repo);
+            DateHelpers dh = new DateHelpers();
+            TypeHelpers th = new TypeHelpers();
+            MD5Helpers hh = new MD5Helpers();
+            IdentifierHelpers ih = new IdentifierHelpers();
 
             var Sections = Array.ConvertAll(fs.Struct.Items, item => (StructType)item);
 
@@ -1529,7 +1530,7 @@ namespace DataHarvester.ctg
         }
 
 
-        public void StoreData(DataLayer repo, Study s, LoggingDataLayer logging_repo)
+        public void StoreData(IStorageDataLayer repo, Study s, IMonitorDataLayer mon_repo)
         {
             // construct database study instance
             StudyInDB dbs = new StudyInDB(s);
@@ -1547,8 +1548,8 @@ namespace DataHarvester.ctg
 
             repo.StoreStudy(dbs);
 
-            StudyCopyHelpers sch = new StudyCopyHelpers(logging_repo);
-            ObjectCopyHelpers och = new ObjectCopyHelpers(logging_repo);
+            StudyCopyHelpers sch = new StudyCopyHelpers();
+            ObjectCopyHelpers och = new ObjectCopyHelpers();
 
             if (s.identifiers.Count > 0)
             {

@@ -4,13 +4,6 @@ namespace DataHarvester
 {
     public class TypeHelpers
     {
-        LoggingDataLayer logging_repo;
-
-        public TypeHelpers(LoggingDataLayer _logging_repo)
-        {
-            logging_repo = _logging_repo;
-        }
-
         public int? GetStatusId(string study_status)
         {
             int? type_id = null;

@@ -1,5 +1,6 @@
 ﻿using Dapper;
 using Npgsql;
+using Serilog;
 
 namespace DataHarvester
 {
@@ -10,12 +11,12 @@ namespace DataHarvester
         private OrgHelper org_helper;
         private TopicHelper topic_helper;
 
-        public PostProcBuilder(string _connString, Source _source, LoggingDataLayer _logging_repo)
+        public PostProcBuilder(string _connString, Source _source, IMonitorDataLayer _mon_repo, ILogger logger)
         {
             connString = _connString;
             source = _source;
-            org_helper = new OrgHelper(connString, _logging_repo);
-            topic_helper = new TopicHelper(connString, _logging_repo );
+            org_helper = new OrgHelper(connString, _mon_repo);
+            topic_helper = new TopicHelper(connString, logger );
         }
 
 

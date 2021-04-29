@@ -1,15 +1,14 @@
 ﻿using System;
 using System.Collections.Generic;
+using Serilog;
 
 namespace DataHarvester.biolincc
 {
     public class BioLinccProcessor
     {
-
-        public Study ProcessData(BioLincc_Record st, DateTime? download_datetime, DataLayer common_repo, BioLinccDataLayer biolincc_repo, LoggingDataLayer logging_repo)
+        public Study ProcessData(BioLincc_Record st, DateTime? download_datetime, IStorageDataLayer storage_repo, BioLinccDataLayer biolincc_repo, IMonitorDataLayer mon_repo, ILogger logger)
         {
             Study s = new Study();
-
             // get date retrieved in object fetch
             // transfer to study and data object records
 
@@ -23,8 +22,8 @@ namespace DataHarvester.biolincc
             List<ObjectDate> data_object_dates = new List<ObjectDate>();
             List<ObjectInstance> data_object_instances = new List<ObjectInstance>();
 
-            HashHelpers hh = new HashHelpers(logging_repo);
-            HtmlHelpers mh = new HtmlHelpers(logging_repo);
+            MD5Helpers hh = new MD5Helpers();
+            HtmlHelpers mh = new HtmlHelpers(logger);
 
             // need study relationships... possibly not at this stage but after links have been examined...
 
@@ -128,7 +127,7 @@ namespace DataHarvester.biolincc
             string nct_id = biolincc_repo.FetchFirstNCTId(sid);
             if (nct_id != null)
             {
-                var sponsor_details = biolincc_repo.FetchBioLINCCSponsorFromNCT(common_repo.CTGConnString, nct_id);
+                var sponsor_details = biolincc_repo.FetchBioLINCCSponsorFromNCT(storage_repo.CTGConnString, nct_id);
                 sponsor_org_id = sponsor_details.org_id;
                 sponsor_org = sponsor_details.org_name;
 
@@ -136,7 +135,7 @@ namespace DataHarvester.biolincc
                 // that are in a group, corresponding to a single NCT entry and public title
                 if (!biolincc_repo.InMultipleHBLIGroup(sid))
                 {
-                    s.display_title = biolincc_repo.FetchStudyTitle(common_repo.CTGConnString, nct_id);
+                    s.display_title = biolincc_repo.FetchStudyTitle(storage_repo.CTGConnString, nct_id);
                 }
             }
 
@@ -335,14 +334,14 @@ namespace DataHarvester.biolincc
         }
 
 
-        public void StoreData(DataLayer repo, Study s, LoggingDataLayer logging_repo)
+        public void StoreData(IStorageDataLayer repo, Study s, IMonitorDataLayer mon_repo)
         {
             // store study
             StudyInDB st = new StudyInDB(s);
             repo.StoreStudy(st);
 
-            StudyCopyHelpers sch = new StudyCopyHelpers(logging_repo);
-            ObjectCopyHelpers och = new ObjectCopyHelpers(logging_repo);
+            StudyCopyHelpers sch = new StudyCopyHelpers();
+            ObjectCopyHelpers och = new ObjectCopyHelpers();
 
             // store study attributes
            

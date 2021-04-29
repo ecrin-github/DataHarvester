@@ -1,13 +1,13 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Globalization;
+using Serilog;
 
 namespace DataHarvester.yoda
 {
     public class YodaProcessor
     {
-
-        public Study ProcessData(Yoda_Record st, DateTime? download_datetime, LoggingDataLayer logging_repo)
+        public Study ProcessData(Yoda_Record st, DateTime? download_datetime, IMonitorDataLayer mon_repo, ILogger logger)
         {
             Study s = new Study();
 
@@ -31,9 +31,9 @@ namespace DataHarvester.yoda
             access_details += "1) the scientific purpose is clearly described; 2) the data requested will be used to enhance scientific and/or medical knowledge; and ";
             access_details += "3) the proposed research can be reasonably addressed using the requested data.";
 
-            StringHelpers sh = new StringHelpers(logging_repo);
-            HashHelpers hh = new HashHelpers(logging_repo);
-            HtmlHelpers mh = new HtmlHelpers(logging_repo);
+            StringHelpers sh = new StringHelpers(logger, mon_repo);
+            MD5Helpers hh = new MD5Helpers();
+            HtmlHelpers mh = new HtmlHelpers(logger);
 
             // transfer features of main study object
             // In most cases study will have already been registered in CGT.
@@ -367,14 +367,14 @@ namespace DataHarvester.yoda
         }
 
 
-        public void StoreData(DataLayer repo, Study s, LoggingDataLayer logging_repo)
+        public void StoreData(IStorageDataLayer repo, Study s, IMonitorDataLayer mon_repo)
         {
             // store study
             StudyInDB st = new StudyInDB(s);
             repo.StoreStudy(st);
 
-            StudyCopyHelpers sch = new StudyCopyHelpers(logging_repo);
-            ObjectCopyHelpers och = new ObjectCopyHelpers(logging_repo);
+            StudyCopyHelpers sch = new StudyCopyHelpers();
+            ObjectCopyHelpers och = new ObjectCopyHelpers();
 
             // store study attributes
             if (s.identifiers.Count > 0)

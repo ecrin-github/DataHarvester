@@ -2,19 +2,19 @@
 using System.Collections.Generic;
 using System.Globalization;
 using System.Threading.Tasks;
+using Serilog;
 
 namespace DataHarvester.isrctn
 {
     public class ISRCTNProcessor
     {
-        //URLChecker checker;
 
         public ISRCTNProcessor()
         {
             //checker = new URLChecker(); 
         }
 
-        public async Task<Study> ProcessDataAsync(ISCTRN_Record fs, DateTime? download_datetime, DataLayer common_repo, LoggingDataLayer logging_repo)
+        public async Task<Study> ProcessDataAsync(ISCTRN_Record fs, DateTime? download_datetime, IStorageDataLayer storage_repo, IMonitorDataLayer mon_repo, ILogger logger)
         {
             Study s = new Study();
 
@@ -31,12 +31,12 @@ namespace DataHarvester.isrctn
             List<ObjectDate> object_dates = new List<ObjectDate>();
             List<ObjectInstance> object_instances = new List<ObjectInstance>();
 
-            HashHelpers hh = new HashHelpers(logging_repo);
-            StringHelpers sh = new StringHelpers(logging_repo);
-            DateHelpers dh = new DateHelpers(logging_repo);
-            TypeHelpers th = new TypeHelpers(logging_repo);
-            HtmlHelpers mh = new HtmlHelpers(logging_repo);
-            IdentifierHelpers ih = new IdentifierHelpers(logging_repo);
+            MD5Helpers hh = new MD5Helpers();
+            StringHelpers sh = new StringHelpers(logger, mon_repo);
+            DateHelpers dh = new DateHelpers();
+            TypeHelpers th = new TypeHelpers();
+            HtmlHelpers mh = new HtmlHelpers(logger);
+            IdentifierHelpers ih = new IdentifierHelpers();
 
             //List<AvailableIPD> ipd_info = new List<AvailableIPD>();
             //List<StudyRelationship> relationships = new List<StudyRelationship>();
@@ -1215,7 +1215,7 @@ namespace DataHarvester.isrctn
         }
 
                 
-        public void StoreData(DataLayer repo, Study s, LoggingDataLayer logging_repo)
+        public void StoreData(IStorageDataLayer repo, Study s, IMonitorDataLayer mon_repo)
         {
             // construct database study instance
             StudyInDB dbs = new StudyInDB(s);
@@ -1233,8 +1233,8 @@ namespace DataHarvester.isrctn
 
             repo.StoreStudy(dbs);
 
-            StudyCopyHelpers sch = new StudyCopyHelpers(logging_repo);
-            ObjectCopyHelpers och = new ObjectCopyHelpers(logging_repo);
+            StudyCopyHelpers sch = new StudyCopyHelpers();
+            ObjectCopyHelpers och = new ObjectCopyHelpers();
 
             if (s.identifiers.Count > 0)
             {

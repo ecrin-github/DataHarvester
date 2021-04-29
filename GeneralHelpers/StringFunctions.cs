@@ -1,16 +1,17 @@
 ﻿using System;
+using Serilog;
 
 namespace DataHarvester
 {
     public class StringHelpers
     {
         HtmlHelpers mh;
-        LoggingDataLayer logging_repo;
+        private readonly ILogger _logger;
 
-        public StringHelpers(LoggingDataLayer _logging_repo)
+        public StringHelpers(ILogger logger, IMonitorDataLayer mon_repo)
         {
-            mh = new HtmlHelpers(_logging_repo);
-            logging_repo = _logging_repo;
+            _logger = logger;
+            mh = new HtmlHelpers(_logger);
         }
 
         public string TidyName(string in_name)
@@ -73,7 +74,7 @@ namespace DataHarvester
             }
             catch (Exception e)
             {
-                logging_repo.LogError("In ReplaceApos: " + e.Message + " (input was '" + apos_name + "')");
+                _logger.Error("In ReplaceApos: " + e.Message + " (input was '" + apos_name + "')");
                 return apos_name;
             }
 
