@@ -9,10 +9,10 @@ namespace DataHarvester
         private IMonitorDataLayer mon_repo;
         private ILogger _logger;
 
-        public HashBuilder(ILogger logger, string _connString, Source _source, IMonitorDataLayer _mon_repo)
+        public HashBuilder(ILogger logger, Source _source, IMonitorDataLayer _mon_repo)
         {
-            connString = _connString;
             source = _source;
+            connString = source.db_conn;
             mon_repo = _mon_repo;
             _logger = logger;
         }

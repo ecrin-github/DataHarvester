@@ -11,32 +11,29 @@ namespace DataHarvester
 {
     internal class ParametersChecker : IParametersChecker
     {
-        private readonly ILogger _logger;
-        private Credentials _credentials;
-        MonitorDataLayer _mon_repo;
+        private ILogger _logger;
+        private ILoggerHelper _logger_helper;
+        private ICredentials _credentials;
+        private IMonitorDataLayer _mon_repo;
 
-        public ParametersChecker(ILogger logger, IConfiguration settings)
+        public ParametersChecker(ILogger logger, ILoggerHelper logger_helper, 
+                  ICredentials credentials, IMonitorDataLayer mon_repo)
         {
             _logger = logger;
-
-            // get the credentials object set up
-            _credentials = new Credentials();
-            _credentials.GetCredentials(settings);
+            _logger_helper = logger_helper;
+            _credentials = credentials;
+            _mon_repo = mon_repo;
         }
 
-        public Credentials Credentials  => _credentials;
-        public MonitorDataLayer Mon_repo => _mon_repo;
-
+        // Parse command line arguments and return true only if no errors.
+        // Otherwise log errors and return false.
 
         public Options ObtainParsedArguments(string[] args)
         {
-            // Parse command line arguments and return true only if no errors.
-            // Otherwise log errors and return false.
-
             var parsedArguments = Parser.Default.ParseArguments<Options>(args);
             if (parsedArguments.Tag.ToString() == "NotParsed")
             {
-                HandleParseError(((NotParsed<Options>)parsedArguments).Errors, _logger);
+                HandleParseError(((NotParsed<Options>)parsedArguments).Errors);
                 return null;
             }
             else
@@ -46,12 +43,10 @@ namespace DataHarvester
         }
 
 
+        // Parse command line arguments and return true if values are valid.
+            // Otherwise log errors and return false.
         public bool ValidArgumentValues(Options opts)
         {
-
-            // Parse command line arguments and return true if values are valid.
-            // Otherwise log errors and return false.
-
             try
             {
                 int harvest_type_id = opts.harvest_type_id;
@@ -59,9 +54,6 @@ namespace DataHarvester
                 {
                     throw new Exception("The t (harvest type) parameter is not one of the allowed values - 1,2 or 3");
                 }
-
-                // set up the monitoring data repo
-                _mon_repo = new MonitorDataLayer(_logger, _credentials);
 
                 foreach (int source_id in opts.source_ids)
                 {
@@ -71,9 +63,7 @@ namespace DataHarvester
                                                     " does not correspond to a known source");
                     }
                 }
-
-                // Got this far - the program can run!
-                return true;
+                return true;    // Got this far - the program can run!
             }
 
             catch (Exception e)  
@@ -81,44 +71,43 @@ namespace DataHarvester
                 _logger.Error(e.Message);
                 _logger.Error(e.StackTrace);
                 _logger.Information("Harvester application aborted");
-                _logger.Information("Closing Log\n");
+                _logger_helper.Logheader("Closing Log");
                 return false;
             }
 
         }
 
 
-        private void HandleParseError(IEnumerable<Error> errs, ILogger logger)
+        private void HandleParseError(IEnumerable<Error> errs)
         {
             // log the errors
-            logger.Error("Error in the command line arguments - they could not be parsed");
+            _logger.Error("Error in the command line arguments - they could not be parsed");
             int n = 0;
             foreach (Error e in errs)
             {
                 n++;
-                logger.Error("Error {n}: Tag was {Tag}", n.ToString(), e.Tag.ToString());
+                _logger.Error("Error {n}: Tag was {Tag}", n.ToString(), e.Tag.ToString());
                 if (e.GetType().Name == "UnknownOptionError")
                 {
-                    logger.Error("Error {n}: Unknown option was {UnknownOption}", n.ToString(), ((UnknownOptionError)e).Token);
+                    _logger.Error("Error {n}: Unknown option was {UnknownOption}", n.ToString(), ((UnknownOptionError)e).Token);
                 }
                 if (e.GetType().Name == "MissingRequiredOptionError")
                 {
-                    logger.Error("Error {n}: Missing option was {MissingOption}", n.ToString(), ((MissingRequiredOptionError)e).NameInfo.NameText);
+                    _logger.Error("Error {n}: Missing option was {MissingOption}", n.ToString(), ((MissingRequiredOptionError)e).NameInfo.NameText);
                 }
                 if (e.GetType().Name == "BadFormatConversionError")
                 {
-                    logger.Error("Error {n}: Wrongly formatted option was {MissingOption}", n.ToString(), ((BadFormatConversionError)e).NameInfo.NameText);
+                    _logger.Error("Error {n}: Wrongly formatted option was {MissingOption}", n.ToString(), ((BadFormatConversionError)e).NameInfo.NameText);
                 }
             }
-            logger.Information("Harvester application aborted");
-            _logger.Information("Closing Log\n");
+            _logger.Information("Harvester application aborted");
+            _logger_helper.Logheader("Closing Log");
         }
 
     }
 
 
-
-    internal class Options
+    public class Options
     {
         // Lists the command line arguments and options
 

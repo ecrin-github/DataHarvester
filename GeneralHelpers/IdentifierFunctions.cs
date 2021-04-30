@@ -42,10 +42,9 @@ namespace DataHarvester
             }
             return to_add;
         }
-
         
 
-        // A helper function called from the loop that goes through the secondary Id data
+        // A helper function called from the loop that goes through the CTG secondary Id data
         // It tries to make the data as complete as possible, depending on the typem of 
         // secondary id that is being processed.
 
@@ -481,6 +480,37 @@ namespace DataHarvester
                 make_individual = true;
             }
             return make_individual;
+        }
+
+
+        // A helper function called from the WHO processor. Returns the source name
+        // from the source id
+
+        public string get_source_name(int? source_id)
+        {
+            string source_name = "";
+            switch (source_id)
+            {
+                case 100116: { source_name = "Australian New Zealand Clinical Trials Registry"; break; }
+                case 100117: { source_name = "Registro Brasileiro de Ensaios Clínicos"; break; }
+                case 100118: { source_name = "Chinese Clinical Trial Register"; break; }
+                case 100119: { source_name = "Clinical Research Information Service (South Korea)"; break; }
+                case 100120: { source_name = "ClinicalTrials.gov"; break; }
+                case 100121: { source_name = "Clinical Trials Registry - India"; break; }
+                case 100122: { source_name = "Registro Público Cubano de Ensayos Clínicos"; break; }
+                case 100123: { source_name = "EU Clinical Trials Register"; break; }
+                case 100124: { source_name = "Deutschen Register Klinischer Studien"; break; }
+                case 100125: { source_name = "Iranian Registry of Clinical Trials"; break; }
+                case 100126: { source_name = "ISRCTN"; break; }
+                case 100127: { source_name = "Japan Primary Registries Network"; break; }
+                case 100128: { source_name = "Pan African Clinical Trial Registry"; break; }
+                case 100129: { source_name = "Registro Peruano de Ensayos Clínicos"; break; }
+                case 100130: { source_name = "Sri Lanka Clinical Trials Registry"; break; }
+                case 100131: { source_name = "Thai Clinical Trials Register"; break; }
+                case 100132: { source_name = "The Netherlands National Trial Register"; break; }
+                case 101989: { source_name = "Lebanon Clinical Trials Registry"; break; }
+            }
+            return source_name;
         }
 
     }

@@ -5,8 +5,19 @@ using Serilog;
 namespace DataHarvester.biolincc
 {
     public class BioLinccProcessor
-    {
-        public Study ProcessData(BioLincc_Record st, DateTime? download_datetime, IStorageDataLayer storage_repo, BioLinccDataLayer biolincc_repo, IMonitorDataLayer mon_repo, ILogger logger)
+    { 
+        IStorageDataLayer _storage_repo;
+        IMonitorDataLayer _mon_repo;
+        ILogger _logger;
+
+        public BioLinccProcessor(IStorageDataLayer storage_repo, IMonitorDataLayer mon_repo, ILogger logger)
+        {
+            _storage_repo = storage_repo;
+            _mon_repo = mon_repo;
+            _logger = logger;
+        }
+
+        public Study ProcessData(BioLincc_Record st, DateTime? download_datetime, BioLinccDataLayer biolincc_repo)
         {
             Study s = new Study();
             // get date retrieved in object fetch
@@ -23,7 +34,7 @@ namespace DataHarvester.biolincc
             List<ObjectInstance> data_object_instances = new List<ObjectInstance>();
 
             MD5Helpers hh = new MD5Helpers();
-            HtmlHelpers mh = new HtmlHelpers(logger);
+            HtmlHelpers mh = new HtmlHelpers(_logger);
 
             // need study relationships... possibly not at this stage but after links have been examined...
 
@@ -127,7 +138,7 @@ namespace DataHarvester.biolincc
             string nct_id = biolincc_repo.FetchFirstNCTId(sid);
             if (nct_id != null)
             {
-                var sponsor_details = biolincc_repo.FetchBioLINCCSponsorFromNCT(storage_repo.CTGConnString, nct_id);
+                var sponsor_details = biolincc_repo.FetchBioLINCCSponsorFromNCT(nct_id);
                 sponsor_org_id = sponsor_details.org_id;
                 sponsor_org = sponsor_details.org_name;
 
@@ -135,7 +146,7 @@ namespace DataHarvester.biolincc
                 // that are in a group, corresponding to a single NCT entry and public title
                 if (!biolincc_repo.InMultipleHBLIGroup(sid))
                 {
-                    s.display_title = biolincc_repo.FetchStudyTitle(storage_repo.CTGConnString, nct_id);
+                    s.display_title = biolincc_repo.FetchStudyTitle(nct_id);
                 }
             }
 
@@ -334,11 +345,11 @@ namespace DataHarvester.biolincc
         }
 
 
-        public void StoreData(IStorageDataLayer repo, Study s, IMonitorDataLayer mon_repo)
+        public void StoreData(Study s, string db_conn)
         {
             // store study
             StudyInDB st = new StudyInDB(s);
-            repo.StoreStudy(st);
+            _storage_repo.StoreStudy(st, db_conn);
 
             StudyCopyHelpers sch = new StudyCopyHelpers();
             ObjectCopyHelpers och = new ObjectCopyHelpers();
@@ -347,40 +358,40 @@ namespace DataHarvester.biolincc
            
             if (s.titles.Count > 0)
             {
-                repo.StoreStudyTitles(sch.study_titles_helper, s.titles);
+                _storage_repo.StoreStudyTitles(sch.study_titles_helper, s.titles, db_conn);
             }
 
             if (s.references.Count > 0)
             {
-                repo.StoreStudyReferences(sch.study_references_helper, s.references);
+                _storage_repo.StoreStudyReferences(sch.study_references_helper, s.references, db_conn);
             }
 
             // store data objects and dataset properties
 
             if (s.data_objects.Count > 0)
             {
-                repo.StoreDataObjects(och.data_objects_helper, s.data_objects);
+                _storage_repo.StoreDataObjects(och.data_objects_helper, s.data_objects, db_conn);
             }
 
             if (s.object_datasets.Count > 0)
             {
-                repo.StoreDatasetProperties(och.object_datasets_helper, s.object_datasets);
+                _storage_repo.StoreDatasetProperties(och.object_datasets_helper, s.object_datasets, db_conn);
             }
 
             // store data object attributes
             if (s.object_dates.Count > 0)
             {
-                repo.StoreObjectDates(och.object_dates_helper, s.object_dates);
+                _storage_repo.StoreObjectDates(och.object_dates_helper, s.object_dates, db_conn);
             }
 
             if (s.object_instances.Count > 0)
             {
-                repo.StoreObjectInstances(och.object_instances_helper, s.object_instances);
+                _storage_repo.StoreObjectInstances(och.object_instances_helper, s.object_instances, db_conn);
             }
 
             if (s.object_titles.Count > 0)
             {
-                repo.StoreObjectTitles(och.object_titles_helper, s.object_titles);
+                _storage_repo.StoreObjectTitles(och.object_titles_helper, s.object_titles, db_conn);
             }
         }
     }

@@ -7,6 +7,10 @@
 
   <ItemGroup>
     <Compile Remove="DataHelpers\TableBuildersAD.cs" />
+    <Compile Remove="SourceSpecific\pubmed\PubmedPostProcBuilder.cs" />
+    <Compile Remove="SubProjectHelpers\OrgHelper.cs" />
+    <Compile Remove="SubProjectHelpers\PostProcBuilder.cs" />
+    <Compile Remove="SubProjectHelpers\TopicHelper.cs" />
   </ItemGroup>
 
   <ItemGroup>
@@ -26,6 +30,10 @@
     <PackageReference Include="Serilog.Sinks.Email" Version="2.4.0" />
     <PackageReference Include="Serilog.Sinks.File" Version="4.1.0" />
     <PackageReference Include="Serilog.Sinks.PostgreSQL" Version="2.2.0" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\ContextDataManager\ContextDataManager.csproj" />
   </ItemGroup>
 
   <ItemGroup>

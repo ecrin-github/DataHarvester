@@ -4,6 +4,6 @@ namespace DataHarvester
 {
     interface IHarvester
     {
-        Task<int> RunAsync(Options opts);
+        int Run(Options opts);
     }
 }

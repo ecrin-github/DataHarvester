@@ -9,7 +9,7 @@ namespace DataHarvester.biolincc
     public class BioLinccDataLayer
     {
         private string bio_connString;
-        private string ctg_connString;
+        private string nct_connString;
 
         /// <summary>
         /// Parameterless constructor is used to automatically build
@@ -32,13 +32,13 @@ namespace DataHarvester.biolincc
             builder.Database = "biolincc";
             bio_connString = builder.ConnectionString;
 
-            builder.Database = "ctg";
-            ctg_connString = builder.ConnectionString;
+            builder.Database = "cgt";
+            nct_connString = builder.ConnectionString;
 
         }
 
 
-        public SponsorDetails FetchBioLINCCSponsorFromNCT(string nct_connString, string nct_id)
+        public SponsorDetails FetchBioLINCCSponsorFromNCT(string nct_id)
         {
             using (var conn = new NpgsqlConnection(nct_connString))
             {
@@ -49,7 +49,7 @@ namespace DataHarvester.biolincc
         }
 
 
-        public string FetchStudyTitle(string nct_connString, string nct_id)
+        public string FetchStudyTitle(string nct_id)
         {
             using (var conn = new NpgsqlConnection(nct_connString))
             {

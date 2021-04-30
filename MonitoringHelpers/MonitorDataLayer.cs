@@ -12,10 +12,11 @@ namespace DataHarvester
 {
     public class MonitorDataLayer : IMonitorDataLayer
     {
+        ICredentials _credentials;
         NpgsqlConnectionStringBuilder builder;
         private string connString;
         private string context_connString;
-        Credentials _credentials;
+        
 
         /// <summary>
         /// Constructor is used to build the connection string, 
@@ -23,7 +24,7 @@ namespace DataHarvester
         /// from the app settings, themselves derived from a json file.
         /// </summary>
         /// 
-        public MonitorDataLayer(ILogger logger, Credentials credentials)
+        public MonitorDataLayer(ILogger logger, ICredentials credentials)
         {
             builder = new NpgsqlConnectionStringBuilder();
 
@@ -40,21 +41,19 @@ namespace DataHarvester
             _credentials = credentials;
         }
 
-
-        public Credentials Credentials => _credentials;
+        public Credentials Credentials => (Credentials)_credentials;
 
 
         public bool SourceIdPresent(int source_id)
         {
-            // ************* CHANGE BACK TO id *********************
-            string sql_string = "Select source_id from sf.source_parameters where source_id = " + source_id.ToString();
+            string sql_string = "Select id from sf.source_parameters where id = " + source_id.ToString();
             using (NpgsqlConnection Conn = new NpgsqlConnection(connString))
             {
                 int res = Conn.QueryFirstOrDefault<int>(sql_string);
                 return (res == 0) ? false : true;
             }
         }
-
+         
 
         public Source FetchSourceParameters(int source_id)
         {

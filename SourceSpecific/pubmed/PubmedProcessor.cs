@@ -8,20 +8,26 @@ using Serilog;
 
 namespace DataHarvester.pubmed
 {
-    
-
     public class PubmedProcessor
     {
-        // The main data extraction function.
-        // Its inputs include a single XML document representing the citation
-        // as well as the currrent PMID and a refrence to the data layer.
+        IStorageDataLayer _storage_repo;
+        IMonitorDataLayer _mon_repo;
+        ILogger _logger;
 
-        public CitationObject ProcessData(string sdoid, XmlDocument d, DateTime? download_datetime, int harvest_id, IMonitorDataLayer mon_repo, ILogger logger)
+        public PubmedProcessor(IStorageDataLayer storage_repo, IMonitorDataLayer mon_repo, ILogger logger)
         {
-            StringHelpers sh = new StringHelpers(logger, mon_repo);
+            _storage_repo = storage_repo;
+            _mon_repo = mon_repo;
+            _logger = logger;
+        }
+
+       
+        public CitationObject ProcessData(XmlDocument d, DateTime? download_datetime)
+        {
+            StringHelpers sh = new StringHelpers(_logger, _mon_repo);
             DateHelpers dh = new DateHelpers();
             TypeHelpers th = new TypeHelpers();
-            HtmlHelpers mh = new HtmlHelpers(logger);
+            HtmlHelpers mh = new HtmlHelpers(_logger);
             IdentifierHelpers ih = new IdentifierHelpers();
 
             // First convert the XML document to a Linq XML Document.
@@ -40,7 +46,6 @@ namespace DataHarvester.pubmed
             // Establish main citation object
             // and list structures to receive data
 
-            CitationObject c = new CitationObject(sdoid, download_datetime);
 
             List<ObjectInstance> instances = new List<ObjectInstance>();
             List<ObjectDate> dates = new List<ObjectDate>();
@@ -65,6 +70,10 @@ namespace DataHarvester.pubmed
             // this to the 'other identifiers' list ('other' because it is not a doi).
             // The date applied may or may not be available later.
 
+            string sdoid = GetElementAsString(citation.Element("PMID"));
+
+            CitationObject c = new CitationObject(sdoid, download_datetime);
+
             identifiers.Add(new ObjectIdentifier(sdoid, 16, "PMID", sdoid, 100133, "National Library of Medicine"));
 
             // Set the PMID entry as an object instance 
@@ -81,8 +90,8 @@ namespace DataHarvester.pubmed
             // not in the right format - 
             // these exceptions appear to be very rare if they occur at all.
 
-            XElement p = citation.Element("PMID");
 
+            var p = citation.Element("PMID");
             string pmidVersion = GetAttributeAsString(p.Attribute("Version"));
             if (pmidVersion != null)
             {
@@ -93,14 +102,19 @@ namespace DataHarvester.pubmed
                 else
                 {
                     c.version = pmidVersion;
-                    mon_repo.StoreExtractionNote(new ExtractionNote(100135, sdoid,
+                    /* LOGGER to go here
+                    //_mon_repo.StoreExtractionNote(new ExtractionNote(100135, sdoid,
                             "Harvest", harvest_id, 16, "PMID version not an integer"));
+                    */
                 }
             }
             else
             {
-                mon_repo.StoreExtractionNote(new ExtractionNote(100135, sdoid,
+                 /* LOGGER to go here
+                    //
+                _mon_repo.StoreExtractionNote(new ExtractionNote(100135, sdoid,
                             "Harvest", harvest_id, 16, "No PMID version attribute found"));
+                 */
             }
 
             // Obtain and store the citation status.
@@ -115,14 +129,20 @@ namespace DataHarvester.pubmed
             if (version_id != null)
             {
                 string qText = "A version attribute (" + version_id + ") found for this citation!";
-                mon_repo.StoreExtractionNote(new ExtractionNote(100135, sdoid,
+                 /* LOGGER to go here
+                    //
+                _mon_repo.StoreExtractionNote(new ExtractionNote(100135, sdoid,
                             "Harvest", harvest_id, 15, qText));
+                 */
             }
             if (version_date != null)
             {
                 string qText = "A version date attribute (" + version_date + ") found for this citation!";
-                mon_repo.StoreExtractionNote(new ExtractionNote(100135, sdoid,
+                 /* LOGGER to go here
+                    //
+                _mon_repo.StoreExtractionNote(new ExtractionNote(100135, sdoid,
                             "Harvest", harvest_id, 15, qText));
+                 */
             }
 
             #endregion
@@ -156,7 +176,7 @@ namespace DataHarvester.pubmed
                         if (lang_2code == "??")
                         {
                             // need to use the database
-                            lang_2code = mon_repo.lang_3_to_2(g);
+                            lang_2code = _mon_repo.lang_3_to_2(g);
                         }
                     }
                     lang_list += ", " + lang_2code;
@@ -239,23 +259,29 @@ namespace DataHarvester.pubmed
                 {
                     article_title_present = false;
                     string qText = "The citation has an empty article title element";
-                    mon_repo.StoreExtractionNote(new ExtractionNote(100135, sdoid,
-                            "Harvest", harvest_id, 28, qText));
+                    /* LOGGER to go here
+                   //
+                   _mon_repo.StoreExtractionNote(new ExtractionNote(100135, sdoid,
+                           "Harvest", harvest_id, 28, qText));
+                    */
+               }
+           }
+           else
+           {
+               article_title_present = false;
+               string qText = "The citation does not have an article title element";
+                /* LOGGER to go here
+                   //
+               _mon_repo.StoreExtractionNote(new ExtractionNote(100135, sdoid,
+                           "Harvest", harvest_id, 28, qText));
+                */
                 }
-            }
-            else
-            {
-                article_title_present = false;
-                string qText = "The citation does not have an article title element";
-                mon_repo.StoreExtractionNote(new ExtractionNote(100135, sdoid,
-                            "Harvest", harvest_id, 28, qText));
-            }
 
 
-            // Get the vernacular title if there is one and characterise it
-            // in a similar way, noting any html.
+                // Get the vernacular title if there is one and characterise it
+                // in a similar way, noting any html.
 
-            XElement vernacular_title = article.Element("VernacularTitle");
+                XElement vernacular_title = article.Element("VernacularTitle");
 
             if (vernacular_title != null)
             {
@@ -283,7 +309,7 @@ namespace DataHarvester.pubmed
                             if (lang_2code == "??")
                             {
                                 // need to use the database
-                                lang_2code = mon_repo.lang_3_to_2(s);
+                                lang_2code = _mon_repo.lang_3_to_2(s);
                             }
                             vlang_code = lang_2code;
                             break;
@@ -342,8 +368,11 @@ namespace DataHarvester.pubmed
                     {
                         vernacular_title_present = false;
                         string qText = "The article and vernacular titles seem identical";
-                        mon_repo.StoreExtractionNote(new ExtractionNote(100135, sdoid,
+                         /* LOGGER to go here
+                    //
+                        _mon_repo.StoreExtractionNote(new ExtractionNote(100135, sdoid,
                             "Harvest", harvest_id, 29, qText));
+                         */
                     }
                 }
             }
@@ -400,8 +429,11 @@ namespace DataHarvester.pubmed
                         if (bracket_count > 0)
                         {
                             string qText = "The title starts with '[', end with ')', but unable to match parentheses. Title = " + atitle;
-                            mon_repo.StoreExtractionNote(new ExtractionNote(100135, sdoid,
+                             /* LOGGER to go here
+                    //
+                            _mon_repo.StoreExtractionNote(new ExtractionNote(100135, sdoid,
                             "Harvest", harvest_id, 18, qText));
+                             */
                         }
                     }
                     else
@@ -409,8 +441,11 @@ namespace DataHarvester.pubmed
                         // Log if a square bracket at the start is not matched by an ending bracket or paranthesis.
 
                         string qText = "The title starts with a '[' but there is no matching ']' or ')' at the end of the title. Title = " + atitle;
-                        mon_repo.StoreExtractionNote(new ExtractionNote(100135, sdoid,
+                         /* LOGGER to go here
+                    //
+                         _mon_repo.StoreExtractionNote(new ExtractionNote(100135, sdoid,
                             "Harvest", harvest_id, 18, qText));
+                         */
                     }
 
                     // Store the title(s) - square brackets being present.
@@ -596,8 +631,11 @@ namespace DataHarvester.pubmed
                         else
                         {
                             string qText = "Unexpected date type (" + date_type + ") found in an article date element";
-                            mon_repo.StoreExtractionNote(new ExtractionNote(100135, sdoid,
+                             /* LOGGER to go here
+                    //
+                            _mon_repo.StoreExtractionNote(new ExtractionNote(100135, sdoid,
                             "Harvest", harvest_id, 19, qText));
+                             */
 
                         }
                     }
@@ -656,8 +694,11 @@ namespace DataHarvester.pubmed
                                     {
                                         date_type = 0;
                                         string qText = "An unexpexted status (" + pub_status + ") found a date in the history section";
-                                        mon_repo.StoreExtractionNote(new ExtractionNote(100135, sdoid,
+                                         /* LOGGER to go here
+                    //
+                                        _mon_repo.StoreExtractionNote(new ExtractionNote(100135, sdoid,
                                                     "Harvest", harvest_id, 20, qText));
+                                         */
                                         break;
                                     }
                             }
@@ -923,8 +964,11 @@ namespace DataHarvester.pubmed
                                             if (c.doi != other_id)
                                             {
                                                 string qText = "Two different dois have been supplied: " + c.doi + " from ELocation, and " + other_id + " from Article Ids";
-                                                mon_repo.StoreExtractionNote(new ExtractionNote(100135, sdoid,
+                                                /* LOGGER to go here
+                    //
+                                                _mon_repo.StoreExtractionNote(new ExtractionNote(100135, sdoid,
                                                                                     "Harvest", harvest_id, 14, qText));
+                                                */
                                                 break;
                                             }
                                         }
@@ -953,8 +997,11 @@ namespace DataHarvester.pubmed
                                         {
                                             // should be present already! - if a different value log it a a query
                                             string qText = "Two different values for pmid found: record pmiod is " + sdoid + ", but in article ids the value " + other_id + " is listed";
-                                            mon_repo.StoreExtractionNote(new ExtractionNote(100135, sdoid,
+                                             /* LOGGER to go here
+                    //
+                                            _mon_repo.StoreExtractionNote(new ExtractionNote(100135, sdoid,
                                                                                 "Harvest", harvest_id, 22, qText));
+                                             */
                                             identifiers.Add(new ObjectIdentifier(sdoid, 16, "PMID", sdoid, 100133, "National Library of Medicine"));
                                         }
                                         break;
@@ -996,8 +1043,11 @@ namespace DataHarvester.pubmed
                                 default:
                                     {
                                         string qText = "A unexpexted article id type (" + id_type + ") found a date in the article id section";
-                                        mon_repo.StoreExtractionNote(new ExtractionNote(100135, sdoid,
+                                        /* LOGGER to go here
+                    //
+                                        _mon_repo.StoreExtractionNote(new ExtractionNote(100135, sdoid,
                                                                             "Harvest", harvest_id, 23, qText));
+                                        */
                                         break;
                                     }
                             }
@@ -1144,8 +1194,11 @@ namespace DataHarvester.pubmed
                                     if (identifier.Length != 19)
                                     {
                                         string qText = "ORCID identifier for person " + sdoid + " is " + identifier + " and has non standard length'";
-                                        mon_repo.StoreExtractionNote(new ExtractionNote(100135, sdoid,
+                                        /* LOGGER to go here
+                    //
+                                        _mon_repo.StoreExtractionNote(new ExtractionNote(100135, sdoid,
                                                                         "Harvest", harvest_id, 24, qText));
+                                        */
                                         identifier = sh.TidyORCIDId2(identifier);
                                     }
                                     break;  // no need to look for more
@@ -1154,9 +1207,12 @@ namespace DataHarvester.pubmed
                                 {
                                     string qText = "person " + full_name + "(linked to " + sdoid + ") identifier ";
                                     qText += "is not an ORCID (" + identifier + " (source =" + identifier_source + "))";
-                                    mon_repo.StoreExtractionNote(new ExtractionNote(100135, sdoid,
+                                     /* LOGGER to go here
+                    //
+                                    _mon_repo.StoreExtractionNote(new ExtractionNote(100135, sdoid,
                                                                         "Harvest", harvest_id, 27, qText));
-                                    identifier = ""; identifier_source = "";  // do not store in db
+                                     */
+                                        identifier = ""; identifier_source = "";  // do not store in db
                                 }
                             }
                         }
@@ -1556,8 +1612,7 @@ namespace DataHarvester.pubmed
         }
 
 
-
-        public void StoreData(IStorageDataLayer repo, CitationObject c, IMonitorDataLayer mon_repo)
+        public void StoreData(CitationObject c, string db_conn)
         {
             // A routine called by the main program that runs through the 
             // Citation object - the singleton properties followed by each of the 
@@ -1566,7 +1621,7 @@ namespace DataHarvester.pubmed
             // Create the base Citation record and store it.
 
             CitationObjectInDB cdb = new CitationObjectInDB(c);
-            repo.StoreCitationObject(cdb);
+            _storage_repo.StoreCitationObject(cdb, db_conn);
 
             ObjectCopyHelpers och = new ObjectCopyHelpers();
 
@@ -1574,64 +1629,55 @@ namespace DataHarvester.pubmed
 
             if (c.article_instances.Count > 0)
             {
-                repo.StoreObjectInstances(och.object_instances_helper, c.article_instances);
+                _storage_repo.StoreObjectInstances(och.object_instances_helper, c.article_instances, db_conn);
             }
 
             if (c.article_titles.Count > 0)
             {
-                repo.StoreObjectTitles(och.object_titles_helper, c.article_titles);
+                _storage_repo.StoreObjectTitles(och.object_titles_helper, c.article_titles, db_conn);
             }
 
             if (c.article_dates.Count > 0)
             {
-                repo.StoreObjectDates(och.object_dates_helper, c.article_dates);
+                _storage_repo.StoreObjectDates(och.object_dates_helper, c.article_dates, db_conn);
             }
 
             if (c.article_contributors.Count > 0)
             {
-                repo.StoreObjectContributors(och.object_contributor_copyhelper, c.article_contributors);
+                _storage_repo.StoreObjectContributors(och.object_contributor_copyhelper, c.article_contributors, db_conn);
             }
 
             if (c.article_identifiers.Count > 0)
             {
-                repo.StoreObjectIdentifiers(och.object_identifier_copyhelper, c.article_identifiers);
+                _storage_repo.StoreObjectIdentifiers(och.object_identifier_copyhelper, c.article_identifiers, db_conn);
             }
 
             if (c.article_descriptions.Count > 0)
             {
-                repo.StoreObjectDescriptions(och.object_description_copyhelper, c.article_descriptions);
+                _storage_repo.StoreObjectDescriptions(och.object_description_copyhelper, c.article_descriptions, db_conn);
             }
 
             if (c.article_topics.Count > 0)
             {
-                repo.StoreObjectTopics(och.object_topic_copyhelper, c.article_topics);
+                _storage_repo.StoreObjectTopics(och.object_topic_copyhelper, c.article_topics, db_conn);
             }
 
             if (c.article_db_ids.Count > 0)
             {
-                repo.StoreObjectAcessionNumbers(och.object_db_link_copyhelper, c.article_db_ids);
+                _storage_repo.StoreObjectAcessionNumbers(och.object_db_link_copyhelper, c.article_db_ids, db_conn);
             }
 
             if (c.article_pubtypes.Count > 0)
             {
-                repo.StorePublicationTypes(och.publication_type_copyhelper, c.article_pubtypes);
+                _storage_repo.StorePublicationTypes(och.publication_type_copyhelper, c.article_pubtypes, db_conn);
             }
 
             if (c.article_comments.Count > 0)
             {
-                repo.StoreObjectComments(och.object_comment_copyhelper, c.article_comments);
+                _storage_repo.StoreObjectComments(och.object_comment_copyhelper, c.article_comments, db_conn);
             }
         }
 
-
-        #region Helper functions
-
-        // These functions make use of the explicit cast operators
-        // available for XElement and XAttribute.
-        // Most functions include a preliminary check for the existence
-        // of the Element or Attribute node itself, followed by a cast to
-        // the required type of the Element or Attribute's 
-        // Value (= inner HTML for an element).
 
         public string GetElementAsString(XElement e) => (e == null) ? null : (string)e;
 
@@ -1653,8 +1699,6 @@ namespace DataHarvester.pubmed
                 return false;
             }
         }
-       
-        #endregion
     }
 }
 

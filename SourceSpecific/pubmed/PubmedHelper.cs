@@ -1,5 +1,6 @@
 ﻿using Dapper;
 using Npgsql;
+using System.Xml.Linq;
 
 namespace DataHarvester
 {
@@ -12,6 +13,37 @@ namespace DataHarvester
             db_conn = _db_conn;
         }
 
+        // All these used within pubmed file processing
+
+        // These functions make use of the explicit cast operators
+        // available for XElement and XAttribute.
+        // Most functions include a preliminary check for the existence
+        // of the Element or Attribute node itself, followed by a cast to
+        // the required type of the Element or Attribute's 
+        // Value (= inner HTML for an element).
+
+        public string GetElementAsString(XElement e) => (e == null) ? null : (string)e;
+
+        public string GetAttributeAsString(XAttribute a) => (a == null) ? null : (string)a;
+
+        public int? GetElementAsInt(XElement e) => (e == null) ? null : (int?)e;
+
+        public int? GetAttributeAsInt(XAttribute a) => (a == null) ? null : (int?)a;
+
+        public bool GetAttributeAsBool(XAttribute a)
+        {
+            string avalue = GetAttributeAsString(a);
+            if (avalue != null)
+            {
+                return (avalue.ToUpper() == "Y") ? true : false;
+            }
+            else
+            {
+                return false;
+            }
+        }
+
+        /*
         // update publisher name in citation object
         // using eissn code
         public void obtain_publisher_names_using_eissn()
@@ -201,6 +233,7 @@ namespace DataHarvester
             }
         }
 
+        */
 
         public void transfer_citation_objects_to_data_objects()
         {

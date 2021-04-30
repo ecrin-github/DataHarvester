@@ -14,19 +14,20 @@ namespace DataHarvester.biolincc
         BioLinccProcessor processor;
         BioLinccIdentifierProcessor identity_processor;
         Source source;
+        int harvest_type_id;
         int harvest_id;
 
-
         public BioLinccController(ILogger logger, IMonitorDataLayer mon_repo, IStorageDataLayer _storage_repo,
-                                  Source _source, int _harvest_id)
+                                  Source _source, int _harvest_type_id, int _harvest_id)
         {
             _logger = logger;
             _mon_repo = mon_repo; 
             storage_repo = _storage_repo;
-            processor = new BioLinccProcessor();
+            processor = new BioLinccProcessor(storage_repo, mon_repo, logger);
             identity_processor = new BioLinccIdentifierProcessor();
             biolincc_repo = new BioLinccDataLayer();
             source = _source;
+            harvest_type_id = _harvest_type_id;
             harvest_id = _harvest_id;
         }
 
@@ -56,7 +57,7 @@ namespace DataHarvester.biolincc
                     BioLincc_Record studyRegEntry = (BioLincc_Record)serializer.Deserialize(rdr);
 
                     // processing here focuses on the listed secondary identifiers...
-                    identity_processor.ProcessData(studyRegEntry, storage_repo, _mon_repo);
+                    identity_processor.ProcessData(studyRegEntry, storage_repo, _mon_repo, source.db_conn);
                 }
 
                 if (n % 10 == 0) _logger.Information(n.ToString());
@@ -97,17 +98,20 @@ namespace DataHarvester.biolincc
                     BioLincc_Record studyRegEntry = (BioLincc_Record)serializer.Deserialize(rdr);
 
                     // break up the file into relevant data classes
-                    Study s = processor.ProcessData(studyRegEntry, rec.last_downloaded, storage_repo, biolincc_repo, _mon_repo, _logger);
+                    Study s = processor.ProcessData(studyRegEntry, rec.last_downloaded, biolincc_repo);
 
                     // store the data in the database			
-                    processor.StoreData(storage_repo, s, _mon_repo);
+                    processor.StoreData(s, source.db_conn);
 
                     // update file record with last processed datetime
-                    _mon_repo.UpdateFileRecLastHarvested(rec.id, "study", harvest_id);
-
+                    // (if not in test mode)
+                    if (harvest_type_id != 3)
+                    {
+                        _mon_repo.UpdateFileRecLastHarvested(rec.id, "study", harvest_id);
+                    }
                 }
 
-                if (n % 10 == 0) _logger.Information(n.ToString());
+                if (n % 100 == 0) _logger.Information(n.ToString());
             }
 
             return n;

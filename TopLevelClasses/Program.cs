@@ -14,7 +14,7 @@ namespace DataHarvester
 {
     class Program
     {
-        static async Task Main(string[] args)
+        static void Main(string[] args)
         {
             // Set up file based configuration environment.
 
@@ -37,10 +37,12 @@ namespace DataHarvester
                  .ConfigureServices((hostContext, services) =>
                  {
                      // Register services (or develop a comp root)
+                     services.AddSingleton<ICredentials, Credentials>();
                      services.AddSingleton<IParametersChecker, ParametersChecker>();
+                     services.AddSingleton<ILoggerHelper, LoggerHelper>();
                      services.AddSingleton<IHarvester, Harvester>();
                      services.AddSingleton<IMonitorDataLayer, MonitorDataLayer>();
-                     services.AddTransient<IStorageDataLayer, StorageDataLayer>();
+                     services.AddSingleton<IStorageDataLayer, StorageDataLayer>();
 
                  })
                  .UseSerilog(new LoggerConfiguration()
@@ -60,8 +62,9 @@ namespace DataHarvester
             if (opts != null && paramChecker.ValidArgumentValues(opts))
             {
                 Harvester harvester = ActivatorUtilities
-                                     .CreateInstance<Harvester>(host.Services, paramChecker.Mon_repo);
-                Environment.ExitCode = await harvester.RunAsync(opts);
+                                     .CreateInstance<Harvester>(host.Services, 
+                                      opts.harvest_type_id, opts.org_update_only);
+                Environment.ExitCode = harvester.Run(opts);
             }
         }
     }

@@ -4,7 +4,7 @@ namespace DataHarvester.biolincc
 {
     public class BioLinccIdentifierProcessor
     {
-        public void ProcessData(BioLincc_Record st, IStorageDataLayer storage_repo, IMonitorDataLayer mon_repo)
+        public void ProcessData(BioLincc_Record st, IStorageDataLayer storage_repo, IMonitorDataLayer mon_repo, string db_conn)
         {
             List<StudyIdentifier> study_identifiers = new List<StudyIdentifier>();
             string sid = st.sd_sid;
@@ -27,7 +27,7 @@ namespace DataHarvester.biolincc
             if (study_identifiers.Count > 0)
             {
                 StudyCopyHelpers sch = new StudyCopyHelpers();
-                storage_repo.StoreStudyIdentifiers(sch.study_ids_helper, study_identifiers);
+                storage_repo.StoreStudyIdentifiers(sch.study_ids_helper, study_identifiers, db_conn);
             }
 
         }

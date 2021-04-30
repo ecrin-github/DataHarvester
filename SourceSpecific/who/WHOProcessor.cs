@@ -7,8 +7,18 @@ namespace DataHarvester.who
 {
     public class WHOProcessor
     {
+        IStorageDataLayer _storage_repo;
+        IMonitorDataLayer _mon_repo;
+        ILogger _logger;
 
-        public Study ProcessData(WHORecord st, DateTime? download_datetime, IStorageDataLayer storage_repo, WHODataLayer who_repo, IMonitorDataLayer mon_repo, ILogger logger)
+        public WHOProcessor(IStorageDataLayer storage_repo, IMonitorDataLayer mon_repo, ILogger logger)
+        {
+            _storage_repo = storage_repo;
+            _mon_repo = mon_repo;
+            _logger = logger;
+        }
+
+        public Study ProcessData(WHORecord st, DateTime? download_datetime)
         {
             Study s = new Study();
 
@@ -26,11 +36,11 @@ namespace DataHarvester.who
             List<ObjectDate> data_object_dates = new List<ObjectDate>();
             List<ObjectInstance> data_object_instances = new List<ObjectInstance>();
 
-            StringHelpers sh = new StringHelpers(logger, mon_repo);
+            StringHelpers sh = new StringHelpers(_logger, _mon_repo);
             DateHelpers dh = new DateHelpers();
             TypeHelpers th = new TypeHelpers();
             MD5Helpers hh = new MD5Helpers();
-            HtmlHelpers mh = new HtmlHelpers(logger);
+            HtmlHelpers mh = new HtmlHelpers(_logger);
             IdentifierHelpers ih = new IdentifierHelpers();
 
 
@@ -47,7 +57,7 @@ namespace DataHarvester.who
             }
 
             study_identifiers.Add(new StudyIdentifier(sid, sid, 11, "Trial Registry ID", st.source_id,
-                                     get_source_name(st.source_id), registration_date?.date_string, null));
+                                     ih.get_source_name(st.source_id), registration_date?.date_string, null));
 
             // titles
             string public_title = sh.CheckTitle(st.public_title);
@@ -227,7 +237,7 @@ namespace DataHarvester.who
                     else
                     {
                         // what is going on?
-                        logger.Error("Odd enrolment string: " + enrolment_as_string + " for " + sid);
+                        _logger.Error("Odd enrolment string: " + enrolment_as_string + " for " + sid);
                     }
                 }
             }
@@ -249,7 +259,7 @@ namespace DataHarvester.who
                     else
                     {
                         // what is going on?
-                        logger.Error("Odd enrolment string: " + enrolment_as_string + " for " + sid);
+                        _logger.Error("Odd enrolment string: " + enrolment_as_string + " for " + sid);
                     }
                 }
             }
@@ -385,7 +395,7 @@ namespace DataHarvester.who
                         }
                         else
                         {
-                            study_identifiers.Add(new StudyIdentifier(sid, id.processed_id, 11, "Trial Registry ID", id.sec_id_source, get_source_name(id.sec_id_source)));
+                            study_identifiers.Add(new StudyIdentifier(sid, id.processed_id, 11, "Trial Registry ID", id.sec_id_source, ih.get_source_name(id.sec_id_source)));
                         }
                     }
                 }
@@ -427,7 +437,7 @@ namespace DataHarvester.who
 
             int? pub_year = registration_date?.year;
 
-            string source_name = get_source_name(st.source_id);
+            string source_name = ih.get_source_name(st.source_id);
             data_objects.Add(new DataObject(sd_oid, sid, object_display_title, pub_year, 23, "Text", 13, "Trial Registry entry",
                 st.source_id, source_name, 12, download_datetime));
 
@@ -593,11 +603,11 @@ namespace DataHarvester.who
         }
 
 
-        public void StoreData(IStorageDataLayer repo, Study s, IMonitorDataLayer mon_repo)
+        public void StoreData(Study s, string db_conn)
         {
             // store study
             StudyInDB st = new StudyInDB(s);
-            repo.StoreStudy(st);
+            _storage_repo.StoreStudy(st, db_conn);
 
             StudyCopyHelpers sch = new StudyCopyHelpers();
             ObjectCopyHelpers och = new ObjectCopyHelpers();
@@ -605,79 +615,53 @@ namespace DataHarvester.who
             // store study attributes
             if (s.identifiers.Count > 0)
             {
-                repo.StoreStudyIdentifiers(sch.study_ids_helper, s.identifiers);
+                _storage_repo.StoreStudyIdentifiers(sch.study_ids_helper, s.identifiers, db_conn);
             }
 
             if (s.titles.Count > 0)
             {
-                repo.StoreStudyTitles(sch.study_titles_helper, s.titles);
+                _storage_repo.StoreStudyTitles(sch.study_titles_helper, s.titles, db_conn);
             }
 
             if (s.features.Count > 0)
             {
-                repo.StoreStudyFeatures(sch.study_features_helper, s.features);
+                _storage_repo.StoreStudyFeatures(sch.study_features_helper, s.features, db_conn);
             }
 
             if (s.topics.Count > 0)
             {
-                repo.StoreStudyTopics(sch.study_topics_helper, s.topics);
+                _storage_repo.StoreStudyTopics(sch.study_topics_helper, s.topics, db_conn);
             }
 
             if (s.contributors.Count > 0)
             {
-                repo.StoreStudyContributors(sch.study_contributors_helper, s.contributors);
+                _storage_repo.StoreStudyContributors(sch.study_contributors_helper, s.contributors, db_conn);
             }
 
             // store data objects and dataset properties
             if (s.data_objects.Count > 0)
             {
-                repo.StoreDataObjects(och.data_objects_helper, s.data_objects);
+                _storage_repo.StoreDataObjects(och.data_objects_helper, s.data_objects, db_conn);
             }
 
             // store data object attributes
             if (s.object_dates.Count > 0)
             {
-                repo.StoreObjectDates(och.object_dates_helper, s.object_dates);
+                _storage_repo.StoreObjectDates(och.object_dates_helper, s.object_dates, db_conn);
             }
 
             if (s.object_instances.Count > 0)
             {
-                repo.StoreObjectInstances(och.object_instances_helper, s.object_instances);
+                _storage_repo.StoreObjectInstances(och.object_instances_helper, s.object_instances, db_conn);
             }
 
             if (s.object_titles.Count > 0)
             {
-                repo.StoreObjectTitles(och.object_titles_helper, s.object_titles);
+                _storage_repo.StoreObjectTitles(och.object_titles_helper, s.object_titles, db_conn);
             }
         }
 
 
-        private string get_source_name(int? source_id)
-        {
-            string source_name = "";
-            switch (source_id)
-            {
-                case 100116: { source_name = "Australian New Zealand Clinical Trials Registry"; break; }
-                case 100117: { source_name = "Registro Brasileiro de Ensaios Clínicos"; break; }
-                case 100118: { source_name = "Chinese Clinical Trial Register"; break; }
-                case 100119: { source_name = "Clinical Research Information Service (South Korea)"; break; }
-                case 100120: { source_name = "ClinicalTrials.gov"; break; }
-                case 100121: { source_name = "Clinical Trials Registry - India"; break; }
-                case 100122: { source_name = "Registro Público Cubano de Ensayos Clínicos"; break; }
-                case 100123: { source_name = "EU Clinical Trials Register"; break; }
-                case 100124: { source_name = "Deutschen Register Klinischer Studien"; break; }
-                case 100125: { source_name = "Iranian Registry of Clinical Trials"; break; }
-                case 100126: { source_name = "ISRCTN"; break; }
-                case 100127: { source_name = "Japan Primary Registries Network"; break; }
-                case 100128: { source_name = "Pan African Clinical Trial Registry"; break; }
-                case 100129: { source_name = "Registro Peruano de Ensayos Clínicos"; break; }
-                case 100130: { source_name = "Sri Lanka Clinical Trials Registry"; break; }
-                case 100131: { source_name = "Thai Clinical Trials Register"; break; }
-                case 100132: { source_name = "The Netherlands National Trial Register"; break; }
-                case 101989: { source_name = "Lebanon Clinical Trials Registry"; break; }
-            }
-            return source_name;
-        }
     }
 
 }

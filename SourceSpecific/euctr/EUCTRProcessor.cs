@@ -7,8 +7,20 @@ namespace DataHarvester.euctr
 {
     public class EUCTRProcessor
 	{
-		public Study ProcessData(EUCTR_Record fs, DateTime? download_datetime, IStorageDataLayer storage_repo, IMonitorDataLayer mon_repo, ILogger logger)
+		IStorageDataLayer _storage_repo;
+		IMonitorDataLayer _mon_repo;
+		ILogger _logger;
+
+		public EUCTRProcessor(IStorageDataLayer storage_repo, IMonitorDataLayer mon_repo, ILogger logger)
 		{
+			_storage_repo = storage_repo;
+			_mon_repo = mon_repo;
+			_logger = logger;
+		}
+
+		public Study ProcessData(Object rs, DateTime? download_datetime)
+		{
+			EUCTR_Record fs = (EUCTR_Record)rs;
 			Study s = new Study();
 			List<StudyIdentifier> identifiers = new List<StudyIdentifier>();
 			List<StudyTitle> titles = new List<StudyTitle>();
@@ -21,8 +33,8 @@ namespace DataHarvester.euctr
 			List<ObjectInstance> object_instances = new List<ObjectInstance>();
 
 			MD5Helpers hh = new MD5Helpers();
-			StringHelpers sh = new StringHelpers(logger, mon_repo);
-    		HtmlHelpers mh = new HtmlHelpers(logger);
+			StringHelpers sh = new StringHelpers(_logger, _mon_repo);
+    		HtmlHelpers mh = new HtmlHelpers(_logger);
 
 			// STUDY AND ATTRIBUTES
 
@@ -792,7 +804,7 @@ namespace DataHarvester.euctr
 		}
 
 			
-		public void StoreData(IStorageDataLayer repo, Study s, IMonitorDataLayer mon_repo)
+		public void StoreData(Study s, string db_conn)
 		{
 			// construct database study instance
 			StudyInDB dbs = new StudyInDB(s);
@@ -808,49 +820,49 @@ namespace DataHarvester.euctr
 			dbs.max_age_units_id = s.max_age_units_id;
 			dbs.max_age_units = s.max_age_units;
 
-			repo.StoreStudy(dbs);
+			_storage_repo.StoreStudy(dbs, db_conn);
 
 			StudyCopyHelpers sch = new StudyCopyHelpers();
 			ObjectCopyHelpers och = new ObjectCopyHelpers();
 
 			if (s.identifiers.Count > 0)
 			{
-				repo.StoreStudyIdentifiers(sch.study_ids_helper, s.identifiers);
+				_storage_repo.StoreStudyIdentifiers(sch.study_ids_helper, s.identifiers, db_conn);
 			}
 
 			if (s.titles.Count > 0)
 			{
-				repo.StoreStudyTitles(sch.study_titles_helper, s.titles);
+				_storage_repo.StoreStudyTitles(sch.study_titles_helper, s.titles, db_conn);
 			}
 
 			if (s.contributors.Count > 0)
 			{
-				repo.StoreStudyContributors(sch.study_contributors_helper, s.contributors);
+				_storage_repo.StoreStudyContributors(sch.study_contributors_helper, s.contributors, db_conn);
 			}
 
 			if (s.topics.Count > 0)
 			{
-				repo.StoreStudyTopics(sch.study_topics_helper, s.topics);
+				_storage_repo.StoreStudyTopics(sch.study_topics_helper, s.topics, db_conn);
 			}
 
 			if (s.features.Count > 0)
 			{
-				repo.StoreStudyFeatures(sch.study_features_helper, s.features);
+				_storage_repo.StoreStudyFeatures(sch.study_features_helper, s.features, db_conn);
 			}
 
 			if (s.data_objects.Count > 0)
 			{
-				repo.StoreDataObjects(och.data_objects_helper, s.data_objects);
+				_storage_repo.StoreDataObjects(och.data_objects_helper, s.data_objects, db_conn);
 			}
 
 			if (s.object_instances.Count > 0)
-			{ 
-				repo.StoreObjectInstances(och.object_instances_helper, s.object_instances);
+			{
+				_storage_repo.StoreObjectInstances(och.object_instances_helper, s.object_instances, db_conn);
 			}
 
 			if (s.object_titles.Count > 0)
 			{
-				repo.StoreObjectTitles(och.object_titles_helper, s.object_titles);
+				_storage_repo.StoreObjectTitles(och.object_titles_helper, s.object_titles, db_conn);
 			}
 
 		}

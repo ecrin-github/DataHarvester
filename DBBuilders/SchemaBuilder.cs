@@ -1,21 +1,42 @@
-﻿namespace DataHarvester
+﻿using Serilog;
+
+namespace DataHarvester
 {
     public class SchemaBuilder
     {
-        private string connString;
-        private Source source;
-        private StudyTableBuildersSD study_tablebuilder;
-        private ObjectTableBuildersSD object_tablebuilder;
+        private Source _source;
+        private ILogger _logger;
+        private StudyTableBuilder study_tablebuilder;
+        private ObjectTableBuilder object_tablebuilder;
 
-        public SchemaBuilder(string _connString, Source _source)
+        public SchemaBuilder(Source source, ILogger logger)
         {
-            connString = _connString;
-            source = _source;
-            study_tablebuilder = new StudyTableBuildersSD(connString);
-            object_tablebuilder = new ObjectTableBuildersSD(connString);
+            _source = source;
+            _logger = logger;
+            study_tablebuilder = new StudyTableBuilder(source.db_conn);
+            object_tablebuilder = new ObjectTableBuilder(source.db_conn);
         }
 
-        public void DeleteSDStudyTables()
+        public void RecreateTables()
+        {
+            if (_source.has_study_tables)
+            {
+                DeleteStudyTables();
+                _logger.Information("Existing study tables deleted");
+
+                BuildNewStudyTables();
+                _logger.Information("Study tables recreated");
+            }
+
+            DeleteObjectTables();
+            _logger.Information("Existing object tables deleted");
+
+            BuildNewObjectTables();
+            _logger.Information("Object tables recreated");
+        }
+
+
+        private void DeleteStudyTables()
         {
             // dropping routines include 'if exists'
             // therefore can attempt to drop all of them
@@ -31,7 +52,7 @@
             study_tablebuilder.drop_table("study_ipd_available");
         }
 
-        public void DeleteSDObjectTables()
+        private void DeleteObjectTables()
         {
             // dropping routines include 'if exists'
             // therefore can attempt to drop all of them
@@ -53,7 +74,7 @@
         }
 
 
-        public void BuildNewSDStudyTables()
+        private void BuildNewStudyTables()
         {
             // these common to all databases
 
@@ -62,18 +83,18 @@
             study_tablebuilder.create_table_study_titles();
 
             // these are database dependent
-            if (source.has_study_topics) study_tablebuilder.create_table_study_topics();
-            if (source.has_study_features) study_tablebuilder.create_table_study_features();
-            if (source.has_study_contributors) study_tablebuilder.create_table_study_contributors();
-            if (source.has_study_references) study_tablebuilder.create_table_study_references();
-            if (source.has_study_relationships) study_tablebuilder.create_table_study_relationships();
-            if (source.has_study_links) study_tablebuilder.create_table_study_links();
-            if (source.has_study_ipd_available) study_tablebuilder.create_table_ipd_available();
+            if (_source.has_study_topics) study_tablebuilder.create_table_study_topics();
+            if (_source.has_study_features) study_tablebuilder.create_table_study_features();
+            if (_source.has_study_contributors) study_tablebuilder.create_table_study_contributors();
+            if (_source.has_study_references) study_tablebuilder.create_table_study_references();
+            if (_source.has_study_relationships) study_tablebuilder.create_table_study_relationships();
+            if (_source.has_study_links) study_tablebuilder.create_table_study_links();
+            if (_source.has_study_ipd_available) study_tablebuilder.create_table_ipd_available();
 
         }
 
 
-        public void BuildNewSDObjectTables()
+        private void BuildNewObjectTables()
         {
             // these common to all databases
 
@@ -83,11 +104,11 @@
 
             // these are database dependent		
 
-            if (source.has_object_datasets) object_tablebuilder.create_table_object_datasets();
-            if (source.has_object_dates) object_tablebuilder.create_table_object_dates();
-            if (source.has_object_relationships) object_tablebuilder.create_table_object_relationships();
-            if (source.has_object_rights) object_tablebuilder.create_table_object_rights();
-            if (source.has_object_pubmed_set)
+            if (_source.has_object_datasets) object_tablebuilder.create_table_object_datasets();
+            if (_source.has_object_dates) object_tablebuilder.create_table_object_dates();
+            if (_source.has_object_relationships) object_tablebuilder.create_table_object_relationships();
+            if (_source.has_object_rights) object_tablebuilder.create_table_object_rights();
+            if (_source.has_object_pubmed_set)
             {
                 object_tablebuilder.create_table_citation_objects();
                 object_tablebuilder.create_table_object_contributors();

@@ -1,21 +1,29 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Globalization;
-using System.Threading.Tasks;
 using Serilog;
 
 namespace DataHarvester.isrctn
 {
     public class ISRCTNProcessor
     {
+        IStorageDataLayer _storage_repo;
+        IMonitorDataLayer _mon_repo;
+        ILogger _logger;
 
-        public ISRCTNProcessor()
+        public ISRCTNProcessor(IStorageDataLayer storage_repo, IMonitorDataLayer mon_repo, ILogger logger)
         {
-            //checker = new URLChecker(); 
+            _storage_repo = storage_repo;
+            _mon_repo = mon_repo;
+            _logger = logger;
         }
 
-        public async Task<Study> ProcessDataAsync(ISCTRN_Record fs, DateTime? download_datetime, IStorageDataLayer storage_repo, IMonitorDataLayer mon_repo, ILogger logger)
+        public Study ProcessData(Object rs, DateTime? download_datetime)
         {
+            // when the async web site check is activated...
+            //public async Task<Study> ProcessDataAsync(ISCTRN_Record fs, DateTime? download_datetime)
+           
+            ISCTRN_Record fs = (ISCTRN_Record)rs;
             Study s = new Study();
 
             List<StudyIdentifier> identifiers = new List<StudyIdentifier>();
@@ -32,10 +40,10 @@ namespace DataHarvester.isrctn
             List<ObjectInstance> object_instances = new List<ObjectInstance>();
 
             MD5Helpers hh = new MD5Helpers();
-            StringHelpers sh = new StringHelpers(logger, mon_repo);
+            StringHelpers sh = new StringHelpers(_logger, _mon_repo);
             DateHelpers dh = new DateHelpers();
             TypeHelpers th = new TypeHelpers();
-            HtmlHelpers mh = new HtmlHelpers(logger);
+            HtmlHelpers mh = new HtmlHelpers(_logger);
             IdentifierHelpers ih = new IdentifierHelpers();
 
             //List<AvailableIPD> ipd_info = new List<AvailableIPD>();
@@ -1215,7 +1223,7 @@ namespace DataHarvester.isrctn
         }
 
                 
-        public void StoreData(IStorageDataLayer repo, Study s, IMonitorDataLayer mon_repo)
+        public void StoreData(Study s, string db_conn)
         {
             // construct database study instance
             StudyInDB dbs = new StudyInDB(s);
@@ -1231,117 +1239,63 @@ namespace DataHarvester.isrctn
             dbs.max_age_units_id = s.max_age_units_id;
             dbs.max_age_units = s.max_age_units;
 
-            repo.StoreStudy(dbs);
+            _storage_repo.StoreStudy(dbs, db_conn);
 
             StudyCopyHelpers sch = new StudyCopyHelpers();
             ObjectCopyHelpers och = new ObjectCopyHelpers();
 
             if (s.identifiers.Count > 0)
             {
-                repo.StoreStudyIdentifiers(sch.study_ids_helper, s.identifiers);
+                _storage_repo.StoreStudyIdentifiers(sch.study_ids_helper, s.identifiers, db_conn);
             }
 
             if (s.titles.Count > 0)
             {
-                repo.StoreStudyTitles(sch.study_titles_helper, s.titles);
+                _storage_repo.StoreStudyTitles(sch.study_titles_helper, s.titles, db_conn);
             }
 
             if (s.references.Count > 0)
             {
-                repo.StoreStudyReferences(sch.study_references_helper, s.references);
+                _storage_repo.StoreStudyReferences(sch.study_references_helper, s.references, db_conn);
             }
 
             if (s.contributors.Count > 0)
             {
-                repo.StoreStudyContributors(sch.study_contributors_helper,
-                                          s.contributors);
+                _storage_repo.StoreStudyContributors(sch.study_contributors_helper,
+                                          s.contributors, db_conn);
             }
 
             if (s.topics.Count > 0)
             {
-                repo.StoreStudyTopics(sch.study_topics_helper,
-                                          s.topics);
+                _storage_repo.StoreStudyTopics(sch.study_topics_helper,
+                                          s.topics, db_conn);
             }
 
             if (s.features.Count > 0)
             {
-                repo.StoreStudyFeatures(sch.study_features_helper,s.features);
+                _storage_repo.StoreStudyFeatures(sch.study_features_helper,s.features, db_conn);
             }
 
             if (s.data_objects.Count > 0)
             {
-                repo.StoreDataObjects(och.data_objects_helper, s.data_objects);
+                _storage_repo.StoreDataObjects(och.data_objects_helper, s.data_objects, db_conn);
             }
 
             if (s.object_instances.Count > 0)
             {
-                repo.StoreObjectInstances(och.object_instances_helper, s.object_instances);
+                _storage_repo.StoreObjectInstances(och.object_instances_helper, s.object_instances, db_conn);
             }
 
             if (s.object_titles.Count > 0)
             {
-                repo.StoreObjectTitles(och.object_titles_helper, s.object_titles);
+                _storage_repo.StoreObjectTitles(och.object_titles_helper, s.object_titles, db_conn);
             }
 
             if (s.object_dates.Count > 0)
             {
-                repo.StoreObjectDates(och.object_dates_helper, s.object_dates);
+                _storage_repo.StoreObjectDates(och.object_dates_helper, s.object_dates, db_conn);
             }
 
-        }
-
-    }
-
-
-    /*
-    public class URLChecker
-    {
-        HttpClient Client = new HttpClient();
-        DateTime today = DateTime.Today;
-
-        public async Task CheckURLsAsync(List<ObjectInstance> web_resources)
-        {
-            foreach (ObjectInstance i in web_resources)
-            {
-                if (i.resource_type_id == 11)  // just do the study docs for now
-                {
-                    string url_to_check = i.url;
-                    if (url_to_check != null && url_to_check != "")
-                    {
-                        HttpRequestMessage http_request = new HttpRequestMessage(HttpMethod.Head, url_to_check);
-                        var result = await Client.SendAsync(http_request);
-                        if ((int)result.StatusCode == 200)
-                        {
-                            i.url_last_checked = today;
-                        }
-                    }
-                }
-            }
-        }
-
-
-        public async Task<bool> CheckURLAsync(string url_to_check)
-        {
-            if (!string.IsNullOrEmpty(url_to_check))
-            {
-                try
-                {
-                    HttpRequestMessage http_request = new HttpRequestMessage(HttpMethod.Head, url_to_check);
-                    var result = await Client.SendAsync(http_request);
-                    return ((int)result.StatusCode == 200);
-                }
-                catch(Exception e)
-                {
-                    string message = e.Message;
-                    return false;
-                }
-            }
-            else
-            {
-                return false;
-            }
         }
     }
-    */
-
 }

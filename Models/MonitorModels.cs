@@ -8,30 +8,30 @@ namespace DataHarvester
     [Table("sf.source_parameters")]
     public class Source 
     {
-        [Description("source_id")]
-        public int id { get; set; }   // ******** TO BE CHANGED BACK AGAIN! ********************
-        public int? preference_rating { get; set; }
-        public string database_name { get; set; }
-        public int default_harvest_type_id { get; set; }
-        public bool requires_file_name { get; set; }
-        public bool uses_who_harvest { get; set; }
-        public string local_folder { get; set; }
-        public bool? local_files_grouped { get; set; }
-        public int? grouping_range_by_id { get; set; }
-        public string local_file_prefix { get; set; }
-        public bool has_study_tables { get; set; }
-        public bool has_study_topics { get; set; }
-        public bool has_study_features { get; set; }
-        public bool has_study_contributors { get; set; }
-        public bool has_study_references { get; set; }
-        public bool has_study_relationships { get; set; }
-        public bool has_study_links { get; set; }
-        public bool has_study_ipd_available { get; set; }
-        public bool has_object_datasets { get; set; }
-        public bool has_object_dates { get; set; }
-        public bool has_object_rights { get; set; }
-        public bool has_object_relationships { get; set; }
-        public bool has_object_pubmed_set { get; set; }
+        public int id { get; }  
+        public int? preference_rating { get; }
+        public string database_name { get; }
+        public string db_conn { get; set; }
+        public int default_harvest_type_id { get; }
+        public bool requires_file_name { get; }
+        public bool uses_who_harvest { get; }
+        public string local_folder { get; }
+        public bool? local_files_grouped { get; }
+        public int? grouping_range_by_id { get; }
+        public string local_file_prefix { get;  }
+        public bool has_study_tables { get; }
+        public bool has_study_topics { get; }
+        public bool has_study_features { get; }
+        public bool has_study_contributors { get; }
+        public bool has_study_references { get; }
+        public bool has_study_relationships { get; }
+        public bool has_study_links { get; }
+        public bool has_object_datasets { get; }
+        public bool has_study_ipd_available { get; }
+        public bool has_object_dates { get; }
+        public bool has_object_rights { get; }
+        public bool has_object_relationships { get; }
+        public bool has_object_pubmed_set { get; }
     }
 
     [Table("sf.extraction_notes")]

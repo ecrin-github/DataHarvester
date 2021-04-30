@@ -5,40 +5,47 @@ using DataHarvester.isrctn;
 using DataHarvester.pubmed;
 using DataHarvester.who;
 using DataHarvester.yoda;
-using System;
-using System.Threading.Tasks;
 using Serilog;
-using Microsoft.Extensions.Configuration;
-using Npgsql;
+using System;
 using System.Linq;
+using ContextDataManager;
+using System.Xml.Serialization;
 
 namespace DataHarvester
 {
     class Harvester : IHarvester
     {
         ILogger _logger;
-        IConfiguration _settings;
+        ILoggerHelper _logger_helper;
         IMonitorDataLayer _mon_repo;
+        IStorageDataLayer _storage_repo;
 
-        public Harvester(ILogger logger, IConfiguration configFiles, IMonitorDataLayer mon_repo)
+        int _harvest_type_id;
+        bool _org_update_only;
+
+        public Harvester(ILogger logger, ILoggerHelper logger_helper,
+                         IMonitorDataLayer mon_repo, IStorageDataLayer storage_repo,
+                         int harvest_type_id, bool org_update_only)
         {
             _logger = logger;
-            _settings = configFiles;
+            _logger_helper = logger_helper;
             _mon_repo = mon_repo;
+            _storage_repo = storage_repo;
+            _harvest_type_id = harvest_type_id;
+            _org_update_only = org_update_only;
         }
 
-        public async Task<int> RunAsync(Options opts)
+        public int Run(Options opts)
         {
             try
             {
-                _logger.Information("STARTING HARVESTER\n");
-                LogCommandLineParameters(opts, _logger);
-
+                _logger_helper.Logheader("STARTING HARVESTER");
+                _logger_helper.LogCommandLineParameters(opts);
                 foreach (int source_id in opts.source_ids)
                 {
-                    await HarvestDataAsync(source_id, opts.harvest_type_id, opts.org_update_only, _mon_repo);
+                    HarvestData(source_id);
                 }
-                _logger.Information("Closing Log\n");
+                _logger_helper.Logheader("Closing Log");
                 return 0;
             }
 
@@ -46,43 +53,45 @@ namespace DataHarvester
             {
                 _logger.Error(e.Message);
                 _logger.Error(e.StackTrace);
-                _logger.Information("Closing Log\n");
+                _logger_helper.Logheader("Closing Log");
                 return -1;
             }
-
         }
 
 
-        private async Task HarvestDataAsync(int source_id, int harvest_type_id, bool org_update_only, IMonitorDataLayer mon_repo)
+        private void HarvestData(int source_id)
         {
-            Source source = mon_repo.FetchSourceParameters(source_id);
-            StorageDataLayer storage_repo = new StorageDataLayer(source.database_name, mon_repo.Credentials, harvest_type_id);
+            // Obtain source details, augment with connection string for this database
+            // after the storage repository for this source has been created.
 
-            // Create sd tables. (Some sources may be data objects only.)
+            Source source = _mon_repo.FetchSourceParameters(source_id);
+            Credentials creds = _mon_repo.Credentials;
+            source.db_conn = creds.GetConnectionString(source.database_name, _harvest_type_id);
+            _logger.Information("For source: " + source.id + ": " + source.database_name);
 
-            if (org_update_only != true)
+            if (!_org_update_only)
             {
-                // Construct the sd tables.
+                // Bulk of the harvesting process can be skipped if this run is just for updating 
+                // tables with context values.Otherwise...
+                // construct the sd tables. (Some sources may be data objects only.)
 
-                SchemaBuilder sdb = new SchemaBuilder(storage_repo.ConnString, source);
-                if (source.has_study_tables)
-                {
-                    sdb.DeleteSDStudyTables();
-                    sdb.BuildNewSDStudyTables();
-                }
-                sdb.DeleteSDObjectTables();
-                sdb.BuildNewSDObjectTables();
+                _logger_helper.Logheader("Recreate database tables");
+                SchemaBuilder sdb = new SchemaBuilder(source, _logger);
+                sdb.RecreateTables();
 
-                // construct the harvest_event record
-                int harvest_id = mon_repo.GetNextHarvestEventId();
-                HarvestEvent harvest = new HarvestEvent(harvest_id, source.id, harvest_type_id);
+                // Construct the harvest_event record.
+
+                _logger_helper.Logheader("Process data");
+                int harvest_id = _mon_repo.GetNextHarvestEventId();
+                HarvestEvent harvest = new HarvestEvent(harvest_id, source.id, _harvest_type_id);
+                _logger.Information("Harvest event " + harvest_id.ToString() + " began");
 
                 // Harvest the data from the local XML files
 
                 if (source.uses_who_harvest)
                 {
-                    WHOController c = new WHOController(_logger, mon_repo, storage_repo, source, harvest_type_id, harvest_id);
-                    harvest.num_records_available = mon_repo.FetchFullFileCount(source.id, "study", harvest_type_id);
+                    WHOController c = new WHOController(_logger, _mon_repo, _storage_repo, source, _harvest_type_id, harvest_id);
+                    harvest.num_records_available = _mon_repo.FetchFullFileCount(source.id, "study", _harvest_type_id);
                     harvest.num_records_harvested = c.LoopThroughFiles();
                 }
                 else
@@ -91,44 +100,53 @@ namespace DataHarvester
                     {
                         case 101900:
                             {
-                                BioLinccController c = new BioLinccController(_logger, mon_repo, storage_repo, source, harvest_id);
+                                BioLinccController c = new BioLinccController(_logger, _mon_repo, _storage_repo, source, _harvest_type_id, harvest_id);
                                 c.GetInitialIDData();
-                                harvest.num_records_available = mon_repo.FetchFullFileCount(source.id, "study", harvest_type_id);
+                                harvest.num_records_available = _mon_repo.FetchFullFileCount(source.id, "study", _harvest_type_id);
                                 harvest.num_records_harvested = c.LoopThroughFiles();
                                 break;
                             }
                         case 101901:
                             {
-                                YodaController c = new YodaController(_logger, mon_repo, storage_repo, source, harvest_id);
-                                harvest.num_records_available = mon_repo.FetchFullFileCount(source.id, "study", harvest_type_id);
+                                YodaController c = new YodaController(_logger, _mon_repo, _storage_repo, source, _harvest_type_id, harvest_id);
+                                harvest.num_records_available = _mon_repo.FetchFullFileCount(source.id, "study", _harvest_type_id);
                                 harvest.num_records_harvested = c.LoopThroughFiles();
                                 break;
                             }
                         case 100120:
-                            {
-                                CTGController c = new CTGController(_logger, mon_repo, storage_repo, source, harvest_id, harvest_type_id);
-                                harvest.num_records_available = mon_repo.FetchFullFileCount(source.id, "study", harvest_type_id);
+                            { 
+                                harvest.num_records_available = _mon_repo.FetchFullFileCount(source.id, "study", _harvest_type_id);
+                                XmlSerializer serializer = new XmlSerializer(typeof(FullStudy));
+                                CTGProcessor processor = new CTGProcessor(_storage_repo, _mon_repo, _logger);
+                                CTGController c = new CTGController(_logger, _mon_repo, _storage_repo, source, 
+                                                     _harvest_type_id, harvest_id, serializer, processor);
                                 harvest.num_records_harvested = c.LoopThroughFiles();
                                 break;
                             }
                         case 100123:
                             {
-                                EUCTRController c = new EUCTRController(_logger, mon_repo, storage_repo, source, harvest_id, harvest_type_id);
-                                harvest.num_records_available = mon_repo.FetchFullFileCount(source.id, "study", harvest_type_id);
+                                XmlSerializer serializer = new XmlSerializer(typeof(EUCTR_Record));
+                                EUCTRProcessor processor = new EUCTRProcessor(_storage_repo, _mon_repo, _logger);
+                                EUCTRController c = new EUCTRController(_logger, _mon_repo, _storage_repo, source,
+                                                        _harvest_type_id, harvest_id, serializer, processor);
+                                harvest.num_records_available = _mon_repo.FetchFullFileCount(source.id, "study", _harvest_type_id);
                                 harvest.num_records_harvested = c.LoopThroughFiles();
                                 break;
                             }
                         case 100126:
                             {
-                                ISRCTNController c = new ISRCTNController(_logger, mon_repo, storage_repo, source, harvest_id, harvest_type_id);
-                                harvest.num_records_available = mon_repo.FetchFullFileCount(source.id, "study", harvest_type_id);
-                                harvest.num_records_harvested = await c.LoopThroughFilesAsync();
+                                XmlSerializer serializer = new XmlSerializer(typeof(ISCTRN_Record));
+                                ISRCTNProcessor processor = new ISRCTNProcessor(_storage_repo, _mon_repo, _logger);
+                                ISRCTNController c = new ISRCTNController(_logger, _mon_repo, _storage_repo, source,
+                                                        _harvest_type_id, harvest_id, serializer, processor);
+                                harvest.num_records_available = _mon_repo.FetchFullFileCount(source.id, "study", _harvest_type_id);
+                                harvest.num_records_harvested = c.LoopThroughFiles();
                                 break;
                             }
                         case 100135:
                             {
-                                PubmedController c = new PubmedController(_logger, mon_repo, storage_repo, source, harvest_id, harvest_type_id);
-                                harvest.num_records_available = mon_repo.FetchFullFileCount(source.id, "object", harvest_type_id);
+                                PubmedController c = new PubmedController(_logger, _mon_repo, _storage_repo, source, _harvest_type_id, harvest_id);
+                                harvest.num_records_available = _mon_repo.FetchFullFileCount(source.id, "object", _harvest_type_id);
                                 harvest.num_records_harvested = c.LoopThroughFiles();
 
                                 // For pubmed necessary to do additional processing afterwards 
@@ -140,42 +158,29 @@ namespace DataHarvester
                 }
 
                 harvest.time_ended = DateTime.Now;
-                mon_repo.StoreHarvestEvent(harvest);
+                _mon_repo.StoreHarvestEvent(harvest);
+
+                _logger.Information("Number of source XML files: " + harvest.num_records_available.ToString());
+                _logger.Information("Number of files harvested: " + harvest.num_records_harvested.ToString());
+                _logger.Information("Harvest event " + harvest_id.ToString() + " ended");
             }
 
-            // These functions have to be run even if the 
-            // harvest is 'org_update_only', as well as when the 
-            // sd tables are constructed in the normal way
+            // These functions have to be run even if the harvest is 'org_update_only'.
 
-            PostProcBuilder ppb = new PostProcBuilder(storage_repo.ConnString, source, mon_repo, _logger);
-            ppb.EstablishContextForeignTables(storage_repo.Credentials.Username, storage_repo.Credentials.Password);
+            ContextDataManager.Source context_source = new ContextDataManager.Source(source.id, source.preference_rating, source.database_name, source.db_conn,
+                                                              source.has_study_tables, source.has_study_topics, source.has_study_contributors);
+            ContextDataManager.Credentials context_creds = new ContextDataManager.Credentials(creds.Host, creds.Username, creds.Password);
 
-            // Update and standardise organisation ids and names
-            _logger.Information("Update Orgs and Topics\n");
-            if (source.has_study_tables)
-            {
-                ppb.UpdateStudyIdentifierOrgs();
-                _logger.Information("Study identifier orgs updated");
-                ppb.UpdateStudyContributorOrgs();
-                _logger.Information("Study contributor orgs updated");
-            }
-            ppb.UpdateDataObjectOrgs();
-            _logger.Information("Data object managing orgs updated");
-            ppb.StoreUnMatchedNames();
-            _logger.Information("Unmatched org names stored");
-
-            // Update and standardise topic ids and names
-            string source_type = source.has_study_tables ? "study" : "object";
-            ppb.UpdateTopics(source_type);
-            _logger.Information("Topic data updated");
-
-            ppb.DropContextForeignTables();
+            _logger_helper.Logheader("Updating context data");
+            ContextMain context_entry_point = new ContextMain(_logger);
+            context_entry_point.UpdateDataFromContext(context_creds, context_source);
 
             // Note the hashes can only be done after all the
             // data is complete, including the organisation 
             // codes and names derived above
-            _logger.Information("Create Record Hashes\n");
-            HashBuilder hb = new HashBuilder(_logger, storage_repo.ConnString, source, mon_repo);
+
+            _logger_helper.Logheader("Create Record Hashes");
+            HashBuilder hb = new HashBuilder(_logger, source, _mon_repo);
             if (source.has_study_tables)
             {
                 hb.CreateStudyHashes();
@@ -190,26 +195,9 @@ namespace DataHarvester
             hb.CreateObjectCompositeHashes();
             _logger.Information("Data object composite hashes created");
 
-            LoggerHelper log_helper = new LoggerHelper(_logger);
-            log_helper.LogTableStatistics(mon_repo.Credentials, source);
+            _logger_helper.LogTableStatistics(source, "sd");
         }
 
-
-        private void LogCommandLineParameters(Options opts, ILogger logger)
-        {
-            logger.Information("Setup\n");
-            int[] source_ids = opts.source_ids.ToArray();
-            if (source_ids.Length == 1)
-            {
-                logger.Information("Source_id is " + source_ids[0].ToString());
-            }
-            else
-            {
-                logger.Information("Source_ids are " + string.Join(",", source_ids));
-            }
-            logger.Information("Type_id is " + opts.harvest_type_id.ToString());
-            logger.Information("Update org ids only is " + opts.org_update_only);
-        }
     }
 }
 

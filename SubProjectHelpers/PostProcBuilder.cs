@@ -11,16 +11,16 @@ namespace DataHarvester
         private OrgHelper org_helper;
         private TopicHelper topic_helper;
 
-        public PostProcBuilder(string _connString, Source _source, IMonitorDataLayer _mon_repo, ILogger logger)
+        public PostProcBuilder(Source _source, IMonitorDataLayer _mon_repo, ILogger logger)
         {
-            connString = _connString;
             source = _source;
+            connString = source.db_conn;
             org_helper = new OrgHelper(connString, _mon_repo);
             topic_helper = new TopicHelper(connString, logger );
         }
 
 
-        public void EstablishContextForeignTables(string user_name, string password)
+        public void EstablishContextForeignTables(Credentials creds)
         {
             using (var conn = new NpgsqlConnection(connString))
             {
@@ -35,7 +35,7 @@ namespace DataHarvester
 
                 sql_string = @"CREATE USER MAPPING IF NOT EXISTS FOR CURRENT_USER
                      SERVER context 
-                     OPTIONS (user '" + user_name + "', password '" + password + "');";
+                     OPTIONS (user '" + creds.Username + "', password '" + creds.Password + "');";
                 conn.Execute(sql_string);
 
                 sql_string = @"DROP SCHEMA IF EXISTS context_ctx cascade;
