@@ -411,10 +411,4 @@ namespace DataHarvester
         }
     }
 
-
-    // Used during the extraction process, to log any odd or error condition.
-    // The data are transfered directly to the database as required using Dapper.
-
-    
-
 }

@@ -102,47 +102,33 @@ namespace DataHarvester.pubmed
                 else
                 {
                     c.version = pmidVersion;
-                    /* LOGGER to go here
-                    //_mon_repo.StoreExtractionNote(new ExtractionNote(100135, sdoid,
-                            "Harvest", harvest_id, 16, "PMID version not an integer"));
-                    */
+                    _logger.Information("PMID version for {sdoid} not an integer", sdoid);
                 }
             }
             else
             {
-                 /* LOGGER to go here
-                    //
-                _mon_repo.StoreExtractionNote(new ExtractionNote(100135, sdoid,
-                            "Harvest", harvest_id, 16, "No PMID version attribute found"));
-                 */
+                _logger.Information("No PMID version attribute found for {sdoid}", sdoid);
             }
+
 
             // Obtain and store the citation status.
 
             c.abstract_status = GetAttributeAsString(citation.Attribute("Status"));
 
             // Version and version_date hardly ever present
-            // if they do occur put them in as an extraction note.
+            // if they do occur log them.
 
             string version_id = GetAttributeAsString(citation.Attribute("VersionID"));
             string version_date = GetAttributeAsString(citation.Attribute("VersionDate"));
             if (version_id != null)
             {
-                string qText = "A version attribute (" + version_id + ") found for this citation!";
-                 /* LOGGER to go here
-                    //
-                _mon_repo.StoreExtractionNote(new ExtractionNote(100135, sdoid,
-                            "Harvest", harvest_id, 15, qText));
-                 */
+                string qText = "A version attribute (" + version_id + ") found for pmid {sdoid}";
+                _logger.Information(qText, sdoid);
             }
             if (version_date != null)
             {
-                string qText = "A version date attribute (" + version_date + ") found for this citation!";
-                 /* LOGGER to go here
-                    //
-                _mon_repo.StoreExtractionNote(new ExtractionNote(100135, sdoid,
-                            "Harvest", harvest_id, 15, qText));
-                 */
+                string qText = "A version date attribute (" + version_date + ") found for pmid {sdoid}";
+                _logger.Information(qText, sdoid);
             }
 
             #endregion
@@ -258,30 +244,22 @@ namespace DataHarvester.pubmed
                 else
                 {
                     article_title_present = false;
-                    string qText = "The citation has an empty article title element";
-                    /* LOGGER to go here
-                   //
-                   _mon_repo.StoreExtractionNote(new ExtractionNote(100135, sdoid,
-                           "Harvest", harvest_id, 28, qText));
-                    */
-               }
+                    string qText = "The citation has an empty article title element, pmid {sdoid}";
+                    _logger.Information(qText, sdoid);
+                }
            }
            else
            {
                article_title_present = false;
-               string qText = "The citation does not have an article title element";
-                /* LOGGER to go here
-                   //
-               _mon_repo.StoreExtractionNote(new ExtractionNote(100135, sdoid,
-                           "Harvest", harvest_id, 28, qText));
-                */
-                }
+               string qText = "The citation does not have an article title element, pmid {sdoid}";
+                _logger.Information(qText, sdoid);
+            }
 
 
-                // Get the vernacular title if there is one and characterise it
-                // in a similar way, noting any html.
+            // Get the vernacular title if there is one and characterise it
+            // in a similar way, noting any html.
 
-                XElement vernacular_title = article.Element("VernacularTitle");
+            XElement vernacular_title = article.Element("VernacularTitle");
 
             if (vernacular_title != null)
             {
@@ -367,12 +345,8 @@ namespace DataHarvester.pubmed
                     if (vtitle == atitle)
                     {
                         vernacular_title_present = false;
-                        string qText = "The article and vernacular titles seem identical";
-                         /* LOGGER to go here
-                    //
-                        _mon_repo.StoreExtractionNote(new ExtractionNote(100135, sdoid,
-                            "Harvest", harvest_id, 29, qText));
-                         */
+                        string qText = "The article and vernacular titles seem identical, for pmid {sdoid}";
+                        _logger.Information(qText, sdoid);
                     }
                 }
             }
@@ -428,24 +402,18 @@ namespace DataHarvester.pubmed
                         }
                         if (bracket_count > 0)
                         {
-                            string qText = "The title starts with '[', end with ')', but unable to match parentheses. Title = " + atitle;
-                             /* LOGGER to go here
-                    //
-                            _mon_repo.StoreExtractionNote(new ExtractionNote(100135, sdoid,
-                            "Harvest", harvest_id, 18, qText));
-                             */
+                            string qText = "The title starts with '[', end with ')', but unable to match parentheses. Title = " 
+                                           + atitle + ", for pmid {sdoid}";
+                            _logger.Information(qText, sdoid);
                         }
                     }
                     else
                     {
                         // Log if a square bracket at the start is not matched by an ending bracket or paranthesis.
 
-                        string qText = "The title starts with a '[' but there is no matching ']' or ')' at the end of the title. Title = " + atitle;
-                         /* LOGGER to go here
-                    //
-                         _mon_repo.StoreExtractionNote(new ExtractionNote(100135, sdoid,
-                            "Harvest", harvest_id, 18, qText));
-                         */
+                        string qText = "The title starts with a '[' but there is no matching ']' or ')' at the end of the title. Title = "
+                                           + atitle + ", for pmid {sdoid}";
+                        _logger.Information(qText, sdoid);
                     }
 
                     // Store the title(s) - square brackets being present.
@@ -577,7 +545,7 @@ namespace DataHarvester.pubmed
                 {
                     // An 'ordinary' composite Y, M, D date.
                     // ProcessDate is a helper function that splits the date components, 
-                    //  identifies partial dates, and creates the date as a string.
+                    // identifies partial dates, and creates the date as a string.
 
                     publication_date = dh.ProcessDate(sdoid, pub_date, 12, "Available");
                 }
@@ -630,13 +598,8 @@ namespace DataHarvester.pubmed
                         }
                         else
                         {
-                            string qText = "Unexpected date type (" + date_type + ") found in an article date element";
-                             /* LOGGER to go here
-                    //
-                            _mon_repo.StoreExtractionNote(new ExtractionNote(100135, sdoid,
-                            "Harvest", harvest_id, 19, qText));
-                             */
-
+                            string qText = "Unexpected date type (" + date_type + ") found in an article date element, pmid {sdoid}"; 
+                            _logger.Information(qText, sdoid);
                         }
                     }
                 }
@@ -693,12 +656,8 @@ namespace DataHarvester.pubmed
                                 default:
                                     {
                                         date_type = 0;
-                                        string qText = "An unexpexted status (" + pub_status + ") found a date in the history section";
-                                         /* LOGGER to go here
-                    //
-                                        _mon_repo.StoreExtractionNote(new ExtractionNote(100135, sdoid,
-                                                    "Harvest", harvest_id, 20, qText));
-                                         */
+                                        string qText = "An unexpexted status (" + pub_status + ") found a date in the history section, pmid {sdoid}";
+                                        _logger.Information(qText, sdoid);
                                         break;
                                     }
                             }
@@ -963,12 +922,9 @@ namespace DataHarvester.pubmed
                                         {
                                             if (c.doi != other_id)
                                             {
-                                                string qText = "Two different dois have been supplied: " + c.doi + " from ELocation, and " + other_id + " from Article Ids";
-                                                /* LOGGER to go here
-                    //
-                                                _mon_repo.StoreExtractionNote(new ExtractionNote(100135, sdoid,
-                                                                                    "Harvest", harvest_id, 14, qText));
-                                                */
+                                                string qText = "Two different dois have been supplied: " + c.doi +
+                                                               " from ELocation, and " + other_id + " from Article Ids, pmid { sdoid}";
+                                                _logger.Information(qText, sdoid);
                                                 break;
                                             }
                                         }
@@ -996,12 +952,8 @@ namespace DataHarvester.pubmed
                                         if (ih.IdNotPresent(identifiers, 16, other_id))
                                         {
                                             // should be present already! - if a different value log it a a query
-                                            string qText = "Two different values for pmid found: record pmiod is " + sdoid + ", but in article ids the value " + other_id + " is listed";
-                                             /* LOGGER to go here
-                    //
-                                            _mon_repo.StoreExtractionNote(new ExtractionNote(100135, sdoid,
-                                                                                "Harvest", harvest_id, 22, qText));
-                                             */
+                                            string qText = "Two different values for pmid found: record pmiod is {sdoid}, but in article ids the value " + other_id + " is listed";
+                                            _logger.Information(qText, sdoid);
                                             identifiers.Add(new ObjectIdentifier(sdoid, 16, "PMID", sdoid, 100133, "National Library of Medicine"));
                                         }
                                         break;
@@ -1042,12 +994,8 @@ namespace DataHarvester.pubmed
                                     }
                                 default:
                                     {
-                                        string qText = "A unexpexted article id type (" + id_type + ") found a date in the article id section";
-                                        /* LOGGER to go here
-                    //
-                                        _mon_repo.StoreExtractionNote(new ExtractionNote(100135, sdoid,
-                                                                            "Harvest", harvest_id, 23, qText));
-                                        */
+                                        string qText = "A unexpexted article id type (" + id_type + ") found a date in the article id section, for pmid {sdoid}";
+                                        _logger.Information(qText, sdoid);
                                         break;
                                     }
                             }
@@ -1193,26 +1141,16 @@ namespace DataHarvester.pubmed
                                     identifier = sh.TidyORCIDId(identifier);
                                     if (identifier.Length != 19)
                                     {
-                                        string qText = "ORCID identifier for person " + sdoid + " is " + identifier + " and has non standard length'";
-                                        /* LOGGER to go here
-                    //
-                                        _mon_repo.StoreExtractionNote(new ExtractionNote(100135, sdoid,
-                                                                        "Harvest", harvest_id, 24, qText));
-                                        */
                                         identifier = sh.TidyORCIDId2(identifier);
                                     }
                                     break;  // no need to look for more
                                 }
                                 else
                                 {
-                                    string qText = "person " + full_name + "(linked to " + sdoid + ") identifier ";
+                                    string qText = "person " + full_name + "(linked to {sdoid}) identifier ";
                                     qText += "is not an ORCID (" + identifier + " (source =" + identifier_source + "))";
-                                     /* LOGGER to go here
-                    //
-                                    _mon_repo.StoreExtractionNote(new ExtractionNote(100135, sdoid,
-                                                                        "Harvest", harvest_id, 27, qText));
-                                     */
-                                        identifier = ""; identifier_source = "";  // do not store in db
+                                    _logger.Information(qText, sdoid);
+                                    identifier = ""; identifier_source = "";  // do not store in db
                                 }
                             }
                         }
@@ -1415,102 +1353,6 @@ namespace DataHarvester.pubmed
             }
 
             #endregion
-
-
-
-            #region Abstracts (not used)
-            // Article abstracts.
-
-            //XElement articleAbstract = article.Element("Abstract");
-            //if (articleAbstract != null)
-            //{
-            //    bool ab_contains_html = false;
-            //    IEnumerable<XElement> abstract_texts = articleAbstract.Elements("AbstractText");
-
-            //    foreach (XElement at in abstract_texts)
-            //    {
-            //        var abreader = at.CreateReader();
-            //        abreader.MoveToContent();
-            //        string ab_text = abreader.ReadInnerXml().Trim();
-
-            //        if (ab_text.Contains("<i>") || ab_text.Contains("<b>") || ab_text.Contains("<u>")
-            //            || ab_text.Contains("<sup>") || ab_text.Contains("<sub>") || ab_text.Contains("<math>"))
-            //        {
-            //            ab_contains_html = true;
-            //            // log this in extraction_notes
-            //            string qText = "The abstract text includes embedded html (" + ab_text + ")";
-            //            repo.StoreExtractionNote(pmid, 26, qText);
-            //        }
-            //        else
-            //        {
-            //            ab_contains_html = false;
-            //        }
-
-            //        Description abs = new Description
-            //        {
-            //            sd_id = c.sd_id,
-            //            description_type_id = 16,
-            //            description_type = "Abstract Section",
-            //            label = GetAttributeAsString(at.Attribute("Label")),
-            //            description_text = ab_text,
-            //            lang_code = "eng",
-            //            contains_html = ab_contains_html
-            //        };
-
-            //        descriptions.Add(abs);
-            //    }
-            //}
-
-
-            //// Other abstracts (relatively rare).
-
-            //IEnumerable<XElement> other_abstracts = citation.Elements("OtherAbstract");
-            //if (other_abstracts.Count() > 0)
-            //{
-            //    foreach (XElement oab in other_abstracts)
-            //    {
-            //        bool ab_contains_html = false;
-            //        IEnumerable<XElement> abstract_texts = oab.Elements("AbstractText");
-
-            //        foreach (XElement at in abstract_texts)
-            //        {
-            //            var abreader = at.CreateReader();
-            //            abreader.MoveToContent();
-            //            string ab_text = abreader.ReadInnerXml().Trim();
-
-            //            if (ab_text.Contains("<i>") || ab_text.Contains("<b>") || ab_text.Contains("<u>")
-            //                || ab_text.Contains("<sup>") || ab_text.Contains("<sub>") || ab_text.Contains("<math>"))
-            //            {
-            //                ab_contains_html = true;
-            //                // log this in extraction_notes
-            //                string qText = "The abstract text includes embedded html (" + ab_text + ")";
-            //                repo.StoreExtractionNote(pmid, 26, qText);
-            //            }
-            //            else
-            //            {
-            //                ab_contains_html = false;
-            //            }
-
-
-            //            Description abs = new Description
-            //            {
-            //                sd_id = c.sd_id,
-            //                description_type_id = 17,
-            //                description_type = "External Abstract",
-            //                label = GetAttributeAsString(at.Attribute("Label")),
-            //                description_text = ab_text,
-            //                lang_code = "eng",
-            //                contains_html = ab_contains_html
-            //            };
-
-
-            //            descriptions.Add(abs);
-            //        }
-            //    }
-            //}
-
-            #endregion
-
 
 
             #region Miscellaneous

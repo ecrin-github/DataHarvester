@@ -69,7 +69,7 @@ namespace DataHarvester.ctg
             XElement EligibilityModule = null;
             XElement ContactsLocationsModule = null;
             XElement ReferencesModule = null;
-            XElement IPDSharingStatementModule = null;
+            XElement IPDSharingModule = null;
             XElement LargeDocumentModule = null;
             XElement ConditionBrowseModule = null;
             XElement InterventionBrowseModule = null;
@@ -96,7 +96,7 @@ namespace DataHarvester.ctg
                 EligibilityModule = xh.RetrieveStruct(ProtocolSection, "EligibilityModule");
                 ContactsLocationsModule = xh.RetrieveStruct(ProtocolSection, "ContactsLocationsModule");
                 ReferencesModule = xh.RetrieveStruct(ProtocolSection, "ReferencesModule");
-                IPDSharingStatementModule = xh.RetrieveStruct(ProtocolSection, "IPDSharingStatementModule");
+                IPDSharingModule = xh.RetrieveStruct(ProtocolSection, "IPDSharingStatementModule");
             }
 
 
@@ -122,15 +122,7 @@ namespace DataHarvester.ctg
             if (DerivedSection != null)
             {
                 ConditionBrowseModule = xh.RetrieveStruct(DerivedSection, "ConditionBrowseModule");
-                if (ConditionBrowseModule != null)
-                {
-                    IEnumerable<XElement> condition_meshlist = xh.RetrieveListElements(ConditionBrowseModule, "ConditionMeshList");
-                }
                 InterventionBrowseModule = xh.RetrieveStruct(DerivedSection, "InterventionBrowseModule");
-                if (InterventionBrowseModule != null)
-                {
-                    IEnumerable<XElement> condition_meshlist = xh.RetrieveListElements(ConditionBrowseModule, "ConditionMeshList");
-                }
             }
 
 
@@ -376,6 +368,7 @@ namespace DataHarvester.ctg
                 s.brief_description = xh.FieldValue(DescriptionModule, "BriefSummary");
             }
 
+
             ConditionBrowseModule = xh.RetrieveStruct(DerivedSection, "ConditionBrowseModule");
             if (ConditionBrowseModule != null)
             {
@@ -389,8 +382,8 @@ namespace DataHarvester.ctg
                         topics.Add(new StudyTopic(sid, 13, "condition", true, mesh_code, mesh_term, "browse list"));
                     }
                 }
-
             }
+
             InterventionBrowseModule = xh.RetrieveStruct(DerivedSection, "InterventionBrowseModule");
             if (InterventionBrowseModule != null)
             {
@@ -435,7 +428,6 @@ namespace DataHarvester.ctg
                         {
                             topics.Add(new StudyTopic(sid, 11, "keyword", keyword_name));
                         }
-                        topics.Add(new StudyTopic(sid, 11, "keyword", keyword_name));
                     }
                 }
             }
@@ -454,149 +446,117 @@ namespace DataHarvester.ctg
             }
 
 
-
-
-            /*
-
-           
             if (DesignModule != null)
             {
-                object[] items = DesignModule.Items;
-                if (items != null)
+                s.study_type = xh.FieldValue(DesignModule, "StudyType");
+                s.study_type_id = th.GetTypeId(s.study_type);
+
+                if (s.study_type == "Interventional")
                 {
-                    s.study_type = xh.FieldValue(items, "StudyType");
-                    s.study_type_id = th.GetTypeId(s.study_type);
-
-                    if (s.study_type == "Interventional")
+                    var phases = xh.RetrieveListElements(DesignModule, "PhaseList");
+                    if (phases != null && phases.Count() > 0)
                     {
-
-                        ListType phase_list = xh.FindList(items, "PhaseList");
-                        if (phase_list != null)
+                        foreach (XElement phase in phases)
                         {
-                            var phases = phase_list.Items;
-                            if (phases.Length > 0)
-                            {
-                                string this_phase = "";
-                                for (int p = 0; p < phases.Length; p++)
-                                {
-                                    this_phase = (phases[p] as FieldType).Value;
-                                    features.Add(new StudyFeature(sid, 20, "phase", th.GetPhaseId(this_phase), this_phase));
-                                }
-                            }
+                            string this_phase = (phase == null) ? null : (string)phase;
+                            features.Add(new StudyFeature(sid, 20, "phase", th.GetPhaseId(this_phase), this_phase));
+                        }
+                    }
+                    else
+                    {
+                        features.Add(new StudyFeature(sid, 20, "phase", th.GetPhaseId("Not provided"), "Not provided"));
+                    }
+
+
+                    var design_info = xh.RetrieveStruct(DesignModule, "DesignInfo");
+                    if (design_info != null)
+                    {
+                        string design_allocation = xh.FieldValue(design_info, "DesignAllocation") ?? "Not provided";
+                        features.Add(new StudyFeature(sid, 22, "allocation type", th.GetAllocationTypeId(design_allocation), design_allocation));
+
+                        string design_intervention_model = xh.FieldValue(design_info, "DesignInterventionModel") ?? "Not provided";
+                        features.Add(new StudyFeature(sid, 23, "intervention model", th.GetDesignTypeId(design_intervention_model), design_intervention_model));
+
+                        string design_primary_purpose = xh.FieldValue(design_info, "DesignPrimaryPurpose") ?? "Not provided";
+                        features.Add(new StudyFeature(sid, 21, "primary purpose", th.GetPrimaryPurposeId(design_primary_purpose), design_primary_purpose));
+
+                        var masking_details = xh.RetrieveStruct(design_info, "DesignMaskingInfo");
+                        if (masking_details != null)
+                        {
+                            string design_masking = xh.FieldValue(masking_details, "DesignMasking") ?? "Not provided";
+                            features.Add(new StudyFeature(sid, 24, "masking", th.GetMaskingTypeId(design_masking), design_masking));
                         }
                         else
                         {
-                            features.Add(new StudyFeature(sid, 20, "phase", th.GetPhaseId("Not provided"), "Not provided"));
+                            features.Add(new StudyFeature(sid, 24, "masking", th.GetMaskingTypeId("Not provided"), "Not provided"));
+                        }
+                    }
+                }
+
+
+                if (s.study_type == "Observational")
+                {
+                    string patient_registry = xh.FieldValue(DesignModule, "PatientRegistry");
+                    if (patient_registry == "Yes")  // change type...
+                    {
+                        s.study_type_id = 13;
+                        s.study_type = "Observational Patient Registry";
+                    }
+
+                    var design_info = xh.RetrieveStruct(DesignModule, "DesignInfo");
+                    if (design_info != null)
+                    {
+                        var obsmodel_list = xh.RetrieveListElements(design_info, "DesignObservationalModelList");
+                        if (obsmodel_list != null && obsmodel_list.Count() > 0)
+                        {
+                                foreach (XElement obsmodel in obsmodel_list)
+                                {
+                                    string this_obsmodel = (obsmodel == null) ? null : (string)obsmodel;
+                                    features.Add(new StudyFeature(sid, 30, "observational model", th.GetObsModelTypeId(this_obsmodel), this_obsmodel));
+                                }
+                        }
+                        else
+                        {
+                            features.Add(new StudyFeature(sid, 30, "observational model", th.GetObsModelTypeId("Not provided"), "Not provided"));
                         }
 
 
-                        StructType design_info = xh.FindStruct(items, "DesignInfo");
-                        if (design_info != null)
+                        var timepersp_list = xh.RetrieveListElements(design_info, "DesignTimePerspectiveList");
+                        if (timepersp_list != null && timepersp_list.Count() > 0)
                         {
-                            var design_items = design_info.Items;
-
-                            string design_allocation = xh.FieldValue(design_items, "DesignAllocation") ?? "Not provided";
-                            features.Add(new StudyFeature(sid, 22, "allocation type", th.GetAllocationTypeId(design_allocation), design_allocation));
-
-                            string design_intervention_model = xh.FieldValue(design_items, "DesignInterventionModel") ?? "Not provided";
-                            features.Add(new StudyFeature(sid, 23, "intervention model", th.GetDesignTypeId(design_intervention_model), design_intervention_model));
-
-                            string design_primary_purpose = xh.FieldValue(design_items, "DesignPrimaryPurpose") ?? "Not provided";
-                            features.Add(new StudyFeature(sid, 21, "primary purpose", th.GetPrimaryPurposeId(design_primary_purpose), design_primary_purpose));
-
-                            StructType masking_details = xh.FindStruct(design_items, "DesignMaskingInfo");
-                            if (masking_details != null)
-                            {
-                                var masking_items = masking_details.Items;
-                                string design_masking = xh.FieldValue(masking_items, "DesignMasking") ?? "Not provided";
-                                features.Add(new StudyFeature(sid, 24, "masking", th.GetMaskingTypeId(design_masking), design_masking));
-                            }
-                            else
-                            {
-                                features.Add(new StudyFeature(sid, 24, "masking", th.GetMaskingTypeId("Not provided"), "Not provided"));
-                            }
+                                foreach (XElement timepersp in timepersp_list)
+                                {
+                                    string this_persp = (timepersp == null) ? null : (string)timepersp;
+                                    features.Add(new StudyFeature(sid, 31, "time perspective", th.GetTimePerspectiveId(this_persp), this_persp));
+                                }
+                        }
+                        else
+                        {
+                            features.Add(new StudyFeature(sid, 31, "time perspective", th.GetTimePerspectiveId("Not provided"), "Not provided"));
                         }
                     }
 
-
-                    if (s.study_type == "Observational")
+                    var biospec_details = xh.RetrieveStruct(design_info, "BioSpec");
+                    if (biospec_details != null)
                     {
-                        string patient_registry = xh.FieldValue(items, "PatientRegistry");
-                        if (patient_registry == "Yes")  // change type...
-                        {
-                            s.study_type_id = 13;
-                            s.study_type = "Observational Patient Registry";
-                        }
-
-                        StructType design_info = xh.FindStruct(items, "DesignInfo");
-                        if (design_info != null)
-                        {
-                            var design_items = design_info.Items;
-
-                            ListType obsmodel_list = xh.FindList(design_items, "DesignObservationalModelList");
-                            if (obsmodel_list != null)
-                            {
-                                var obsmodels = obsmodel_list.Items;
-                                if (obsmodels.Length > 0)
-                                {
-                                    string this_obsmodel = "";
-                                    for (int p = 0; p < obsmodels.Length; p++)
-                                    {
-                                        this_obsmodel = (obsmodels[p] as FieldType).Value;
-                                        features.Add(new StudyFeature(sid, 30, "observational model", th.GetObsModelTypeId(this_obsmodel), this_obsmodel));
-                                    }
-                                }
-                            }
-                            else
-                            {
-                                features.Add(new StudyFeature(sid, 30, "observational model", th.GetObsModelTypeId("Not provided"), "Not provided"));
-                            }
-
-
-                            ListType timepersp_list = xh.FindList(design_items, "DesignTimePerspectiveList");
-                            if (timepersp_list != null)
-                            {
-                                var timepersps = timepersp_list.Items;
-                                if (timepersps.Length > 0)
-                                {
-                                    string this_persp = "";
-                                    for (int p = 0; p < timepersps.Length; p++)
-                                    {
-                                        this_persp = (timepersps[p] as FieldType).Value;
-                                        features.Add(new StudyFeature(sid, 31, "time perspective", th.GetTimePerspectiveId(this_persp), this_persp));
-                                    }
-                                }
-                            }
-                            else
-                            {
-                                features.Add(new StudyFeature(sid, 31, "time perspective", th.GetTimePerspectiveId("Not provided"), "Not provided"));
-                            }
-                        }
-
-                        StructType biospec_details = xh.FindStruct(items, "BioSpec");
-                        if (biospec_details != null)
-                        {
-                            var biospec_items = biospec_details.Items;
-                            string biospec_retention = xh.FieldValue(biospec_items, "BioSpecRetention") ?? "Not provided";
-                            features.Add(new StudyFeature(sid, 32, "biospecimens retained", th.GetSpecimentRetentionId(biospec_retention), biospec_retention));
-                        }
-
+                        string biospec_retention = xh.FieldValue(biospec_details, "BioSpecRetention") ?? "Not provided";
+                        features.Add(new StudyFeature(sid, 32, "biospecimens retained", th.GetSpecimentRetentionId(biospec_retention), biospec_retention));
                     }
 
+                }
 
-                    StructType enrol_details = xh.FindStruct(items, "EnrollmentInfo");
-                    if (enrol_details != null)
+
+                var enrol_details = xh.RetrieveStruct(DesignModule, "EnrollmentInfo");
+                if (enrol_details != null)
+                {
+                    string enrolment_count = xh.FieldValue(enrol_details, "EnrollmentCount") ?? "Not provided";
+                    if (enrolment_count != "Not provided")
                     {
-                        var enrol_items = enrol_details.Items;
-                        string enrolment_count = xh.FieldValue(enrol_items, "EnrollmentCount") ?? "Not provided";
-                        if (enrolment_count != "Not provided")
+                        if (Int32.TryParse(enrolment_count, out int enrolment))
                         {
-                            if (Int32.TryParse(enrolment_count, out int enrolment))
+                            if (enrolment <= 1000 || !Regex.Match(enrolment_count, @"^9+$").Success)
                             {
-                                if (enrolment <= 1000 || !Regex.Match(enrolment_count, @"^9+$").Success)
-                                {
-                                    s.study_enrolment = enrolment;
-                                }
+                                s.study_enrolment = enrolment;
                             }
                         }
                     }
@@ -604,46 +564,41 @@ namespace DataHarvester.ctg
             }
 
 
-
             if (EligibilityModule != null)
             {
-                object[] items = EligibilityModule.Items;
-                if (items != null)
+                s.study_gender_elig = xh.FieldValue(EligibilityModule, "Gender") ?? "Not provided";
+                if (s.study_gender_elig == "All")
                 {
-                    s.study_gender_elig = xh.FieldValue(items, "Gender") ?? "Not provided";
-                    if (s.study_gender_elig == "All")
-                    {
-                        s.study_gender_elig = "Both";
-                    }
-                    s.study_gender_elig_id = th.GetGenderEligId(s.study_gender_elig);
+                    s.study_gender_elig = "Both";
+                }
+                s.study_gender_elig_id = th.GetGenderEligId(s.study_gender_elig);
 
-                    string min_age = xh.FieldValue(items, "MinimumAge");
-                    if (min_age != null)
+                string min_age = xh.FieldValue(EligibilityModule, "MinimumAge");
+                if (min_age != null)
+                {
+                    // split number from time unit
+                    string LHS = min_age.Trim().Substring(0, min_age.IndexOf(' '));
+                    string RHS = min_age.Trim().Substring(min_age.IndexOf(' ') + 1);
+                    if (Int32.TryParse(LHS, out int minage))
                     {
-                        // split number from time unit
-                        string LHS = min_age.Trim().Substring(0, min_age.IndexOf(' '));
-                        string RHS = min_age.Trim().Substring(min_age.IndexOf(' ') + 1);
-                        if (Int32.TryParse(LHS, out int minage))
-                        {
-                            s.min_age = minage;
-                            if (!RHS.EndsWith("s")) RHS += "s";
-                            s.min_age_units = RHS;
-                            s.min_age_units_id = th.GetTimeUnitsId(RHS);
-                        }
+                        s.min_age = minage;
+                        if (!RHS.EndsWith("s")) RHS += "s";
+                        s.min_age_units = RHS;
+                        s.min_age_units_id = th.GetTimeUnitsId(RHS);
                     }
+                }
 
-                    string max_age = xh.FieldValue(items, "MaximumAge");
-                    if (max_age != null)
+                string max_age = xh.FieldValue(EligibilityModule, "MaximumAge");
+                if (max_age != null)
+                {
+                    string LHS = max_age.Trim().Substring(0, max_age.IndexOf(' '));
+                    string RHS = max_age.Trim().Substring(max_age.IndexOf(' ') + 1);
+                    if (Int32.TryParse(LHS, out int maxage))
                     {
-                        string LHS = max_age.Trim().Substring(0, max_age.IndexOf(' '));
-                        string RHS = max_age.Trim().Substring(max_age.IndexOf(' ') + 1);
-                        if (Int32.TryParse(LHS, out int maxage))
-                        {
-                            s.max_age = maxage;
-                            if (!RHS.EndsWith("s")) RHS += "s";
-                            s.max_age_units = RHS;
-                            s.max_age_units_id = th.GetTimeUnitsId(RHS);
-                        }
+                        s.max_age = maxage;
+                        if (!RHS.EndsWith("s")) RHS += "s";
+                        s.max_age_units = RHS;
+                        s.max_age_units_id = th.GetTimeUnitsId(RHS);
                     }
                 }
             }
@@ -651,72 +606,52 @@ namespace DataHarvester.ctg
 
             if (ContactsLocationsModule != null)
             {
-                object[] items = ContactsLocationsModule.Items;
-                if (items != null)
+                var officials = xh.RetrieveListElements(ContactsLocationsModule, "OverallOfficialList");
+                if (officials != null && officials.Count() > 0)
                 {
-                    ListType official_list = xh.FindList(items, "OverallOfficialList");
-                    if (official_list != null)
+                    foreach (XElement official in officials)
                     {
-                        var officials = official_list.Items;
-                        if (officials.Length > 0)
+                        string official_name = xh.FieldValue(official, "OverallOfficialName");
+                        if (official_name != null)
                         {
-                            for (int i = 0; i < officials.Length; i++)
-                            {
-                                StructType collab = officials[i] as StructType;
-                                string official_name = xh.FieldValue(collab.Items, "OverallOfficialName");
-                                if (official_name != null)
-                                {
-                                    official_name = sh.TidyName(official_name);
-                                    string official_affiliation = xh.FieldValue(collab.Items, "OverallOfficialAffiliation");
-                                    contributors.Add(new StudyContributor(sid, 51, "Study Lead", null,
-                                                            null, official_name, official_affiliation));
-                                }
-                            }
+                            official_name = sh.TidyName(official_name);
+                            string official_affiliation = xh.FieldValue(official, "OverallOfficialAffiliation");
+                            contributors.Add(new StudyContributor(sid, 51, "Study Lead", null,
+                                                    null, official_name, official_affiliation));
                         }
                     }
                 }
+
             }
 
-
-            //if (MiscInfoModule != null)
-            //{
-            // this data not currently extracted 
-            //}
-
-
-            string object_type = "", object_class = "";
-            if (IPDSharingStatementModule != null)
+            
+            if (IPDSharingModule != null)
             {
-
-                object[] items = IPDSharingStatementModule.Items;
-                if (items != null)
+                if (IPDSharingModule != null)
                 {
-                    string IPDSharingDescription = xh.FieldValue(items, "IPDSharingDescription");
+                    string IPDSharingDescription = xh.FieldValue(IPDSharingModule, "IPDSharingDescription");
                     if (IPDSharingDescription != null)
                     {
                         string sharing_statement = "(As of " + status_verified_date + "): " + IPDSharingDescription;
-                        string IPDSharingTimeFrame = xh.FieldValue(items, "IPDSharingTimeFrame") ?? "";
-                        string IPDSharingAccessCriteria = xh.FieldValue(items, "IPDSharingAccessCriteria") ?? "";
-                        string IPDSharingURL = xh.FieldValue(items, "IPDSharingURL") ?? "";
+                        string IPDSharingTimeFrame = xh.FieldValue(IPDSharingModule, "IPDSharingTimeFrame") ?? "";
+                        string IPDSharingAccessCriteria = xh.FieldValue(IPDSharingModule, "IPDSharingAccessCriteria") ?? "";
+                        string IPDSharingURL = xh.FieldValue(IPDSharingModule, "IPDSharingURL") ?? "";
 
                         if (IPDSharingTimeFrame != "") sharing_statement += "\r\nTime frame: " + IPDSharingTimeFrame;
                         if (IPDSharingAccessCriteria != "") sharing_statement += "\r\nAccess Criteria: " + IPDSharingAccessCriteria;
                         if (IPDSharingURL != "") sharing_statement += "\r\nURL: " + IPDSharingURL;
 
-                        ListType IPDSharingInfoTypeList = xh.FindList(items, "IPDSharingInfoTypeList");
-                        if (IPDSharingInfoTypeList != null)
+                        var IPDSharingInfoTypeList = xh.RetrieveListElements(IPDSharingModule, "IPDSharingInfoTypeList");
+                        if (IPDSharingInfoTypeList != null && IPDSharingInfoTypeList.Count() > 0)
                         {
-                            var item_types = IPDSharingInfoTypeList.Items;
-                            if (item_types.Length > 0)
+                            string itemlist = "";
+                            foreach (XElement infotype in IPDSharingInfoTypeList)
                             {
-                                string itemlist = "";
-                                for (int i = 0; i < item_types.Length; i++)
-                                {
-                                    string item_type = ((FieldType)item_types[i]).Value;
-                                    itemlist += (i == 0) ? item_type : ", " + item_type;
-                                }
-                                sharing_statement += "\r\nInformation available: " + itemlist;
+                                string item_type = (infotype == null) ? null : (string)infotype;
+                                itemlist += ", " + item_type;
                             }
+                            string infoitemlist = itemlist.Substring(1);
+                            sharing_statement += "\r\nInformation available: " + infoitemlist;
                         }
                         s.data_sharing_statement = sharing_statement;
                     }
@@ -728,7 +663,7 @@ namespace DataHarvester.ctg
 
             /********************* Linked Data Object Data **********************************/
 
-            /*
+            string object_type = "", object_class = "";
             string title_base = "";
             int title_type_id = 0;
             string title_type = "";
@@ -768,6 +703,7 @@ namespace DataHarvester.ctg
                 title_type = "Study registry ID :: object type";
             }
 
+            
             // first object is the protocol registration
             // title will be display title as well
             string object_display_title = title_base + " :: CTG Registry entry";
@@ -775,7 +711,9 @@ namespace DataHarvester.ctg
             // create hash Id for the data object
             string sd_oid = hh.CreateMD5(sid + object_display_title);
 
-            int object_type_id = 13, object_class_id = 23;
+            // Define and provide intiial values
+            int object_type_id = 13;
+            int object_class_id = 23;
 
             data_objects.Add(new DataObject(sd_oid, sid, object_display_title, firstpost.year,
                                 23, "Text", 13, "Trial Registry entry", 100120,
@@ -800,8 +738,7 @@ namespace DataHarvester.ctg
             url = "https://clinicaltrials.gov/ct2/show/study/" + sid;
             object_instances.Add(new ObjectInstance(sd_oid, 100120, "ClinicalTrials.gov", url, true,
                                       39, "Web text with XML or JSON via API"));
-
-
+                        
             // if present, set up results data object
             if (resultspost != null && results_data_present)
             {
@@ -838,129 +775,122 @@ namespace DataHarvester.ctg
 
             if (LargeDocumentModule != null)
             {
-                object[] items = LargeDocumentModule.Items;
-                if (items != null)
+                if (LargeDocumentModule != null)
                 {
-                    ListType large_doc_list = xh.FindList(items, "LargeDocList");
-                    if (large_doc_list != null)
+                    var largedocs = xh.RetrieveListElements(LargeDocumentModule, "LargeDocList");
+                    if (largedocs != null && largedocs.Count() > 0)
                     {
-                        var largedocs = large_doc_list.Items;
-                        if (largedocs.Length > 0)
+                        foreach (XElement largedoc in largedocs)
                         {
-                            for (int i = 0; i < largedocs.Length; i++)
+                            string type_abbrev = xh.FieldValue(largedoc, "LargeDocTypeAbbrev");
+                            string has_protocol = xh.FieldValue(largedoc, "LargeDocHasProtocol");
+                            string has_sap = xh.FieldValue(largedoc, "LargeDocHasSAP");
+                            string has_icf = xh.FieldValue(largedoc, "LargeDocHasICF");
+                            string doc_label = xh.FieldValue(largedoc, "LargeDocLabel");
+                            string doc_date = xh.FieldValue(largedoc, "LargeDocDate");
+                            string upload_date = xh.FieldValue(largedoc, "LargeDocUploadDate");
+                            string file_name = xh.FieldValue(largedoc, "LargeDocFilename");
+
+                            // create a new data object
+
+                            // decompose the doc date to get publication year
+                            SplitDate docdate = null;
+                            if (doc_date != null)
                             {
-                                StructType large_doc = largedocs[i] as StructType;
-                                var doc_items = large_doc.Items;
-                                string type_abbrev = xh.FieldValue(doc_items, "LargeDocTypeAbbrev");
-                                string has_protocol = xh.FieldValue(doc_items, "LargeDocHasProtocol");
-                                string has_sap = xh.FieldValue(doc_items, "LargeDocHasSAP");
-                                string has_icf = xh.FieldValue(doc_items, "LargeDocHasICF");
-                                string doc_label = xh.FieldValue(doc_items, "LargeDocLabel");
-                                string doc_date = xh.FieldValue(doc_items, "LargeDocDate");
-                                string upload_date = xh.FieldValue(doc_items, "LargeDocUploadDate");
-                                string file_name = xh.FieldValue(doc_items, "LargeDocFilename");
-
-                                // create a new data object
-
-                                // decompose the doc date to get publication year
-                                SplitDate docdate = null;
-                                if (doc_date != null)
-                                {
-                                    docdate = dh.GetDateParts(doc_date);
-                                }
-
-                                switch (type_abbrev)
-                                {
-                                    case "Prot":
-                                        {
-                                            object_type_id = 11; object_type = "Study Protocol";
-                                            break;
-                                        }
-                                    case "SAP":
-                                        {
-                                            object_type_id = 22; object_type = "Statistical analysis plan";
-                                            break;
-                                        }
-                                    case "ICF":
-                                        {
-                                            object_type_id = 18; object_type = "Informed consent forms";
-                                            break;
-                                        }
-                                    case "Prot_SAP":
-                                        {
-                                            object_type_id = 74; object_type = "Protocol SAP";
-                                            break;
-                                        }
-                                    case "Prot_ICF":
-                                        {
-                                            object_type_id = 75; object_type = "Protocol ICF";
-                                            break;
-                                        }
-                                    case "Prot_SAP_ICF":
-                                        {
-                                            object_type_id = 76; object_type = "Protocol SAP ICF";
-                                            break;
-                                        }
-                                    default:
-                                        {
-                                            object_type_id = 37; object_type = type_abbrev;
-                                            break;
-                                        }
-                                }
-
-                                int t_type_id; string t_type;
-                                if (!string.IsNullOrEmpty(doc_label))
-                                {
-                                    object_display_title = title_base + " :: " + doc_label;
-                                    t_type_id = 21; t_type = "Study short name :: object name";
-                                }
-                                else
-                                {
-                                    object_display_title = title_base + " :: " + object_type;
-                                    t_type_id = 22; t_type = "Study short name :: object type";
-                                }
-
-                                // check name
-                                int next_num = xh.CheckObjectName(object_titles, object_display_title);
-                                if (next_num > 0)
-                                {
-                                    object_display_title += "_" + next_num.ToString();
-                                }
-                                sd_oid = hh.CreateMD5(sid + object_display_title);
-
-                                data_objects.Add(new DataObject(sd_oid, sid, object_display_title, docdate.year,
-                                23, "Text", object_type_id, object_type, 100120,
-                                "ClinicalTrials.gov", 11, download_datetime));
-
-                                // check here not a previous data object of the same type
-                                // It may have the same url. If so ignore it.
-                                // If it appears to be different, add a suffix to the data object name
-
-
-                                // add in title
-                                object_titles.Add(new ObjectTitle(sd_oid, object_display_title,
-                                t_type_id, t_type, true));
-
-                                // add in dates
-                                if (docdate != null)
-                                {
-                                    object_dates.Add(new ObjectDate(sd_oid, 15, "Created",
-                                        docdate.year, docdate.month, docdate.day, docdate.date_string));
-                                }
-
-                                if (upload_date != null)
-                                {
-                                    if (DateTime.TryParseExact(upload_date, "MM/dd/yyyy HH:mm", null, DateTimeStyles.None, out DateTime uploaddate))
-                                    {
-                                        object_dates.Add(new ObjectDate(sd_oid, 12, "Available",
-                                                                uploaddate.Year, uploaddate.Month, uploaddate.Day, uploaddate.ToString("yyyy MMM dd")));
-                                    }
-                                }
-
-                                // add in instance
-                                url = "https://clinicaltrials.gov/ProvidedDocs/" + sid.Substring(sid.Length - 2, 2) + "/" + sid + "/" + file_name;
-                                object_instances.Add(new ObjectInstance(sd_oid, 100120, "ClinicalTrials.gov", url, true, 11, "PDF"));
+                                docdate = dh.GetDateParts(doc_date);
                             }
+
+                            switch (type_abbrev)
+                            {
+                                case "Prot":
+                                    {
+                                        object_type_id = 11; object_type = "Study Protocol";
+                                        break;
+                                    }
+                                case "SAP":
+                                    {
+                                        object_type_id = 22; object_type = "Statistical analysis plan";
+                                        break;
+                                    }
+                                case "ICF":
+                                    {
+                                        object_type_id = 18; object_type = "Informed consent forms";
+                                        break;
+                                    }
+                                case "Prot_SAP":
+                                    {
+                                        object_type_id = 74; object_type = "Protocol SAP";
+                                        break;
+                                    }
+                                case "Prot_ICF":
+                                    {
+                                        object_type_id = 75; object_type = "Protocol ICF";
+                                        break;
+                                    }
+                                case "Prot_SAP_ICF":
+                                    {
+                                        object_type_id = 76; object_type = "Protocol SAP ICF";
+                                        break;
+                                    }
+                                default:
+                                    {
+                                        object_type_id = 37; object_type = type_abbrev;
+                                        break;
+                                    }
+                            }
+
+                            int t_type_id; string t_type;
+                            if (!string.IsNullOrEmpty(doc_label))
+                            {
+                                object_display_title = title_base + " :: " + doc_label;
+                                t_type_id = 21; t_type = "Study short name :: object name";
+                            }
+                            else
+                            {
+                                object_display_title = title_base + " :: " + object_type;
+                                t_type_id = 22; t_type = "Study short name :: object type";
+                            }
+
+                            // check name
+                            int next_num = xh.CheckObjectName(object_titles, object_display_title);
+                            if (next_num > 0)
+                            {
+                                object_display_title += "_" + next_num.ToString();
+                            }
+                            sd_oid = hh.CreateMD5(sid + object_display_title);
+
+                            data_objects.Add(new DataObject(sd_oid, sid, object_display_title, docdate.year,
+                            23, "Text", object_type_id, object_type, 100120,
+                            "ClinicalTrials.gov", 11, download_datetime));
+
+                            // check here not a previous data object of the same type
+                            // It may have the same url. If so ignore it.
+                            // If it appears to be different, add a suffix to the data object name
+
+
+                            // add in title
+                            object_titles.Add(new ObjectTitle(sd_oid, object_display_title,
+                            t_type_id, t_type, true));
+
+                            // add in dates
+                            if (docdate != null)
+                            {
+                                object_dates.Add(new ObjectDate(sd_oid, 15, "Created",
+                                    docdate.year, docdate.month, docdate.day, docdate.date_string));
+                            }
+
+                            if (upload_date != null)
+                            {
+                                if (DateTime.TryParseExact(upload_date, "MM/dd/yyyy HH:mm", null, DateTimeStyles.None, out DateTime uploaddate))
+                                {
+                                    object_dates.Add(new ObjectDate(sd_oid, 12, "Available",
+                                                            uploaddate.Year, uploaddate.Month, uploaddate.Day, uploaddate.ToString("yyyy MMM dd")));
+                                }
+                            }
+
+                            // add in instance
+                            url = "https://clinicaltrials.gov/ProvidedDocs/" + sid.Substring(sid.Length - 2, 2) + "/" + sid + "/" + file_name;
+                            object_instances.Add(new ObjectInstance(sd_oid, 100120, "ClinicalTrials.gov", url, true, 11, "PDF"));
                         }
                     }
                 }
@@ -969,221 +899,398 @@ namespace DataHarvester.ctg
 
             if (ReferencesModule != null)
             {
-                // references cannot become datav objects until
+                // references cannot become data objects until
                 // their dates are checked against the study date
-                // this is therefore generating a lkist for the future
-                object[] items = ReferencesModule.Items;
-                if (items != null)
-                {
-                    ListType reference_list = xh.FindList(items, "ReferenceList");
-                    if (reference_list != null)
-                    {
-                        var refs = reference_list.Items;
-                        if (refs.Length > 0)
-                        {
-                            for (int i = 0; i < refs.Length; i++)
-                            {
-                                StructType reference = refs[i] as StructType;
-                                var ref_items = reference.Items;
-                                string ref_type = xh.FieldValue(ref_items, "ReferenceType");
-                                if (ref_type == "result")
-                                {
-                                    string pmid = xh.FieldValue(ref_items, "ReferencePMID");
-                                    string citation = xh.FieldValue(ref_items, "ReferenceCitation");
-                                    references.Add(new StudyReference(sid, pmid, citation, null, null));
-                                }
+                // this is therefore generating a list for the future.
 
-                                ListType retraction_list = xh.FindList(ref_items, "RetractionList");
-                                if (retraction_list != null)
-                                {
-                                    var retractions = retraction_list.Items;
-                                    if (retractions.Length > 0)
-                                    {
-                                        for (int j = 0; j < retractions.Length; j++)
-                                        {
-                                            StructType retraction = retractions[j] as StructType;
-                                            string retraction_pmid = xh.FieldValue(retraction.Items, "RetractionPMID");
-                                            string retraction_source = xh.FieldValue(retraction.Items, "RetractionSource");
-                                            references.Add(new StudyReference(sid, retraction_pmid, retraction_source, null, "RETRACTION"));
-                                        }
-                                    }
-                                }
+                var refs = xh.RetrieveListElements(ReferencesModule, "ReferenceList");
+                if (refs != null && refs.Count() > 0)
+                {
+                    foreach (XElement reference in refs)
+                    {
+                        string ref_type = xh.FieldValue(reference, "ReferenceType");
+                        if (ref_type == "result")
+                        {
+                            string pmid = xh.FieldValue(reference, "ReferencePMID");
+                            string citation = xh.FieldValue(reference, "ReferenceCitation");
+                            references.Add(new StudyReference(sid, pmid, citation, null, null));
+                        }
+
+                        var retractions = xh.RetrieveListElements(reference, "RetractionList");
+                        if (retractions != null && retractions.Count() > 0)
+                        {
+                            foreach (XElement retraction in retractions)
+                            {
+                                string retraction_pmid = xh.FieldValue(retraction, "RetractionPMID");
+                                string retraction_source = xh.FieldValue(retraction, "RetractionSource");
+                                references.Add(new StudyReference(sid, retraction_pmid, retraction_source, null, "RETRACTION"));
                             }
                         }
                     }
+                }
 
-                    // some of these may be turnable into data objects available, either
-                    // directly or after review of requests
-                    // Others will need to be stored as records for future processing
 
-                    ListType avail_ipd_List = xh.FindList(items, "AvailIPDList");
-                    if (avail_ipd_List != null)
+                // some of the available ipd may be turnable into data objects available, either
+                // directly or after review of requests
+                // Others will need to be stored as records for future processing
+
+                var avail_ipd_items = xh.RetrieveListElements(ReferencesModule, "AvailIPDList");
+                if (avail_ipd_items != null && avail_ipd_items.Count() > 0)
+                {
+                    foreach (XElement avail_ipd in avail_ipd_items)
                     {
-                        var avail_ipd_items = avail_ipd_List.Items;
-                        if (avail_ipd_items.Length > 0)
+                        string ipd_id = xh.FieldValue(avail_ipd, "AvailIPDId");
+                        string ipd_type = xh.FieldValue(avail_ipd, "AvailIPDType");
+                        string ipd_url = xh.FieldValue(avail_ipd, "AvailIPDURL");
+                        string ipd_comment = xh.FieldValue(avail_ipd, "AvailIPDComment");
+
+                        // Often a GSK store
+
+                        if (ipd_url.Contains("clinicalstudydatarequest.com"))
                         {
-                            for (int i = 0; i < avail_ipd_items.Length; i++)
+                            // create a new data object
+                            switch (ipd_type)
                             {
-                                StructType avail_ipd = avail_ipd_items[i] as StructType;
-                                var ipd_items = avail_ipd.Items;
-                                string ipd_id = xh.FieldValue(ipd_items, "AvailIPDId");
-                                string ipd_type = xh.FieldValue(ipd_items, "AvailIPDType");
-                                string ipd_url = xh.FieldValue(ipd_items, "AvailIPDURL");
-                                string ipd_comment = xh.FieldValue(ipd_items, "AvailIPDComment");
+                                case "Informed Consent Form":
+                                    {
+                                        object_type_id = 18; object_type = "Informed consent forms";
+                                        break;
+                                    }
+                                case "Dataset Specification":
+                                    {
+                                        object_type_id = 31; object_type = "Data Dictionary";
+                                        break;
+                                    }
+                                case "Annotated Case Report Form":
+                                    {
+                                        object_type_id = 30; object_type = "Annotated Data Collection Forms";
+                                        break;
+                                    }
+                                case "Statistical Analysis Plan":
+                                    {
+                                        object_type_id = 22; object_type = "Statistical analysis plan";
+                                        break;
+                                    }
+                                case "Individual Participant Data Set":
+                                    {
+                                        object_type_id = 80; object_type = "Individual Participant Data";
+                                        break;
+                                    }
+                                case "Clinical Study Report":
+                                    {
+                                        object_type_id = 26; object_type = "Clinical Study Report";
+                                        break;
+                                    }
+                                case "Study Protocol":
+                                    {
+                                        object_type_id = 11; object_type = "Study Protocol";
+                                        break;
+                                    }
+                            }
 
-                                // Often a GSK store
+                            object_class_id = (object_type_id == 80) ? 14 : 23;
+                            object_class = (object_type_id == 80) ? "Dataset" : "Text";
 
-                                if (ipd_url.Contains("clinicalstudydatarequest.com"))
+                            int? sponsor_id = null;
+                            string t_base = "";
+
+                            if (sponsor_name == "GlaxoSmithKline" || sponsor_name == "GSK")
+                            {
+                                sponsor_id = 100163;
+                                t_base = "GSK-";
+                            }
+                            else
+                            {
+                                sponsor_id = null;
+                                t_base = sponsor_name + "-" ?? "";
+                            }
+
+                            if (ipd_id == null)
+                            {
+                                t_base = title_base;
+                                title_type_id = 22; title_type = "Study short name :: object type";
+                            }
+                            else
+                            {
+                                t_base += ipd_id;
+                                title_type_id = 20; title_type = "Unique data object title";
+                            }
+
+                            object_display_title = t_base + " :: " + object_type;
+
+                            // check name
+                            int next_num = xh.CheckObjectName(object_titles, object_display_title);
+                            if (next_num > 0)
+                            {
+                                object_display_title += "_" + next_num.ToString();
+                            }
+
+                            sd_oid = hh.CreateMD5(sid + object_display_title);
+
+                            // add data object
+                            data_objects.Add(new DataObject(sd_oid, sid, object_display_title, null,
+                            object_class_id, object_class, object_type_id, object_type, sponsor_id, sponsor_name,
+                            17, "Case by case download", gsk_access_details,
+                            "https://clinicalstudydatarequest.com/Help/Help-How-to-Request-Data.aspx",
+                            null, download_datetime));
+
+                            // add in title
+                            object_titles.Add(new ObjectTitle(sd_oid, object_display_title,
+                            title_type_id, title_type, true));
+
+                            // for datasets also add dataset properties - even if they are largely unknown
+                            if (object_type_id == 80)
+                            {
+                                if (sponsor_name == "GlaxoSmithKline" || sponsor_name == "GSK")
                                 {
-                                    // create a new data object
-                                    switch (ipd_type)
+                                    object_datasets.Add(new ObjectDataset(sd_oid, 
+                                                3, "Anonymised", "GSK states that... 'researchers are provided access to anonymized patient-level data '",
+                                                2, "De-identification applied", "",
+                                                0, "Not known", ""));
+                                }
+                                else
+                                {
+                                    object_datasets.Add(new ObjectDataset(sd_oid, 
+                                                0, "Not known", "",
+                                                0, "Not known", "",
+                                                0, "Not known", ""));
+                                }
+                            }
+                        }
+
+                        else if (ipd_url.Contains("servier.com"))
+                        {
+                            // create a new data object
+                            if (ipd_type.ToLower().Contains("study-level clinical trial data"))
+                            {
+                                object_type_id = 69; object_type = "Aggregated result dataset";
+                            }
+                            else
+                                switch (ipd_type)
+                                {
+                                    case "Informed Consent Form":
+                                        {
+                                            object_type_id = 18; object_type = "Informed consent forms";
+                                            break;
+                                        }
+                                    case "Statistical Analysis Plan":
+                                        {
+                                            object_type_id = 22; object_type = "Statistical analysis plan";
+                                            break;
+                                        }
+                                    case "Individual Participant Data Set":
+                                        {
+                                            object_type_id = 80; object_type = "Individual Participant Data";
+                                            break;
+                                        }
+                                    case "Clinical Study Report":
+                                        {
+                                            object_type_id = 26; object_type = "Clinical Study Report";
+                                            break;
+                                        }
+                                    case "Study Protocol":
+                                        {
+                                            object_type_id = 11; object_type = "Study Protocol";
+                                            break;
+                                        }
+                                }
+
+                            object_class_id = (object_type_id == 80 || object_type_id == 69) ? 14 : 23;
+                            object_class = (object_type_id == 80 || object_type_id == 69) ? "Dataset" : "Text";
+
+                            object_display_title = title_base + " :: " + object_type;
+
+                            // check name
+                            int next_num = xh.CheckObjectName(object_titles, object_display_title);
+                            if (next_num > 0)
+                            {
+                                object_display_title += "_" + next_num.ToString();
+                            }
+
+                            sd_oid = hh.CreateMD5(sid + object_display_title);
+
+                            data_objects.Add(new DataObject(sd_oid, sid, object_display_title, null,
+                            object_class_id, object_class, object_type_id, object_type, 101418, "Servier",
+                            18, "Case by case on-screen access", servier_access_details,
+                            "https://clinicaltrials.servier.com/data-request-portal/", null, download_datetime));
+
+                            // add in title
+                            title_type_id = 22; title_type = "Study short name :: object type";
+                            object_titles.Add(new ObjectTitle(sd_oid, object_display_title,
+                            title_type_id, title_type, true));
+
+                            if (object_type_id == 80)
+                            {
+                                object_datasets.Add(new ObjectDataset(sd_oid,
+                                            3, "Anonymised", "Sevier states that... 'Servier will provide anonymized patient-level and study-level clinical trial data'",
+                                            2, "De-identification applied", "",
+                                            0, "Not known", ""));
+                            }
+                        }
+
+                        else if (ipd_url.Contains("merck.com"))
+                        {
+
+                            // some of the merck records are direct access to a page
+                            // with a further link to a pdf, plus other study components
+
+                            // the others are indications that the object exists but is not directly available
+                            // create a new data object
+
+                            if (ipd_url.Contains("&tab=access"))
+                            {
+                                object_type_id = 79; object_type = "CSR Summary";
+                                object_class_id = 23; object_class = "Text";
+
+                                // disregard the other entries - as they lead nowhere
+                                object_display_title = title_base + " :: " + object_type;
+
+                                // check name
+                                int next_num = xh.CheckObjectName(object_titles, object_display_title);
+                                if (next_num > 0)
+                                {
+                                    object_display_title += "_" + next_num.ToString();
+                                }
+
+                                sd_oid = hh.CreateMD5(sid + object_display_title);
+
+                                data_objects.Add(new DataObject(sd_oid, sid, object_display_title, null,
+                                object_class_id, object_class, object_type_id, object_type,
+                                100165, "Merck Sharp & Dohme", 11, download_datetime));
+
+                                // add in title
+                                title_type_id = 22; title_type = "Study short name :: object type";
+                                object_titles.Add(new ObjectTitle(sd_oid, object_display_title,
+                                title_type_id, title_type, true));
+
+                                // add in instance
+                                object_instances.Add(new ObjectInstance(sd_oid, 4, "Summary version", 100165,
+                                            "Merck Sharp & Dohme Corp.", ipd_url, true, 11, "PDF", null, null));
+                            }
+                        }
+                        else
+                        {
+                            ipd_info.Add(new AvailableIPD(sid, ipd_id, ipd_type, ipd_url, ipd_comment));
+                        }
+                    }
+                }
+
+                // at the moment these records are for storage and future processing
+                // tidy up urls, remove a small proportion of obvious non-useful links
+
+                var see_also_refs = xh.RetrieveListElements(ReferencesModule, "SeeAlsoLinkList");
+                if (see_also_refs != null && see_also_refs.Count() > 0)
+                {
+                    foreach (XElement see_also_ref in see_also_refs)
+                    {
+                        string link_label = xh.FieldValue(see_also_ref, "SeeAlsoLinkLabel");
+                        string link_url = xh.FieldValue(see_also_ref, "SeeAlsoLinkURL");
+
+                        if (link_url != null)
+                        {
+                            bool add_to_db = true;
+                            if (link_url.EndsWith("/")) link_url = link_url.Substring(0, link_url.Length - 1);
+
+                            if (link_label == "NIH Clinical Center Detailed Web Page" && link_url.EndsWith(".html"))
+                            {
+                                // add new data object
+                                object_type_id = 38; object_type = "Study Overview";
+                                object_class_id = 23; object_class = "Text";
+
+                                // disregard the other entries - as they lead nowhere
+                                object_display_title = title_base + " :: " + object_type;
+
+                                // check name
+                                int next_num = xh.CheckObjectName(object_titles, object_display_title);
+                                if (next_num > 0)
+                                {
+                                    object_display_title += "_" + next_num.ToString();
+                                }
+
+                                sd_oid = hh.CreateMD5(sid + object_display_title);
+
+                                data_objects.Add(new DataObject(sd_oid, sid, object_display_title, null,
+                                object_class_id, object_class, object_type_id, object_type, 100360,
+                                "National Institutes of Health Clinical Center", 11, download_datetime));
+
+                                // add in title
+                                title_type_id = 22; title_type = "Study short name :: object type";
+                                object_titles.Add(new ObjectTitle(sd_oid, object_display_title,
+                                title_type_id, title_type, true));
+
+                                // add in instance
+                                object_instances.Add(new ObjectInstance(sd_oid, 100360, "National Institutes of Health Clinical Center",
+                                            link_url, true, 35, "Web text"));
+
+                                add_to_db = false;
+                            }
+
+                            if (link_url.Contains("filehosting.pharmacm.com/Download"))
+                            {
+                                string test_url = link_url.ToLower();
+                                object_type_id = 0;
+                                int instance_type_id = 1; // default
+                                string instance_type = "Full resource"; // default
+
+                                if (test_url.Contains("csr") || (test_url.Contains("study") && test_url.Contains("report")))
+                                {
+                                    if (test_url.Contains("redacted"))
                                     {
-                                        case "Informed Consent Form":
-                                            {
-                                                object_type_id = 18; object_type = "Informed consent forms";
-                                                break;
-                                            }
-                                        case "Dataset Specification":
-                                            {
-                                                object_type_id = 31; object_type = "Data Dictionary";
-                                                break;
-                                            }
-                                        case "Annotated Case Report Form":
-                                            {
-                                                object_type_id = 30; object_type = "Annotated Data Collection Forms";
-                                                break;
-                                            }
-                                        case "Statistical Analysis Plan":
-                                            {
-                                                object_type_id = 22; object_type = "Statistical analysis plan";
-                                                break;
-                                            }
-                                        case "Individual Participant Data Set":
-                                            {
-                                                object_type_id = 80; object_type = "Individual Participant Data";
-                                                break;
-                                            }
-                                        case "Clinical Study Report":
-                                            {
-                                                object_type_id = 26; object_type = "Clinical Study Report";
-                                                break;
-                                            }
-                                        case "Study Protocol":
-                                            {
-                                                object_type_id = 11; object_type = "Study Protocol";
-                                                break;
-                                            }
+                                        object_type_id = 27; object_type = "Redacted Clinical Study Report";
+                                        instance_type_id = 5; instance_type = "Redacted version";
                                     }
-
-                                    object_class_id = (object_type_id == 80) ? 14 : 23;
-                                    object_class = (object_type_id == 80) ? "Dataset" : "Text";
-
-                                    int? sponsor_id = null;
-                                    string t_base = "";
-
-                                    if (sponsor_name == "GlaxoSmithKline" || sponsor_name == "GSK")
+                                    else if (test_url.Contains("summary"))
                                     {
-                                        sponsor_id = 100163;
-                                        t_base = "GSK-";
+                                        object_type_id = 79; object_type = "CSR Summary";
+                                        instance_type_id = 4; instance_type = "Summary version";
                                     }
                                     else
                                     {
-                                        sponsor_id = null;
-                                        t_base = sponsor_name + "-" ?? "";
-                                    }
-
-                                    if (ipd_id == null)
-                                    {
-                                        t_base = title_base;
-                                        title_type_id = 22; title_type = "Study short name :: object type";
-                                    }
-                                    else
-                                    {
-                                        t_base += ipd_id;
-                                        title_type_id = 20; title_type = "Unique data object title";
-                                    }
-
-                                    object_display_title = t_base + " :: " + object_type;
-
-                                    // check name
-                                    int next_num = xh.CheckObjectName(object_titles, object_display_title);
-                                    if (next_num > 0)
-                                    {
-                                        object_display_title += "_" + next_num.ToString();
-                                    }
-
-                                    sd_oid = hh.CreateMD5(sid + object_display_title);
-
-                                    // add data object
-                                    data_objects.Add(new DataObject(sd_oid, sid, object_display_title, null,
-                                    object_class_id, object_class, object_type_id, object_type, sponsor_id, sponsor_name,
-                                    17, "Case by case download", gsk_access_details,
-                                    "https://clinicalstudydatarequest.com/Help/Help-How-to-Request-Data.aspx",
-                                    null, download_datetime));
-
-                                    // add in title
-                                    object_titles.Add(new ObjectTitle(sd_oid, object_display_title,
-                                    title_type_id, title_type, true));
-
-                                    // for datasets also add dataset properties - even if they are largely unknown
-                                    if (object_type_id == 80)
-                                    {
-                                        if (sponsor_name == "GlaxoSmithKline" || sponsor_name == "GSK")
-                                        {
-                                            object_datasets.Add(new ObjectDataset(sd_oid, 
-                                                        3, "Anonymised", "GSK states that... 'researchers are provided access to anonymized patient-level data '",
-                                                        2, "De-identification applied", "",
-                                                        0, "Not known", ""));
-                                        }
-                                        else
-                                        {
-                                            object_datasets.Add(new ObjectDataset(sd_oid, 
-                                                        0, "Not known", "",
-                                                        0, "Not known", "",
-                                                        0, "Not known", ""));
-                                        }
+                                        object_type_id = 26; object_type = "Clinical Study Report";
                                     }
                                 }
 
-                                else if (ipd_url.Contains("servier.com"))
+                                else if (test_url.Contains("csp") || test_url.Contains("protocol"))
                                 {
-                                    // create a new data object
-                                    if (ipd_type.ToLower().Contains("study-level clinical trial data"))
+                                    if (test_url.Contains("redacted"))
                                     {
-                                        object_type_id = 69; object_type = "Aggregated result dataset";
+                                        object_type_id = 42; object_type = "Redacted Protocol";
+                                        instance_type_id = 5; instance_type = "Redacted version";
                                     }
                                     else
-                                        switch (ipd_type)
-                                        {
-                                            case "Informed Consent Form":
-                                                {
-                                                    object_type_id = 18; object_type = "Informed consent forms";
-                                                    break;
-                                                }
-                                            case "Statistical Analysis Plan":
-                                                {
-                                                    object_type_id = 22; object_type = "Statistical analysis plan";
-                                                    break;
-                                                }
-                                            case "Individual Participant Data Set":
-                                                {
-                                                    object_type_id = 80; object_type = "Individual Participant Data";
-                                                    break;
-                                                }
-                                            case "Clinical Study Report":
-                                                {
-                                                    object_type_id = 26; object_type = "Clinical Study Report";
-                                                    break;
-                                                }
-                                            case "Study Protocol":
-                                                {
-                                                    object_type_id = 11; object_type = "Study Protocol";
-                                                    break;
-                                                }
-                                        }
+                                    {
+                                        object_type_id = 11; object_type = "Study Protocol";
+                                    }
+                                }
 
-                                    object_class_id = (object_type_id == 80 || object_type_id == 69) ? 14 : 23;
-                                    object_class = (object_type_id == 80 || object_type_id == 69) ? "Dataset" : "Text";
+                                else if (test_url.Contains("sap") || test_url.Contains("analysis"))
+                                {
+                                    if (test_url.Contains("redacted"))
+                                    {
+                                        object_type_id = 43; object_type = "Redacted SAP";
+                                        instance_type_id = 5; instance_type = "Redacted version";
+                                    }
+                                    else
+                                    {
+                                        object_type_id = 22; object_type = "Statistical analysis plan";
+                                    }
+                                }
+
+                                else if (test_url.Contains("summary") || test_url.Contains("rds"))
+                                {
+                                    object_type_id = 79; object_type = "CSR Summary";
+                                    instance_type_id = 4; instance_type = "Summary version";
+                                }
+
+                                else if (test_url.Contains("poster"))
+                                {
+                                    object_type_id = 108; object_type = "Conference Poster";
+                                }
+
+
+                                if (object_type_id > 0 && sponsor_name != null)
+                                {
+                                    // Probably need to add a new data object. By default....
 
                                     object_display_title = title_base + " :: " + object_type;
 
@@ -1195,259 +1302,58 @@ namespace DataHarvester.ctg
                                     }
 
                                     sd_oid = hh.CreateMD5(sid + object_display_title);
+                                    // check here not a previous data object of the same type
+                                    // It may have the same url. If so ignore it.
+                                    // If it appears to be different, add a suffix to the data object name
 
-                                    data_objects.Add(new DataObject(sd_oid, sid, object_display_title, null,
-                                    object_class_id, object_class, object_type_id, object_type, 101418, "Servier",
-                                    18, "Case by case on-screen access", servier_access_details,
-                                    "https://clinicaltrials.servier.com/data-request-portal/", null, download_datetime));
+                                    object_class_id = 23; object_class = "Text";
+
+                                    DataObject doc_object = new DataObject(sd_oid, sid, object_display_title, null,
+                                    23, "Text", object_type_id, object_type, null, sponsor_name, 11, download_datetime);
+
+                                    // add data object
+                                    data_objects.Add(doc_object);
 
                                     // add in title
                                     title_type_id = 22; title_type = "Study short name :: object type";
                                     object_titles.Add(new ObjectTitle(sd_oid, object_display_title,
                                     title_type_id, title_type, true));
 
-                                    if (object_type_id == 80)
-                                    {
-                                        object_datasets.Add(new ObjectDataset(sd_oid,
-                                                    3, "Anonymised", "Sevier states that... 'Servier will provide anonymized patient-level and study-level clinical trial data'",
-                                                    2, "De-identification applied", "",
-                                                    0, "Not known", ""));
-                                    }
-                                }
+                                    // add in instance
+                                    object_instances.Add(new ObjectInstance(sd_oid, instance_type_id, instance_type,
+                                        101419, "TrialScope Disclose", link_url, true, 11, "PDF", null, null));
 
-                                else if (ipd_url.Contains("merck.com"))
-                                {
-
-                                    // some of the merck records are direct access to a page
-                                    // with a further link to a pdf, plus other study components
-
-                                    // the others are indications that the object exists but is not directly available
-                                    // create a new data object
-
-                                    if (ipd_url.Contains("&tab=access"))
-                                    {
-                                        object_type_id = 79; object_type = "CSR Summary";
-                                        object_class_id = 23; object_class = "Text";
-
-                                        // disregard the other entries - as they lead nowhere
-                                        object_display_title = title_base + " :: " + object_type;
-
-                                        // check name
-                                        int next_num = xh.CheckObjectName(object_titles, object_display_title);
-                                        if (next_num > 0)
-                                        {
-                                            object_display_title += "_" + next_num.ToString();
-                                        }
-
-                                        sd_oid = hh.CreateMD5(sid + object_display_title);
-
-                                        data_objects.Add(new DataObject(sd_oid, sid, object_display_title, null,
-                                        object_class_id, object_class, object_type_id, object_type,
-                                        100165, "Merck Sharp & Dohme", 11, download_datetime));
-
-                                        // add in title
-                                        title_type_id = 22; title_type = "Study short name :: object type";
-                                        object_titles.Add(new ObjectTitle(sd_oid, object_display_title,
-                                        title_type_id, title_type, true));
-
-                                        // add in instance
-                                        object_instances.Add(new ObjectInstance(sd_oid, 4, "Summary version", 100165,
-                                                    "Merck Sharp & Dohme Corp.", ipd_url, true, 11, "PDF", null, null));
-                                    }
-                                }
-                                else
-                                {
-                                    ipd_info.Add(new AvailableIPD(sid, ipd_id, ipd_type, ipd_url, ipd_comment));
                                 }
                             }
-                        }
-                    }
 
-                    // at the moment these records are for storage and future processing
-                    // tidy up urls, remove a small proportion of obvious non-useful links
+                            if (link_label == "To obtain contact information for a study center near you, click here.") add_to_db = false;
+                            if (link_label == "Researchers can use this site to request access to anonymised patient level data and/or supporting documents from clinical studies to conduct further research.") add_to_db = false;
+                            if (link_label == "University of Texas MD Anderson Cancer Center Website") add_to_db = false;
+                            if (link_label == "UT MD Anderson Cancer Center website") add_to_db = false;
+                            if (link_label == "Clinical Trials at Novo Nordisk") add_to_db = false;
+                            if (link_label == "Memorial Sloan Kettering Cancer Center") add_to_db = false;
+                            if (link_label == "AmgenTrials clinical trials website") add_to_db = false;
+                            if (link_label == "Mayo Clinic Clinical Trials") add_to_db = false;
+                            if (link_url == "http://trials.boehringer-ingelheim.com") add_to_db = false;
 
-                    ListType see_also_list = xh.FindList(items, "SeeAlsoLinkList");
-                    if (see_also_list != null)
-                    {
-                        var see_also_refs = see_also_list.Items;
-                        if (see_also_refs.Length > 0)
-                        {
-                            for (int i = 0; i < see_also_refs.Length; i++)
+                            if ((link_label == null || link_label == "") && (link_url.EndsWith(".com") || link_url.EndsWith(".org"))) add_to_db = false;
+
+                            // only add to links table if all tests above have failed
+
+                            if (add_to_db)
                             {
-                                StructType see_also = see_also_refs[i] as StructType;
-                                string link_label = xh.FieldValue(see_also.Items, "SeeAlsoLinkLabel");
-                                string link_url = xh.FieldValue(see_also.Items, "SeeAlsoLinkURL");
-
-                                if (link_url != null)
+                                if (link_label != null)
                                 {
-                                    bool add_to_db = true;
-                                    if (link_url.EndsWith("/")) link_url = link_url.Substring(0, link_url.Length - 1);
-
-                                    if (link_label == "NIH Clinical Center Detailed Web Page" && link_url.EndsWith(".html"))
-                                    {
-                                        // add new data object
-                                        object_type_id = 38; object_type = "Study Overview";
-                                        object_class_id = 23; object_class = "Text";
-
-                                        // disregard the other entries - as they lead nowhere
-                                        object_display_title = title_base + " :: " + object_type;
-
-                                        // check name
-                                        int next_num = xh.CheckObjectName(object_titles, object_display_title);
-                                        if (next_num > 0)
-                                        {
-                                            object_display_title += "_" + next_num.ToString();
-                                        }
-
-                                        sd_oid = hh.CreateMD5(sid + object_display_title);
-
-                                        data_objects.Add(new DataObject(sd_oid, sid, object_display_title, null,
-                                        object_class_id, object_class, object_type_id, object_type, 100360,
-                                        "National Institutes of Health Clinical Center", 11, download_datetime));
-
-                                        // add in title
-                                        title_type_id = 22; title_type = "Study short name :: object type";
-                                        object_titles.Add(new ObjectTitle(sd_oid, object_display_title,
-                                        title_type_id, title_type, true));
-
-                                        // add in instance
-                                        object_instances.Add(new ObjectInstance(sd_oid, 100360, "National Institutes of Health Clinical Center",
-                                                    link_url, true, 35, "Web text"));
-
-                                        add_to_db = false;
-                                    }
-
-                                    if (link_url.Contains("filehosting.pharmacm.com/Download"))
-                                    {
-                                        string test_url = link_url.ToLower();
-                                        object_type_id = 0;
-                                        int instance_type_id = 1; // default
-                                        string instance_type = "Full resource"; // default
-
-                                        if (test_url.Contains("csr") || (test_url.Contains("study") && test_url.Contains("report")))
-                                        {
-                                            if (test_url.Contains("redacted"))
-                                            {
-                                                object_type_id = 27; object_type = "Redacted Clinical Study Report";
-                                                instance_type_id = 5; instance_type = "Redacted version";
-                                            }
-                                            else if (test_url.Contains("summary"))
-                                            {
-                                                object_type_id = 79; object_type = "CSR Summary";
-                                                instance_type_id = 4; instance_type = "Summary version";
-                                            }
-                                            else
-                                            {
-                                                object_type_id = 26; object_type = "Clinical Study Report";
-                                            }
-                                        }
-
-                                        else if (test_url.Contains("csp") || test_url.Contains("protocol"))
-                                        {
-                                            if (test_url.Contains("redacted"))
-                                            {
-                                                object_type_id = 42; object_type = "Redacted Protocol";
-                                                instance_type_id = 5; instance_type = "Redacted version";
-                                            }
-                                            else
-                                            {
-                                                object_type_id = 11; object_type = "Study Protocol";
-                                            }
-                                        }
-
-                                        else if (test_url.Contains("sap") || test_url.Contains("analysis"))
-                                        {
-                                            if (test_url.Contains("redacted"))
-                                            {
-                                                object_type_id = 43; object_type = "Redacted SAP";
-                                                instance_type_id = 5; instance_type = "Redacted version";
-                                            }
-                                            else
-                                            {
-                                                object_type_id = 22; object_type = "Statistical analysis plan";
-                                            }
-                                        }
-
-                                        else if (test_url.Contains("summary") || test_url.Contains("rds"))
-                                        {
-                                            object_type_id = 79; object_type = "CSR Summary";
-                                            instance_type_id = 4; instance_type = "Summary version";
-                                        }
-
-                                        else if (test_url.Contains("poster"))
-                                        {
-                                            object_type_id = 108; object_type = "Conference Poster";
-                                        }
-
-
-                                        if (object_type_id > 0 && sponsor_name != null)
-                                        {
-                                            // Probably need to add a new data object. By default....
-
-                                            object_display_title = title_base + " :: " + object_type;
-
-                                            // check name
-                                            int next_num = xh.CheckObjectName(object_titles, object_display_title);
-                                            if (next_num > 0)
-                                            {
-                                                object_display_title += "_" + next_num.ToString();
-                                            }
-
-                                            sd_oid = hh.CreateMD5(sid + object_display_title);
-                                            // check here not a previous data object of the same type
-                                            // It may have the same url. If so ignore it.
-                                            // If it appears to be different, add a suffix to the data object name
-
-                                            object_class_id = 23; object_class = "Text";
-
-                                            DataObject doc_object = new DataObject(sd_oid, sid, object_display_title, null,
-                                            23, "Text", object_type_id, object_type, null, sponsor_name, 11, download_datetime);
-
-                                            // add data object
-                                            data_objects.Add(doc_object);
-
-                                            // add in title
-                                            title_type_id = 22; title_type = "Study short name :: object type";
-                                            object_titles.Add(new ObjectTitle(sd_oid, object_display_title,
-                                            title_type_id, title_type, true));
-
-                                            // add in instance
-                                            object_instances.Add(new ObjectInstance(sd_oid, instance_type_id, instance_type,
-                                                101419, "TrialScope Disclose", link_url, true, 11, "PDF", null, null));
-
-                                        }
-                                    }
-
-                                    if (link_label == "To obtain contact information for a study center near you, click here.") add_to_db = false;
-                                    if (link_label == "Researchers can use this site to request access to anonymised patient level data and/or supporting documents from clinical studies to conduct further research.") add_to_db = false;
-                                    if (link_label == "University of Texas MD Anderson Cancer Center Website") add_to_db = false;
-                                    if (link_label == "UT MD Anderson Cancer Center website") add_to_db = false;
-                                    if (link_label == "Clinical Trials at Novo Nordisk") add_to_db = false;
-                                    if (link_label == "Memorial Sloan Kettering Cancer Center") add_to_db = false;
-                                    if (link_label == "AmgenTrials clinical trials website") add_to_db = false;
-                                    if (link_label == "Mayo Clinic Clinical Trials") add_to_db = false;
-                                    if (link_url == "http://trials.boehringer-ingelheim.com") add_to_db = false;
-
-                                    if ((link_label == null || link_label == "") && (link_url.EndsWith(".com") || link_url.EndsWith(".org"))) add_to_db = false;
-
-                                    // only add to links table if all tests above have failed
-
-                                    if (add_to_db)
-                                    {
-                                        if (link_label != null)
-                                        {
-                                            link_label = link_label.Trim();
-                                            if (link_label.StartsWith("\"") && link_label.EndsWith("\"")) link_label = link_label.Substring(1, link_label.Length - 2);
-                                            if (link_label.StartsWith("((") && link_label.EndsWith("))")) link_label = link_label.Substring(2, link_label.Length - 4);
-                                            if (link_label.StartsWith("(") && link_label.EndsWith(")")) link_label = link_label.Substring(1, link_label.Length - 2);
-                                            if (link_label.StartsWith("|")) link_label = link_label.Substring(1, link_label.Length - 1);
-                                            if (link_label.StartsWith(".")) link_label = link_label.Substring(1, link_label.Length - 1);
-                                            if (link_label.StartsWith(":")) link_label = link_label.Substring(1, link_label.Length - 1);
-                                            link_label = link_label.Trim();
-                                        }
-                                        studylinks.Add(new StudyLink(sid, link_label, link_url));
-                                    }
+                                    link_label = link_label.Trim();
+                                    if (link_label.StartsWith("\"") && link_label.EndsWith("\"")) link_label = link_label.Substring(1, link_label.Length - 2);
+                                    if (link_label.StartsWith("((") && link_label.EndsWith("))")) link_label = link_label.Substring(2, link_label.Length - 4);
+                                    if (link_label.StartsWith("(") && link_label.EndsWith(")")) link_label = link_label.Substring(1, link_label.Length - 2);
+                                    if (link_label.StartsWith("|")) link_label = link_label.Substring(1, link_label.Length - 1);
+                                    if (link_label.StartsWith(".")) link_label = link_label.Substring(1, link_label.Length - 1);
+                                    if (link_label.StartsWith(":")) link_label = link_label.Substring(1, link_label.Length - 1);
+                                    link_label = link_label.Trim();
                                 }
+                                studylinks.Add(new StudyLink(sid, link_label, link_url));
                             }
                         }
                     }
@@ -1480,7 +1386,6 @@ namespace DataHarvester.ctg
                 }
             }
 
-            */
 
             s.identifiers = identifiers;
             s.titles = titles;
@@ -1499,7 +1404,6 @@ namespace DataHarvester.ctg
             s.object_instances = object_instances;
 
             return s;
-
         }
 
 
