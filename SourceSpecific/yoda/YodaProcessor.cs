@@ -1,6 +1,9 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Globalization;
+using System.Linq;
+using System.Xml;
+using System.Xml.Linq;
 using Serilog;
 
 namespace DataHarvester.yoda
@@ -18,7 +21,7 @@ namespace DataHarvester.yoda
             _logger = logger;
         }
 
-        public Study ProcessData(Yoda_Record st, DateTime? download_datetime)
+        public Study ProcessData(XmlDocument d, DateTime? download_datetime)
         {
             Study s = new Study();
 
@@ -46,24 +49,44 @@ namespace DataHarvester.yoda
             MD5Helpers hh = new MD5Helpers();
             HtmlHelpers mh = new HtmlHelpers(_logger);
 
-            // transfer features of main study object
+            // First convert the XML document to a Linq XML Document.
+
+            XDocument xDoc = XDocument.Load(new XmlNodeReader(d));
+
+            // Obtain the main top level elements of the registry entry.
             // In most cases study will have already been registered in CGT.
-            string sid = st.sd_sid;
+            XElement r = xDoc.Root;
+            
+            string sid = GetElementAsString(r.Element("sd_sid"));
             s.sd_sid = sid;
             s.datetime_of_data_fetch = download_datetime;
-            if (st.yoda_title.Contains("<"))
+
+            string yoda_title = GetElementAsString(r.Element("yoda_title"));
+            string display_title = GetElementAsString(r.Element("display_title"));
+            bool is_yoda_only = GetElementAsBool(r.Element("sd_sid")); 
+            string remote_url = GetElementAsString(r.Element("remote_url"));
+            string therapaeutic_area = GetElementAsString(r.Element("therapaeutic_area"));
+            string product_class = GetElementAsString(r.Element("product_class"));
+            string sponsor_protocol_id = GetElementAsString(r.Element("sponsor_protocol_id"));
+            string data_partner = GetElementAsString(r.Element("data_partner"));
+            string conditions_studied = GetElementAsString(r.Element("conditions_studied"));
+            string mean_age = GetElementAsString(r.Element("mean_age"));
+            string primary_citation_link = GetElementAsString(r.Element("primary_citation_link"));
+            string last_revised_date = GetElementAsString(r.Element("last_revised_date")); ;
+
+            if (yoda_title.Contains("<"))
             {
-                st.yoda_title = mh.replace_tags(st.yoda_title);
-                st.yoda_title = mh.strip_tags(st.yoda_title);
+                yoda_title = mh.replace_tags(yoda_title);
+                yoda_title = mh.strip_tags(yoda_title);
             }
 
-            if (st.display_title != null)
+            if (display_title != null)
             {
-                s.display_title = st.display_title;
+                s.display_title = display_title;
             }
             else
             {
-                s.display_title = st.yoda_title;
+                s.display_title = yoda_title;
             }
 
             // No brief description available 
@@ -73,26 +96,28 @@ namespace DataHarvester.yoda
             s.study_status = "Completed";  // assumption for entry onto web site
 
             // previously obtained from the ctg or isrctn entry
-            s.study_type_id = st.type_id;
-            if (st.type_id == 11)
-            {
-                s.study_type = "Interventional";
-            }
-            else if (st.type_id == 12)
-            {
-                s.study_type = "Observational";
-            }
+            //s.study_type_id = st.type_id;
+            //if (st.type_id == 11)
+            //{
+            //    s.study_type = "Interventional";
+            //}
+            //else if (st.type_id == 12)
+            //{
+            //    s.study_type = "Observational";
+            //}
 
             // study type only really relevant for non registered studies (others will  
             // have type identified in registered study entry
-            
 
-            if (Int32.TryParse(st.enrolment, out int enrolment_number))
+            string enrolment = GetElementAsString(r.Element("enrolment"));
+            string percent_female = GetElementAsString(r.Element("percent_female"));
+            string percent_male = GetElementAsString(r.Element("percent_male"));
+
+            if (Int32.TryParse(enrolment, out int enrolment_number))
             {
                 s.study_enrolment = enrolment_number;
             }
 
-            string percent_female = st.percent_female;
             if (!string.IsNullOrEmpty(percent_female) && percent_female != "N/A")
             {
                 if (percent_female.EndsWith("%"))
@@ -100,7 +125,7 @@ namespace DataHarvester.yoda
                     percent_female = percent_female.Substring(0, percent_female.Length - 1);
                 }
 
-                if (Single.TryParse(st.enrolment, out float female_percentage))
+                if (Single.TryParse(percent_female, out float female_percentage))
                 {
                     if (female_percentage == 0)
                     {
@@ -127,22 +152,33 @@ namespace DataHarvester.yoda
 
             // transfer title data
             // Normally just one - the 'yoda title'
-            if (st.study_titles.Count > 0)
-            {
-                foreach(Title t in st.study_titles)
-                {
-                    study_titles.Add(new StudyTitle(sid, t.title_text, t.title_type_id, t.title_type, t.is_default, t.comments));
-                }
-            }
+
+           //if (st.study_titles.Count > 0)
+            //{
+           //    foreach(Title t in st.study_titles)
+             //   {
+             //       study_titles.Add(new StudyTitle(sid, t.title_text, t.title_type_id, t.title_type, t.is_default, t.comments));
+             //   }
+            //}
 
             // transfer identifier data
             // Normally a protocol id will be the only addition (may be a duplicate of one already in the system)
-            if (st.study_identifiers.Count > 0)
+            XElement sids = r.Element("study_identifiers");
+            if (sids != null)
             {
-                foreach(Identifier i in st.study_identifiers)
+                var study_idents = sids.Elements("Identifier");
+                if (study_idents != null && study_idents.Count() > 0)
                 {
-                    study_identifiers.Add(new StudyIdentifier(sid, i.identifier_value, i.identifier_type_id, i.identifier_type,
-                                                      i.identifier_org_id, i.identifier_org));
+                    foreach (XElement i in study_idents)
+                    {
+                        string identifier_value = GetElementAsString(r.Element("identifier_value"));
+                        int? identifier_type_id = GetElementAsInt(r.Element("identifier_type_id"));
+                        string identifier_type = GetElementAsString(r.Element("identifier_type"));
+                        int? identifier_org_id = GetElementAsInt(r.Element("identifier_org_id"));
+                        string identifier_org = GetElementAsString(r.Element("identifier_org"));
+                        study_identifiers.Add(new StudyIdentifier(sid, identifier_value, identifier_type_id, identifier_type,
+                                                          identifier_org_id, identifier_org));
+                    }
                 }
             }
 
@@ -150,10 +186,12 @@ namespace DataHarvester.yoda
             // only sponsor knowm, and only relevant for non registered studies (others will  
             // have type identified in registered study entry).
             int? sponsor_org_id; string sponsor_org;
-            if (!string.IsNullOrEmpty(st.sponsor))
+            int? sponsor_id = GetElementAsInt(r.Element("sponsor_id"));
+            string sponsor = GetElementAsString(r.Element("sponsor"));
+            if (!string.IsNullOrEmpty(sponsor))
             {
-                sponsor_org_id = st.sponsor_id;
-                sponsor_org = sh.TidyOrgName(st.sponsor, sid);
+                sponsor_org_id = sponsor_id;
+                sponsor_org = sh.TidyOrgName(sponsor, sid);
             }
             else
             {
@@ -161,20 +199,22 @@ namespace DataHarvester.yoda
                 sponsor_org = "No organisation name provided in source data";
             }
 
-            if (st.is_yoda_only)
+            if (is_yoda_only)
             {
                 study_contributors.Add(new StudyContributor(sid, 54, "Study Sponsor", sponsor_org_id, sponsor_org, null, null));
             }
 
             // study topics
-            if (!string.IsNullOrEmpty(st.compound_generic_name))
+            string compound_generic_name = GetElementAsString(r.Element("compound_generic_name"));
+            string compound_product_name = GetElementAsString(r.Element("compound_product_name"));
+            if (!string.IsNullOrEmpty(compound_generic_name))
             {
-                study_topics.Add(new StudyTopic(sid, 12, "chemical / agent", st.compound_generic_name, "generic name"));
+                study_topics.Add(new StudyTopic(sid, 12, "chemical / agent", compound_generic_name, "generic name"));
             }
 
-            if (!string.IsNullOrEmpty(st.compound_product_name))
+            if (!string.IsNullOrEmpty(compound_product_name))
             {
-                string product_name = st.compound_product_name.Replace(((char)174).ToString(), "");    // drop reg mark
+                string product_name = compound_product_name.Replace(((char)174).ToString(), "");    // drop reg mark
                 product_name = product_name.Replace("   ", " ").Replace("  ", " ").Trim();
 
                 // see if already exists
@@ -194,9 +234,9 @@ namespace DataHarvester.yoda
                 }
             }
 
-            if (!string.IsNullOrEmpty(st.conditions_studied))
+            if (!string.IsNullOrEmpty(conditions_studied))
             {
-                study_topics.Add(new StudyTopic(sid, 13, "condition", st.conditions_studied));
+                study_topics.Add(new StudyTopic(sid, 13, "condition", conditions_studied));
             }
 
             // create study references (pmids)
@@ -225,122 +265,130 @@ namespace DataHarvester.yoda
             data_object_titles.Add(new ObjectTitle(sd_oid, object_display_title, 22,
                             "Study short name :: object type", true));
             data_object_instances.Add(new ObjectInstance(sd_oid, 101901, "Yoda",
-                                st.remote_url, true, 35, "Web text"));
+                                remote_url, true, 35, "Web text"));
 
             // then for each supp doc...
-            if (st.supp_docs.Count > 0)
+            XElement sds = r.Element("supp_docs");
+            if (sds != null)
             {
-                foreach (SuppDoc sd in st.supp_docs)
+                var supp_docs = sds.Elements("SuppDoc");
+                if (supp_docs != null && supp_docs.Count() > 0)
                 {
-                    // get object_type
-                    int object_class_id = 0; string object_class = "";
-                    int object_type_id = 0; string object_type = "";
-
-                    switch (sd.doc_name)
+                    foreach (XElement sd in supp_docs)
                     {
-                        case "Collected Datasets":
-                            {
-                                object_type_id = 80;
-                                object_type = "Individual Participant Data";
-                                object_class_id = 14; object_class = "Datasets";
-                                break;
-                            }
-                        case "Data Definition Specification":
-                            {
-                                object_type_id = 31;
-                                object_type = "Data Dictionary";
-                                object_class_id = 23; object_class = "Text";
-                                break;
-                            }
-                        case "Analysis Datasets":
-                            {
-                                object_type_id = 51;
-                                object_type = "IPD final analysis datasets (full study population)";
-                                object_class_id = 14; object_class = "Datasets";
-                                break;
-                            }
-                        case "CSR Summary":
-                            {
-                                object_type_id = 79;
-                                object_type = "CSR Summary";
-                                object_class_id = 23; object_class = "Text";
-                                break;
-                            }
-                        case "Annotated Case Report Form":
-                            {
-                                object_type_id = 30;
-                                object_type = "Annotated Data Collection Forms";
-                                object_class_id = 23; object_class = "Text";
-                                break;
-                            }
-                        case "Statistical Analysis Plan":
-                            {
-                                object_type_id = 22;
-                                object_type = "Statistical analysis plan";
-                                object_class_id = 23; object_class = "Text";
-                                break;
-                            }
-                        case "Protocol with Amendments":
-                            {
-                                object_type_id = 11;
-                                object_type = "Study Protocol";
-                                object_class_id = 23; object_class = "Text";
-                                break;
-                            }
-                        case "Clinical Study Report":
-                            {
-                                object_type_id = 26;
-                                object_type = "Clinical Study Report";
-                                object_class_id = 23; object_class = "Text";
-                                break;
-                            }
-                    }
+                        // get object_type
+                        int object_class_id = 0; string object_class = "";
+                        int object_type_id = 0; string object_type = "";
+                        string doc_name = GetElementAsString(sd.Element("doc_name"));
+                        string comment = GetElementAsString(sd.Element("comment"));
+                        string url = GetElementAsString(sd.Element("url"));
 
-                    object_display_title = name_base + " :: " + object_type;
-                    sd_oid = hh.CreateMD5(sid + object_display_title);
-
-                    if (sd.comment == "Available now")
-                    {
-                        data_objects.Add(new DataObject(sd_oid, sid, object_display_title, null, object_class_id, object_class, object_type_id, object_type,
-                                        101901, "Yoda", 11, download_datetime));
-                        data_object_titles.Add(new ObjectTitle(sd_oid, object_display_title, 22,"Study short name :: object type", true));
-
-                        // create instance as resource exists
-                        // get file type from link if possible
-                        int resource_type_id = 0; string resource_type = "";
-                        if (sd.url.ToLower().EndsWith(".pdf"))
+                        switch (doc_name)
                         {
-                            resource_type_id = 11;
-                            resource_type = "PDF";
+                            case "Collected Datasets":
+                                {
+                                    object_type_id = 80;
+                                    object_type = "Individual Participant Data";
+                                    object_class_id = 14; object_class = "Datasets";
+                                    break;
+                                }
+                            case "Data Definition Specification":
+                                {
+                                    object_type_id = 31;
+                                    object_type = "Data Dictionary";
+                                    object_class_id = 23; object_class = "Text";
+                                    break;
+                                }
+                            case "Analysis Datasets":
+                                {
+                                    object_type_id = 51;
+                                    object_type = "IPD final analysis datasets (full study population)";
+                                    object_class_id = 14; object_class = "Datasets";
+                                    break;
+                                }
+                            case "CSR Summary":
+                                {
+                                    object_type_id = 79;
+                                    object_type = "CSR Summary";
+                                    object_class_id = 23; object_class = "Text";
+                                    break;
+                                }
+                            case "Annotated Case Report Form":
+                                {
+                                    object_type_id = 30;
+                                    object_type = "Annotated Data Collection Forms";
+                                    object_class_id = 23; object_class = "Text";
+                                    break;
+                                }
+                            case "Statistical Analysis Plan":
+                                {
+                                    object_type_id = 22;
+                                    object_type = "Statistical analysis plan";
+                                    object_class_id = 23; object_class = "Text";
+                                    break;
+                                }
+                            case "Protocol with Amendments":
+                                {
+                                    object_type_id = 11;
+                                    object_type = "Study Protocol";
+                                    object_class_id = 23; object_class = "Text";
+                                    break;
+                                }
+                            case "Clinical Study Report":
+                                {
+                                    object_type_id = 26;
+                                    object_type = "Clinical Study Report";
+                                    object_class_id = 23; object_class = "Text";
+                                    break;
+                                }
                         }
-                        else if (sd.url.ToLower().EndsWith(".xls"))
+
+                        object_display_title = name_base + " :: " + object_type;
+                        sd_oid = hh.CreateMD5(sid + object_display_title);
+
+                        if (comment == "Available now")
                         {
-                            resource_type_id = 18;
-                            resource_type = "Excel Spreadsheet(s)";
+                            data_objects.Add(new DataObject(sd_oid, sid, object_display_title, null, object_class_id, object_class, object_type_id, object_type,
+                                            101901, "Yoda", 11, download_datetime));
+                            data_object_titles.Add(new ObjectTitle(sd_oid, object_display_title, 22, "Study short name :: object type", true));
+
+                            // create instance as resource exists
+                            // get file type from link if possible
+                            int resource_type_id = 0; string resource_type = "";
+                            if (url.ToLower().EndsWith(".pdf"))
+                            {
+                                resource_type_id = 11;
+                                resource_type = "PDF";
+                            }
+                            else if (url.ToLower().EndsWith(".xls"))
+                            {
+                                resource_type_id = 18;
+                                resource_type = "Excel Spreadsheet(s)";
+                            }
+                            else
+                            {
+                                resource_type_id = 0;
+                                resource_type = "Not yet known";
+                            }
+                            data_object_instances.Add(new ObjectInstance(sd_oid, 101901, "Yoda", url, true, resource_type_id, resource_type));
                         }
                         else
                         {
-                            resource_type_id = 0;
-                            resource_type = "Not yet known";
+                            DateTime date_access_url_checked = new DateTime(2020, 9, 23);
+                            data_objects.Add(new DataObject(sd_oid, sid, object_display_title, null, object_class_id, object_class, object_type_id, object_type,
+                                            101901, "Yoda", 17, "Case by case download", access_details,
+                                            "https://yoda.yale.edu/how-request-data", date_access_url_checked, download_datetime));
+                            data_object_titles.Add(new ObjectTitle(sd_oid, object_display_title, 22, "Study short name :: object type", true));
                         }
-                        data_object_instances.Add(new ObjectInstance(sd_oid, 101901, "Yoda", sd.url, true, resource_type_id, resource_type));
-                    }
-                    else
-                    {
-                        DateTime date_access_url_checked = new DateTime(2020, 9, 23);
-                        data_objects.Add(new DataObject(sd_oid, sid, object_display_title, null, object_class_id, object_class, object_type_id, object_type,
-                                        101901, "Yoda", 17, "Case by case download", access_details,
-                                        "https://yoda.yale.edu/how-request-data", date_access_url_checked, download_datetime));
-                        data_object_titles.Add(new ObjectTitle(sd_oid, object_display_title, 22, "Study short name :: object type", true));
-                    }
 
-                    // for datasets also add dataset properties - even if they are largely unknown
-                    if (object_type_id == 80)
-                    {
-                        object_datasets.Add(new ObjectDataset(sd_oid, 0, "Not known", "",
-                                                  2, "De-identification applied",
-                                                  "Yoda states that '...researchers will be granted access to participant-level study data that are devoid of personally identifiable information; current best guidelines for de-identification of data will be used.'",
-                                                  0, "Not known", ""));
+                        // for datasets also add dataset properties - even if they are largely unknown
+                        if (object_type_id == 80)
+                        {
+                            object_datasets.Add(new ObjectDataset(sd_oid, 0, "Not known", "",
+                                                      2, "De-identification applied",
+                                                      "Yoda states that '...researchers will be granted access to participant-level study data that are devoid of personally identifiable information; current best guidelines for de-identification of data will be used.'",
+                                                      0, "Not known", ""));
+                        }
                     }
                 }
             }
@@ -418,7 +466,49 @@ namespace DataHarvester.yoda
                 _storage_repo.StoreObjectTitles(och.object_titles_helper, s.object_titles, db_conn);
             }
         }
+
+
+        public string GetElementAsString(XElement e) => (e == null) ? null : (string)e;
+
+        public string GetAttributeAsString(XAttribute a) => (a == null) ? null : (string)a;
+
+        public int? GetElementAsInt(XElement e) => (e == null) ? null : (int?)e;
+
+        public int? GetAttributeAsInt(XAttribute a) => (a == null) ? null : (int?)a;
+
+        public bool GetAttributeAsBool(XAttribute a)
+        {
+            string avalue = GetAttributeAsString(a);
+            if (avalue != null)
+            {
+                return (avalue.ToUpper() == "Y") ? true : false;
+            }
+            else
+            {
+                return false;
+            }
+        }
+
+        public bool GetElementAsBool(XElement e)
+        {
+            string evalue = GetElementAsString(e);
+            if (evalue != null)
+            {
+                return (evalue.ToLower() == "true") ? true : false;
+            }
+            else
+            {
+                return false;
+            }
+        }
     }
 }
+
+
+
+
+}
+
+
 
 

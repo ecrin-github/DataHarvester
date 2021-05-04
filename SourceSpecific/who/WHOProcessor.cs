@@ -1,6 +1,9 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Text.RegularExpressions;
+using System.Xml;
+using System.Xml.Linq;
 using Serilog;
 
 namespace DataHarvester.who
@@ -18,7 +21,7 @@ namespace DataHarvester.who
             _logger = logger;
         }
 
-        public Study ProcessData(WHORecord st, DateTime? download_datetime)
+        public Study ProcessData(XmlDocument d, DateTime? download_datetime)
         {
             Study s = new Study();
 
@@ -44,25 +47,38 @@ namespace DataHarvester.who
             IdentifierHelpers ih = new IdentifierHelpers();
 
 
-            // transfer features of main study object
+            // First convert the XML document to a Linq XML Document.
 
-            string sid = st.sd_sid;
+            XDocument xDoc = XDocument.Load(new XmlNodeReader(d));
+
+            // Obtain the main top level elements of the registry entry.
+            // In most cases study will have already been registered in CGT.
+            XElement r = xDoc.Root;
+
+            string sid = GetElementAsString(r.Element("sd_sid"));
             s.sd_sid = sid;
             s.datetime_of_data_fetch = download_datetime;
 
+            // transfer features of main study object
+
+            s.sd_sid = sid;
+            s.datetime_of_data_fetch = download_datetime;
+
+            string date_registration = GetElementAsString(r.Element("date_registration"));
+            int? source_id = GetElementAsInt(r.Element("source_id"));
+            string public_title = sh.CheckTitle(GetElementAsString(r.Element("")));
+            string scientific_title = sh.CheckTitle(GetElementAsString(r.Element("scientific_title")));
+
             SplitDate registration_date = null;
-            if (!string.IsNullOrEmpty(st.date_registration))
+            if (!string.IsNullOrEmpty(date_registration))
             {
-                registration_date = dh.GetDatePartsFromISOString(st.date_registration);
+                registration_date = dh.GetDatePartsFromISOString(date_registration);
             }
 
-            study_identifiers.Add(new StudyIdentifier(sid, sid, 11, "Trial Registry ID", st.source_id,
-                                     ih.get_source_name(st.source_id), registration_date?.date_string, null));
+            study_identifiers.Add(new StudyIdentifier(sid, sid, 11, "Trial Registry ID", source_id,
+                                     ih.get_source_name(source_id), registration_date?.date_string, null));
 
             // titles
-            string public_title = sh.CheckTitle(st.public_title);
-            string scientific_title = sh.CheckTitle(st.scientific_title);
-
             if (public_title == "")
             {
                 if (scientific_title != "")
@@ -106,11 +122,13 @@ namespace DataHarvester.who
             // e.g. Spanish, German, French - may be linkable to the source registry
 
             // brief description
-            string interventions = "", primary_outcome = "", study_design = "";
+            string interventions = GetElementAsString(r.Element("interventions"));
+            string primary_outcome = GetElementAsString(r.Element("primary_outcome"));
+            string design_string = GetElementAsString(r.Element("design_string"));
 
-            if (!string.IsNullOrEmpty(st.interventions))
+            if (!string.IsNullOrEmpty(interventions))
             {
-                interventions = st.interventions.Trim();
+                interventions = interventions.Trim();
                 if (!interventions.ToLower().StartsWith("intervention"))
                 {
                     interventions = "Interventions: " + interventions;
@@ -121,9 +139,9 @@ namespace DataHarvester.who
                 }
             }
 
-            if (!string.IsNullOrEmpty(st.primary_outcome))
+            if (!string.IsNullOrEmpty(primary_outcome))
             {
-                primary_outcome = st.primary_outcome.Trim();
+                primary_outcome = primary_outcome.Trim();
                 if (!primary_outcome.ToLower().StartsWith("primary"))
                 {
                     primary_outcome = "Primary outcome(s): " + primary_outcome;
@@ -136,11 +154,11 @@ namespace DataHarvester.who
                 }
             }
 
-
-            if (!string.IsNullOrEmpty(st.design_string)
-                && !st.design_string.ToLower().Contains("not selected"))
+            string study_design = "";
+            if (!string.IsNullOrEmpty(design_string)
+                && !design_string.ToLower().Contains("not selected"))
             {
-                study_design = st.design_string.Trim();
+                study_design = design_string.Trim();
                 if (!study_design.ToLower().StartsWith("primary"))
                 {
                     study_design = "Study Design: " + study_design;
@@ -160,14 +178,15 @@ namespace DataHarvester.who
             }
 
             // data sharing statement
-            if (!string.IsNullOrEmpty(st.ipd_description)
-                && st.ipd_description.Length > 10
-                && st.ipd_description.ToLower() != "not available"
-                && st.ipd_description.ToLower() != "not avavilable"
-                && st.ipd_description.ToLower() != "not applicable"
-                && !st.ipd_description.Contains("justification or reason for"))
+            string ipd_description = GetElementAsString(r.Element("ipd_description"));
+            if (!string.IsNullOrEmpty(ipd_description)
+                && ipd_description.Length > 10
+                && ipd_description.ToLower() != "not available"
+                && ipd_description.ToLower() != "not avavilable"
+                && ipd_description.ToLower() != "not applicable"
+                && !ipd_description.Contains("justification or reason for"))
             {
-                s.data_sharing_statement = st.ipd_description;
+                s.data_sharing_statement = ipd_description;
                 if (s.data_sharing_statement.Contains("<"))
                 {
                     s.data_sharing_statement = mh.replace_tags(s.data_sharing_statement);
@@ -175,9 +194,10 @@ namespace DataHarvester.who
                 }
             }
 
-            if (!string.IsNullOrEmpty(st.date_enrolment))
+            string date_enrolment = GetElementAsString(r.Element("date_enrolment"));
+            if (!string.IsNullOrEmpty(date_enrolment))
             {
-                SplitDate enrolment_date = dh.GetDatePartsFromISOString(st.date_enrolment);
+                SplitDate enrolment_date = dh.GetDatePartsFromISOString(date_enrolment);
                 if (enrolment_date?.year > 1960)
                 {
                     s.study_start_year = enrolment_date.year;
@@ -185,24 +205,28 @@ namespace DataHarvester.who
                 }
             }
 
+
             // study type and status 
-            if (!string.IsNullOrEmpty(st.study_type))
+            string study_type = GetElementAsString(r.Element("study_type"));
+            string study_status = GetElementAsString(r.Element("study_status"));
+
+            if (!string.IsNullOrEmpty(study_type))
             {
-                if (st.study_type.StartsWith("Other"))
+                if (study_type.StartsWith("Other"))
                 {
                     s.study_type = "Other";
                     s.study_type_id = 16;
                 }
                 else
                 {
-                    s.study_type = st.study_type; ;
+                    s.study_type = study_type; ;
                     s.study_type_id = th.GetTypeId(s.study_type);
                 }
             }
 
-            if (!string.IsNullOrEmpty(st.study_status))
+            if (!string.IsNullOrEmpty(study_status))
             {
-                if (st.study_status.StartsWith("Other"))
+                if (study_status.StartsWith("Other"))
                 {
                     s.study_status = "Other";
                     s.study_status_id = 24;
@@ -210,7 +234,7 @@ namespace DataHarvester.who
                 }
                 else
                 {
-                    s.study_status = st.study_status;
+                    s.study_status = study_status;
                     s.study_status_id = th.GetStatusId(s.study_status);
                 }
             }
@@ -220,13 +244,14 @@ namespace DataHarvester.who
             int? enrolment = 0;
 
             // use actual enrolment figure if present and not a data or a dummy figure
-            if (!string.IsNullOrEmpty(st.results_actual_enrollment)
-                && !st.results_actual_enrollment.Contains("9999")
-                && !Regex.Match(st.results_actual_enrollment, @"\d{4}-\d{2}-\d{2}").Success)
+            string results_actual_enrollment = GetElementAsString(r.Element("results_actual_enrollment"));
+            if (!string.IsNullOrEmpty(results_actual_enrollment)
+                && !results_actual_enrollment.Contains("9999")
+                && !Regex.Match(results_actual_enrollment, @"\d{4}-\d{2}-\d{2}").Success)
             {
-                if (Regex.Match(st.results_actual_enrollment, @"\d+").Success)
+                if (Regex.Match(results_actual_enrollment, @"\d+").Success)
                 {
-                    string enrolment_as_string = Regex.Match(st.results_actual_enrollment, @"\d+").Value;
+                    string enrolment_as_string = Regex.Match(results_actual_enrollment, @"\d+").Value;
                     if (Int32.TryParse(enrolment_as_string, out int numeric_value))
                     {
                         if (numeric_value < 10000)
@@ -243,12 +268,13 @@ namespace DataHarvester.who
             }
 
             // use the target if that is all that is available
-            if (enrolment == 0 && !string.IsNullOrEmpty(st.target_size)
-                && !st.target_size.Contains("9999"))
+            string target_size = GetElementAsString(r.Element("target_size"));
+            if (enrolment == 0 && !string.IsNullOrEmpty(target_size)
+                && !target_size.Contains("9999"))
             {
-                if (Regex.Match(st.target_size, @"\d+").Success)
+                if (Regex.Match(target_size, @"\d+").Success)
                 {
-                    string enrolment_as_string = Regex.Match(st.target_size, @"\d+").Value;
+                    string enrolment_as_string = Regex.Match(target_size, @"\d+").Value;
                     if (Int32.TryParse(enrolment_as_string, out int numeric_value))
                     {
                         if (numeric_value < 10000)
@@ -265,18 +291,22 @@ namespace DataHarvester.who
             }
             s.study_enrolment = enrolment > 0 ? enrolment : null;
 
+            string agemin = GetElementAsString(r.Element("agemin"));
+            string agemin_units = GetElementAsString(r.Element("agemin_units"));
+            string agemax = GetElementAsString(r.Element("agemax"));
+            string agemax_units = GetElementAsString(r.Element("agemax_units"));
 
-            if (Int32.TryParse(st.agemin, out int min))
+            if (Int32.TryParse(agemin, out int min))
             {
                 s.min_age = min;
-                if (st.agemin_units.StartsWith("Other"))
+                if (agemin_units.StartsWith("Other"))
                 {
                     // was not classified previously...
-                    s.min_age_units = th.GetTimeUnits(st.agemin_units);
+                    s.min_age_units = th.GetTimeUnits(agemin_units);
                 }
                 else
                 {
-                    s.min_age_units = st.agemin_units;
+                    s.min_age_units = agemin_units;
                 }
                 if (s.min_age_units != null)
                 {
@@ -285,19 +315,19 @@ namespace DataHarvester.who
             }
 
 
-            if (Int32.TryParse(st.agemax, out int max))
+            if (Int32.TryParse(agemax, out int max))
             {
                 if (max != 0)
                 {
                     s.max_age = max;
-                    if (st.agemax_units.StartsWith("Other"))
+                    if (agemax_units.StartsWith("Other"))
                     {
                         // was not classified previously...
-                        s.max_age_units = th.GetTimeUnits(st.agemax_units);
+                        s.max_age_units = th.GetTimeUnits(agemax_units);
                     }
                     else
                     {
-                        s.max_age_units = st.agemax_units;
+                        s.max_age_units = agemax_units;
                     }
                     if (s.max_age_units != null)
                     {
@@ -306,14 +336,14 @@ namespace DataHarvester.who
                 }
             }
 
-
-            if (st.gender.Contains("?? Unable to classify"))
+            string gender = GetElementAsString(r.Element("gender"));
+            if (gender.Contains("?? Unable to classify"))
             {
-                st.gender = "Not provided";
+                gender = "Not provided";
             }
 
-            s.study_gender_elig = st.gender;
-            s.study_gender_elig_id = th.GetGenderEligId(st.gender);
+            s.study_gender_elig = gender;
+            s.study_gender_elig_id = th.GetGenderEligId(gender);
 
 
             // Add study attribute records.
@@ -321,9 +351,10 @@ namespace DataHarvester.who
             // study contributors - Sponsor N.B. default below
             string sponsor_name = "No organisation name provided in source data";
 
-            if (!string.IsNullOrEmpty(st.primary_sponsor))
+            string primary_sponsor = GetElementAsString(r.Element("primary_sponsor"));
+            if (!string.IsNullOrEmpty(primary_sponsor))
             {
-                sponsor_name = sh.TidyOrgName(st.primary_sponsor, sid);
+                sponsor_name = sh.TidyOrgName(primary_sponsor, sid);
                 string sponsor = sponsor_name.ToLower();
                 if (sh.FilterOut_Null_OrgNames(sponsor) != "")
                 {
@@ -342,85 +373,117 @@ namespace DataHarvester.who
 
             // Study lead
             string study_lead = "";
-            if (!string.IsNullOrEmpty(st.scientific_contact_givenname) || !string.IsNullOrEmpty(st.scientific_contact_familyname))
+            string scientific_contact_givenname = GetElementAsString(r.Element("scientific_contact_givenname"));
+            string scientific_contact_familyname = GetElementAsString(r.Element("scientific_contact_familyname"));
+            string scientific_contact_affiliation = GetElementAsString(r.Element("scientific_contact_affiliation"));
+            if (!string.IsNullOrEmpty(scientific_contact_givenname) || !string.IsNullOrEmpty(scientific_contact_familyname))
             {
-                string givenname = st.scientific_contact_givenname ?? "";
-                string familyname = st.scientific_contact_familyname ?? "";
+                string givenname = scientific_contact_givenname ?? "";
+                string familyname = scientific_contact_familyname ?? "";
                 string full_name = (givenname + " " + familyname).Trim();
                 study_lead = full_name;  // for later comparison
-                string affiliation = st.scientific_contact_affiliation ?? "";
+                string affiliation = scientific_contact_affiliation ?? "";
                 study_contributors.Add(new StudyContributor(sid, 51, "Study Lead", null, null, full_name, affiliation));
             }
 
             // public contact
-            if (!string.IsNullOrEmpty(st.public_contact_givenname) || !string.IsNullOrEmpty(st.public_contact_familyname))
+            string public_contact_givenname = GetElementAsString(r.Element("public_contact_givenname"));
+            string public_contact_familyname = GetElementAsString(r.Element("public_contact_familyname"));
+            string public_contact_affiliation = GetElementAsString(r.Element("public_contact_affiliation"));
+            if (!string.IsNullOrEmpty(public_contact_givenname) || !string.IsNullOrEmpty(public_contact_familyname))
             {
-                string givenname = st.public_contact_givenname ?? "";
-                string familyname = st.public_contact_familyname ?? "";
+                string givenname = public_contact_givenname ?? "";
+                string familyname = public_contact_familyname ?? "";
                 string full_name = (givenname + " " + familyname).Trim();
                 if (full_name != study_lead)  // often duplicated
                 {
-                    string affiliation = st.public_contact_affiliation ?? "";
+                    string affiliation = public_contact_affiliation ?? "";
                     study_contributors.Add(new StudyContributor(sid, 56, "Public Contact", null, null, full_name, affiliation));
                 }
             }
 
             // study features 
-            if (st.study_features.Count > 0)
+            XElement sf = r.Element("study_features");
+            if (sf != null)
             {
-                foreach (StudyFeature f in st.study_features)
+                var study_feats = sf.Elements("StudyFeatures");
+                if (study_feats != null && study_feats.Count() > 0)
                 {
-                    study_features.Add(new DataHarvester.StudyFeature(sid, f.ftype_id, f.ftype, f.fvalue_id, f.fvalue));
+                    foreach (XElement f in study_feats)
+                    {
+                        int? ftype_id = GetElementAsInt(f.Element("ftype_id"));
+                        string ftype = GetElementAsString(f.Element("ftype"));
+                        int? fvalue_id = GetElementAsInt(f.Element("fvalue_id"));
+                        string fvalue = GetElementAsString(f.Element("fvalue"));
+                        study_features.Add(new DataHarvester.StudyFeature(sid, ftype_id, ftype, fvalue_id, fvalue));
+                    }
                 }
             }
 
+
             //study identifiers
-            if (st.secondary_ids.Count > 0)
+            XElement sids = r.Element("secondary_ids");
+            if (sids != null)
             {
-                foreach (Secondary_Id id in st.secondary_ids)
+                var secondary_ids = sids.Elements("Secondary_Id");
+                if (secondary_ids != null && secondary_ids.Count() > 0)
                 {
-                    if (id.sec_id_source == null)
+                    foreach (XElement id in secondary_ids)
                     {
-                        study_identifiers.Add(new StudyIdentifier(sid, id.processed_id, 14, "Sponsor ID", null, sponsor_name));
-                    }
-                    else
-                    {
-                        if (id.sec_id_source == 102000)
+                        int? sec_id_source = GetElementAsInt(id.Element("sec_id_source"));
+                        string processed_id = GetElementAsString(id.Element("processed_id"));
+                        if (sec_id_source == null)
                         {
-                            study_identifiers.Add(new StudyIdentifier(sid, id.processed_id, 41, "Regulatory Body ID", 102000, "Anvisa (Brazil)"));
-                        }
-                        else if (id.sec_id_source == 102001)
-                        {
-                            study_identifiers.Add(new StudyIdentifier(sid, id.processed_id, 12, "Ethics Review ID", 102001, "Comitê de Ética em Pesquisa (local) (Brazil)"));
+                            study_identifiers.Add(new StudyIdentifier(sid, processed_id, 14, "Sponsor ID", null, sponsor_name));
                         }
                         else
                         {
-                            study_identifiers.Add(new StudyIdentifier(sid, id.processed_id, 11, "Trial Registry ID", id.sec_id_source, ih.get_source_name(id.sec_id_source)));
+                            if (sec_id_source == 102000)
+                            {
+                                study_identifiers.Add(new StudyIdentifier(sid, processed_id, 41, "Regulatory Body ID", 102000, "Anvisa (Brazil)"));
+                            }
+                            else if (sec_id_source == 102001)
+                            {
+                                study_identifiers.Add(new StudyIdentifier(sid, processed_id, 12, "Ethics Review ID", 102001, "Comitê de Ética em Pesquisa (local) (Brazil)"));
+                            }
+                            else
+                            {
+                                study_identifiers.Add(new StudyIdentifier(sid, processed_id, 11, "Trial Registry ID", sec_id_source, ih.get_source_name(sec_id_source)));
+                            }
                         }
                     }
                 }
             }
 
             // study conditions
-            if (st.condition_list.Count > 0)
+            XElement cl = r.Element("condiiton_list");
+            if (cl != null)
             {
-                foreach (StudyCondition sc in st.condition_list)
+                var conditions = cl.Elements("StudyCondition");
+                if (conditions != null && conditions.Count() > 0)
                 {
-                    if (!string.IsNullOrEmpty(sc.condition))
+                    foreach (XElement cn in conditions)
                     {
-                        char[] chars_to_trim = {' ', '?', ':', '*', '/', '-', '_', '+', '='};
-                        string cond = sc.condition.Trim(chars_to_trim);
-                        if (!string.IsNullOrEmpty(cond) && cond.ToLower() != "not applicable" && cond.ToLower() != "&quot")
+                        string condition = GetElementAsString(cn.Element("condition"));
+                        if (!string.IsNullOrEmpty(condition))
                         {
-                            if (sc.code == null)
+                            char[] chars_to_trim = { ' ', '?', ':', '*', '/', '-', '_', '+', '=' };
+                            string cond = condition.Trim(chars_to_trim);
+                            if (!string.IsNullOrEmpty(cond) && cond.ToLower() != "not applicable" && cond.ToLower() != "&quot")
                             {
-                                study_topics.Add(new StudyTopic(sid, 13, "Condition", cond));
-                            }
-                            else
-                            {
-                                if (sc.code_system == "ICD 10")
+                                string code = GetElementAsString(cn.Element("code"));
+                                string code_system = GetElementAsString(cn.Element("code_system"));
+
+                                if (code == null)
                                 {
-                                    study_topics.Add(new StudyTopic(sid, 13, "Condition", cond, 12, sc.code, ""));
+                                    study_topics.Add(new StudyTopic(sid, 13, "Condition", cond));
+                                }
+                                else
+                                {
+                                    if (code_system == "ICD 10")
+                                    {
+                                        study_topics.Add(new StudyTopic(sid, 13, "Condition", cond, 12, code, ""));
+                                    }
                                 }
                             }
                         }
@@ -437,15 +500,16 @@ namespace DataHarvester.who
 
             int? pub_year = registration_date?.year;
 
-            string source_name = ih.get_source_name(st.source_id);
+            string source_name = ih.get_source_name(source_id);
             data_objects.Add(new DataObject(sd_oid, sid, object_display_title, pub_year, 23, "Text", 13, "Trial Registry entry",
-                st.source_id, source_name, 12, download_datetime));
+                source_id, source_name, 12, download_datetime));
 
             data_object_titles.Add(new ObjectTitle(sd_oid, object_display_title, 22,
                                 "Study short name :: object type", true));
 
-            data_object_instances.Add(new ObjectInstance(sd_oid, st.source_id, source_name,
-                                st.remote_url, true, 35, "Web text"));
+            string remote_url = GetElementAsString(r.Element("remote_url"));
+            data_object_instances.Add(new ObjectInstance(sd_oid, source_id, source_name,
+                                remote_url, true, 35, "Web text"));
 
             if (registration_date != null)
             {
@@ -453,26 +517,28 @@ namespace DataHarvester.who
                           registration_date.month, registration_date.day, registration_date.date_string));
             }
 
-            if (st.record_date != null)
+            string rec_date = GetElementAsString(r.Element("record_date"));
+            if (rec_date != null)
             {
-                SplitDate record_date = dh.GetDatePartsFromISOString(st.record_date);
+                SplitDate record_date = dh.GetDatePartsFromISOString(rec_date);
                 data_object_dates.Add(new ObjectDate(sd_oid, 18, "Updated", record_date.year,
                           record_date.month, record_date.day, record_date.date_string));
 
             }
 
-
+            string results_url_link = GetElementAsString(r.Element("results_url_link"));
+            string results_date_posted = GetElementAsString(r.Element("results_date_posted"));
             // there may be (rarely) a results link... (exclude those on CTG - should be picked up there)
-            if (!string.IsNullOrEmpty(st.results_url_link))
+            if (!string.IsNullOrEmpty(results_url_link))
             {
-                if (st.results_url_link.Contains("http") && !st.results_url_link.ToLower().Contains("clinicaltrials.gov"))
+                if (results_url_link.Contains("http") && !results_url_link.ToLower().Contains("clinicaltrials.gov"))
                 {
                     object_display_title = name_base + " :: " + "Results summary";
                     sd_oid = hh.CreateMD5(sid + object_display_title);
                     SplitDate results_date = null;
-                    if (st.results_date_posted != null)
+                    if (results_date_posted != null)
                     {
-                        results_date = dh.GetDatePartsFromISOString(st.results_date_posted);
+                        results_date = dh.GetDatePartsFromISOString(results_date_posted);
                     }
 
                     int? posted_year = results_date?.year;
@@ -480,13 +546,13 @@ namespace DataHarvester.who
                     // (in practice may not be in the registry)
                     data_objects.Add(new DataObject(sd_oid, sid, object_display_title, posted_year, 
                                      23, "Text", 28, "Trial registry results summary",
-                                     st.source_id, source_name, 12, download_datetime));
+                                     source_id, source_name, 12, download_datetime));
 
                     data_object_titles.Add(new ObjectTitle(sd_oid, object_display_title, 22,
                                         "Study short name :: object type", true));
 
-                    string url_link = Regex.Match(st.results_url_link, @"(http|https)://[\w-]+(\.[\w-]+)+([\w\.,@\?\^=%&:/~\+#-]*[\w@\?\^=%&/~\+#-])?").Value;
-                    data_object_instances.Add(new ObjectInstance(sd_oid, st.source_id, source_name,
+                    string url_link = Regex.Match(results_url_link, @"(http|https)://[\w-]+(\.[\w-]+)+([\w\.,@\?\^=%&:/~\+#-]*[\w@\?\^=%&/~\+#-])?").Value;
+                    data_object_instances.Add(new ObjectInstance(sd_oid, source_id, source_name,
                                         url_link, true, 35, "Web text"));
 
                     if (results_date != null)
@@ -499,9 +565,10 @@ namespace DataHarvester.who
 
 
             // there may be (rarely) a protocol link...(exclude those simply referring to CTG - should be picked up there)
-            if (!string.IsNullOrEmpty(st.results_url_protocol))
+            string results_url_protocol = GetElementAsString(r.Element("results_url_protocol"));
+            if (!string.IsNullOrEmpty(results_url_protocol))
             {
-                string prot_url = st.results_url_protocol.ToLower();
+                string prot_url = results_url_protocol.ToLower();
                 if (prot_url.Contains("http") && !prot_url.Contains("clinicaltrials.gov"))
                 {
                     // presumed to be a download or a web reference
@@ -509,12 +576,12 @@ namespace DataHarvester.who
                     int resource_type_id = 0;
                     string url_link = "";
                     int url_start = prot_url.IndexOf("http");
-                    if (st.results_url_protocol.Contains(".pdf"))
+                    if (results_url_protocol.Contains(".pdf"))
                     {
                         resource_type = "PDF";
                         resource_type_id = 11;
                         int pdf_end = prot_url.IndexOf(".pdf");
-                        url_link = st.results_url_protocol.Substring(url_start, pdf_end - url_start + 4);
+                        url_link = results_url_protocol.Substring(url_start, pdf_end - url_start + 4);
 
                     }
                     else if (prot_url.Contains(".doc"))
@@ -524,12 +591,12 @@ namespace DataHarvester.who
                         if (prot_url.Contains(".docx"))
                         {
                             int docx_end = prot_url.IndexOf(".docx");
-                            url_link = st.results_url_protocol.Substring(url_start, docx_end - url_start + 5);
+                            url_link = results_url_protocol.Substring(url_start, docx_end - url_start + 5);
                         }
                         else
                         {
                             int doc_end = prot_url.IndexOf(".doc");
-                            url_link = st.results_url_protocol.Substring(url_start, doc_end - url_start + 4);
+                            url_link = results_url_protocol.Substring(url_start, doc_end - url_start + 4);
                         }
                     }
                     else
@@ -537,7 +604,7 @@ namespace DataHarvester.who
                         // most probably some sort of web reference
                         resource_type = "Web text";
                         resource_type_id = 35;
-                        url_link = Regex.Match(st.results_url_protocol, @"(http|https)://[\w-]+(\.[\w-]+)+([\w\.,@\?\^=%&:/~\+#-]*[\w@\?\^=%&/~\+#-])?").Value;
+                        url_link = Regex.Match(results_url_protocol, @"(http|https)://[\w-]+(\.[\w-]+)+([\w\.,@\?\^=%&:/~\+#-]*[\w@\?\^=%&/~\+#-])?").Value;
                     }
 
                     int object_type_id = 0; string object_type = "";
@@ -562,7 +629,7 @@ namespace DataHarvester.who
                     data_object_titles.Add(new ObjectTitle(sd_oid, object_display_title, 22,
                                         "Study short name :: object type", true));
 
-                    data_object_instances.Add(new ObjectInstance(sd_oid, st.source_id, source_name,
+                    data_object_instances.Add(new ObjectInstance(sd_oid, source_id, source_name,
                                         url_link, true, resource_type_id, resource_type));
                     
                 }
@@ -661,6 +728,40 @@ namespace DataHarvester.who
             }
         }
 
+
+        public string GetElementAsString(XElement e) => (e == null) ? null : (string)e;
+
+        public string GetAttributeAsString(XAttribute a) => (a == null) ? null : (string)a;
+
+        public int? GetElementAsInt(XElement e) => (e == null) ? null : (int?)e;
+
+        public int? GetAttributeAsInt(XAttribute a) => (a == null) ? null : (int?)a;
+
+        public bool GetAttributeAsBool(XAttribute a)
+        {
+            string avalue = GetAttributeAsString(a);
+            if (avalue != null)
+            {
+                return (avalue.ToUpper() == "Y") ? true : false;
+            }
+            else
+            {
+                return false;
+            }
+        }
+
+        public bool GetElementAsBool(XElement e)
+        {
+            string evalue = GetElementAsString(e);
+            if (evalue != null)
+            {
+                return (evalue.ToLower() == "true") ? true : false;
+            }
+            else
+            {
+                return false;
+            }
+        }
 
     }
 

@@ -1,6 +1,8 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Globalization;
+using System.Xml;
+using System.Xml.Linq;
 using Serilog;
 
 namespace DataHarvester.euctr
@@ -18,9 +20,8 @@ namespace DataHarvester.euctr
 			_logger = logger;
 		}
 
-		public Study ProcessData(Object rs, DateTime? download_datetime)
+		public Study ProcessData(XmlDocument d, DateTime? download_datetime)
 		{
-			EUCTR_Record fs = (EUCTR_Record)rs;
 			Study s = new Study();
 			List<StudyIdentifier> identifiers = new List<StudyIdentifier>();
 			List<StudyTitle> titles = new List<StudyTitle>();
@@ -35,6 +36,14 @@ namespace DataHarvester.euctr
 			MD5Helpers hh = new MD5Helpers();
 			StringHelpers sh = new StringHelpers(_logger, _mon_repo);
     		HtmlHelpers mh = new HtmlHelpers(_logger);
+
+			// First convert the XML document to a Linq XML Document.
+
+			XDocument xDoc = XDocument.Load(new XmlNodeReader(d));
+
+			// Obtain the main top level elements of the registry entry.
+
+			XElement FullStudy = xDoc.Root;
 
 			// STUDY AND ATTRIBUTES
 

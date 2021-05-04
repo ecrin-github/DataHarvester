@@ -11,21 +11,18 @@ namespace DataHarvester.ctg
         ILogger _logger;
         IMonitorDataLayer _mon_repo;
         IStorageDataLayer _storage_repo;
-        XmlSerializer _serializer;
         CTGProcessor _processor;
         Source source;
         int harvest_type_id;
         int harvest_id;
 
         public CTGController(ILogger logger, IMonitorDataLayer mon_repo, IStorageDataLayer storage_repo,
-                             Source _source, int _harvest_type_id, int _harvest_id,
-                             XmlSerializer serializer, CTGProcessor processor)
+                             Source _source, int _harvest_type_id, int _harvest_id, CTGProcessor processor)
         {
             _logger = logger;
             _mon_repo = mon_repo;
             _storage_repo = storage_repo;
             _processor = processor;
-            _serializer = serializer;
             source = _source;
             harvest_type_id = _harvest_type_id;
             harvest_id = _harvest_id;
@@ -33,7 +30,7 @@ namespace DataHarvester.ctg
  
         public int? LoopThroughFiles()
         {
-            // Loop through the available records a chunk at a time (may be 1 for smaller rexord sources)
+            // Loop through the available records a chunk at a time (may be 1 for smaller record sources)
             // First get the total number of records in the system for this source
             // Set up the outer limit and get the relevant records for each pass
 
@@ -42,12 +39,16 @@ namespace DataHarvester.ctg
             int k = 0;
             for (int m = 0; m < total_amount; m += chunk)
             {
+                // if (k > 50) break; // for testing...
+
                 IEnumerable<StudyFileRecord> file_list = _mon_repo
                         .FetchStudyFileRecordsByOffset(source.id, m, chunk, harvest_type_id);
 
                 int n = 0; string filePath = "";
                 foreach (StudyFileRecord rec in file_list)
                 {
+                    // if (k > 50) break; // for testing...
+
                     n++; k++;
                     filePath = rec.local_path;
 
@@ -57,20 +58,6 @@ namespace DataHarvester.ctg
                         xdoc.Load(filePath);
                         Study s = _processor.ProcessData(xdoc, rec.last_downloaded);
 
-
-                        /*
-                        string inputString = "";
-                        using (var streamReader = new StreamReader(filePath, System.Text.Encoding.UTF8))
-                        {
-                            inputString += streamReader.ReadToEnd();
-                        }
-
-                        StringReader rdr = new StringReader(inputString);
-                        var studyEntry = _serializer.Deserialize(rdr);
-
-                        // break up the file into relevant data classes
-                        Study s = _processor.ProcessData(studyEntry, rec.last_downloaded);
-                        */
                         // store the data in the database
                         _processor.StoreData(s, source.db_conn);
 
@@ -82,11 +69,11 @@ namespace DataHarvester.ctg
                         }
                     }
                     
-                    if (k % 100 == 0) _logger.Information("Records harvested: " + k.ToString());
+                    if (k % chunk == 0) _logger.Information("Records harvested: " + k.ToString());
                 }
             }
 
-            return (k);
+            return k;
         }
     }
 }
