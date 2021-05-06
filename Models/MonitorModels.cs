@@ -8,13 +8,15 @@ namespace DataHarvester
     [Table("sf.source_parameters")]
     public class Source 
     {
-        public int id { get; }  
+        public int id { get; }
+        public string source_type { get; }
         public int? preference_rating { get; }
         public string database_name { get; }
         public string db_conn { get; set; }
         public int default_harvest_type_id { get; }
         public bool requires_file_name { get; }
         public bool uses_who_harvest { get; }
+        public int harvest_chunk { get; }
         public string local_folder { get; }
         public bool? local_files_grouped { get; }
         public int? grouping_range_by_id { get; }

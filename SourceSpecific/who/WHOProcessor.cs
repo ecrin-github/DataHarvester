@@ -8,7 +8,7 @@ using Serilog;
 
 namespace DataHarvester.who
 {
-    public class WHOProcessor
+    public class WHOProcessor : IProcessor
     {
         IStorageDataLayer _storage_repo;
         IMonitorDataLayer _mon_repo;
@@ -729,20 +729,50 @@ namespace DataHarvester.who
         }
 
 
-        public string GetElementAsString(XElement e) => (e == null) ? null : (string)e;
+        private string GetElementAsString(XElement e) => (e == null) ? null : (string)e;
 
-        public string GetAttributeAsString(XAttribute a) => (a == null) ? null : (string)a;
+        private string GetAttributeAsString(XAttribute a) => (a == null) ? null : (string)a;
 
-        public int? GetElementAsInt(XElement e) => (e == null) ? null : (int?)e;
 
-        public int? GetAttributeAsInt(XAttribute a) => (a == null) ? null : (int?)a;
+        private int? GetElementAsInt(XElement e)
+        {
+            string evalue = GetElementAsString(e);
+            if (string.IsNullOrEmpty(evalue))
+            {
+                return null;
+            }
+            else
+            {
+                if (Int32.TryParse(evalue, out int res))
+                    return res;
+                else
+                    return null;
+            }
+        }
 
-        public bool GetAttributeAsBool(XAttribute a)
+        private int? GetAttributeAsInt(XAttribute a)
         {
             string avalue = GetAttributeAsString(a);
-            if (avalue != null)
+            if (string.IsNullOrEmpty(avalue))
             {
-                return (avalue.ToUpper() == "Y") ? true : false;
+                return null;
+            }
+            else
+            {
+                if (Int32.TryParse(avalue, out int res))
+                    return res;
+                else
+                    return null;
+            }
+        }
+
+
+        private bool GetElementAsBool(XElement e)
+        {
+            string evalue = GetElementAsString(e);
+            if (evalue != null)
+            {
+                return (evalue.ToLower() == "true" || evalue.ToLower()[0] == 'y') ? true : false;
             }
             else
             {
@@ -750,12 +780,12 @@ namespace DataHarvester.who
             }
         }
 
-        public bool GetElementAsBool(XElement e)
+        private bool GetAttributeAsBool(XAttribute a)
         {
-            string evalue = GetElementAsString(e);
-            if (evalue != null)
+            string avalue = GetAttributeAsString(a);
+            if (avalue != null)
             {
-                return (evalue.ToLower() == "true") ? true : false;
+                return (avalue.ToLower() == "true" || avalue.ToLower()[0] == 'y') ? true : false;
             }
             else
             {

@@ -37,7 +37,7 @@ namespace DataHarvester.biolincc
 
         }
 
-
+        /*
         public SponsorDetails FetchBioLINCCSponsorFromNCT(string nct_id)
         {
             using (var conn = new NpgsqlConnection(nct_connString))
@@ -132,6 +132,7 @@ namespace DataHarvester.biolincc
             }
 
         }
+        */
     }
 }
 

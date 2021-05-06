@@ -87,10 +87,10 @@ namespace DataHarvester
                 _logger.Information("Harvest event " + harvest_id.ToString() + " began");
 
                 // Harvest the data from the local XML files
+                harvest.num_records_available = _mon_repo.FetchFullFileCount(source.id, source.source_type, _harvest_type_id);
 
                 if (source.uses_who_harvest)
                 {
-                    harvest.num_records_available = _mon_repo.FetchFullFileCount(source.id, "study", _harvest_type_id);
                     WHOProcessor processor = new WHOProcessor(_storage_repo, _mon_repo, _logger);
                     WHOController c = new WHOController(_logger, _mon_repo, _storage_repo, source, 
                                      _harvest_type_id, harvest_id, processor);
@@ -102,18 +102,15 @@ namespace DataHarvester
                     {
                         case 101900:
                             {
-                                harvest.num_records_available = _mon_repo.FetchFullFileCount(source.id, "study", _harvest_type_id);
                                 BioLinccProcessor processor = new BioLinccProcessor(_storage_repo, _mon_repo, _logger);
                                 BioLinccController c = new BioLinccController(_logger, _mon_repo, _storage_repo, source,
                                                      _harvest_type_id, harvest_id, processor);
-                                c.GetInitialIDData();
                                 harvest.num_records_harvested = c.LoopThroughFiles();
                                 break;
                             }
                         case 101901:
                             {
                                 
-                                harvest.num_records_available = _mon_repo.FetchFullFileCount(source.id, "study", _harvest_type_id);
                                 YodaProcessor processor = new YodaProcessor(_storage_repo, _mon_repo, _logger);
                                 YodaController c = new YodaController(_logger, _mon_repo, _storage_repo, source,
                                                       _harvest_type_id, harvest_id, processor);
@@ -122,7 +119,6 @@ namespace DataHarvester
                             }
                         case 100120:
                             { 
-                                harvest.num_records_available = _mon_repo.FetchFullFileCount(source.id, "study", _harvest_type_id);
                                 CTGProcessor processor = new CTGProcessor(_storage_repo, _mon_repo, _logger);
                                 CTGController c = new CTGController(_logger, _mon_repo, _storage_repo, source, 
                                                      _harvest_type_id, harvest_id, processor);
@@ -134,13 +130,11 @@ namespace DataHarvester
                                 EUCTRProcessor processor = new EUCTRProcessor(_storage_repo, _mon_repo, _logger);
                                 EUCTRController c = new EUCTRController(_logger, _mon_repo, _storage_repo, source,
                                                     _harvest_type_id, harvest_id, processor);
-                                harvest.num_records_available = _mon_repo.FetchFullFileCount(source.id, "study", _harvest_type_id);
                                 harvest.num_records_harvested = c.LoopThroughFiles();
                                 break;
                             }
                         case 100126:
                             {
-                                harvest.num_records_available = _mon_repo.FetchFullFileCount(source.id, "study", _harvest_type_id);
                                 ISRCTNProcessor processor = new ISRCTNProcessor(_storage_repo, _mon_repo, _logger);
                                 ISRCTNController c = new ISRCTNController(_logger, _mon_repo, _storage_repo, source,
                                                         _harvest_type_id, harvest_id, processor);
@@ -149,7 +143,6 @@ namespace DataHarvester
                             }
                         case 100135:
                             {
-                                harvest.num_records_available = _mon_repo.FetchFullFileCount(source.id, "object", _harvest_type_id);
                                 PubmedProcessor processor = new PubmedProcessor(_storage_repo, _mon_repo, _logger);
                                 PubmedController c = new PubmedController(_logger, _mon_repo, _storage_repo, source,
                                                     _harvest_type_id, harvest_id, processor);

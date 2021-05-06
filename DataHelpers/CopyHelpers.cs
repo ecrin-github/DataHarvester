@@ -183,6 +183,8 @@ namespace DataHarvester
                 .MapDate("url_last_checked", x => x.url_last_checked)
                 .MapInteger("resource_type_id", x => x.resource_type_id)
                 .MapVarchar("resource_type", x => x.resource_type)
+                .MapVarchar("resource_size", x => x.resource_size)
+                .MapVarchar("resource_size_units", x => x.resource_size_units)
                 .MapVarchar("resource_comments", x => x.resource_comments);
 
 

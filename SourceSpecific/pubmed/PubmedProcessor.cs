@@ -8,7 +8,7 @@ using Serilog;
 
 namespace DataHarvester.pubmed
 {
-    public class PubmedProcessor
+    public class PubmedProcessor 
     {
         IStorageDataLayer _storage_repo;
         IMonitorDataLayer _mon_repo;
@@ -22,7 +22,7 @@ namespace DataHarvester.pubmed
         }
 
        
-        public CitationObject ProcessData(XmlDocument d, DateTime? download_datetime)
+        public Study ProcessData(XmlDocument d, DateTime? download_datetime)
         {
             StringHelpers sh = new StringHelpers(_logger, _mon_repo);
             DateHelpers dh = new DateHelpers();
@@ -1450,11 +1450,14 @@ namespace DataHarvester.pubmed
             c.article_topics = topics;
             c.article_db_ids = db_ids;
             c.article_comments = comments;
+
+
+
             return c;
         }
 
 
-        public void StoreData(CitationObject c, string db_conn)
+        public void StoreData(Study s, string db_conn)
         {
             // A routine called by the main program that runs through the 
             // Citation object - the singleton properties followed by each of the 
@@ -1469,72 +1472,115 @@ namespace DataHarvester.pubmed
 
             // Store the contributors, their identifiers and attributions. 
 
-            if (c.article_instances.Count > 0)
+            if (s.article_instances.Count > 0)
             {
-                _storage_repo.StoreObjectInstances(och.object_instances_helper, c.article_instances, db_conn);
+                _storage_repo.StoreObjectInstances(och.object_instances_helper, s.article_instances, db_conn);
             }
 
-            if (c.article_titles.Count > 0)
+            if (s.article_titles.Count > 0)
             {
-                _storage_repo.StoreObjectTitles(och.object_titles_helper, c.article_titles, db_conn);
+                _storage_repo.StoreObjectTitles(och.object_titles_helper, s.article_titles, db_conn);
             }
 
-            if (c.article_dates.Count > 0)
+            if (s.article_dates.Count > 0)
             {
-                _storage_repo.StoreObjectDates(och.object_dates_helper, c.article_dates, db_conn);
+                _storage_repo.StoreObjectDates(och.object_dates_helper, s.article_dates, db_conn);
             }
 
-            if (c.article_contributors.Count > 0)
+            if (s.article_contributors.Count > 0)
             {
-                _storage_repo.StoreObjectContributors(och.object_contributor_copyhelper, c.article_contributors, db_conn);
+                _storage_repo.StoreObjectContributors(och.object_contributor_copyhelper, s.article_contributors, db_conn);
             }
 
-            if (c.article_identifiers.Count > 0)
+            if (s.article_identifiers.Count > 0)
             {
-                _storage_repo.StoreObjectIdentifiers(och.object_identifier_copyhelper, c.article_identifiers, db_conn);
+                _storage_repo.StoreObjectIdentifiers(och.object_identifier_copyhelper, s.article_identifiers, db_conn);
             }
 
-            if (c.article_descriptions.Count > 0)
+            if (s.article_descriptions.Count > 0)
             {
-                _storage_repo.StoreObjectDescriptions(och.object_description_copyhelper, c.article_descriptions, db_conn);
+                _storage_repo.StoreObjectDescriptions(och.object_description_copyhelper, s.article_descriptions, db_conn);
             }
 
-            if (c.article_topics.Count > 0)
+            if (s.article_topics.Count > 0)
             {
-                _storage_repo.StoreObjectTopics(och.object_topic_copyhelper, c.article_topics, db_conn);
+                _storage_repo.StoreObjectTopics(och.object_topic_copyhelper, s.article_topics, db_conn);
             }
 
-            if (c.article_db_ids.Count > 0)
+            if (sarticle_db_ids.Count > 0)
             {
-                _storage_repo.StoreObjectAcessionNumbers(och.object_db_link_copyhelper, c.article_db_ids, db_conn);
+                _storage_repo.StoreObjectAcessionNumbers(och.object_db_link_copyhelper, s.article_db_ids, db_conn);
             }
 
-            if (c.article_pubtypes.Count > 0)
+            if (s.article_pubtypes.Count > 0)
             {
-                _storage_repo.StorePublicationTypes(och.publication_type_copyhelper, c.article_pubtypes, db_conn);
+                _storage_repo.StorePublicationTypes(och.publication_type_copyhelper, s.article_pubtypes, db_conn);
             }
 
-            if (c.article_comments.Count > 0)
+            if (s.article_comments.Count > 0)
             {
-                _storage_repo.StoreObjectComments(och.object_comment_copyhelper, c.article_comments, db_conn);
+                _storage_repo.StoreObjectComments(och.object_comment_copyhelper, s.article_comments, db_conn);
             }
         }
 
 
-        public string GetElementAsString(XElement e) => (e == null) ? null : (string)e;
+        private string GetElementAsString(XElement e) => (e == null) ? null : (string)e;
 
-        public string GetAttributeAsString(XAttribute a) => (a == null) ? null : (string)a;
+        private string GetAttributeAsString(XAttribute a) => (a == null) ? null : (string)a;
 
-        public int? GetElementAsInt(XElement e) => (e == null) ? null : (int?)e;
 
-        public int? GetAttributeAsInt(XAttribute a) => (a == null) ? null : (int?)a;
+        private int? GetElementAsInt(XElement e)
+        {
+            string evalue = GetElementAsString(e);
+            if (string.IsNullOrEmpty(evalue))
+            {
+                return null;
+            }
+            else
+            {
+                if (Int32.TryParse(evalue, out int res))
+                    return res;
+                else
+                    return null;
+            }
+        }
 
-        public bool GetAttributeAsBool(XAttribute a)
+        private int? GetAttributeAsInt(XAttribute a)
+        {
+            string avalue = GetAttributeAsString(a);
+            if (string.IsNullOrEmpty(avalue))
+            {
+                return null;
+            }
+            else
+            {
+                if (Int32.TryParse(avalue, out int res))
+                    return res;
+                else
+                    return null;
+            }
+        }
+
+
+        private bool GetElementAsBool(XElement e)
+        {
+            string evalue = GetElementAsString(e);
+            if (evalue != null)
+            {
+                return (evalue.ToLower() == "true" || evalue.ToLower()[0] == 'y') ? true : false;
+            }
+            else
+            {
+                return false;
+            }
+        }
+
+        private bool GetAttributeAsBool(XAttribute a)
         {
             string avalue = GetAttributeAsString(a);
             if (avalue != null)
             {
-                return (avalue.ToUpper() == "Y") ? true : false;
+                return (avalue.ToLower() == "true" || avalue.ToLower()[0] == 'y') ? true : false;
             }
             else
             {

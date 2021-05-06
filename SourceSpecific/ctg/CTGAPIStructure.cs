@@ -19,6 +19,7 @@ using System.Xml.Linq;
 
 namespace DataHarvester.ctg
 {
+    /*
     /// <remarks/>
     [System.CodeDom.Compiler.GeneratedCodeAttribute("xsd", "4.8.3928.0")]
     [System.SerializableAttribute()]
@@ -186,122 +187,7 @@ namespace DataHarvester.ctg
                 this.nameField = value;
             }
         }
-    }
+    }*/
+    
+   }
 
-
-    public class XmlHelpers
-    {
-        // All these used within CTG file processing
-
-
-        public XElement RetrieveStruct(XElement container, string nameToMatch)
-        {
-            var Structs = container.Elements("Struct");
-            foreach (XElement st in Structs)
-            {
-                if ((string)st.Attribute("Name") == nameToMatch)
-                {
-                    return st;
-                }
-            }
-            return null;
-        }
-
-
-        public bool CheckStructExists(XElement container, string nameToMatch)
-        {
-
-            var Structs = container.Elements("Struct");
-            foreach (XElement st in Structs)
-            {
-                if ((string)st.Attribute("Name") == nameToMatch)
-                {
-                    return true;
-                }
-            }
-            return false;
-        }
-
-
-        public string FieldValue(XElement container, string nameToMatch)
-        {
-            var Fields = container.Elements("Field");
-            foreach (XElement b in Fields)
-            {
-                if ((string)b.Attribute("Name") == nameToMatch)
-                {
-                    return (b == null) ? null : (string)b;
-                }
-            }
-            return null;
-        }
-
-
-        public string StructFieldValue(XElement container, string structToMatch, string fieldToMatch)
-        {
-            var Structs = container.Elements("Struct");
-            foreach (XElement st in Structs)
-            {
-                if ((string)st.Attribute("Name") == structToMatch)
-                {
-                    return FieldValue(st, fieldToMatch);
-                }
-            }
-            return null;
-        }
-
-
-        public IEnumerable<XElement> RetrieveListElements(XElement container, string listToMatch)
-        {
-            var Lists = container.Elements("List");
-            foreach (XElement li in Lists)
-            {
-                if ((string)li.Attribute("Name") == listToMatch)
-                {
-                    return li.Elements();
-                }
-            }
-            return null;
-        }
-
-
-        // check name...
-        public int CheckObjectName(List<ObjectTitle> titles, string object_display_title)
-        {
-            int num_of_this_type = 0;
-            if (titles.Count > 0)
-            {
-                for (int j = 0; j < titles.Count; j++)
-                {
-                    if (titles[j].title_text.Contains(object_display_title))
-                    {
-                        num_of_this_type++;
-                    }
-                }
-            }
-            return num_of_this_type;
-        }
-
-        public string GetElementAsString(XElement e) => (e == null) ? null : (string)e;
-
-        public string GetAttributeAsString(XAttribute a) => (a == null) ? null : (string)a;
-
-        public int? GetElementAsInt(XElement e) => (e == null) ? null : (int?)e;
-
-        public int? GetAttributeAsInt(XAttribute a) => (a == null) ? null : (int?)a;
-
-        public bool GetAttributeAsBool(XAttribute a)
-        {
-            string avalue = GetAttributeAsString(a);
-            if (avalue != null)
-            {
-                return (avalue.ToUpper() == "Y") ? true : false;
-            }
-            else
-            {
-                return false;
-            }
-        }
-    }
-
-}

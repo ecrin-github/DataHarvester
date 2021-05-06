@@ -56,8 +56,8 @@ namespace DataHarvester.pubmed
                         {
                             XmlDocument xdoc = new XmlDocument();
                             xdoc.Load(filePath);
-                            CitationObject c = _processor.ProcessData(xdoc, rec.last_downloaded);
-                            _processor.StoreData(c, source.db_conn);
+                            Study s = _processor.ProcessData(xdoc, rec.last_downloaded);
+                            _processor.StoreData(s, source.db_conn);
 
                             /// update file record with last processed datetime
                             // (if not in test mode)

@@ -21,7 +21,7 @@ namespace DataHarvester
         // of the Element or Attribute node itself, followed by a cast to
         // the required type of the Element or Attribute's 
         // Value (= inner HTML for an element).
-
+        /*
         public string GetElementAsString(XElement e) => (e == null) ? null : (string)e;
 
         public string GetAttributeAsString(XAttribute a) => (a == null) ? null : (string)a;
@@ -42,6 +42,7 @@ namespace DataHarvester
                 return false;
             }
         }
+        */
 
         /*
         // update publisher name in citation object

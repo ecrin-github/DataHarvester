@@ -8,7 +8,7 @@ using Serilog;
 
 namespace DataHarvester.yoda
 {
-    public class YodaProcessor
+    public class YodaProcessor : IProcessor
     {
         IStorageDataLayer _storage_repo;
         IMonitorDataLayer _mon_repo;
@@ -71,7 +71,6 @@ namespace DataHarvester.yoda
             string data_partner = GetElementAsString(r.Element("data_partner"));
             string conditions_studied = GetElementAsString(r.Element("conditions_studied"));
             string mean_age = GetElementAsString(r.Element("mean_age"));
-            string primary_citation_link = GetElementAsString(r.Element("primary_citation_link"));
             string last_revised_date = GetElementAsString(r.Element("last_revised_date")); ;
 
             if (yoda_title.Contains("<"))
@@ -240,12 +239,19 @@ namespace DataHarvester.yoda
             }
 
             // create study references (pmids)
-            if (st.study_references.Count > 0)
+            XElement refs = r.Element("study_references");
+            if (refs != null)
             {
-                foreach (Reference r in st.study_references)
+                var study_refs = refs.Elements("Reference");
+                if (study_refs != null && study_refs.Count() > 0)
                 {
-                    // normally only 1 if there is one there at all 
-                    study_references.Add(new StudyReference(sid, r.pmid, st.primary_citation_link, "", ""));
+                    foreach (XElement sr in study_refs)
+                    {
+                        string pmid = GetElementAsString(sr.Element("pmid"));
+                        string primary_citation_link = GetElementAsString(sr.Element("primary_citation_link"));
+                        // normally only 1 if there is one there at all 
+                        study_references.Add(new StudyReference(sid, pmid, primary_citation_link, "", ""));
+                    }
                 }
             }
 
@@ -468,20 +474,50 @@ namespace DataHarvester.yoda
         }
 
 
-        public string GetElementAsString(XElement e) => (e == null) ? null : (string)e;
+        private string GetElementAsString(XElement e) => (e == null) ? null : (string)e;
 
-        public string GetAttributeAsString(XAttribute a) => (a == null) ? null : (string)a;
+        private string GetAttributeAsString(XAttribute a) => (a == null) ? null : (string)a;
 
-        public int? GetElementAsInt(XElement e) => (e == null) ? null : (int?)e;
 
-        public int? GetAttributeAsInt(XAttribute a) => (a == null) ? null : (int?)a;
+        private int? GetElementAsInt(XElement e)
+        {
+            string evalue = GetElementAsString(e);
+            if (string.IsNullOrEmpty(evalue))
+            {
+                return null;
+            }
+            else
+            {
+                if (Int32.TryParse(evalue, out int res))
+                    return res;
+                else
+                    return null;
+            }
+        }
 
-        public bool GetAttributeAsBool(XAttribute a)
+        private int? GetAttributeAsInt(XAttribute a)
         {
             string avalue = GetAttributeAsString(a);
-            if (avalue != null)
+            if (string.IsNullOrEmpty(avalue))
             {
-                return (avalue.ToUpper() == "Y") ? true : false;
+                return null;
+            }
+            else
+            {
+                if (Int32.TryParse(avalue, out int res))
+                    return res;
+                else
+                    return null;
+            }
+        }
+
+
+        private bool GetElementAsBool(XElement e)
+        {
+            string evalue = GetElementAsString(e);
+            if (evalue != null)
+            {
+                return (evalue.ToLower() == "true" || evalue.ToLower()[0] == 'y') ? true : false;
             }
             else
             {
@@ -489,12 +525,12 @@ namespace DataHarvester.yoda
             }
         }
 
-        public bool GetElementAsBool(XElement e)
+        private bool GetAttributeAsBool(XAttribute a)
         {
-            string evalue = GetElementAsString(e);
-            if (evalue != null)
+            string avalue = GetAttributeAsString(a);
+            if (avalue != null)
             {
-                return (evalue.ToLower() == "true") ? true : false;
+                return (avalue.ToLower() == "true" || avalue.ToLower()[0] == 'y') ? true : false;
             }
             else
             {
@@ -505,9 +541,6 @@ namespace DataHarvester.yoda
 }
 
 
-
-
-}
 
 
 

@@ -9,7 +9,7 @@ using Serilog;
 
 namespace DataHarvester.ctg
 {
-    public class CTGProcessor
+    public class CTGProcessor : IProcessor
     {
         IStorageDataLayer _storage_repo;
         IMonitorDataLayer _mon_repo;
@@ -58,8 +58,7 @@ namespace DataHarvester.ctg
             TypeHelpers th = new TypeHelpers();
             MD5Helpers hh = new MD5Helpers();
             IdentifierHelpers ih = new IdentifierHelpers();
-            XmlHelpers xh = new XmlHelpers();
-
+           
             XElement IdentificationModule = null;
             XElement StatusModule = null;
             XElement SponsorCollaboratorsModule = null;
@@ -84,45 +83,45 @@ namespace DataHarvester.ctg
             XElement Study = FullStudy.Element("Struct");
             IEnumerable<XElement> StudyTopSections = Study.Elements("Struct");
 
-            XElement ProtocolSection = xh.RetrieveStruct(Study, "ProtocolSection");
+            XElement ProtocolSection = RetrieveStruct(Study, "ProtocolSection");
             if (ProtocolSection!= null)
             {
-                IdentificationModule = xh.RetrieveStruct(ProtocolSection, "IdentificationModule");
-                StatusModule = xh.RetrieveStruct(ProtocolSection, "StatusModule");
-                SponsorCollaboratorsModule = xh.RetrieveStruct(ProtocolSection, "SponsorCollaboratorsModule");
-                DescriptionModule = xh.RetrieveStruct(ProtocolSection, "DescriptionModule");
-                ConditionsModule = xh.RetrieveStruct(ProtocolSection, "ConditionsModule");
-                DesignModule = xh.RetrieveStruct(ProtocolSection, "DesignModule");
-                EligibilityModule = xh.RetrieveStruct(ProtocolSection, "EligibilityModule");
-                ContactsLocationsModule = xh.RetrieveStruct(ProtocolSection, "ContactsLocationsModule");
-                ReferencesModule = xh.RetrieveStruct(ProtocolSection, "ReferencesModule");
-                IPDSharingModule = xh.RetrieveStruct(ProtocolSection, "IPDSharingStatementModule");
+                IdentificationModule = RetrieveStruct(ProtocolSection, "IdentificationModule");
+                StatusModule = RetrieveStruct(ProtocolSection, "StatusModule");
+                SponsorCollaboratorsModule = RetrieveStruct(ProtocolSection, "SponsorCollaboratorsModule");
+                DescriptionModule = RetrieveStruct(ProtocolSection, "DescriptionModule");
+                ConditionsModule = RetrieveStruct(ProtocolSection, "ConditionsModule");
+                DesignModule = RetrieveStruct(ProtocolSection, "DesignModule");
+                EligibilityModule = RetrieveStruct(ProtocolSection, "EligibilityModule");
+                ContactsLocationsModule = RetrieveStruct(ProtocolSection, "ContactsLocationsModule");
+                ReferencesModule = RetrieveStruct(ProtocolSection, "ReferencesModule");
+                IPDSharingModule = RetrieveStruct(ProtocolSection, "IPDSharingStatementModule");
             }
 
 
-            XElement ResultsSection = xh.RetrieveStruct(Study, "ResultsSection");
+            XElement ResultsSection = RetrieveStruct(Study, "ResultsSection");
             if (ResultsSection != null)
             {
-                bool ParticipantFlowModuleExists = xh.CheckStructExists(ResultsSection, "ParticipantFlowModule");
-                bool BaselineCharacteristicsModuleExists = xh.CheckStructExists(ResultsSection, "BaselineCharacteristicsModule");
-                bool OutcomeMeasuresModuleExists = xh.CheckStructExists(ResultsSection, "OutcomeMeasuresModules");
+                bool ParticipantFlowModuleExists = CheckStructExists(ResultsSection, "ParticipantFlowModule");
+                bool BaselineCharacteristicsModuleExists = CheckStructExists(ResultsSection, "BaselineCharacteristicsModule");
+                bool OutcomeMeasuresModuleExists = CheckStructExists(ResultsSection, "OutcomeMeasuresModules");
                 results_data_present = (ParticipantFlowModuleExists || BaselineCharacteristicsModuleExists
                     || OutcomeMeasuresModuleExists);
             }
 
 
-            XElement DocumentSection = xh.RetrieveStruct(Study, "DocumentSection");
+            XElement DocumentSection = RetrieveStruct(Study, "DocumentSection");
             if (DocumentSection != null)
             {
-                LargeDocumentModule = xh.RetrieveStruct(DocumentSection, "LargeDocumentModule");
+                LargeDocumentModule = RetrieveStruct(DocumentSection, "LargeDocumentModule");
             }
 
 
-            XElement DerivedSection = xh.RetrieveStruct(Study, "DerivedSection");
+            XElement DerivedSection = RetrieveStruct(Study, "DerivedSection");
             if (DerivedSection != null)
             {
-                ConditionBrowseModule = xh.RetrieveStruct(DerivedSection, "ConditionBrowseModule");
-                InterventionBrowseModule = xh.RetrieveStruct(DerivedSection, "InterventionBrowseModule");
+                ConditionBrowseModule = RetrieveStruct(DerivedSection, "ConditionBrowseModule");
+                InterventionBrowseModule = RetrieveStruct(DerivedSection, "InterventionBrowseModule");
             }
 
 
@@ -132,17 +131,17 @@ namespace DataHarvester.ctg
             {
                 //var id_items = IdentificationModule.Items;
                 //var status_items = StatusModule.Items;
-                sid = xh.FieldValue(IdentificationModule, "NCTId");
+                sid = FieldValue(IdentificationModule, "NCTId");
                 s.sd_sid = sid;
                 s.datetime_of_data_fetch = download_datetime;
 
-                s.study_status = xh.FieldValue(StatusModule, "OverallStatus");
+                s.study_status = FieldValue(StatusModule, "OverallStatus");
                 s.study_status_id = th.GetStatusId(s.study_status);
-                status_verified_date = xh.FieldValue(StatusModule, "StatusVerifiedDate");
+                status_verified_date = FieldValue(StatusModule, "StatusVerifiedDate");
 
                 // this date is a simple field in the status module
                 // assumed to be the date the identifier was assigned
-                submissionDate = xh.FieldValue(StatusModule, "StudyFirstSubmitDate");
+                submissionDate = FieldValue(StatusModule, "StudyFirstSubmitDate");
 
                 // add the NCT identifier record - 100120 is the id of ClinicalTrials.gov
                 submissionDate = dh.StandardiseDateFormat(submissionDate);
@@ -151,7 +150,7 @@ namespace DataHarvester.ctg
 
                 // add title records
                 bool default_found = false, is_default = false;
-                brief_title = xh.FieldValue(IdentificationModule, "BriefTitle");
+                brief_title = FieldValue(IdentificationModule, "BriefTitle");
                 if (brief_title != null)
                 {
                     is_default = true;
@@ -159,7 +158,7 @@ namespace DataHarvester.ctg
                     titles.Add(new StudyTitle(sid, brief_title, 15, "Public Title", is_default));
                 }
 
-                official_title = xh.FieldValue(IdentificationModule, "OfficialTitle");
+                official_title = FieldValue(IdentificationModule, "OfficialTitle");
                 if (official_title != null)
                 {
                     is_default = !default_found;
@@ -167,7 +166,7 @@ namespace DataHarvester.ctg
                     titles.Add(new StudyTitle(sid, official_title, 17, "Protocol Title", is_default));
                 }
 
-                acronym = xh.FieldValue(IdentificationModule, "Acronym");
+                acronym = FieldValue(IdentificationModule, "Acronym");
                 if (acronym != null)
                 {
                     is_default = !default_found;
@@ -179,11 +178,11 @@ namespace DataHarvester.ctg
                 s.display_title = (brief_title != null) ? brief_title : official_title;
 
                 // get the sponsor id information
-                string org = sh.TidyOrgName(xh.StructFieldValue(IdentificationModule, "Organization", "OrgFullName"), sid);
-                string org_study_id = xh.StructFieldValue(IdentificationModule, "OrgStudyIdInfo", "OrgStudyId");
-                string org_id_type = xh.StructFieldValue(IdentificationModule, "OrgStudyIdInfo", "OrgStudyIdType");
-                string org_id_domain = sh.TidyOrgName(xh.StructFieldValue(IdentificationModule, "OrgStudyIdInfo", "OrgStudyIdDomain"), sid);
-                string org_id_link = xh.StructFieldValue(IdentificationModule, "OrgStudyIdInfo", "OrgStudyIdLink");
+                string org = sh.TidyOrgName(StructFieldValue(IdentificationModule, "Organization", "OrgFullName"), sid);
+                string org_study_id = StructFieldValue(IdentificationModule, "OrgStudyIdInfo", "OrgStudyId");
+                string org_id_type = StructFieldValue(IdentificationModule, "OrgStudyIdInfo", "OrgStudyIdType");
+                string org_id_domain = sh.TidyOrgName(StructFieldValue(IdentificationModule, "OrgStudyIdInfo", "OrgStudyIdDomain"), sid);
+                string org_id_link = StructFieldValue(IdentificationModule, "OrgStudyIdInfo", "OrgStudyIdLink");
 
                 // add the sponsor's identifier
                 if (org_id_type == "U.S. NIH Grant/Contract")
@@ -211,17 +210,17 @@ namespace DataHarvester.ctg
 
                 // add any additional identifiers (if not already used as a sponsor id)
 
-                var secIds = xh.RetrieveListElements(IdentificationModule, "SecondaryIdInfoList");
+                var secIds = RetrieveListElements(IdentificationModule, "SecondaryIdInfoList");
                 if (secIds != null)
                 {
                     foreach (XElement id_element in secIds)
                     {
-                        string id_value = xh.FieldValue(id_element, "SecondaryId");
-                        string id_link = xh.FieldValue(id_element, "SecondaryIdLink");
+                        string id_value = FieldValue(id_element, "SecondaryId");
+                        string id_link = FieldValue(id_element, "SecondaryIdLink");
                         if (org_study_id == null || id_value.Trim().ToLower() != org_study_id.Trim().ToLower())
                         {
-                            string identifier_type = xh.FieldValue(id_element, "SecondaryIdType");
-                            string identifier_org = sh.TidyOrgName(xh.FieldValue(id_element, "SecondaryIdDomain"), sid);
+                            string identifier_type = FieldValue(id_element, "SecondaryIdType");
+                            string identifier_org = sh.TidyOrgName(FieldValue(id_element, "SecondaryIdDomain"), sid);
                             IdentifierDetails idd = ih.GetIdentifierProps(identifier_type, identifier_org, id_value);
 
                             // add the secondary identifier
@@ -233,44 +232,44 @@ namespace DataHarvester.ctg
 
 
                 // get the main three registry entry dates if they are available
-                XElement FirstPostDate = xh.RetrieveStruct(StatusModule, "StudyFirstPostDateStruct");
+                XElement FirstPostDate = RetrieveStruct(StatusModule, "StudyFirstPostDateStruct");
                 if (FirstPostDate != null)
                 {
-                    string firstpost_type = xh.FieldValue(FirstPostDate, "StudyFirstPostDateType");
+                    string firstpost_type = FieldValue(FirstPostDate, "StudyFirstPostDateType");
                     if (firstpost_type != "Anticipated")
                     {
-                        string firstpost_date = xh.FieldValue(FirstPostDate, "StudyFirstPostDate");
+                        string firstpost_date = FieldValue(FirstPostDate, "StudyFirstPostDate");
                         firstpost = dh.GetDateParts(firstpost_date);
                         if (firstpost_type.ToLower() == "estimate") firstpost.date_string += " (est.)";
                     }
                 }
 
-                XElement ResultsPostDate = xh.RetrieveStruct(StatusModule, "ResultsFirstPostDateStruct");
+                XElement ResultsPostDate = RetrieveStruct(StatusModule, "ResultsFirstPostDateStruct");
                 if (ResultsPostDate != null)
                 {
-                    string results_type = xh.FieldValue(ResultsPostDate, "ResultsFirstPostDateType");
+                    string results_type = FieldValue(ResultsPostDate, "ResultsFirstPostDateType");
                     if (results_type != "Anticipated")
                     {
-                        string resultspost_date = xh.FieldValue(ResultsPostDate, "ResultsFirstPostDate");
+                        string resultspost_date = FieldValue(ResultsPostDate, "ResultsFirstPostDate");
                         resultspost = dh.GetDateParts(resultspost_date);
                         if (results_type.ToLower() == "estimate") resultspost.date_string += " (est.)";
                     }
                 }
 
-                XElement LastUpdateDate = xh.RetrieveStruct(StatusModule, "LastUpdatePostDateStruct");
+                XElement LastUpdateDate = RetrieveStruct(StatusModule, "LastUpdatePostDateStruct");
                 if (LastUpdateDate != null)
                 {
-                    string update_type = xh.FieldValue(LastUpdateDate, "LastUpdatePostDateType");
+                    string update_type = FieldValue(LastUpdateDate, "LastUpdatePostDateType");
                     if (update_type != "Anticipated")
                     {
-                        string updatepost_date = xh.FieldValue(LastUpdateDate, "LastUpdatePostDate");
+                        string updatepost_date = FieldValue(LastUpdateDate, "LastUpdatePostDate");
                         updatepost = dh.GetDateParts(updatepost_date);
                         if (update_type.ToLower() == "estimate") updatepost.date_string += " (est.)";
                     }
                 }
 
                 // expanded access details
-                string expanded_access_nctid = xh.StructFieldValue(StatusModule, "ExpandedAccessInfo", "ExpandedAccessNCTId");
+                string expanded_access_nctid = StructFieldValue(StatusModule, "ExpandedAccessInfo", "ExpandedAccessNCTId");
                 if (expanded_access_nctid != null)
                 {
                     relationships.Add(new StudyRelationship(sid, 23, "has an expanded access version", expanded_access_nctid));
@@ -279,10 +278,10 @@ namespace DataHarvester.ctg
 
 
                 // get and store study start date, if available, to use to check possible linked papers
-                XElement StudyStartDate = xh.RetrieveStruct(StatusModule, "StartDateStruct");
+                XElement StudyStartDate = RetrieveStruct(StatusModule, "StartDateStruct");
                 if (StudyStartDate != null)
                 {
-                    string studystart_date = xh.FieldValue(StudyStartDate, "StartDate");
+                    string studystart_date = FieldValue(StudyStartDate, "StartDate");
                     startdate = dh.GetDateParts(studystart_date);
                     s.study_start_year = startdate.year;
                     s.study_start_month = startdate.month;
@@ -297,10 +296,10 @@ namespace DataHarvester.ctg
 
             if (SponsorCollaboratorsModule != null)
             {
-                XElement sponsor = xh.RetrieveStruct(SponsorCollaboratorsModule, "LeadSponsor");
+                XElement sponsor = RetrieveStruct(SponsorCollaboratorsModule, "LeadSponsor");
                 if (sponsor != null)
                 {
-                    string sponsor_candidate = xh.FieldValue(sponsor, "LeadSponsorName");
+                    string sponsor_candidate = FieldValue(sponsor, "LeadSponsorName");
                     if (sh.FilterOut_Null_OrgNames(sponsor_candidate) != "")
                     {
                         sponsor_name = sh.TidyOrgName(sponsor_candidate, sid);
@@ -310,18 +309,18 @@ namespace DataHarvester.ctg
                     }
                 }
 
-                XElement resp_party = xh.RetrieveStruct(SponsorCollaboratorsModule, "ResponsibleParty");
+                XElement resp_party = RetrieveStruct(SponsorCollaboratorsModule, "ResponsibleParty");
                 if (resp_party != null)
                 {
-                    string rp_type = xh.FieldValue(resp_party, "ResponsiblePartyType");
+                    string rp_type = FieldValue(resp_party, "ResponsiblePartyType");
 
                     if (rp_type != "Sponsor")
                     {
-                        string rp_name = xh.FieldValue(resp_party, "ResponsiblePartyInvestigatorFullName");
-                        string rp_title = xh.FieldValue(resp_party, "ResponsiblePartyInvestigatorTitle");
-                        string rp_affil = xh.FieldValue(resp_party, "ResponsiblePartyInvestigatorAffiliation");
-                        string rp_oldnametitle = xh.FieldValue(resp_party, "ResponsiblePartyOldNameTitle");
-                        string rp_oldorg = xh.FieldValue(resp_party, "ResponsiblePartyOldOrganization");
+                        string rp_name = FieldValue(resp_party, "ResponsiblePartyInvestigatorFullName");
+                        string rp_title = FieldValue(resp_party, "ResponsiblePartyInvestigatorTitle");
+                        string rp_affil = FieldValue(resp_party, "ResponsiblePartyInvestigatorAffiliation");
+                        string rp_oldnametitle = FieldValue(resp_party, "ResponsiblePartyOldNameTitle");
+                        string rp_oldorg = FieldValue(resp_party, "ResponsiblePartyOldOrganization");
 
                         if (rp_name == null && rp_oldnametitle != null) rp_name = rp_oldnametitle;
                         if (rp_affil == null && rp_oldorg != null) rp_affil = rp_oldorg;
@@ -345,12 +344,12 @@ namespace DataHarvester.ctg
                     }
                 }
 
-                var collaborators = xh.RetrieveListElements(SponsorCollaboratorsModule, "CollaboratorList");
+                var collaborators = RetrieveListElements(SponsorCollaboratorsModule, "CollaboratorList");
                 if (collaborators != null && collaborators.Count() > 0)
                 {
                     foreach (XElement Collab in collaborators)
                     {
-                        string collab_candidate = xh.FieldValue(Collab, "CollaboratorName");
+                        string collab_candidate = FieldValue(Collab, "CollaboratorName");
                         if (sh.FilterOut_Null_OrgNames(collab_candidate) != "")
                         {
                             string collab_name = sh.TidyOrgName(collab_candidate, sid);
@@ -365,35 +364,35 @@ namespace DataHarvester.ctg
 
             if (DescriptionModule != null)
             {
-                s.brief_description = xh.FieldValue(DescriptionModule, "BriefSummary");
+                s.brief_description = FieldValue(DescriptionModule, "BriefSummary");
             }
 
 
-            ConditionBrowseModule = xh.RetrieveStruct(DerivedSection, "ConditionBrowseModule");
+            ConditionBrowseModule = RetrieveStruct(DerivedSection, "ConditionBrowseModule");
             if (ConditionBrowseModule != null)
             {
-                var condition_meshlist = xh.RetrieveListElements(ConditionBrowseModule, "ConditionMeshList");
+                var condition_meshlist = RetrieveListElements(ConditionBrowseModule, "ConditionMeshList");
                 if (condition_meshlist != null && condition_meshlist.Count() > 0)
                 {
                     foreach (XElement condition in condition_meshlist)
                     { 
-                        string mesh_code = xh.FieldValue(condition, "ConditionMeshId");
-                        string mesh_term = xh.FieldValue(condition, "ConditionMeshTerm");
+                        string mesh_code = FieldValue(condition, "ConditionMeshId");
+                        string mesh_term = FieldValue(condition, "ConditionMeshTerm");
                         topics.Add(new StudyTopic(sid, 13, "condition", true, mesh_code, mesh_term, "browse list"));
                     }
                 }
             }
 
-            InterventionBrowseModule = xh.RetrieveStruct(DerivedSection, "InterventionBrowseModule");
+            InterventionBrowseModule = RetrieveStruct(DerivedSection, "InterventionBrowseModule");
             if (InterventionBrowseModule != null)
             {
-                var intervention_meshlist = xh.RetrieveListElements(InterventionBrowseModule, "InterventionMeshList");
+                var intervention_meshlist = RetrieveListElements(InterventionBrowseModule, "InterventionMeshList");
                 if (intervention_meshlist != null && intervention_meshlist.Count() > 0)
                 {
                     foreach (XElement intervention in intervention_meshlist)
                     {
-                        string mesh_code = xh.FieldValue(intervention, "InterventionMeshId");
-                        string mesh_term = xh.FieldValue(intervention, "InterventionMeshTerm");
+                        string mesh_code = FieldValue(intervention, "InterventionMeshId");
+                        string mesh_term = FieldValue(intervention, "InterventionMeshTerm");
                         topics.Add(new StudyTopic(sid, 12, "chemical / agent", true, mesh_code, mesh_term, "browse list"));
                     }
                 }
@@ -401,7 +400,7 @@ namespace DataHarvester.ctg
 
             if (ConditionsModule != null)
             {
-                var conditions_list = xh.RetrieveListElements(ConditionsModule, "ConditionList");
+                var conditions_list = RetrieveListElements(ConditionsModule, "ConditionList");
                 if (conditions_list != null && conditions_list.Count() > 0)
                 {
                     foreach (XElement condition in conditions_list)
@@ -417,7 +416,7 @@ namespace DataHarvester.ctg
 
                 }
 
-                var keywords_list = xh.RetrieveListElements(ConditionsModule, "KeywordList");
+                var keywords_list = RetrieveListElements(ConditionsModule, "KeywordList");
                 if (keywords_list != null && keywords_list.Count() > 0)
                 {
                     foreach (XElement keyword in keywords_list)
@@ -448,12 +447,12 @@ namespace DataHarvester.ctg
 
             if (DesignModule != null)
             {
-                s.study_type = xh.FieldValue(DesignModule, "StudyType");
+                s.study_type = FieldValue(DesignModule, "StudyType");
                 s.study_type_id = th.GetTypeId(s.study_type);
 
                 if (s.study_type == "Interventional")
                 {
-                    var phases = xh.RetrieveListElements(DesignModule, "PhaseList");
+                    var phases = RetrieveListElements(DesignModule, "PhaseList");
                     if (phases != null && phases.Count() > 0)
                     {
                         foreach (XElement phase in phases)
@@ -468,22 +467,22 @@ namespace DataHarvester.ctg
                     }
 
 
-                    var design_info = xh.RetrieveStruct(DesignModule, "DesignInfo");
+                    var design_info = RetrieveStruct(DesignModule, "DesignInfo");
                     if (design_info != null)
                     {
-                        string design_allocation = xh.FieldValue(design_info, "DesignAllocation") ?? "Not provided";
+                        string design_allocation = FieldValue(design_info, "DesignAllocation") ?? "Not provided";
                         features.Add(new StudyFeature(sid, 22, "allocation type", th.GetAllocationTypeId(design_allocation), design_allocation));
 
-                        string design_intervention_model = xh.FieldValue(design_info, "DesignInterventionModel") ?? "Not provided";
+                        string design_intervention_model = FieldValue(design_info, "DesignInterventionModel") ?? "Not provided";
                         features.Add(new StudyFeature(sid, 23, "intervention model", th.GetDesignTypeId(design_intervention_model), design_intervention_model));
 
-                        string design_primary_purpose = xh.FieldValue(design_info, "DesignPrimaryPurpose") ?? "Not provided";
+                        string design_primary_purpose = FieldValue(design_info, "DesignPrimaryPurpose") ?? "Not provided";
                         features.Add(new StudyFeature(sid, 21, "primary purpose", th.GetPrimaryPurposeId(design_primary_purpose), design_primary_purpose));
 
-                        var masking_details = xh.RetrieveStruct(design_info, "DesignMaskingInfo");
+                        var masking_details = RetrieveStruct(design_info, "DesignMaskingInfo");
                         if (masking_details != null)
                         {
-                            string design_masking = xh.FieldValue(masking_details, "DesignMasking") ?? "Not provided";
+                            string design_masking = FieldValue(masking_details, "DesignMasking") ?? "Not provided";
                             features.Add(new StudyFeature(sid, 24, "masking", th.GetMaskingTypeId(design_masking), design_masking));
                         }
                         else
@@ -496,17 +495,17 @@ namespace DataHarvester.ctg
 
                 if (s.study_type == "Observational")
                 {
-                    string patient_registry = xh.FieldValue(DesignModule, "PatientRegistry");
+                    string patient_registry = FieldValue(DesignModule, "PatientRegistry");
                     if (patient_registry == "Yes")  // change type...
                     {
                         s.study_type_id = 13;
                         s.study_type = "Observational Patient Registry";
                     }
 
-                    var design_info = xh.RetrieveStruct(DesignModule, "DesignInfo");
+                    var design_info = RetrieveStruct(DesignModule, "DesignInfo");
                     if (design_info != null)
                     {
-                        var obsmodel_list = xh.RetrieveListElements(design_info, "DesignObservationalModelList");
+                        var obsmodel_list = RetrieveListElements(design_info, "DesignObservationalModelList");
                         if (obsmodel_list != null && obsmodel_list.Count() > 0)
                         {
                                 foreach (XElement obsmodel in obsmodel_list)
@@ -521,7 +520,7 @@ namespace DataHarvester.ctg
                         }
 
 
-                        var timepersp_list = xh.RetrieveListElements(design_info, "DesignTimePerspectiveList");
+                        var timepersp_list = RetrieveListElements(design_info, "DesignTimePerspectiveList");
                         if (timepersp_list != null && timepersp_list.Count() > 0)
                         {
                                 foreach (XElement timepersp in timepersp_list)
@@ -536,20 +535,20 @@ namespace DataHarvester.ctg
                         }
                     }
 
-                    var biospec_details = xh.RetrieveStruct(design_info, "BioSpec");
+                    var biospec_details = RetrieveStruct(design_info, "BioSpec");
                     if (biospec_details != null)
                     {
-                        string biospec_retention = xh.FieldValue(biospec_details, "BioSpecRetention") ?? "Not provided";
+                        string biospec_retention = FieldValue(biospec_details, "BioSpecRetention") ?? "Not provided";
                         features.Add(new StudyFeature(sid, 32, "biospecimens retained", th.GetSpecimentRetentionId(biospec_retention), biospec_retention));
                     }
 
                 }
 
 
-                var enrol_details = xh.RetrieveStruct(DesignModule, "EnrollmentInfo");
+                var enrol_details = RetrieveStruct(DesignModule, "EnrollmentInfo");
                 if (enrol_details != null)
                 {
-                    string enrolment_count = xh.FieldValue(enrol_details, "EnrollmentCount") ?? "Not provided";
+                    string enrolment_count = FieldValue(enrol_details, "EnrollmentCount") ?? "Not provided";
                     if (enrolment_count != "Not provided")
                     {
                         if (Int32.TryParse(enrolment_count, out int enrolment))
@@ -566,14 +565,14 @@ namespace DataHarvester.ctg
 
             if (EligibilityModule != null)
             {
-                s.study_gender_elig = xh.FieldValue(EligibilityModule, "Gender") ?? "Not provided";
+                s.study_gender_elig = FieldValue(EligibilityModule, "Gender") ?? "Not provided";
                 if (s.study_gender_elig == "All")
                 {
                     s.study_gender_elig = "Both";
                 }
                 s.study_gender_elig_id = th.GetGenderEligId(s.study_gender_elig);
 
-                string min_age = xh.FieldValue(EligibilityModule, "MinimumAge");
+                string min_age = FieldValue(EligibilityModule, "MinimumAge");
                 if (min_age != null)
                 {
                     // split number from time unit
@@ -588,7 +587,7 @@ namespace DataHarvester.ctg
                     }
                 }
 
-                string max_age = xh.FieldValue(EligibilityModule, "MaximumAge");
+                string max_age = FieldValue(EligibilityModule, "MaximumAge");
                 if (max_age != null)
                 {
                     string LHS = max_age.Trim().Substring(0, max_age.IndexOf(' '));
@@ -606,16 +605,16 @@ namespace DataHarvester.ctg
 
             if (ContactsLocationsModule != null)
             {
-                var officials = xh.RetrieveListElements(ContactsLocationsModule, "OverallOfficialList");
+                var officials = RetrieveListElements(ContactsLocationsModule, "OverallOfficialList");
                 if (officials != null && officials.Count() > 0)
                 {
                     foreach (XElement official in officials)
                     {
-                        string official_name = xh.FieldValue(official, "OverallOfficialName");
+                        string official_name = FieldValue(official, "OverallOfficialName");
                         if (official_name != null)
                         {
                             official_name = sh.TidyName(official_name);
-                            string official_affiliation = xh.FieldValue(official, "OverallOfficialAffiliation");
+                            string official_affiliation = FieldValue(official, "OverallOfficialAffiliation");
                             contributors.Add(new StudyContributor(sid, 51, "Study Lead", null,
                                                     null, official_name, official_affiliation));
                         }
@@ -629,19 +628,19 @@ namespace DataHarvester.ctg
             {
                 if (IPDSharingModule != null)
                 {
-                    string IPDSharingDescription = xh.FieldValue(IPDSharingModule, "IPDSharingDescription");
+                    string IPDSharingDescription = FieldValue(IPDSharingModule, "IPDSharingDescription");
                     if (IPDSharingDescription != null)
                     {
                         string sharing_statement = "(As of " + status_verified_date + "): " + IPDSharingDescription;
-                        string IPDSharingTimeFrame = xh.FieldValue(IPDSharingModule, "IPDSharingTimeFrame") ?? "";
-                        string IPDSharingAccessCriteria = xh.FieldValue(IPDSharingModule, "IPDSharingAccessCriteria") ?? "";
-                        string IPDSharingURL = xh.FieldValue(IPDSharingModule, "IPDSharingURL") ?? "";
+                        string IPDSharingTimeFrame = FieldValue(IPDSharingModule, "IPDSharingTimeFrame") ?? "";
+                        string IPDSharingAccessCriteria = FieldValue(IPDSharingModule, "IPDSharingAccessCriteria") ?? "";
+                        string IPDSharingURL = FieldValue(IPDSharingModule, "IPDSharingURL") ?? "";
 
                         if (IPDSharingTimeFrame != "") sharing_statement += "\r\nTime frame: " + IPDSharingTimeFrame;
                         if (IPDSharingAccessCriteria != "") sharing_statement += "\r\nAccess Criteria: " + IPDSharingAccessCriteria;
                         if (IPDSharingURL != "") sharing_statement += "\r\nURL: " + IPDSharingURL;
 
-                        var IPDSharingInfoTypeList = xh.RetrieveListElements(IPDSharingModule, "IPDSharingInfoTypeList");
+                        var IPDSharingInfoTypeList = RetrieveListElements(IPDSharingModule, "IPDSharingInfoTypeList");
                         if (IPDSharingInfoTypeList != null && IPDSharingInfoTypeList.Count() > 0)
                         {
                             string itemlist = "";
@@ -777,19 +776,19 @@ namespace DataHarvester.ctg
             {
                 if (LargeDocumentModule != null)
                 {
-                    var largedocs = xh.RetrieveListElements(LargeDocumentModule, "LargeDocList");
+                    var largedocs = RetrieveListElements(LargeDocumentModule, "LargeDocList");
                     if (largedocs != null && largedocs.Count() > 0)
                     {
                         foreach (XElement largedoc in largedocs)
                         {
-                            string type_abbrev = xh.FieldValue(largedoc, "LargeDocTypeAbbrev");
-                            string has_protocol = xh.FieldValue(largedoc, "LargeDocHasProtocol");
-                            string has_sap = xh.FieldValue(largedoc, "LargeDocHasSAP");
-                            string has_icf = xh.FieldValue(largedoc, "LargeDocHasICF");
-                            string doc_label = xh.FieldValue(largedoc, "LargeDocLabel");
-                            string doc_date = xh.FieldValue(largedoc, "LargeDocDate");
-                            string upload_date = xh.FieldValue(largedoc, "LargeDocUploadDate");
-                            string file_name = xh.FieldValue(largedoc, "LargeDocFilename");
+                            string type_abbrev = FieldValue(largedoc, "LargeDocTypeAbbrev");
+                            string has_protocol = FieldValue(largedoc, "LargeDocHasProtocol");
+                            string has_sap = FieldValue(largedoc, "LargeDocHasSAP");
+                            string has_icf = FieldValue(largedoc, "LargeDocHasICF");
+                            string doc_label = FieldValue(largedoc, "LargeDocLabel");
+                            string doc_date = FieldValue(largedoc, "LargeDocDate");
+                            string upload_date = FieldValue(largedoc, "LargeDocUploadDate");
+                            string file_name = FieldValue(largedoc, "LargeDocFilename");
 
                             // create a new data object
 
@@ -852,7 +851,7 @@ namespace DataHarvester.ctg
                             }
 
                             // check name
-                            int next_num = xh.CheckObjectName(object_titles, object_display_title);
+                            int next_num = CheckObjectName(object_titles, object_display_title);
                             if (next_num > 0)
                             {
                                 object_display_title += "_" + next_num.ToString();
@@ -903,26 +902,26 @@ namespace DataHarvester.ctg
                 // their dates are checked against the study date
                 // this is therefore generating a list for the future.
 
-                var refs = xh.RetrieveListElements(ReferencesModule, "ReferenceList");
+                var refs = RetrieveListElements(ReferencesModule, "ReferenceList");
                 if (refs != null && refs.Count() > 0)
                 {
                     foreach (XElement reference in refs)
                     {
-                        string ref_type = xh.FieldValue(reference, "ReferenceType");
+                        string ref_type = FieldValue(reference, "ReferenceType");
                         if (ref_type == "result")
                         {
-                            string pmid = xh.FieldValue(reference, "ReferencePMID");
-                            string citation = xh.FieldValue(reference, "ReferenceCitation");
+                            string pmid = FieldValue(reference, "ReferencePMID");
+                            string citation = FieldValue(reference, "ReferenceCitation");
                             references.Add(new StudyReference(sid, pmid, citation, null, null));
                         }
 
-                        var retractions = xh.RetrieveListElements(reference, "RetractionList");
+                        var retractions = RetrieveListElements(reference, "RetractionList");
                         if (retractions != null && retractions.Count() > 0)
                         {
                             foreach (XElement retraction in retractions)
                             {
-                                string retraction_pmid = xh.FieldValue(retraction, "RetractionPMID");
-                                string retraction_source = xh.FieldValue(retraction, "RetractionSource");
+                                string retraction_pmid = FieldValue(retraction, "RetractionPMID");
+                                string retraction_source = FieldValue(retraction, "RetractionSource");
                                 references.Add(new StudyReference(sid, retraction_pmid, retraction_source, null, "RETRACTION"));
                             }
                         }
@@ -934,15 +933,15 @@ namespace DataHarvester.ctg
                 // directly or after review of requests
                 // Others will need to be stored as records for future processing
 
-                var avail_ipd_items = xh.RetrieveListElements(ReferencesModule, "AvailIPDList");
+                var avail_ipd_items = RetrieveListElements(ReferencesModule, "AvailIPDList");
                 if (avail_ipd_items != null && avail_ipd_items.Count() > 0)
                 {
                     foreach (XElement avail_ipd in avail_ipd_items)
                     {
-                        string ipd_id = xh.FieldValue(avail_ipd, "AvailIPDId");
-                        string ipd_type = xh.FieldValue(avail_ipd, "AvailIPDType");
-                        string ipd_url = xh.FieldValue(avail_ipd, "AvailIPDURL");
-                        string ipd_comment = xh.FieldValue(avail_ipd, "AvailIPDComment");
+                        string ipd_id = FieldValue(avail_ipd, "AvailIPDId");
+                        string ipd_type = FieldValue(avail_ipd, "AvailIPDType");
+                        string ipd_url = FieldValue(avail_ipd, "AvailIPDURL");
+                        string ipd_comment = FieldValue(avail_ipd, "AvailIPDComment");
 
                         // Often a GSK store
 
@@ -1019,7 +1018,7 @@ namespace DataHarvester.ctg
                             object_display_title = t_base + " :: " + object_type;
 
                             // check name
-                            int next_num = xh.CheckObjectName(object_titles, object_display_title);
+                            int next_num = CheckObjectName(object_titles, object_display_title);
                             if (next_num > 0)
                             {
                                 object_display_title += "_" + next_num.ToString();
@@ -1101,7 +1100,7 @@ namespace DataHarvester.ctg
                             object_display_title = title_base + " :: " + object_type;
 
                             // check name
-                            int next_num = xh.CheckObjectName(object_titles, object_display_title);
+                            int next_num = CheckObjectName(object_titles, object_display_title);
                             if (next_num > 0)
                             {
                                 object_display_title += "_" + next_num.ToString();
@@ -1146,7 +1145,7 @@ namespace DataHarvester.ctg
                                 object_display_title = title_base + " :: " + object_type;
 
                                 // check name
-                                int next_num = xh.CheckObjectName(object_titles, object_display_title);
+                                int next_num = CheckObjectName(object_titles, object_display_title);
                                 if (next_num > 0)
                                 {
                                     object_display_title += "_" + next_num.ToString();
@@ -1178,13 +1177,13 @@ namespace DataHarvester.ctg
                 // at the moment these records are for storage and future processing
                 // tidy up urls, remove a small proportion of obvious non-useful links
 
-                var see_also_refs = xh.RetrieveListElements(ReferencesModule, "SeeAlsoLinkList");
+                var see_also_refs = RetrieveListElements(ReferencesModule, "SeeAlsoLinkList");
                 if (see_also_refs != null && see_also_refs.Count() > 0)
                 {
                     foreach (XElement see_also_ref in see_also_refs)
                     {
-                        string link_label = xh.FieldValue(see_also_ref, "SeeAlsoLinkLabel");
-                        string link_url = xh.FieldValue(see_also_ref, "SeeAlsoLinkURL");
+                        string link_label = FieldValue(see_also_ref, "SeeAlsoLinkLabel");
+                        string link_url = FieldValue(see_also_ref, "SeeAlsoLinkURL");
 
                         if (link_url != null)
                         {
@@ -1201,7 +1200,7 @@ namespace DataHarvester.ctg
                                 object_display_title = title_base + " :: " + object_type;
 
                                 // check name
-                                int next_num = xh.CheckObjectName(object_titles, object_display_title);
+                                int next_num = CheckObjectName(object_titles, object_display_title);
                                 if (next_num > 0)
                                 {
                                     object_display_title += "_" + next_num.ToString();
@@ -1295,7 +1294,7 @@ namespace DataHarvester.ctg
                                     object_display_title = title_base + " :: " + object_type;
 
                                     // check name
-                                    int next_num = xh.CheckObjectName(object_titles, object_display_title);
+                                    int next_num = CheckObjectName(object_titles, object_display_title);
                                     if (next_num > 0)
                                     {
                                         object_display_title += "_" + next_num.ToString();
@@ -1499,5 +1498,159 @@ namespace DataHarvester.ctg
             }
 
         }
+
+        private string GetElementAsString(XElement e) => (e == null) ? null : (string)e;
+
+        private string GetAttributeAsString(XAttribute a) => (a == null) ? null : (string)a;
+
+
+        private int? GetElementAsInt(XElement e)
+        {
+            string evalue = GetElementAsString(e);
+            if (string.IsNullOrEmpty(evalue))
+            {
+                return null;
+            }
+            else
+            {
+                if (Int32.TryParse(evalue, out int res))
+                    return res;
+                else
+                    return null;
+            }
+        }
+
+        private int? GetAttributeAsInt(XAttribute a)
+        {
+            string avalue = GetAttributeAsString(a);
+            if (string.IsNullOrEmpty(avalue))
+            {
+                return null;
+            }
+            else
+            {
+                if (Int32.TryParse(avalue, out int res))
+                    return res;
+                else
+                    return null;
+            }
+        }
+
+
+        private bool GetElementAsBool(XElement e)
+        {
+            string evalue = GetElementAsString(e);
+            if (evalue != null)
+            {
+                return (evalue.ToLower() == "true" || evalue.ToLower()[0] == 'y') ? true : false;
+            }
+            else
+            {
+                return false;
+            }
+        }
+
+        private bool GetAttributeAsBool(XAttribute a)
+        {
+            string avalue = GetAttributeAsString(a);
+            if (avalue != null)
+            {
+                return (avalue.ToLower() == "true" || avalue.ToLower()[0] == 'y') ? true : false;
+            }
+            else
+            {
+                return false;
+            }
+        }
+
+
+        private XElement RetrieveStruct(XElement container, string nameToMatch)
+        {
+            var Structs = container.Elements("Struct");
+            foreach (XElement st in Structs)
+            {
+                if ((string)st.Attribute("Name") == nameToMatch)
+                {
+                    return st;
+                }
+            }
+            return null;
+        }
+
+
+        private bool CheckStructExists(XElement container, string nameToMatch)
+        {
+
+            var Structs = container.Elements("Struct");
+            foreach (XElement st in Structs)
+            {
+                if ((string)st.Attribute("Name") == nameToMatch)
+                {
+                    return true;
+                }
+            }
+            return false;
+        }
+
+
+        private string FieldValue(XElement container, string nameToMatch)
+        {
+            var Fields = container.Elements("Field");
+            foreach (XElement b in Fields)
+            {
+                if ((string)b.Attribute("Name") == nameToMatch)
+                {
+                    return (b == null) ? null : (string)b;
+                }
+            }
+            return null;
+        }
+
+
+        private string StructFieldValue(XElement container, string structToMatch, string fieldToMatch)
+        {
+            var Structs = container.Elements("Struct");
+            foreach (XElement st in Structs)
+            {
+                if ((string)st.Attribute("Name") == structToMatch)
+                {
+                    return FieldValue(st, fieldToMatch);
+                }
+            }
+            return null;
+        }
+
+
+        private IEnumerable<XElement> RetrieveListElements(XElement container, string listToMatch)
+        {
+            var Lists = container.Elements("List");
+            foreach (XElement li in Lists)
+            {
+                if ((string)li.Attribute("Name") == listToMatch)
+                {
+                    return li.Elements();
+                }
+            }
+            return null;
+        }
+
+
+        // check name...
+        private int CheckObjectName(List<ObjectTitle> titles, string object_display_title)
+        {
+            int num_of_this_type = 0;
+            if (titles.Count > 0)
+            {
+                for (int j = 0; j < titles.Count; j++)
+                {
+                    if (titles[j].title_text.Contains(object_display_title))
+                    {
+                        num_of_this_type++;
+                    }
+                }
+            }
+            return num_of_this_type;
+        }
+
     }
 }
