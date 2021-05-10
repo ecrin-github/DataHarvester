@@ -4,7 +4,53 @@ using System.Collections.Generic;
 
 namespace DataHarvester
 {
+    public class FullDataObject
+    {
+        public string sd_oid { get; set; }
+        public string sd_sid { get; set; }
+        public string display_title { get; set; }
+        public string version { get; set; }
+        public string doi { get; set; }
+        public int doi_status_id { get; set; }
+        public int? publication_year { get; set; }
+        public int object_class_id { get; set; }
+        public string object_class { get; set; }
+        public int? object_type_id { get; set; }
+        public string object_type { get; set; }
+        public int? managing_org_id { get; set; }
+        public string managing_org { get; set; }
+        public string lang_code { get; set; }
+        public int? access_type_id { get; set; }
+        public string access_type { get; set; }
+        public string access_details { get; set; }
+        public string access_details_url { get; set; }
+        public DateTime? url_last_checked { get; set; }
+        public int? eosc_category { get; set; }
+        public bool add_study_contribs { get; set; }
+        public bool add_study_topics { get; set; }
+        public DateTime? datetime_of_data_fetch { get; set; }
 
+        public List<string> language_list { get; set; }
+        public List<ObjectDate> object_dates { get; set; }
+        public List<ObjectTitle> object_titles { get; set; }
+        public List<ObjectIdentifier> object_identifiers { get; set; }
+        public List<ObjectTopic> object_topics { get; set; }
+        public List<ObjectPublicationType> object_pubtypes { get; set; }
+        public List<ObjectDescription> object_descriptions { get; set; }
+        public List<ObjectInstance> object_instances { get; set; }
+        public List<ObjectContributor> object_contributors { get; set; }
+        public List<ObjectComment> object_comments { get; set; }
+        public List<ObjectDBLink> object_db_ids { get; set; }
+
+        public FullDataObject(string _sd_oid, DateTime? _datetime_of_data_fetch)
+        {
+            sd_oid = _sd_oid;
+            datetime_of_data_fetch = _datetime_of_data_fetch;
+        }
+
+    }
+
+    [Table("sd.DataObjects")]
     public class DataObject
     {
         public string sd_oid { get; set; }
@@ -30,6 +76,33 @@ namespace DataHarvester
         public bool add_study_contribs { get; set; }
         public bool add_study_topics { get; set; }
         public DateTime? datetime_of_data_fetch { get; set; }
+
+        public DataObject(FullDataObject fob)
+        {
+            sd_oid = fob.sd_oid;
+            sd_sid = fob.sd_sid;
+            display_title = fob.display_title;
+            version = fob.version;
+            doi = fob.doi;
+            doi_status_id = fob.doi_status_id;
+            publication_year = fob.publication_year;
+            object_class_id = fob.object_class_id;
+            object_class = fob.object_class;
+            object_type_id = fob.object_type_id;
+            object_type = fob.object_type;
+            managing_org_id = fob.managing_org_id;
+            managing_org = fob.managing_org;
+            lang_code = "en";
+            access_type_id = fob.access_type_id;
+            access_type = fob.access_type;
+            access_details = fob.access_details;
+            access_details_url = fob.access_details_url;
+            url_last_checked = fob.url_last_checked;
+            eosc_category = fob.eosc_category;
+            add_study_contribs = fob.add_study_contribs;
+            add_study_topics = fob.add_study_topics;
+            datetime_of_data_fetch = fob.datetime_of_data_fetch;
+        }
 
 
         public DataObject(string _sd_oid, string _sd_sid, string _display_title, int? _publication_year, int _object_class_id,

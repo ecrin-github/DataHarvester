@@ -7,11 +7,8 @@
 
   <ItemGroup>
     <Compile Remove="DataHelpers\TableBuildersAD.cs" />
-    <Compile Remove="SourceSpecific\biolincc\BioLinccDataLayer.cs" />
+    <Compile Remove="SourceSpecific\pubmed\PubmedController.cs" />
     <Compile Remove="SourceSpecific\pubmed\PubmedPostProcBuilder.cs" />
-    <Compile Remove="SubProjectHelpers\OrgHelper.cs" />
-    <Compile Remove="SubProjectHelpers\PostProcBuilder.cs" />
-    <Compile Remove="SubProjectHelpers\TopicHelper.cs" />
   </ItemGroup>
 
   <ItemGroup>
@@ -35,6 +32,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\ContextDataManager\ContextDataManager.csproj" />
+    <ProjectReference Include="..\HashDataLibrary\HashDataLibrary.csproj" />
   </ItemGroup>
 
   <ItemGroup>

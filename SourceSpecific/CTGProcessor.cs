@@ -9,7 +9,7 @@ using Serilog;
 
 namespace DataHarvester.ctg
 {
-    public class CTGProcessor : IProcessor
+    public class CTGProcessor : IStudyProcessor
     {
         IStorageDataLayer _storage_repo;
         IMonitorDataLayer _mon_repo;

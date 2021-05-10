@@ -7,7 +7,7 @@ using Serilog;
 
 namespace DataHarvester.biolincc
 {
-    public class BioLinccProcessor : IProcessor
+    public class BioLinccProcessor : IStudyProcessor
     { 
         IStorageDataLayer _storage_repo;
         IMonitorDataLayer _mon_repo;

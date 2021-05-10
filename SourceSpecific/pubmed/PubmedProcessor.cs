@@ -8,7 +8,7 @@ using Serilog;
 
 namespace DataHarvester.pubmed
 {
-    public class PubmedProcessor 
+    public class PubmedProcessor : IObjectProcessor
     {
         IStorageDataLayer _storage_repo;
         IMonitorDataLayer _mon_repo;
@@ -22,7 +22,7 @@ namespace DataHarvester.pubmed
         }
 
        
-        public Study ProcessData(XmlDocument d, DateTime? download_datetime)
+        public FullDataObject ProcessData(XmlDocument d, DateTime? download_datetime)
         {
             StringHelpers sh = new StringHelpers(_logger, _mon_repo);
             DateHelpers dh = new DateHelpers();
@@ -72,7 +72,7 @@ namespace DataHarvester.pubmed
 
             string sdoid = GetElementAsString(citation.Element("PMID"));
 
-            CitationObject c = new CitationObject(sdoid, download_datetime);
+            FullDataObject fob = new FullDataObject(sdoid, download_datetime);
 
             identifiers.Add(new ObjectIdentifier(sdoid, 16, "PMID", sdoid, 100133, "National Library of Medicine"));
 
@@ -97,11 +97,11 @@ namespace DataHarvester.pubmed
             {
                 if (Int32.TryParse(pmidVersion, out int res))
                 {
-                    c.version = res.ToString();
+                    fob.version = res.ToString();
                 }
                 else
                 {
-                    c.version = pmidVersion;
+                    fob.version = pmidVersion;
                     _logger.Information("PMID version for {sdoid} not an integer", sdoid);
                 }
             }
@@ -113,7 +113,7 @@ namespace DataHarvester.pubmed
 
             // Obtain and store the citation status.
 
-            c.abstract_status = GetAttributeAsString(citation.Attribute("Status"));
+            string abstract_status = GetAttributeAsString(citation.Attribute("Status"));
 
             // Version and version_date hardly ever present
             // if they do occur log them.
@@ -139,7 +139,7 @@ namespace DataHarvester.pubmed
 
             // Obtain and store the article publication model
 
-            c.pub_model = GetAttributeAsString(article.Attribute("PubModel"));
+            string pub_model = GetAttributeAsString(article.Attribute("PubModel"));
 
             // Obtain and store (in the languages list) the article's language(s) - 
             // get these early as may be needed by title extraction code below.
@@ -147,7 +147,7 @@ namespace DataHarvester.pubmed
             var languages = article.Elements("Language");
             if (languages.Count() > 0)
             {
-                c.language_list = languages.Select(g => GetElementAsString(g)).ToList();
+                fob.language_list = languages.Select(g => GetElementAsString(g)).ToList();
                 string lang_list = "";
                 foreach (string g in languages)
                 {
@@ -167,7 +167,7 @@ namespace DataHarvester.pubmed
                     }
                     lang_list += ", " + lang_2code;
                 }
-                c.lang_code = lang_list.Substring(2);
+                fob.lang_code = lang_list.Substring(2);
             }
 
 
@@ -192,7 +192,6 @@ namespace DataHarvester.pubmed
             if (journal != null)
             {
                 string journalTitle = GetElementAsString(journal.Element("Title"));
-                c.journal_title = journalTitle;
                 IEnumerable<XElement> ISSNs = journal.Elements("ISSN");
                 if (ISSNs.Count() > 0)
                 {
@@ -208,7 +207,6 @@ namespace DataHarvester.pubmed
                             {
                                 pissn = pissn.Substring(0, 4) + pissn.Substring(5, 4);
                             }
-                            c.pissn = pissn;
                         }
                         if (ISSN_type == "Electronic")
                         {
@@ -217,7 +215,6 @@ namespace DataHarvester.pubmed
                             {
                                 eissn = eissn.Substring(0, 4) + eissn.Substring(5, 4);
                             }
-                            c.eissn = eissn;
                         }
                     }
                 }
@@ -279,7 +276,7 @@ namespace DataHarvester.pubmed
                     // Try and get vernacular code language - not explicitly given so
                     // all methods imperfect but seem to work in most situations so far.
 
-                    foreach (string s in c.language_list)
+                    foreach (string s in fob.language_list)
                     {
                         if (s != "eng")
                         {
@@ -478,7 +475,7 @@ namespace DataHarvester.pubmed
 
             // Obtain and store publication status.
 
-            c.publication_status = GetElementAsString(pubmed.Element("PublicationStatus"));
+            string publication_status = GetElementAsString(pubmed.Element("PublicationStatus"));
 
             // Obtain any article databank list - to identify links to
             // registries and / or gene or protein databases. Each distinct bank
@@ -550,7 +547,7 @@ namespace DataHarvester.pubmed
                     publication_date = dh.ProcessDate(sdoid, pub_date, 12, "Available");
                 }
                 dates.Add(publication_date);
-                c.publication_year = publication_date.start_year;
+                fob.publication_year = publication_date.start_year;
                 publication_date_string = publication_date.date_as_string;
             }
 
@@ -839,7 +836,7 @@ namespace DataHarvester.pubmed
 
                                 case "doi":
                                     {
-                                        if (c.doi == null) c.doi = value.Trim().ToLower();
+                                        if (fob.doi == null) fob.doi = value.Trim().ToLower();
                                         source_elocation_string += " doi:" + value + ".";
                                         break;
                                     }
@@ -914,15 +911,15 @@ namespace DataHarvester.pubmed
                                 case "doi":
                                     {
                                         other_id = other_id.ToLower();
-                                        if (c.doi == null)
+                                        if (fob.doi == null)
                                         {
-                                            c.doi = other_id;
+                                            fob.doi = other_id;
                                         }
                                         else
                                         {
-                                            if (c.doi != other_id)
+                                            if (fob.doi != other_id)
                                             {
-                                                string qText = "Two different dois have been supplied: " + c.doi +
+                                                string qText = "Two different dois have been supplied: " + fob.doi +
                                                                " from ELocation, and " + other_id + " from Article Ids, pmid { sdoid}";
                                                 _logger.Information(qText, sdoid);
                                                 break;
@@ -1158,7 +1155,7 @@ namespace DataHarvester.pubmed
                         string affiliation = "", affil_identifier = ""; string affil_ident_source = "";
                         if (a.Elements("AffiliationInfo").Count() > 0)
                         {
-                            // N.B. ensure there is an identifier element or the attempted attribute access will throw an exception
+                            // N.fob. ensure there is an identifier element or the attempted attribute access will throw an exception
                             // occasionally may be multiple affiliations
                             var person_affiliations = a.Elements("AffiliationInfo");
                             foreach (XElement e in person_affiliations)
@@ -1277,7 +1274,7 @@ namespace DataHarvester.pubmed
                     pagination = pagination.Substring(0, pagination.Length - 1);
                 }
 
-                switch (c.pub_model)
+                switch (pub_model)
                 {
                     case "Print":
                         {
@@ -1407,11 +1404,11 @@ namespace DataHarvester.pubmed
             {
                 art_title = art_title + ".";
             }
-            c.display_title = (author_string != "" ? author_string + ". " : "") + art_title + journal_source;
+            fob.display_title = (author_string != "" ? author_string + ". " : "") + art_title + journal_source;
 
             // Tidy up doi status.
 
-            c.doi_status_id = (c.doi != null) ? 1 : 5;
+            fob.doi_status_id = (fob.doi != null) ? 1 : 5;
 
             // Tidy up access type.
 
@@ -1426,100 +1423,107 @@ namespace DataHarvester.pubmed
             }
             if (PMC_present)
             {
-                c.access_type_id = 11;
-                c.access_type = "Public on-screen access and download";
+                fob.access_type_id = 11;
+                fob.access_type = "Public on-screen access and download";
             }
             else
             {
-                c.access_type_id = 15;
-                c.access_type = "Restricted download";
-                c.access_details = "Not in PMC - presumed behind pay wall, but to check'";
+                fob.access_type_id = 15;
+                fob.access_type = "Restricted download";
+                fob.access_details = "Not in PMC - presumed behind pay wall, but to check'";
             }
+
+
+            // get managing org data from eissn, pissn
+            // need reference to a repo...
+            // fob.managing_org_id
+            // fob.managing_org
 
 
             // Assign repeating properties to citationn object
             // and return the fully constructed citation object.
 
-            c.article_instances = instances;
-            c.article_dates = dates;
-            c.article_titles = titles;
-            c.article_identifiers = identifiers;
-            c.article_contributors = contributors;
-            c.article_descriptions = descriptions;
-            c.article_pubtypes = pubtypes;
-            c.article_topics = topics;
-            c.article_db_ids = db_ids;
-            c.article_comments = comments;
+            fob.object_instances = instances;
+            fob.object_dates = dates;
+            fob.object_titles = titles;
+            fob.object_identifiers = identifiers;
+            fob.object_contributors = contributors;
+            fob.object_descriptions = descriptions;
+            fob.object_pubtypes = pubtypes;
+            fob.object_topics = topics;
+            fob.object_db_ids = db_ids;
+            fob.object_comments = comments;
 
-
-
-            return c;
+            return fob;
         }
 
 
-        public void StoreData(Study s, string db_conn)
+        public void StoreData(FullDataObject fob, string db_conn)
         {
             // A routine called by the main program that runs through the 
             // Citation object - the singleton properties followed by each of the 
             // repeating propereties, and stores them in the associated DB table.
 
-            // Create the base Citation record and store it.
+            // Create the base data object record and store it.
 
-            CitationObjectInDB cdb = new CitationObjectInDB(c);
-            _storage_repo.StoreCitationObject(cdb, db_conn);
+            DataObject dob = new DataObject(fob);
+            _storage_repo.StoreDataObject(dob, db_conn);
+
+            //CitationObjectInDB cdb = new CitationObjectInDB(c);
+            //_storage_repo.StoreCitationObject(cdb, db_conn);
 
             ObjectCopyHelpers och = new ObjectCopyHelpers();
 
             // Store the contributors, their identifiers and attributions. 
 
-            if (s.article_instances.Count > 0)
+            if (fob.object_instances.Count > 0)
             {
-                _storage_repo.StoreObjectInstances(och.object_instances_helper, s.article_instances, db_conn);
+                _storage_repo.StoreObjectInstances(och.object_instances_helper, fob.object_instances, db_conn);
             }
 
-            if (s.article_titles.Count > 0)
+            if (fob.object_titles.Count > 0)
             {
-                _storage_repo.StoreObjectTitles(och.object_titles_helper, s.article_titles, db_conn);
+                _storage_repo.StoreObjectTitles(och.object_titles_helper, fob.object_titles, db_conn);
             }
 
-            if (s.article_dates.Count > 0)
+            if (fob.object_dates.Count > 0)
             {
-                _storage_repo.StoreObjectDates(och.object_dates_helper, s.article_dates, db_conn);
+                _storage_repo.StoreObjectDates(och.object_dates_helper, fob.object_dates, db_conn);
             }
 
-            if (s.article_contributors.Count > 0)
+            if (fob.object_contributors.Count > 0)
             {
-                _storage_repo.StoreObjectContributors(och.object_contributor_copyhelper, s.article_contributors, db_conn);
+                _storage_repo.StoreObjectContributors(och.object_contributor_copyhelper, fob.object_contributors, db_conn);
             }
 
-            if (s.article_identifiers.Count > 0)
+            if (fob.object_identifiers.Count > 0)
             {
-                _storage_repo.StoreObjectIdentifiers(och.object_identifier_copyhelper, s.article_identifiers, db_conn);
+                _storage_repo.StoreObjectIdentifiers(och.object_identifier_copyhelper, fob.object_identifiers, db_conn);
             }
 
-            if (s.article_descriptions.Count > 0)
+            if (fob.object_descriptions.Count > 0)
             {
-                _storage_repo.StoreObjectDescriptions(och.object_description_copyhelper, s.article_descriptions, db_conn);
+                _storage_repo.StoreObjectDescriptions(och.object_description_copyhelper, fob.object_descriptions, db_conn);
             }
 
-            if (s.article_topics.Count > 0)
+            if (fob.object_topics.Count > 0)
             {
-                _storage_repo.StoreObjectTopics(och.object_topic_copyhelper, s.article_topics, db_conn);
+                _storage_repo.StoreObjectTopics(och.object_topic_copyhelper, fob.object_topics, db_conn);
             }
 
-            if (sarticle_db_ids.Count > 0)
+            if (fob.object_db_ids.Count > 0)
             {
-                _storage_repo.StoreObjectAcessionNumbers(och.object_db_link_copyhelper, s.article_db_ids, db_conn);
+                _storage_repo.StoreObjectAcessionNumbers(och.object_db_link_copyhelper, fob.object_db_ids, db_conn);
             }
 
-            if (s.article_pubtypes.Count > 0)
+            if (fob.object_pubtypes.Count > 0)
             {
-                _storage_repo.StorePublicationTypes(och.publication_type_copyhelper, s.article_pubtypes, db_conn);
+                _storage_repo.StorePublicationTypes(och.publication_type_copyhelper, fob.object_pubtypes, db_conn);
             }
 
-            if (s.article_comments.Count > 0)
+            if (fob.object_comments.Count > 0)
             {
-                _storage_repo.StoreObjectComments(och.object_comment_copyhelper, s.article_comments, db_conn);
+                _storage_repo.StoreObjectComments(och.object_comment_copyhelper, fob.object_comments, db_conn);
             }
         }
 

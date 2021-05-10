@@ -1,33 +1,32 @@
 ﻿using System.Collections.Generic;
 using System.IO;
 using System.Xml;
-using System.Xml.Serialization;
 using Serilog;
 
-namespace DataHarvester.biolincc
+namespace DataHarvester
 {
-    public class BioLinccController
+    public class ObjectController
     {
         ILogger _logger;
         IMonitorDataLayer _mon_repo;
         IStorageDataLayer _storage_repo;
-        BioLinccProcessor _processor;
+        IObjectProcessor _processor;
         Source _source;
         int _harvest_type_id;
         int _harvest_id;
 
-        public BioLinccController(ILogger logger, IMonitorDataLayer mon_repo, IStorageDataLayer storage_repo,
-                                  Source source, int harvest_type_id, int harvest_id, BioLinccProcessor processor)
+        public ObjectController(ILogger logger, IMonitorDataLayer mon_repo, IStorageDataLayer storage_repo,
+                              Source source, int harvest_type_id, int harvest_id, IObjectProcessor processor)
         {
             _logger = logger;
-            _mon_repo = mon_repo; 
+            _mon_repo = mon_repo;
             _storage_repo = storage_repo;
             _processor = processor;
             _source = source;
             _harvest_type_id = harvest_type_id;
             _harvest_id = harvest_id;
-        }
 
+        }
 
         public int? LoopThroughFiles()
         {
@@ -56,10 +55,10 @@ namespace DataHarvester.biolincc
                     {
                         XmlDocument xdoc = new XmlDocument();
                         xdoc.Load(filePath);
-                        Study s = _processor.ProcessData(xdoc, rec.last_downloaded);
-                         
-                        // store the data in the database
-                        _processor.StoreData(s, _source.db_conn);
+                        FullDataObject fob = _processor.ProcessData(xdoc, rec.last_downloaded);
+
+                        // store the data in the database			
+                        _processor.StoreData(fob, _source.db_conn);
 
                         // update file record with last processed datetime
                         // (if not in test mode)
@@ -68,12 +67,19 @@ namespace DataHarvester.biolincc
                             _mon_repo.UpdateFileRecLastHarvested(rec.id, _source.source_type, _harvest_id);
                         }
                     }
+
+                    if (k % chunk == 0) _logger.Information("Records harvested: " + k.ToString());
                 }
 
-                 if (k % chunk == 0) _logger.Information("Records harvested: " + k.ToString());
             }
 
             return k;
+        }
+
+
+        public void DoPostProcessing()
+        {
+            // Necessary for pubmed data
 
         }
     }

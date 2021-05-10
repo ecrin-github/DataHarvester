@@ -7,7 +7,7 @@ namespace DataHarvester
     {
         void StoreCitationObject(CitationObjectInDB ctob, string connString);
         void StoreStudy(StudyInDB st_db, string connString);
-
+        void StoreDataObject(DataObject b, string connString);
         ulong StoreDataObjects(PostgreSQLCopyHelper<DataObject> copyHelper, IEnumerable<DataObject> entities, string connString);
         ulong StoreDatasetProperties(PostgreSQLCopyHelper<ObjectDataset> copyHelper, IEnumerable<ObjectDataset> entities, string connString);
         ulong StoreObjectAcessionNumbers(PostgreSQLCopyHelper<ObjectDBLink> copyHelper, IEnumerable<ObjectDBLink> entities, string connString);

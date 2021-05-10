@@ -1,24 +1,23 @@
 ﻿using System.Collections.Generic;
 using System.IO;
 using System.Xml;
-using System.Xml.Serialization;
 using Serilog;
 
-namespace DataHarvester.who
+namespace DataHarvester
 {
-    public class WHOController
+    public class StudyController
     {
         ILogger _logger;
         IMonitorDataLayer _mon_repo;
         IStorageDataLayer _storage_repo;
-        WHOProcessor _processor;
+        IStudyProcessor _processor;
         Source _source;
         int _harvest_type_id;
         int _harvest_id;
 
-        public WHOController(ILogger logger, IMonitorDataLayer mon_repo, IStorageDataLayer storage_repo,
-                             Source source, int harvest_type_id, int harvest_id, WHOProcessor processor)
-        { 
+        public StudyController(ILogger logger, IMonitorDataLayer mon_repo, IStorageDataLayer storage_repo,
+                              Source source, int harvest_type_id, int harvest_id, IStudyProcessor processor)
+        {
             _logger = logger;
             _mon_repo = mon_repo;
             _storage_repo = storage_repo;
@@ -28,10 +27,9 @@ namespace DataHarvester.who
             _harvest_id = harvest_id;
         }
 
-
         public int? LoopThroughFiles()
         {
-            // Loop through the available records a chunk at a time (may be 1 for smaller rexord sources)
+            // Loop through the available records a chunk at a time (may be 1 for smaller record sources)
             // First get the total number of records in the system for this source
             // Set up the outer limit and get the relevant records for each pass
 
@@ -44,6 +42,7 @@ namespace DataHarvester.who
 
                 IEnumerable<StudyFileRecord> file_list = _mon_repo
                         .FetchStudyFileRecordsByOffset(_source.id, m, chunk, _harvest_type_id);
+
                 int n = 0; string filePath = "";
                 foreach (StudyFileRecord rec in file_list)
                 {
@@ -57,7 +56,7 @@ namespace DataHarvester.who
                         xdoc.Load(filePath);
                         Study s = _processor.ProcessData(xdoc, rec.last_downloaded);
 
-                        // store the data in the database			  
+                        // store the data in the database			
                         _processor.StoreData(s, _source.db_conn);
 
                         // update file record with last processed datetime
@@ -67,9 +66,10 @@ namespace DataHarvester.who
                             _mon_repo.UpdateFileRecLastHarvested(rec.id, _source.source_type, _harvest_id);
                         }
                     }
+
+                    if (k % chunk == 0) _logger.Information("Records harvested: " + k.ToString());
                 }
 
-                if (k % chunk == 0) _logger.Information("Records harvested: " + k.ToString());
             }
 
             return k;

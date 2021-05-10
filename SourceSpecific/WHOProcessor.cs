@@ -8,7 +8,7 @@ using Serilog;
 
 namespace DataHarvester.who
 {
-    public class WHOProcessor : IProcessor
+    public class WHOProcessor : IStudyProcessor
     {
         IStorageDataLayer _storage_repo;
         IMonitorDataLayer _mon_repo;
@@ -59,15 +59,8 @@ namespace DataHarvester.who
             s.sd_sid = sid;
             s.datetime_of_data_fetch = download_datetime;
 
-            // transfer features of main study object
-
-            s.sd_sid = sid;
-            s.datetime_of_data_fetch = download_datetime;
-
             string date_registration = GetElementAsString(r.Element("date_registration"));
             int? source_id = GetElementAsInt(r.Element("source_id"));
-            string public_title = sh.CheckTitle(GetElementAsString(r.Element("")));
-            string scientific_title = sh.CheckTitle(GetElementAsString(r.Element("scientific_title")));
 
             SplitDate registration_date = null;
             if (!string.IsNullOrEmpty(date_registration))
@@ -79,6 +72,8 @@ namespace DataHarvester.who
                                      ih.get_source_name(source_id), registration_date?.date_string, null));
 
             // titles
+            string public_title = sh.CheckTitle(GetElementAsString(r.Element("public_title")));
+            string scientific_title = sh.CheckTitle(GetElementAsString(r.Element("scientific_title")));
             if (public_title == "")
             {
                 if (scientific_title != "")
@@ -118,7 +113,7 @@ namespace DataHarvester.who
 
             s.title_lang_code = "en";  // as a default
 
-            // need a mechanism, here to try and identify at least majot language variations
+            // need a mechanism, here to try and identify at least major language variations
             // e.g. Spanish, German, French - may be linkable to the source registry
 
             // brief description
@@ -223,6 +218,11 @@ namespace DataHarvester.who
                     s.study_type_id = th.GetTypeId(s.study_type);
                 }
             }
+            else
+            {
+                s.study_type = "Not yet known";
+                s.study_type_id = 0;
+            }
 
             if (!string.IsNullOrEmpty(study_status))
             {
@@ -230,13 +230,17 @@ namespace DataHarvester.who
                 {
                     s.study_status = "Other";
                     s.study_status_id = 24;
-
                 }
                 else
                 {
                     s.study_status = study_status;
                     s.study_status_id = th.GetStatusId(s.study_status);
                 }
+            }
+            else
+            {
+                s.study_status = "Unknown status";
+                s.study_status_id = 0;
             }
 
 
@@ -406,7 +410,7 @@ namespace DataHarvester.who
             XElement sf = r.Element("study_features");
             if (sf != null)
             {
-                var study_feats = sf.Elements("StudyFeatures");
+                var study_feats = sf.Elements("StudyFeature");
                 if (study_feats != null && study_feats.Count() > 0)
                 {
                     foreach (XElement f in study_feats)
@@ -434,7 +438,17 @@ namespace DataHarvester.who
                         string processed_id = GetElementAsString(id.Element("processed_id"));
                         if (sec_id_source == null)
                         {
-                            study_identifiers.Add(new StudyIdentifier(sid, processed_id, 14, "Sponsor ID", null, sponsor_name));
+                            string sponsor_name_lower = sponsor_name.ToLower();
+                            if (sponsor_name_lower == "na" || sponsor_name_lower == "n/a" || sponsor_name_lower == "no"
+                                || sponsor_name_lower == "none" || sponsor_name_lower == "not available"
+                                || sponsor_name_lower == "no sponsor" || sponsor_name == "-" || sponsor_name == "--")
+                            {
+                                study_identifiers.Add(new StudyIdentifier(sid, processed_id, 14, "Sponsor ID", 12, "No organisation name provided in source data"));
+                            }
+                            else 
+                            {
+                                study_identifiers.Add(new StudyIdentifier(sid, processed_id, 14, "Sponsor ID", null, sponsor_name));
+                            }
                         }
                         else
                         {
@@ -456,7 +470,7 @@ namespace DataHarvester.who
             }
 
             // study conditions
-            XElement cl = r.Element("condiiton_list");
+            XElement cl = r.Element("condition_list");
             if (cl != null)
             {
                 var conditions = cl.Elements("StudyCondition");

@@ -1,11 +1,7 @@
 ﻿using System;
 using System.IO;
-using System.Threading;
 using System.Reflection;
-using System.Threading.Tasks;
-using System.Collections.Generic;
 using Serilog;
-using CommandLine;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -43,7 +39,6 @@ namespace DataHarvester
                      services.AddSingleton<IHarvester, Harvester>();
                      services.AddSingleton<IMonitorDataLayer, MonitorDataLayer>();
                      services.AddSingleton<IStorageDataLayer, StorageDataLayer>();
-
                  })
                  .UseSerilog(new LoggerConfiguration()
                         .ReadFrom.Configuration(configFiles)
@@ -61,9 +56,7 @@ namespace DataHarvester
 
             if (opts != null && paramChecker.ValidArgumentValues(opts))
             {
-                Harvester harvester = ActivatorUtilities
-                                     .CreateInstance<Harvester>(host.Services, 
-                                      opts.harvest_type_id, opts.org_update_only);
+                Harvester harvester = ActivatorUtilities.CreateInstance<Harvester>(host.Services);
                 Environment.ExitCode = harvester.Run(opts);
             }
         }

@@ -117,7 +117,15 @@ namespace DataHarvester
             }
         }
 
-
+        // Inserts the base dataobject, i.e. with all the  
+        // singleton properties, in the database.
+        public void StoreDataObject(DataObject b, string connString)
+        {
+            using (var conn = new NpgsqlConnection(connString))
+            {
+                conn.Insert<DataObject>(b);
+            }
+        }
 
         public ulong StoreDataObjects(PostgreSQLCopyHelper<DataObject> copyHelper,
                        IEnumerable<DataObject> entities, string connString)

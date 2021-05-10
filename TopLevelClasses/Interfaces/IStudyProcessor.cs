@@ -5,7 +5,7 @@ using System.Xml;
 
 namespace DataHarvester
 {
-    interface IProcessor
+    public interface IStudyProcessor
     {
         public Study ProcessData(XmlDocument d, DateTime? download_datetime);
 

@@ -8,7 +8,7 @@ using Serilog;
 
 namespace DataHarvester.yoda
 {
-    public class YodaProcessor : IProcessor
+    public class YodaProcessor : IStudyProcessor
     {
         IStorageDataLayer _storage_repo;
         IMonitorDataLayer _mon_repo;

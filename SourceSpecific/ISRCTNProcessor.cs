@@ -8,7 +8,7 @@ using Serilog;
 
 namespace DataHarvester.isrctn
 {
-    public class ISRCTNProcessor : IProcessor
+    public class ISRCTNProcessor : IStudyProcessor
     {
         IStorageDataLayer _storage_repo;
         IMonitorDataLayer _mon_repo;

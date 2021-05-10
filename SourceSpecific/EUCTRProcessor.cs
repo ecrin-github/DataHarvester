@@ -8,7 +8,7 @@ using Serilog;
 
 namespace DataHarvester.euctr
 {
-    public class EUCTRProcessor : IProcessor
+    public class EUCTRProcessor : IStudyProcessor
     {
         IStorageDataLayer _storage_repo;
         IMonitorDataLayer _mon_repo;

@@ -11,13 +11,13 @@ namespace DataHarvester.pubmed
         ILogger _logger;
         IMonitorDataLayer _mon_repo;
         IStorageDataLayer storage_repo;
-        PubmedProcessor _processor;
+        IObjectProcessor _processor;
         Source source;
         int harvest_type_id;
         int harvest_id; 
 
         public PubmedController(ILogger logger, IMonitorDataLayer mon_repo, IStorageDataLayer _storage_repo,
-                             Source _source, int _harvest_type_id, int _harvest_id, PubmedProcessor processor)
+                             Source _source, int _harvest_type_id, int _harvest_id, IObjectProcessor processor)
         {
             _logger = logger;
             _mon_repo = mon_repo;
@@ -56,8 +56,8 @@ namespace DataHarvester.pubmed
                         {
                             XmlDocument xdoc = new XmlDocument();
                             xdoc.Load(filePath);
-                            Study s = _processor.ProcessData(xdoc, rec.last_downloaded);
-                            _processor.StoreData(s, source.db_conn);
+                            FullDataObject fob = _processor.ProcessData(xdoc, rec.last_downloaded);
+                            _processor.StoreData(fob, source.db_conn);
 
                             /// update file record with last processed datetime
                             // (if not in test mode)
