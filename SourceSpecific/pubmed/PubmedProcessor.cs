@@ -10,13 +10,11 @@ namespace DataHarvester.pubmed
 {
     public class PubmedProcessor : IObjectProcessor
     {
-        IStorageDataLayer _storage_repo;
         IMonitorDataLayer _mon_repo;
         ILogger _logger;
 
-        public PubmedProcessor(IStorageDataLayer storage_repo, IMonitorDataLayer mon_repo, ILogger logger)
+        public PubmedProcessor(IMonitorDataLayer mon_repo, ILogger logger)
         {
-            _storage_repo = storage_repo;
             _mon_repo = mon_repo;
             _logger = logger;
         }
@@ -1455,76 +1453,6 @@ namespace DataHarvester.pubmed
             fob.object_comments = comments;
 
             return fob;
-        }
-
-
-        public void StoreData(FullDataObject fob, string db_conn)
-        {
-            // A routine called by the main program that runs through the 
-            // Citation object - the singleton properties followed by each of the 
-            // repeating propereties, and stores them in the associated DB table.
-
-            // Create the base data object record and store it.
-
-            DataObject dob = new DataObject(fob);
-            _storage_repo.StoreDataObject(dob, db_conn);
-
-            //CitationObjectInDB cdb = new CitationObjectInDB(c);
-            //_storage_repo.StoreCitationObject(cdb, db_conn);
-
-            ObjectCopyHelpers och = new ObjectCopyHelpers();
-
-            // Store the contributors, their identifiers and attributions. 
-
-            if (fob.object_instances.Count > 0)
-            {
-                _storage_repo.StoreObjectInstances(och.object_instances_helper, fob.object_instances, db_conn);
-            }
-
-            if (fob.object_titles.Count > 0)
-            {
-                _storage_repo.StoreObjectTitles(och.object_titles_helper, fob.object_titles, db_conn);
-            }
-
-            if (fob.object_dates.Count > 0)
-            {
-                _storage_repo.StoreObjectDates(och.object_dates_helper, fob.object_dates, db_conn);
-            }
-
-            if (fob.object_contributors.Count > 0)
-            {
-                _storage_repo.StoreObjectContributors(och.object_contributor_copyhelper, fob.object_contributors, db_conn);
-            }
-
-            if (fob.object_identifiers.Count > 0)
-            {
-                _storage_repo.StoreObjectIdentifiers(och.object_identifier_copyhelper, fob.object_identifiers, db_conn);
-            }
-
-            if (fob.object_descriptions.Count > 0)
-            {
-                _storage_repo.StoreObjectDescriptions(och.object_description_copyhelper, fob.object_descriptions, db_conn);
-            }
-
-            if (fob.object_topics.Count > 0)
-            {
-                _storage_repo.StoreObjectTopics(och.object_topic_copyhelper, fob.object_topics, db_conn);
-            }
-
-            if (fob.object_db_ids.Count > 0)
-            {
-                _storage_repo.StoreObjectAcessionNumbers(och.object_db_link_copyhelper, fob.object_db_ids, db_conn);
-            }
-
-            if (fob.object_pubtypes.Count > 0)
-            {
-                _storage_repo.StorePublicationTypes(och.publication_type_copyhelper, fob.object_pubtypes, db_conn);
-            }
-
-            if (fob.object_comments.Count > 0)
-            {
-                _storage_repo.StoreObjectComments(och.object_comment_copyhelper, fob.object_comments, db_conn);
-            }
         }
 
 

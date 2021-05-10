@@ -8,7 +8,5 @@ namespace DataHarvester
     public interface IStudyProcessor
     {
         public Study ProcessData(XmlDocument d, DateTime? download_datetime);
-
-        public void StoreData(Study s, string db_conn);
     }
 }

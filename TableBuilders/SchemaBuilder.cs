@@ -4,12 +4,12 @@ namespace DataHarvester
 {
     public class SchemaBuilder
     {
-        private Source _source;
+        private ISource _source;
         private ILogger _logger;
         private StudyTableBuilder study_tablebuilder;
         private ObjectTableBuilder object_tablebuilder;
 
-        public SchemaBuilder(Source source, ILogger logger)
+        public SchemaBuilder(ISource source, ILogger logger)
         {
             _source = source;
             _logger = logger;

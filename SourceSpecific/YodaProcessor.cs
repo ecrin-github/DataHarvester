@@ -10,13 +10,11 @@ namespace DataHarvester.yoda
 {
     public class YodaProcessor : IStudyProcessor
     {
-        IStorageDataLayer _storage_repo;
         IMonitorDataLayer _mon_repo;
         ILogger _logger;
 
-        public YodaProcessor(IStorageDataLayer storage_repo, IMonitorDataLayer mon_repo, ILogger logger)
+        public YodaProcessor(IMonitorDataLayer mon_repo, ILogger logger)
         {
-            _storage_repo = storage_repo;
             _mon_repo = mon_repo;
             _logger = logger;
         }
@@ -414,64 +412,6 @@ namespace DataHarvester.yoda
             return s;
         }
 
-
-        public void StoreData(Study s, string db_conn)
-        {
-            // store study
-            StudyInDB st = new StudyInDB(s);
-            _storage_repo.StoreStudy(st, db_conn);
-
-            StudyCopyHelpers sch = new StudyCopyHelpers();
-            ObjectCopyHelpers och = new ObjectCopyHelpers();
-
-            // store study attributes
-            if (s.identifiers.Count > 0)
-            {
-                _storage_repo.StoreStudyIdentifiers(sch.study_ids_helper, s.identifiers, db_conn);
-            }
-
-            if (s.titles.Count > 0)
-            {
-                _storage_repo.StoreStudyTitles(sch.study_titles_helper, s.titles, db_conn);
-            }
-
-            if (s.references.Count > 0)
-            {
-                _storage_repo.StoreStudyReferences(sch.study_references_helper, s.references, db_conn);
-            }
-
-            if (s.contributors.Count > 0)
-            {
-                _storage_repo.StoreStudyContributors(sch.study_contributors_helper, s.contributors, db_conn);
-            }
-
-            if (s.topics.Count > 0)
-            {
-                _storage_repo.StoreStudyTopics(sch.study_topics_helper, s.topics, db_conn);
-            }
-
-            // store data objects and dataset properties
-            if (s.data_objects.Count > 0)
-            {
-                _storage_repo.StoreDataObjects(och.data_objects_helper, s.data_objects, db_conn);
-            }
-
-            if (s.object_datasets.Count > 0)
-            {
-                _storage_repo.StoreDatasetProperties(och.object_datasets_helper, s.object_datasets, db_conn);
-            }
-
-            // store data object attributes
-            if (s.object_instances.Count > 0)
-            {
-                _storage_repo.StoreObjectInstances(och.object_instances_helper, s.object_instances, db_conn);
-            }
-
-            if (s.object_titles.Count > 0)
-            {
-                _storage_repo.StoreObjectTitles(och.object_titles_helper, s.object_titles, db_conn);
-            }
-        }
 
 
         private string GetElementAsString(XElement e) => (e == null) ? null : (string)e;

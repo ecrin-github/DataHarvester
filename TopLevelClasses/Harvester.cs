@@ -36,10 +36,14 @@ namespace DataHarvester
             {
                 _logger_helper.Logheader("STARTING HARVESTER");
                 _logger_helper.LogCommandLineParameters(opts);
+                int harvest_type_id = opts.harvest_type_id;
+                bool org_update_only = opts.org_update_only;
+
                 foreach (int source_id in opts.source_ids)
                 {
-                    HarvestData(source_id, opts.harvest_type_id, opts.org_update_only);
+                    HarvestData(source_id, harvest_type_id, org_update_only);
                 }
+
                 _logger_helper.Logheader("Closing Log");
                 return 0;
             }
@@ -57,9 +61,8 @@ namespace DataHarvester
         private void HarvestData(int source_id, int harvest_type_id, bool org_update_only)
         {
             // Obtain source details, augment with connection string for this database
-            // after the storage repository for this source has been created.
 
-            Source source = _mon_repo.FetchSourceParameters(source_id);
+            ISource source = _mon_repo.FetchSourceParameters(source_id);
             Credentials creds = _mon_repo.Credentials;
             source.db_conn = creds.GetConnectionString(source.database_name, harvest_type_id);
             _logger.Information("For source: " + source.id + ": " + source.database_name);
@@ -90,7 +93,7 @@ namespace DataHarvester
                 {
                     if (source.uses_who_harvest)
                     {
-                        study_processor = new WHOProcessor(_storage_repo, _mon_repo, _logger);
+                        study_processor = new WHOProcessor(_mon_repo, _logger);
                     }
                     else
                     {
@@ -98,35 +101,34 @@ namespace DataHarvester
                         {
                             case 101900:
                                 {
-                                    study_processor = new BioLinccProcessor(_storage_repo, _mon_repo, _logger);
+                                    study_processor = new BioLinccProcessor(_mon_repo, _logger);
                                     break;
                                 }
                             case 101901:
                                 {
-                                    study_processor = new YodaProcessor(_storage_repo, _mon_repo, _logger);
+                                    study_processor = new YodaProcessor(_mon_repo, _logger);
                                     break;
                                 }
                             case 100120:
                                 {
-                                    study_processor = new CTGProcessor(_storage_repo, _mon_repo, _logger);
+                                    study_processor = new CTGProcessor(_mon_repo, _logger);
                                     break;
                                 }
                             case 100123:
                                 {
-                                    study_processor = new EUCTRProcessor(_storage_repo, _mon_repo, _logger);
+                                    study_processor = new EUCTRProcessor(_mon_repo, _logger);
                                     break;
                                 }
                             case 100126:
                                 {
-                                    study_processor = new ISRCTNProcessor(_storage_repo, _mon_repo, _logger);
+                                    study_processor = new ISRCTNProcessor(_mon_repo, _logger);
                                     break;
                                 }
                         }
                     }
                     
-                    StudyController c = new StudyController(_logger, _mon_repo, _storage_repo, source,
-                    harvest_type_id, harvest_id, study_processor);
-                    harvest.num_records_harvested = c.LoopThroughFiles();
+                    StudyController c = new StudyController(_logger, _mon_repo, _storage_repo, source, study_processor);
+                    harvest.num_records_harvested = c.LoopThroughFiles(harvest_type_id, harvest_id);
                 }
                 else
                 {
@@ -135,18 +137,13 @@ namespace DataHarvester
                     {
                         case 100135:
                             {
-                                object_processor = new PubmedProcessor(_storage_repo, _mon_repo, _logger);
-                                //PubmedController c = new PubmedController(_logger, _mon_repo, _storage_repo, source,
-                                 //                   _harvest_type_id, harvest_id, objectprocessor);
-                                //harvest.num_records_harvested = c.LoopThroughFiles();
-                                //c.DoPubMedPostProcessing();
+                                object_processor = new PubmedProcessor(_mon_repo, _logger);
                                 break;
                             }
                     }
 
-                    ObjectController c = new ObjectController(_logger, _mon_repo, _storage_repo, source,
-                        harvest_type_id, harvest_id, object_processor);
-                    harvest.num_records_harvested = c.LoopThroughFiles();
+                    ObjectController c = new ObjectController(_logger, _mon_repo, _storage_repo, source, object_processor);
+                    harvest.num_records_harvested = c.LoopThroughFiles(harvest_type_id, harvest_id);
                     c.DoPostProcessing();
                 }  
 

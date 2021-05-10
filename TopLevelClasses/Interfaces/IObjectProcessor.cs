@@ -9,7 +9,5 @@ namespace DataHarvester
     {
         public FullDataObject ProcessData(XmlDocument d, DateTime? download_datetime);
 
-        public void StoreData(FullDataObject b, string db_conn);
-
     }
 }

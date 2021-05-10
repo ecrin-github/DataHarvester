@@ -43,7 +43,7 @@ namespace DataHarvester
         }
 
 
-        public void LogTableStatistics(Source s, string schema)
+        public void LogTableStatistics(ISource s, string schema)
         {
             // Gets and logs record count for each table in the sd schema of the database
             // Start by obtaining conection string, then construct log line for each by 

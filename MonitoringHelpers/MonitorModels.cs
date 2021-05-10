@@ -6,7 +6,7 @@ using System.ComponentModel;
 namespace DataHarvester
 {
     [Table("sf.source_parameters")]
-    public class Source 
+    public class Source : ISource
     {
         public int id { get; }
         public string source_type { get; }
@@ -20,7 +20,7 @@ namespace DataHarvester
         public string local_folder { get; }
         public bool? local_files_grouped { get; }
         public int? grouping_range_by_id { get; }
-        public string local_file_prefix { get;  }
+        public string local_file_prefix { get; }
         public bool has_study_tables { get; }
         public bool has_study_topics { get; }
         public bool has_study_features { get; }

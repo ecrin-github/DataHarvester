@@ -39,6 +39,7 @@ namespace DataHarvester
                      services.AddSingleton<IHarvester, Harvester>();
                      services.AddSingleton<IMonitorDataLayer, MonitorDataLayer>();
                      services.AddSingleton<IStorageDataLayer, StorageDataLayer>();
+                     services.AddTransient<ISource, Source>();
                  })
                  .UseSerilog(new LoggerConfiguration()
                         .ReadFrom.Configuration(configFiles)

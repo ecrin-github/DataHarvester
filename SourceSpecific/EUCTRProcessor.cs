@@ -10,13 +10,11 @@ namespace DataHarvester.euctr
 {
     public class EUCTRProcessor : IStudyProcessor
     {
-        IStorageDataLayer _storage_repo;
         IMonitorDataLayer _mon_repo;
         ILogger _logger;
 
-        public EUCTRProcessor(IStorageDataLayer storage_repo, IMonitorDataLayer mon_repo, ILogger logger)
+        public EUCTRProcessor(IMonitorDataLayer mon_repo, ILogger logger)
         {
-            _storage_repo = storage_repo;
             _mon_repo = mon_repo;
             _logger = logger;
         }
@@ -894,70 +892,7 @@ namespace DataHarvester.euctr
             return s;
 
         }
-                    
-        public void StoreData(Study s, string db_conn)
-        {
-            // construct database study instance
-            StudyInDB dbs = new StudyInDB(s);
-
-            dbs.study_enrolment = s.study_enrolment;
-            dbs.study_gender_elig_id = s.study_gender_elig_id;
-            dbs.study_gender_elig = s.study_gender_elig;
-
-            dbs.min_age = s.min_age;
-            dbs.min_age_units_id = s.min_age_units_id;
-            dbs.min_age_units = s.min_age_units;
-            dbs.max_age = s.max_age;
-            dbs.max_age_units_id = s.max_age_units_id;
-            dbs.max_age_units = s.max_age_units;
-
-            _storage_repo.StoreStudy(dbs, db_conn);
-
-            StudyCopyHelpers sch = new StudyCopyHelpers();
-            ObjectCopyHelpers och = new ObjectCopyHelpers();
-
-            if (s.identifiers.Count > 0)
-            {
-                _storage_repo.StoreStudyIdentifiers(sch.study_ids_helper, s.identifiers, db_conn);
-            }
-
-            if (s.titles.Count > 0)
-            {
-                _storage_repo.StoreStudyTitles(sch.study_titles_helper, s.titles, db_conn);
-            }
-
-            if (s.contributors.Count > 0)
-            {
-                _storage_repo.StoreStudyContributors(sch.study_contributors_helper, s.contributors, db_conn);
-            }
-
-            if (s.topics.Count > 0)
-            {
-                _storage_repo.StoreStudyTopics(sch.study_topics_helper, s.topics, db_conn);
-            }
-
-            if (s.features.Count > 0)
-            {
-                _storage_repo.StoreStudyFeatures(sch.study_features_helper, s.features, db_conn);
-            }
-
-            if (s.data_objects.Count > 0)
-            {
-                _storage_repo.StoreDataObjects(och.data_objects_helper, s.data_objects, db_conn);
-            }
-
-            if (s.object_instances.Count > 0)
-            {
-                _storage_repo.StoreObjectInstances(och.object_instances_helper, s.object_instances, db_conn);
-            }
-
-            if (s.object_titles.Count > 0)
-            {
-                _storage_repo.StoreObjectTitles(och.object_titles_helper, s.object_titles, db_conn);
-            }
-
-        }
-
+         
 
         private string GetElementAsString(XElement e) => (e == null) ? null : (string)e;
 

@@ -40,6 +40,8 @@ namespace DataHarvester
         public List<ObjectInstance> object_instances { get; set; }
         public List<ObjectContributor> object_contributors { get; set; }
         public List<ObjectComment> object_comments { get; set; }
+        public List<ObjectRelationship> object_relationships { get; set; }
+        public List<ObjectRight> object_rights { get; set; }
         public List<ObjectDBLink> object_db_ids { get; set; }
 
         public FullDataObject(string _sd_oid, DateTime? _datetime_of_data_fetch)
