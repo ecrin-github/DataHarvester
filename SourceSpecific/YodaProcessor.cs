@@ -59,18 +59,18 @@ namespace DataHarvester.yoda
             s.sd_sid = sid;
             s.datetime_of_data_fetch = download_datetime;
 
-            string yoda_title = GetElementAsString(r.Element("yoda_title"));
-            string display_title = GetElementAsString(r.Element("display_title"));
-            bool is_yoda_only = GetElementAsBool(r.Element("sd_sid")); 
+            bool is_yoda_only = GetElementAsBool(r.Element("is_yoda_only")); 
             string remote_url = GetElementAsString(r.Element("remote_url"));
             string therapaeutic_area = GetElementAsString(r.Element("therapaeutic_area"));
             string product_class = GetElementAsString(r.Element("product_class"));
-            string sponsor_protocol_id = GetElementAsString(r.Element("sponsor_protocol_id"));
+            //string sponsor_protocol_id = GetElementAsString(r.Element("sponsor_protocol_id"));
             string data_partner = GetElementAsString(r.Element("data_partner"));
             string conditions_studied = GetElementAsString(r.Element("conditions_studied"));
-            string mean_age = GetElementAsString(r.Element("mean_age"));
+            //string mean_age = GetElementAsString(r.Element("mean_age"));
             string last_revised_date = GetElementAsString(r.Element("last_revised_date")); ;
 
+            string yoda_title = GetElementAsString(r.Element("yoda_title"));
+            string display_title = GetElementAsString(r.Element("display_title"));
             if (yoda_title.Contains("<"))
             {
                 yoda_title = mh.replace_tags(yoda_title);
@@ -86,25 +86,45 @@ namespace DataHarvester.yoda
                 s.display_title = yoda_title;
             }
 
+            // create study references (pmids)
+            XElement st_titles = r.Element("study_titles");
+            if (st_titles != null)
+            {
+                var titles = st_titles.Elements("Title");
+                if (titles?.Any() == true)
+                {
+                    foreach (XElement t in titles)
+                    {
+                        string title_text = GetElementAsString(t.Element("title_text"));
+                        int? title_type_id = GetElementAsInt(t.Element("title_type_id"));
+                        string title_type = GetElementAsString(t.Element("title_type"));
+                        bool is_default = GetElementAsBool(t.Element("is_default"));
+                        string comments = GetElementAsString(t.Element("comments"));
+                        study_titles.Add(new StudyTitle(sid, title_text, title_type_id, title_type, is_default, comments));
+                    }
+                }
+            }
+                        
+            
             // No brief description available 
             // for Yoda records
-            
+
             s.study_status_id = 21;
             s.study_status = "Completed";  // assumption for entry onto web site
 
-            // previously obtained from the ctg or isrctn entry
-            //s.study_type_id = st.type_id;
-            //if (st.type_id == 11)
-            //{
-            //    s.study_type = "Interventional";
-            //}
-            //else if (st.type_id == 12)
-            //{
-            //    s.study_type = "Observational";
-            //}
-
             // study type only really relevant for non registered studies (others will  
             // have type identified in registered study entry
+            // here, usuallypreviously obtained from the ctg or isrctn entry
+            int? type_id = GetElementAsInt(r.Element("study_type_id"));
+            s.study_type_id = type_id;
+            if (type_id == 11)
+            {
+                s.study_type = "Interventional";
+            }
+            else if (type_id == 12)
+            {
+                s.study_type = "Observational";
+            }
 
             string enrolment = GetElementAsString(r.Element("enrolment"));
             string percent_female = GetElementAsString(r.Element("percent_female"));
@@ -147,32 +167,21 @@ namespace DataHarvester.yoda
                 s.study_gender_elig = "Not provided";
             }
 
-            // transfer title data
-            // Normally just one - the 'yoda title'
-
-           //if (st.study_titles.Count > 0)
-            //{
-           //    foreach(Title t in st.study_titles)
-             //   {
-             //       study_titles.Add(new StudyTitle(sid, t.title_text, t.title_type_id, t.title_type, t.is_default, t.comments));
-             //   }
-            //}
-
             // transfer identifier data
             // Normally a protocol id will be the only addition (may be a duplicate of one already in the system)
             XElement sids = r.Element("study_identifiers");
             if (sids != null)
             {
                 var study_idents = sids.Elements("Identifier");
-                if (study_idents != null && study_idents.Count() > 0)
+                if (study_idents?.Any() == true)
                 {
                     foreach (XElement i in study_idents)
                     {
-                        string identifier_value = GetElementAsString(r.Element("identifier_value"));
-                        int? identifier_type_id = GetElementAsInt(r.Element("identifier_type_id"));
-                        string identifier_type = GetElementAsString(r.Element("identifier_type"));
-                        int? identifier_org_id = GetElementAsInt(r.Element("identifier_org_id"));
-                        string identifier_org = GetElementAsString(r.Element("identifier_org"));
+                        string identifier_value = GetElementAsString(i.Element("identifier_value"));
+                        int? identifier_type_id = GetElementAsInt(i.Element("identifier_type_id"));
+                        string identifier_type = GetElementAsString(i.Element("identifier_type"));
+                        int? identifier_org_id = GetElementAsInt(i.Element("identifier_org_id"));
+                        string identifier_org = GetElementAsString(i.Element("identifier_org"));
                         study_identifiers.Add(new StudyIdentifier(sid, identifier_value, identifier_type_id, identifier_type,
                                                           identifier_org_id, identifier_org));
                     }
@@ -241,7 +250,7 @@ namespace DataHarvester.yoda
             if (refs != null)
             {
                 var study_refs = refs.Elements("Reference");
-                if (study_refs != null && study_refs.Count() > 0)
+                if (study_refs?.Any() == true)
                 {
                     foreach (XElement sr in study_refs)
                     {
@@ -276,7 +285,7 @@ namespace DataHarvester.yoda
             if (sds != null)
             {
                 var supp_docs = sds.Elements("SuppDoc");
-                if (supp_docs != null && supp_docs.Count() > 0)
+                if (supp_docs?.Any() == true)
                 {
                     foreach (XElement sd in supp_docs)
                     {
