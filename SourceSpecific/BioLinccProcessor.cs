@@ -39,20 +39,9 @@ namespace DataHarvester.biolincc
             MD5Helpers hh = new MD5Helpers();
             HtmlHelpers mh = new HtmlHelpers(_logger);
             DateHelpers dh = new DateHelpers();
-
-            // need study relationships... possibly not at this stage but after links have been examined...
-
-            string access_details = "Investigators wishing to request materials from studies ... must register (free) on the BioLINCC website. ";
-            access_details += "Registered investigators may then request detailed searches and submit an application for data sets ";
-            access_details += "and/or biospecimens. (from the BioLINCC website)";
-
-            string de_identification = "All BioLINCC data and biospecimens are de-identified.That is to say that obvious subject identifiers ";
-            de_identification += "(e.g., name, addresses, social security numbers, place of birth, city of birth, contact data) ";
-            de_identification += "have been redacted from all BioLINCC datasets and biospecimens, and under no circumstances would BioLINCC ";
-            de_identification += "provide subject identifiers, or a link to such information, to recipients of coded materials. (from the BioLINCC website)";
+            StringHelpers sh = new StringHelpers(_logger, _mon_repo);
 
             char[] splitter = { '(' };
-            SplitDate last_revised = null;
 
             // transfer features of main study object
             // In most cases study will have already been registered in CGT
@@ -72,6 +61,10 @@ namespace DataHarvester.biolincc
             // For the study, set up two titles, acronym and display title
             // NHLBI title not always exactly the same as the trial registry entry.
 
+            // revise title using nct entry... but only if the study is not one of those
+            // that are in a group, corresponding to a single NCT entry and public title
+            // and only for those where an nct entry exists (Some BioLincc studiues are not registered)
+
             string title = GetElementAsString(r.Element("title"));
             if (title.Contains("<"))
             {
@@ -79,27 +72,27 @@ namespace DataHarvester.biolincc
                 title = mh.strip_tags(title);
             }
 
-            study_titles.Add(new StudyTitle(sid, title, 15, "Public Title", true, "From study page on BioLINCC web site"));
-            string acronym = GetElementAsString(r.Element("acronym"));
-            if (!string.IsNullOrEmpty(acronym))
-            {
-                study_titles.Add(new StudyTitle(sid, acronym, 14, "Acronym or Abbreviation", false, ""));
-            }
-
-            // revise title using nct entry... but only if the study is not one of those
-            // that are in a group, corresponding to a single NCT entry and public title
-            // and only for those where an nct entry exists (Some BioLincc studiues are not registered)
-
             string nct_name = GetElementAsString(r.Element("nct_base_name"));
             bool in_multiple_biolincc_group = GetElementAsBool(r.Element("in_multiple_biolincc_group"));
-
-            if (!in_multiple_biolincc_group && nct_name != null)
+            if (!in_multiple_biolincc_group && !string.IsNullOrEmpty(nct_name))
             {
                 s.display_title = nct_name;
+                study_titles.Add(new StudyTitle(sid, nct_name, 15, "Public title", true));
+                if (nct_name != title)
+                {
+                    study_titles.Add(new StudyTitle(sid, title, 18, "Other scientific title", false, "From study page on BioLINCC web site"));
+                }
             }
             else
             {
                 s.display_title = title;
+                study_titles.Add(new StudyTitle(sid, title, 18, "Other scientific title", true, "From study page on BioLINCC web site")); ;
+            }
+
+            string acronym = GetElementAsString(r.Element("acronym"));
+            if (!string.IsNullOrEmpty(acronym))
+            {
+                study_titles.Add(new StudyTitle(sid, acronym, 14, "Acronym or Abbreviation", false, ""));
             }
 
             string brief_description = GetElementAsString(r.Element("brief_description"));
@@ -205,15 +198,34 @@ namespace DataHarvester.biolincc
 
             data_object_instances.Add(new ObjectInstance(sd_oid, 101900, "BioLINCC",
                                 remote_url, true, 35, "Web text"));
-                     
 
-            // Use last_revised_date
+            // Add dates if available
+            SplitDate page_prepared = null;
+            SplitDate last_revised = null;
+
+            string page_prepared_date = GetElementAsString(r.Element("page_prepared_date"));
+            if (!string.IsNullOrEmpty(page_prepared_date))
+            {
+                page_prepared = dh.GetDatePartsFromISOString(page_prepared_date.Substring(0, 10));
+                data_object_dates.Add(new ObjectDate(sd_oid, 12, "Available", page_prepared.year,
+                            page_prepared.month, page_prepared.day, page_prepared.date_string));
+            }
+
             string last_revised_date = GetElementAsString(r.Element("last_revised_date"));
             if (!string.IsNullOrEmpty(last_revised_date))
             {
                 last_revised = dh.GetDatePartsFromISOString(last_revised_date.Substring(0, 10));
-                data_object_dates.Add(new ObjectDate(sd_oid, 18, "Updated", last_revised.year,
-                            last_revised.month, last_revised.day, last_revised.date_string));
+
+                // only add last revised date if it is later than date prepared date
+                // Fort early trials run before BioLINCC waas set up this is not the case
+
+                if ((last_revised.year * 400) + (last_revised.month * 32) + last_revised.day
+                    >= (page_prepared.year * 400) + (page_prepared.month * 32) + page_prepared.day)
+
+                {
+                    data_object_dates.Add(new ObjectDate(sd_oid, 18, "Updated", last_revised.year,
+                              last_revised.month, last_revised.day, last_revised.date_string));
+                }
             }
 
             // If there is a study web site...
@@ -235,6 +247,17 @@ namespace DataHarvester.biolincc
             // create the data object relating to the dataset, instance not available, title possible...
             // may be a description of the data in 'Data Available...'
             // if so add a data object description....with a data object title
+
+            string access_details = "Investigators wishing to request materials from studies ... must register (free) on the BioLINCC website. ";
+            access_details += "Registered investigators may then request detailed searches and submit an application for data sets ";
+            access_details += "and/or biospecimens. (from the BioLINCC website)";
+
+            string de_identification = "All BioLINCC data and biospecimens are de-identified. Obvious subject identifiers ";
+            de_identification += "and data collected solely for administrative purposes are redacted from datasets, ";
+            de_identification += "and dates are recoded relative to a specific reference point. ";
+            de_identification += "In addition recodes of selected low-frequency data values may be ";
+            de_identification += "carried out to protect subject privacy and minimize re-identification risks (from the BioLINCC documentation).";
+
             string resources_available = GetElementAsString(r.Element("resources_available"));
             if (resources_available.ToLower().Contains("datasets"))
             {
@@ -320,7 +343,7 @@ namespace DataHarvester.biolincc
                         sd_oid = hh.CreateMD5(sid + object_display_title);
 
                         data_objects.Add(new DataObject(sd_oid, sid, object_display_title, pub_year, 23, "Text", object_type_id, object_type,
-                                        sponsor_id, sponsor_name, access_type_id, download_datetime));
+                                        100167, "National Heart, Lung, and Blood Institute (US)", access_type_id, download_datetime));
                         data_object_titles.Add(new ObjectTitle(sd_oid, object_display_title, 21, "Study short name :: object name", true));
                         data_object_instances.Add(new ObjectInstance(sd_oid, 101900, "BioLINCC", url, true, doc_type_id, doc_type, size, size_units));
                     }
@@ -337,7 +360,7 @@ namespace DataHarvester.biolincc
                     foreach (XElement doc in docs)
                     {
                         string pubmed_id = GetElementAsString(doc.Element("pubmed_id"));
-                        string display_title = GetElementAsString(doc.Element("display_title"));
+                        string display_title = sh.ReplaceApos(GetElementAsString(doc.Element("display_title")));
                         string link_id = GetElementAsString(doc.Element("link_id"));
                         study_references.Add(new StudyReference(s.sd_sid, pubmed_id, display_title, link_id, "associated"));
                     }

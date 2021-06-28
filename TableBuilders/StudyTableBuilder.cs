@@ -6,33 +6,33 @@ namespace DataHarvester
 {
     public class StudyTableBuilder
     {
-        string db_conn;
+        string _db_conn;
 
-        public StudyTableBuilder(string _db_conn)
+        public StudyTableBuilder(string db_conn)
         {
-            db_conn = _db_conn;
+            _db_conn = db_conn;
         }
 
-        public void drop_table(string table_name)
+
+        public void Execute_SQL(string sql_string)
         {
-            string sql_string = @"DROP TABLE IF EXISTS sd." + table_name;
-            using (var conn = new NpgsqlConnection(db_conn))
+            using (var conn = new NpgsqlConnection(_db_conn))
             {
                 conn.Execute(sql_string);
             }
         }
 
+
         public void create_table_studies()
         {
-            string sql_string = @"CREATE TABLE sd.studies(
+            string sql_string = @"DROP TABLE IF EXISTS sd.studies;
+            CREATE TABLE sd.studies(
                 id                     INT             GENERATED ALWAYS AS IDENTITY PRIMARY KEY
               , sd_sid                 VARCHAR         NOT NULL
               , display_title          VARCHAR         NULL
               , title_lang_code        VARCHAR         NULL default 'en'
               , brief_description      VARCHAR         NULL
-              , bd_contains_html       BOOLEAN         NULL	default false
               , data_sharing_statement VARCHAR         NULL
-              , dss_contains_html      BOOLEAN         NULL	default false
               , study_start_year       INT             NULL
               , study_start_month      INT             NULL
               , study_type_id          INT             NULL
@@ -54,16 +54,14 @@ namespace DataHarvester
             );
             CREATE INDEX studies_sid ON sd.studies(sd_sid);";
 
-            using (var conn = new NpgsqlConnection(db_conn))
-            {
-                conn.Execute(sql_string);
-            }
+            Execute_SQL(sql_string);
         }
 
 
         public void create_table_study_identifiers()
         {
-            string sql_string = @"CREATE TABLE sd.study_identifiers(
+            string sql_string = @"DROP TABLE IF EXISTS sd.study_identifiers;
+            CREATE TABLE sd.study_identifiers(
                 id                     INT             GENERATED ALWAYS AS IDENTITY PRIMARY KEY
               , sd_sid                 VARCHAR         NOT NULL
               , identifier_value       VARCHAR         NULL
@@ -77,16 +75,14 @@ namespace DataHarvester
             );
             CREATE INDEX study_identifiers_sd_sid ON sd.study_identifiers(sd_sid);";
 
-            using (var conn = new NpgsqlConnection(db_conn))
-            {
-                conn.Execute(sql_string);
-            }
+            Execute_SQL(sql_string);
         }
 
 
         public void create_table_study_relationships()
         {
-            string sql_string = @"CREATE TABLE sd.study_relationships(
+            string sql_string = @"DROP TABLE IF EXISTS sd.study_relationships;
+            CREATE TABLE sd.study_relationships(
                 id                     INT             GENERATED ALWAYS AS IDENTITY PRIMARY KEY
               , sd_sid                 VARCHAR         NOT NULL
               , relationship_type_id   INT             NULL
@@ -97,16 +93,14 @@ namespace DataHarvester
             CREATE INDEX study_relationships_sd_sid ON sd.study_relationships(sd_sid);
             CREATE INDEX study_relationships_target_sd_sid ON sd.study_relationships(target_sd_sid);";
 
-            using (var conn = new NpgsqlConnection(db_conn))
-            {
-                conn.Execute(sql_string);
-            }
+            Execute_SQL(sql_string);
         }
 
 
         public void create_table_study_references()
         {
-            string sql_string = @"CREATE TABLE sd.study_references(
+            string sql_string = @"DROP TABLE IF EXISTS sd.study_references;
+            CREATE TABLE sd.study_references(
                 id                     INT             GENERATED ALWAYS AS IDENTITY PRIMARY KEY
               , sd_sid                 VARCHAR         NOT NULL
               , pmid                   VARCHAR         NULL
@@ -117,16 +111,14 @@ namespace DataHarvester
             );
             CREATE INDEX study_references_sd_sid ON sd.study_references(sd_sid);";
 
-            using (var conn = new NpgsqlConnection(db_conn))
-            {
-                conn.Execute(sql_string);
-            }
+            Execute_SQL(sql_string);
         }
 
 
         public void create_table_study_titles()
         {
-            string sql_string = @"CREATE TABLE sd.study_titles(
+            string sql_string = @"DROP TABLE IF EXISTS sd.study_titles;
+            CREATE TABLE sd.study_titles(
                 id                     INT             GENERATED ALWAYS AS IDENTITY PRIMARY KEY
               , sd_sid                 VARCHAR         NOT NULL
               , title_type_id          INT             NULL
@@ -141,16 +133,14 @@ namespace DataHarvester
             );
             CREATE INDEX study_titles_sd_sid ON sd.study_titles(sd_sid);";
 
-            using (var conn = new NpgsqlConnection(db_conn))
-            {
-                conn.Execute(sql_string);
-            }
+            Execute_SQL(sql_string);
         }
 
 
         public void create_table_study_contributors()
         {
-            string sql_string = @"CREATE TABLE sd.study_contributors(
+            string sql_string = @"DROP TABLE IF EXISTS sd.study_contributors;
+            CREATE TABLE sd.study_contributors(
                 id                     INT             GENERATED ALWAYS AS IDENTITY PRIMARY KEY
               , sd_sid                 VARCHAR         NOT NULL
               , contrib_type_id        INT             NULL
@@ -171,16 +161,14 @@ namespace DataHarvester
             );
             CREATE INDEX study_contributors_sd_sid ON sd.study_contributors(sd_sid);";
 
-            using (var conn = new NpgsqlConnection(db_conn))
-            {
-                conn.Execute(sql_string);
-            }
+            Execute_SQL(sql_string);
         }
 
 
         public void create_table_study_topics()
         {
-            string sql_string = @"CREATE TABLE sd.study_topics(
+            string sql_string = @"DROP TABLE IF EXISTS sd.study_topics;
+            CREATE TABLE sd.study_topics(
                 id                     INT             GENERATED ALWAYS AS IDENTITY PRIMARY KEY
               , sd_sid                 VARCHAR         NOT NULL
               , topic_type_id          INT             NULL
@@ -198,16 +186,14 @@ namespace DataHarvester
             );
             CREATE INDEX study_topics_sd_sid ON sd.study_topics(sd_sid);";
 
-            using (var conn = new NpgsqlConnection(db_conn))
-            {
-                conn.Execute(sql_string);
-            }
+            Execute_SQL(sql_string);
         }
 
 
         public void create_table_study_features()
         {
-            string sql_string = @"CREATE TABLE sd.study_features(
+            string sql_string = @"DROP TABLE IF EXISTS sd.study_features;
+            CREATE TABLE sd.study_features(
                 id                     INT             GENERATED ALWAYS AS IDENTITY PRIMARY KEY
               , sd_sid                 VARCHAR         NOT NULL
               , feature_type_id        INT             NULL
@@ -218,15 +204,13 @@ namespace DataHarvester
             );
             CREATE INDEX study_features_sid ON sd.study_features(sd_sid);";
 
-            using (var conn = new NpgsqlConnection(db_conn))
-            {
-                conn.Execute(sql_string);
-            }
+            Execute_SQL(sql_string);
         }
 
         public void create_table_study_links()
         {
-            string sql_string = @"CREATE TABLE sd.study_links(
+            string sql_string = @"DROP TABLE IF EXISTS sd.study_links;
+            CREATE TABLE sd.study_links(
                 id                     INT             GENERATED ALWAYS AS IDENTITY PRIMARY KEY
               , sd_sid                 VARCHAR         NOT NULL
               , link_label             VARCHAR         NULL
@@ -235,16 +219,14 @@ namespace DataHarvester
             );
             CREATE INDEX study_links_sd_sid ON sd.study_links(sd_sid);";
 
-            using (var conn = new NpgsqlConnection(db_conn))
-            {
-                conn.Execute(sql_string);
-            }
+            Execute_SQL(sql_string);
         }
 
 
         public void create_table_ipd_available()
         {
-            string sql_string = @"CREATE TABLE sd.study_ipd_available(
+            string sql_string = @"DROP TABLE IF EXISTS sd.study_ipd_available;
+            CREATE TABLE sd.study_ipd_available(
                 id                     INT             GENERATED ALWAYS AS IDENTITY PRIMARY KEY
               , sd_sid                 VARCHAR         NOT NULL
               , ipd_id                 VARCHAR         NULL
@@ -255,16 +237,14 @@ namespace DataHarvester
             );
             CREATE INDEX study_ipd_available_sd_sid ON sd.study_ipd_available(sd_sid);";
 
-            using (var conn = new NpgsqlConnection(db_conn))
-            {
-                conn.Execute(sql_string);
-            }
+            Execute_SQL(sql_string);
         }
 
 
         public void create_table_study_hashes()
         {
-            string sql_string = @"CREATE TABLE sd.study_hashes(
+            string sql_string = @"DROP TABLE IF EXISTS sd.study_hashes;
+            CREATE TABLE sd.study_hashes(
                 id                     INT             GENERATED ALWAYS AS IDENTITY PRIMARY KEY
               , sd_sid                 VARCHAR         NOT NULL
               , hash_type_id           INT             NULL
@@ -273,10 +253,7 @@ namespace DataHarvester
             );
             CREATE INDEX study_hashes_sd_sid ON sd.study_hashes(sd_sid);";
 
-            using (var conn = new NpgsqlConnection(db_conn))
-            {
-                conn.Execute(sql_string);
-            }
+            Execute_SQL(sql_string);
         }
 
     }

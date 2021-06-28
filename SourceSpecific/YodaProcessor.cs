@@ -38,11 +38,6 @@ namespace DataHarvester.yoda
             List<ObjectTitle> data_object_titles = new List<ObjectTitle>();
             List<ObjectInstance> data_object_instances = new List<ObjectInstance>();
 
-            string access_details = "The YODA Project will require that requestors provide basic information about the Principal Investigator, Key Personnel, and the ";
-            access_details += "project Research Proposal, including a scientific abstract and research methods.The YODA Project will review proposals to ensure that: ";
-            access_details += "1) the scientific purpose is clearly described; 2) the data requested will be used to enhance scientific and/or medical knowledge; and ";
-            access_details += "3) the proposed research can be reasonably addressed using the requested data.";
-
             StringHelpers sh = new StringHelpers(_logger, _mon_repo);
             MD5Helpers hh = new MD5Helpers();
             HtmlHelpers mh = new HtmlHelpers(_logger);
@@ -63,10 +58,8 @@ namespace DataHarvester.yoda
             string remote_url = GetElementAsString(r.Element("remote_url"));
             string therapaeutic_area = GetElementAsString(r.Element("therapaeutic_area"));
             string product_class = GetElementAsString(r.Element("product_class"));
-            //string sponsor_protocol_id = GetElementAsString(r.Element("sponsor_protocol_id"));
             string data_partner = GetElementAsString(r.Element("data_partner"));
             string conditions_studied = GetElementAsString(r.Element("conditions_studied"));
-            //string mean_age = GetElementAsString(r.Element("mean_age"));
             string last_revised_date = GetElementAsString(r.Element("last_revised_date")); ;
 
             string yoda_title = GetElementAsString(r.Element("yoda_title"));
@@ -77,13 +70,13 @@ namespace DataHarvester.yoda
                 yoda_title = mh.strip_tags(yoda_title);
             }
 
-            if (display_title != null)
+            if (string.IsNullOrEmpty(display_title))
             {
-                s.display_title = display_title;
+                s.display_title = yoda_title;
             }
             else
             {
-                s.display_title = yoda_title;
+                s.display_title = display_title;
             }
 
             // create study references (pmids)
@@ -104,10 +97,9 @@ namespace DataHarvester.yoda
                     }
                 }
             }
-                        
             
-            // No brief description available 
-            // for Yoda records
+            // brief description mostly as derived
+            s.brief_description = GetElementAsString(r.Element("brief_description"));
 
             s.study_status_id = 21;
             s.study_status = "Completed";  // assumption for entry onto web site
@@ -117,18 +109,19 @@ namespace DataHarvester.yoda
             // here, usuallypreviously obtained from the ctg or isrctn entry
             int? type_id = GetElementAsInt(r.Element("study_type_id"));
             s.study_type_id = type_id;
-            if (type_id == 11)
+            switch (type_id)
             {
-                s.study_type = "Interventional";
+                case 11: s.study_type = "interventional"; break;
+                case 12: s.study_type = "observational"; break;
+                case 13: s.study_type = "observational patient registry"; break;
+                case 14: s.study_type = "expanded access"; break;
+                case 15: s.study_type = "funded programme"; break;
+                case 16: s.study_type = "not yet known"; break;
             }
-            else if (type_id == 12)
-            {
-                s.study_type = "Observational";
-            }
+
 
             string enrolment = GetElementAsString(r.Element("enrolment"));
             string percent_female = GetElementAsString(r.Element("percent_female"));
-            string percent_male = GetElementAsString(r.Element("percent_male"));
 
             if (Int32.TryParse(enrolment, out int enrolment_number))
             {
@@ -169,24 +162,21 @@ namespace DataHarvester.yoda
 
             // transfer identifier data
             // Normally a protocol id will be the only addition (may be a duplicate of one already in the system)
-            XElement sids = r.Element("study_identifiers");
-            if (sids != null)
+            var study_idents = r.Element("study_identifiers")?.Elements("Identifier");
+            if (study_idents?.Any() == true)
             {
-                var study_idents = sids.Elements("Identifier");
-                if (study_idents?.Any() == true)
+                foreach (XElement i in study_idents)
                 {
-                    foreach (XElement i in study_idents)
-                    {
-                        string identifier_value = GetElementAsString(i.Element("identifier_value"));
-                        int? identifier_type_id = GetElementAsInt(i.Element("identifier_type_id"));
-                        string identifier_type = GetElementAsString(i.Element("identifier_type"));
-                        int? identifier_org_id = GetElementAsInt(i.Element("identifier_org_id"));
-                        string identifier_org = GetElementAsString(i.Element("identifier_org"));
-                        study_identifiers.Add(new StudyIdentifier(sid, identifier_value, identifier_type_id, identifier_type,
-                                                          identifier_org_id, identifier_org));
-                    }
+                    string identifier_value = GetElementAsString(i.Element("identifier_value"));
+                    int? identifier_type_id = GetElementAsInt(i.Element("identifier_type_id"));
+                    string identifier_type = GetElementAsString(i.Element("identifier_type"));
+                    int? identifier_org_id = GetElementAsInt(i.Element("identifier_org_id"));
+                    string identifier_org = GetElementAsString(i.Element("identifier_org"));
+                    study_identifiers.Add(new StudyIdentifier(sid, identifier_value, identifier_type_id, identifier_type,
+                                                        identifier_org_id, identifier_org));
                 }
             }
+
 
             // study contributors
             // only sponsor knowm, and only relevant for non registered studies (others will  
@@ -388,9 +378,15 @@ namespace DataHarvester.yoda
                         else
                         {
                             DateTime date_access_url_checked = new DateTime(2020, 9, 23);
+
+                            string access_details = "The YODA Project will require that requestors provide basic information about the Principal Investigator, Key Personnel, and the ";
+                            access_details += "project Research Proposal, including a scientific abstract and research methods.The YODA Project will review proposals to ensure that: ";
+                            access_details += "1) the scientific purpose is clearly described; 2) the data requested will be used to enhance scientific and/or medical knowledge; and ";
+                            access_details += "3) the proposed research can be reasonably addressed using the requested data.";
+
                             data_objects.Add(new DataObject(sd_oid, sid, object_display_title, null, object_class_id, object_class, object_type_id, object_type,
                                             101901, "Yoda", 17, "Case by case download", access_details,
-                                            "https://yoda.yale.edu/how-request-data", date_access_url_checked, download_datetime));
+                                            " ", date_access_url_checked, download_datetime));
                             data_object_titles.Add(new ObjectTitle(sd_oid, object_display_title, 22, "Study short name :: object type", true));
                         }
 

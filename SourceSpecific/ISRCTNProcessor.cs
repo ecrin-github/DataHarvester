@@ -29,7 +29,6 @@ namespace DataHarvester.isrctn
             List<StudyReference> references = new List<StudyReference>();
             List<StudyTopic> topics = new List<StudyTopic>();
             List<StudyFeature> features = new List<StudyFeature>();
-            //List<StudyLink> studylinks = new List<StudyLink>();
 
             List<DataObject> data_objects = new List<DataObject>();
             List<ObjectTitle> object_titles = new List<ObjectTitle>();
@@ -125,7 +124,7 @@ namespace DataHarvester.isrctn
             }
 
             string conditions = GetElementAsString(r.Element("condition_category"));
-            if (conditions.Contains("'"))
+            if (conditions.Contains(","))
             {
                 // add some topics
                 string[] conds = conditions.Split(',');
@@ -366,12 +365,12 @@ namespace DataHarvester.isrctn
                                 }
                             case "ClinicalTrials.gov number":
                                 {
-                                    identifiers.Add(new StudyIdentifier(sid, item_value, 11, "Trial Registry ID", 100120, "ClinicalTrials.gov", null, null));
+                                    identifiers.Add(new StudyIdentifier(sid, item_value, 11, "Trial Registry ID", 100120, "Clinicaltrials.gov", null, null));
                                     break;
                                 }
                             case "EudraCT number":
                                 {
-                                    identifiers.Add(new StudyIdentifier(sid, item_value, 11, "Trial Registry ID", 100123, "EU CTR", null, null));
+                                    identifiers.Add(new StudyIdentifier(sid, item_value, 11, "Trial Registry ID", 100123, "EU Clinical Trials Register", null, null));
                                     break;
                                 }
                             default:
@@ -1003,6 +1002,7 @@ namespace DataHarvester.isrctn
                                     // formats vary broadly - may need to be sorted afterwards 
                                     // many refer to results pages in EUCTR and / or ClinicalTrials.gov
                                     // could assume that these at least will be covered in any case...
+
                                     string refs = item_value.Replace("<a", "||").Replace("</a>", "||").Replace(">", "||");
                                     string[] ref_items = refs.Split("||");
                                     if (ref_items.Length > 1)
@@ -1165,7 +1165,7 @@ namespace DataHarvester.isrctn
                 }
             }
 
-
+             
             // possible object of a trial web site if one exists for this study
             string trial_website = GetElementAsString(r.Element("trial_website"));
             if (!string.IsNullOrEmpty(trial_website))
@@ -1191,13 +1191,19 @@ namespace DataHarvester.isrctn
             // Check brief description and 
             // data sharing statement for html
             // after getting rid of any sup / subs, divs and spans.
+            if (s.brief_description != null)
+            {
+                s.brief_description = sh.ReplaceApos(s.brief_description);
+                s.brief_description = mh.replace_tags(s.brief_description);
+                s.bd_contains_html = mh.check_for_tags(s.brief_description);
+            }
 
-            s.brief_description = mh.replace_tags(s.brief_description);
-            s.bd_contains_html = mh.check_for_tags(s.brief_description);
-
-            s.data_sharing_statement = mh.replace_tags(s.data_sharing_statement);
-            s.dss_contains_html = mh.check_for_tags(s.data_sharing_statement);
-
+            if (s.data_sharing_statement != null)
+            {
+                s.data_sharing_statement = sh.ReplaceApos(s.data_sharing_statement);
+                s.data_sharing_statement = mh.replace_tags(s.data_sharing_statement);
+                s.dss_contains_html = mh.check_for_tags(s.data_sharing_statement);
+            }
 
             s.identifiers = identifiers;
             s.titles = titles;

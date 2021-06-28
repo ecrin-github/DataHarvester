@@ -338,7 +338,7 @@ namespace DataHarvester.euctr
 
             if (!display_title_exists)
             {
-                // use a scientific title - should always be one
+                // use the registry title - should always be one
                 for (int k = 0; k < titles.Count; k++)
                 {
                     if (titles[k].title_type_id == 16)
@@ -366,10 +366,17 @@ namespace DataHarvester.euctr
                 }
             }
 
+
             // add in an explanatory message... if no title
             if (!display_title_exists)
             {
                 s.display_title = sid + " (No meaningful title provided)";
+            }
+
+            // truncate title if too long
+            if (s.display_title.Length > 400)
+            {
+                s.display_title = s.display_title.Substring(0, 400) + "...";
             }
 
             // study design info
@@ -377,7 +384,7 @@ namespace DataHarvester.euctr
             if (feats != null)
             {
                 var detail_lines = feats.Elements("DetailLine");
-                if (detail_lines != null && detail_lines.Count() > 0)
+                if (detail_lines?.Any() == true)
                 {
                     foreach (XElement dline in detail_lines)
                     { 
@@ -540,7 +547,7 @@ namespace DataHarvester.euctr
             if (population != null)
             {
                 var detail_lines = feats.Elements("DetailLine");
-                if (detail_lines != null && detail_lines.Count() > 0)
+                if (detail_lines?.Any() == true)
                 {
 
                     bool includes_under18 = false;
@@ -693,7 +700,7 @@ namespace DataHarvester.euctr
             if (imps != null)
             {
                 var imp_lines = feats.Elements("ImpLine");
-                if (imp_lines != null && imp_lines.Count() > 0)
+                if (imp_lines?.Any() == true)
                 {
                     foreach (XElement iline in imp_lines)
                     {

@@ -6,25 +6,27 @@ namespace DataHarvester
 {
     public class ObjectTableBuilder
     {
-        string db_conn;
+        string _db_conn;
 
-        public ObjectTableBuilder(string _db_conn)
+        public ObjectTableBuilder(string db_conn)
         {
-            db_conn = _db_conn;
+            _db_conn = db_conn;
         }
 
-        public void drop_table(string table_name)
+       
+        public void Execute_SQL(string sql_string)
         {
-            string sql_string = @"DROP TABLE IF EXISTS sd." + table_name;
-            using (var conn = new NpgsqlConnection(db_conn))
+            using (var conn = new NpgsqlConnection(_db_conn))
             {
                 conn.Execute(sql_string);
             }
         }
 
+
         public void create_table_data_objects()
         {
-            string sql_string = @"CREATE TABLE sd.data_objects(
+            string sql_string = @"DROP TABLE IF EXISTS sd.data_objects;
+              CREATE TABLE sd.data_objects(
                 id                     INT             GENERATED ALWAYS AS IDENTITY PRIMARY KEY
               , sd_oid                 CHAR(24)        NOT NULL
               , sd_sid                 VARCHAR         NULL
@@ -55,16 +57,14 @@ namespace DataHarvester
             CREATE INDEX data_objects_sd_oid ON sd.data_objects(sd_oid);
             CREATE INDEX data_objects_sd_sid ON sd.data_objects(sd_sid);";
 
-            using (var conn = new NpgsqlConnection(db_conn))
-            {
-                conn.Execute(sql_string);
-            }
+            Execute_SQL(sql_string);
         }
 
 
         public void create_table_object_datasets()
         {
-            string sql_string = @"CREATE TABLE sd.object_datasets(
+            string sql_string = @"DROP TABLE IF EXISTS sd.object_datasets;
+            CREATE TABLE sd.object_datasets(
                 id                     INT             GENERATED ALWAYS AS IDENTITY PRIMARY KEY
               , sd_oid                 CHAR(24)        NOT NULL
               , record_keys_type_id    INT             NULL 
@@ -90,16 +90,14 @@ namespace DataHarvester
             );
             CREATE INDEX object_datasets_sd_oid ON sd.object_datasets(sd_oid);";
 
-            using (var conn = new NpgsqlConnection(db_conn))
-            {
-                conn.Execute(sql_string);
-            }
+            Execute_SQL(sql_string);
         }
 
 
         public void create_table_object_dates()
         {
-            string sql_string = @"CREATE TABLE sd.object_dates(
+            string sql_string = @"DROP TABLE IF EXISTS sd.object_dates
+            CREATE TABLE sd.object_dates(
                 id                     INT             GENERATED ALWAYS AS IDENTITY PRIMARY KEY
               , sd_oid                 CHAR(24)        NOT NULL
               , date_type_id           INT             NULL
@@ -117,16 +115,14 @@ namespace DataHarvester
             );
             CREATE INDEX object_dates_sd_oid ON sd.object_dates(sd_oid);";
 
-            using (var conn = new NpgsqlConnection(db_conn))
-            {
-                conn.Execute(sql_string);
-            }
+            Execute_SQL(sql_string);
         }
 
 
         public void create_table_object_instances()
         {
-            string sql_string = @"CREATE TABLE sd.object_instances(
+            string sql_string = @"DROP TABLE IF EXISTS sd.object_instances;
+            CREATE TABLE sd.object_instances(
                 id                     INT             GENERATED ALWAYS AS IDENTITY PRIMARY KEY
               , sd_oid                 CHAR(24)        NOT NULL
               , instance_type_id       INT             NOT NULL 
@@ -145,16 +141,14 @@ namespace DataHarvester
             );
             CREATE INDEX object_instances_sd_oid ON sd.object_instances(sd_oid);";
 
-            using (var conn = new NpgsqlConnection(db_conn))
-            {
-                conn.Execute(sql_string);
-            }
+            Execute_SQL(sql_string);
         }
 
 
         public void create_table_object_contributors()
         {
-            string sql_string = @"CREATE TABLE sd.object_contributors(
+            string sql_string = @"DROP TABLE IF EXISTS sd.object_contributors;
+            CREATE TABLE sd.object_contributors(
                 id                     INT             GENERATED ALWAYS AS IDENTITY PRIMARY KEY
               , sd_oid                 CHAR(24)        NOT NULL
               , contrib_type_id        INT             NULL
@@ -175,16 +169,14 @@ namespace DataHarvester
             );
             CREATE INDEX object_contributors_sd_oid ON sd.object_contributors(sd_oid);";
 
-            using (var conn = new NpgsqlConnection(db_conn))
-            {
-                conn.Execute(sql_string);
-            }
+            Execute_SQL(sql_string);
         }
 
 
         public void create_table_object_titles()
         {
-            string sql_string = @"CREATE TABLE sd.object_titles(
+            string sql_string = @"DROP TABLE IF EXISTS sd.object_titles;
+            CREATE TABLE sd.object_titles(
                 id                     INT             GENERATED ALWAYS AS IDENTITY PRIMARY KEY
               , sd_oid                 CHAR(24)        NOT NULL
               , title_type_id          INT             NULL
@@ -199,16 +191,14 @@ namespace DataHarvester
             );
             CREATE INDEX object_titles_sd_oid ON sd.object_titles(sd_oid);";
 
-            using (var conn = new NpgsqlConnection(db_conn))
-            {
-                conn.Execute(sql_string);
-            }
+            Execute_SQL(sql_string);
         }
 
 
         public void create_table_object_topics()
         {
-            string sql_string = @"CREATE TABLE sd.object_topics(
+            string sql_string = @"DROP TABLE IF EXISTS sd.object_topics;
+            CREATE TABLE sd.object_topics(
                 id                     INT             GENERATED ALWAYS AS IDENTITY PRIMARY KEY
               , sd_oid                 CHAR(24)        NOT NULL
               , topic_type_id          INT             NULL
@@ -226,16 +216,14 @@ namespace DataHarvester
             );
             CREATE INDEX object_topics_sd_oid ON sd.object_topics(sd_oid);";
 
-            using (var conn = new NpgsqlConnection(db_conn))
-            {
-                conn.Execute(sql_string);
-            }
+            Execute_SQL(sql_string);
         }
 
 
         public void create_table_object_comments()
         {
-            string sql_string = @"CREATE TABLE sd.object_comments(
+            string sql_string = @"DROP TABLE IF EXISTS sd.object_comments;
+            CREATE TABLE sd.object_comments(
                 id                     INT             GENERATED ALWAYS AS IDENTITY PRIMARY KEY
               , sd_oid                 CHAR(24)        NOT NULL
               , ref_type               VARCHAR         NULL 
@@ -247,15 +235,14 @@ namespace DataHarvester
             );
             CREATE INDEX object_comments_sd_oid ON sd.object_comments(sd_oid);";
 
-            using (var conn = new NpgsqlConnection(db_conn))
-            {
-                conn.Execute(sql_string);
-            }
+            Execute_SQL(sql_string);
         }
+
 
         public void create_table_object_descriptions()
         {
-            string sql_string = @"CREATE TABLE sd.object_descriptions(
+            string sql_string = @"DROP TABLE IF EXISTS sd.object_descriptions;
+            CREATE TABLE sd.object_descriptions(
                 id                     INT             GENERATED ALWAYS AS IDENTITY PRIMARY KEY
               , sd_oid                 CHAR(24)        NOT NULL
               , description_type_id    INT             NULL
@@ -268,15 +255,14 @@ namespace DataHarvester
             );
             CREATE INDEX object_descriptions_sd_oid ON sd.object_descriptions(sd_oid);";
 
-            using (var conn = new NpgsqlConnection(db_conn))
-            {
-                conn.Execute(sql_string);
-            }
+            Execute_SQL(sql_string);
         }
+
 
         public void create_table_object_identifiers()
         {
-            string sql_string = @"CREATE TABLE sd.object_identifiers(
+            string sql_string = @"DROP TABLE IF EXISTS sd.object_identifiers;
+            CREATE TABLE sd.object_identifiers(
                 id                     INT             GENERATED ALWAYS AS IDENTITY PRIMARY KEY
               , sd_oid                 CHAR(24)        NOT NULL
               , identifier_value       VARCHAR         NULL
@@ -289,15 +275,13 @@ namespace DataHarvester
             );
             CREATE INDEX object_identifiers_sd_oid ON sd.object_identifiers(sd_oid);";
 
-            using (var conn = new NpgsqlConnection(db_conn))
-            {
-                conn.Execute(sql_string);
-            }
+            Execute_SQL(sql_string);
         }
 
         public void create_table_object_db_links()
         {
-            string sql_string = @"CREATE TABLE sd.object_db_links(
+            string sql_string = @"DROP TABLE IF EXISTS sd.object_db_links;
+            CREATE TABLE sd.object_db_links(
                 id                     INT             GENERATED ALWAYS AS IDENTITY PRIMARY KEY
               , sd_oid                 CHAR(24)        NOT NULL
               , db_sequence            INT             NULL
@@ -307,15 +291,14 @@ namespace DataHarvester
             );
             CREATE INDEX object_db_links_sd_oid ON sd.object_db_links(sd_oid);";
 
-            using (var conn = new NpgsqlConnection(db_conn))
-            {
-                conn.Execute(sql_string);
-            }
+            Execute_SQL(sql_string);
         }
+
 
         public void create_table_object_publication_types()
         {
-            string sql_string = @"CREATE TABLE sd.object_publication_types(
+            string sql_string = @"DROP TABLE IF EXISTS sd.object_publication_types;
+            CREATE TABLE sd.object_publication_types(
                 id                     INT             GENERATED ALWAYS AS IDENTITY PRIMARY KEY
               , sd_oid                 CHAR(24)        NOT NULL
               , type_name              VARCHAR         NULL
@@ -323,16 +306,14 @@ namespace DataHarvester
             );
             CREATE INDEX object_publication_types_sd_oid ON sd.object_publication_types(sd_oid);";
 
-            using (var conn = new NpgsqlConnection(db_conn))
-            {
-                conn.Execute(sql_string);
-            }
+            Execute_SQL(sql_string);
         }
 
 
         public void create_table_object_relationships()
         {
-            string sql_string = @"CREATE TABLE sd.object_relationships(
+            string sql_string = @"DROP TABLE IF EXISTS sd.object_relationships;
+            CREATE TABLE sd.object_relationships(
                 id                     INT             GENERATED ALWAYS AS IDENTITY PRIMARY KEY
               , sd_oid                 CHAR(24)        NOT NULL
               , relationship_type_id   INT             NULL
@@ -342,16 +323,14 @@ namespace DataHarvester
             );
             CREATE INDEX object_relationships_sd_oid ON sd.object_relationships(sd_oid);";
 
-            using (var conn = new NpgsqlConnection(db_conn))
-            {
-                conn.Execute(sql_string);
-            }
+            Execute_SQL(sql_string);
         }
 
 
         public void create_table_object_rights()
         {
-            string sql_string = @"CREATE TABLE sd.object_rights(
+            string sql_string = @"DROP TABLE IF EXISTS sd.object_rights;
+            CREATE TABLE sd.object_rights(
                 id                     INT             GENERATED ALWAYS AS IDENTITY PRIMARY KEY
               , sd_oid                 CHAR(24)        NOT NULL
               , rights_name            VARCHAR         NULL
@@ -361,15 +340,14 @@ namespace DataHarvester
             );
             CREATE INDEX object_rights_sd_oid ON sd.object_rights(sd_oid);";
 
-            using (var conn = new NpgsqlConnection(db_conn))
-            {
-                conn.Execute(sql_string);
-            }
+            Execute_SQL(sql_string);
         }
+
 
         public void create_table_object_hashes()
         {
-            string sql_string = @"CREATE TABLE sd.object_hashes(
+            string sql_string = @"DROP TABLE IF EXISTS sd.object_hashes;
+            CREATE TABLE sd.object_hashes(
                 id                     INT             GENERATED ALWAYS AS IDENTITY PRIMARY KEY
               , sd_oid                 CHAR(24)        NOT NULL
               , hash_type_id           INT             NULL
@@ -378,17 +356,14 @@ namespace DataHarvester
             );
             CREATE INDEX object_hashes_sd_oid ON sd.object_hashes(sd_oid);";
 
-
-            using (var conn = new NpgsqlConnection(db_conn))
-            {
-                conn.Execute(sql_string);
-            }
+            Execute_SQL(sql_string);
         }
 
 
         public void create_table_citation_objects()
         {
-            string sql_string = @"CREATE TABLE sd.citation_objects(
+            string sql_string = @"DROP TABLE IF EXISTS sd.citation_objects;
+            CREATE TABLE sd.citation_objects(
                 id                     INT             GENERATED ALWAYS AS IDENTITY PRIMARY KEY
               , sd_oid                 CHAR(24)        NOT NULL
               , sd_sid                 VARCHAR         NULL
@@ -419,10 +394,7 @@ namespace DataHarvester
             );
             CREATE INDEX citation_objects_sd_oid ON sd.citation_objects(sd_oid);";
 
-            using (var conn = new NpgsqlConnection(db_conn))
-            {
-                conn.Execute(sql_string);
-            }
+            Execute_SQL(sql_string); 
         }
     }
 }

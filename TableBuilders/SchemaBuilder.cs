@@ -17,25 +17,57 @@ namespace DataHarvester
             object_tablebuilder = new ObjectTableBuilder(source.db_conn);
         }
 
+
         public void RecreateTables()
         {
             if (_source.has_study_tables)
             {
-                DeleteStudyTables();
-                _logger.Information("Existing study tables deleted");
+                // these common to all databases
 
-                BuildNewStudyTables();
+                study_tablebuilder.create_table_studies();
+                study_tablebuilder.create_table_study_identifiers();
+                study_tablebuilder.create_table_study_titles();
+
+                // these are database dependent
+                if (_source.has_study_topics) study_tablebuilder.create_table_study_topics();
+                if (_source.has_study_features) study_tablebuilder.create_table_study_features();
+                if (_source.has_study_contributors) study_tablebuilder.create_table_study_contributors();
+                if (_source.has_study_references) study_tablebuilder.create_table_study_references();
+                if (_source.has_study_relationships) study_tablebuilder.create_table_study_relationships();
+                if (_source.has_study_links) study_tablebuilder.create_table_study_links();
+                if (_source.has_study_ipd_available) study_tablebuilder.create_table_ipd_available();
+
                 _logger.Information("Study tables recreated");
             }
 
-            DeleteObjectTables();
-            _logger.Information("Existing object tables deleted");
+            // object tables - these common to all databases
 
-            BuildNewObjectTables();
+            object_tablebuilder.create_table_data_objects();
+            object_tablebuilder.create_table_object_instances();
+            object_tablebuilder.create_table_object_titles();
+
+            // these are database dependent		
+
+            if (_source.has_object_datasets) object_tablebuilder.create_table_object_datasets();
+            if (_source.has_object_dates) object_tablebuilder.create_table_object_dates();
+            if (_source.has_object_relationships) object_tablebuilder.create_table_object_relationships();
+            if (_source.has_object_rights) object_tablebuilder.create_table_object_rights();
+            if (_source.has_object_pubmed_set)
+            {
+                object_tablebuilder.create_table_citation_objects();
+                object_tablebuilder.create_table_object_contributors();
+                object_tablebuilder.create_table_object_topics();
+                object_tablebuilder.create_table_object_comments();
+                object_tablebuilder.create_table_object_descriptions();
+                object_tablebuilder.create_table_object_identifiers();
+                object_tablebuilder.create_table_object_db_links();
+                object_tablebuilder.create_table_object_publication_types();
+            }
+
             _logger.Information("Object tables recreated");
         }
 
-
+        /*
         private void DeleteStudyTables()
         {
             // dropping routines include 'if exists'
@@ -73,7 +105,6 @@ namespace DataHarvester
             object_tablebuilder.drop_table("citation_objects");
         }
 
-
         private void BuildNewStudyTables()
         {
             // these common to all databases
@@ -92,7 +123,6 @@ namespace DataHarvester
             if (_source.has_study_ipd_available) study_tablebuilder.create_table_ipd_available();
 
         }
-
 
         private void BuildNewObjectTables()
         {
@@ -120,7 +150,7 @@ namespace DataHarvester
                 object_tablebuilder.create_table_object_publication_types();
             }
         }
-
+        */
     }
 }
 

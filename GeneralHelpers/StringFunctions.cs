@@ -45,10 +45,10 @@ namespace DataHarvester
         {
             try
             {
-                int apos_pos = apos_name.IndexOf("'");
-                int alen = apos_name.Length;
-                if (apos_pos != -1)
+                while (apos_name.Contains("'"))
                 {
+                    int apos_pos = apos_name.IndexOf("'");
+                    int alen = apos_name.Length;
                     if (apos_pos == 0)
                     {
                         apos_name = "‘" + apos_name.Substring(1);
