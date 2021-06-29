@@ -37,11 +37,10 @@ namespace DataHarvester.who
             List<ObjectDate> data_object_dates = new List<ObjectDate>();
             List<ObjectInstance> data_object_instances = new List<ObjectInstance>();
 
-            StringHelpers sh = new StringHelpers(_logger, _mon_repo);
+            StringHelpers sh = new StringHelpers(_logger);
             DateHelpers dh = new DateHelpers();
             TypeHelpers th = new TypeHelpers();
             MD5Helpers hh = new MD5Helpers();
-            HtmlHelpers mh = new HtmlHelpers(_logger);
             IdentifierHelpers ih = new IdentifierHelpers();
 
 
@@ -70,8 +69,8 @@ namespace DataHarvester.who
                                      ih.get_source_name(source_id), registration_date?.date_string, null));
 
             // titles
-            string public_title = sh.CheckTitle(GetElementAsString(r.Element("public_title")));
-            string scientific_title = sh.CheckTitle(GetElementAsString(r.Element("scientific_title")));
+            string public_title = sh.CheckWHOTitle(GetElementAsString(r.Element("public_title")));
+            string scientific_title = sh.CheckWHOTitle(GetElementAsString(r.Element("scientific_title")));
             if (public_title == "")
             {
                 if (scientific_title != "")
@@ -163,12 +162,10 @@ namespace DataHarvester.who
                 }
             }
 
-            s.brief_description = (interventions + " " + primary_outcome + " " + study_design).Trim();
-            if (s.brief_description.Contains("<"))
-            {
-                s.brief_description = mh.replace_tags(s.brief_description);
-                s.bd_contains_html = mh.check_for_tags(s.brief_description);
-            }
+            string brief_description = (interventions + " " + primary_outcome + " " + study_design).Trim();
+            brief_description = sh.ReplaceApos(brief_description);
+            s.brief_description = sh.ReplaceTags(brief_description);
+
 
             // data sharing statement
             string ipd_description = GetElementAsString(r.Element("ipd_description"));
@@ -179,12 +176,8 @@ namespace DataHarvester.who
                 && ipd_description.ToLower() != "not applicable"
                 && !ipd_description.Contains("justification or reason for"))
             {
-                s.data_sharing_statement = ipd_description;
-                if (s.data_sharing_statement.Contains("<"))
-                {
-                    s.data_sharing_statement = mh.replace_tags(s.data_sharing_statement);
-                    s.dss_contains_html = mh.check_for_tags(s.data_sharing_statement);
-                }
+                ipd_description = sh.ReplaceApos(ipd_description);
+                s.data_sharing_statement = sh.ReplaceTags(ipd_description);
             }
 
             string date_enrolment = GetElementAsString(r.Element("date_enrolment"));
@@ -383,6 +376,7 @@ namespace DataHarvester.who
                 string givenname = scientific_contact_givenname ?? "";
                 string familyname = scientific_contact_familyname ?? "";
                 string full_name = (givenname + " " + familyname).Trim();
+                full_name = sh.ReplaceApos(full_name);
                 study_lead = full_name;  // for later comparison
                 string affiliation = scientific_contact_affiliation ?? "";
                 study_contributors.Add(new StudyContributor(sid, 51, "Study Lead", null, null, full_name, affiliation));
@@ -397,6 +391,7 @@ namespace DataHarvester.who
                 string givenname = public_contact_givenname ?? "";
                 string familyname = public_contact_familyname ?? "";
                 string full_name = (givenname + " " + familyname).Trim();
+                full_name = sh.ReplaceApos(full_name);
                 if (full_name != study_lead)  // often duplicated
                 {
                     string affiliation = public_contact_affiliation ?? "";

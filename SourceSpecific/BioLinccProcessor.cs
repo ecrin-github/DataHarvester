@@ -37,9 +37,8 @@ namespace DataHarvester.biolincc
             List<ObjectInstance> data_object_instances = new List<ObjectInstance>();
 
             MD5Helpers hh = new MD5Helpers();
-            HtmlHelpers mh = new HtmlHelpers(_logger);
             DateHelpers dh = new DateHelpers();
-            StringHelpers sh = new StringHelpers(_logger, _mon_repo);
+            StringHelpers sh = new StringHelpers(_logger);
 
             char[] splitter = { '(' };
 
@@ -66,11 +65,8 @@ namespace DataHarvester.biolincc
             // and only for those where an nct entry exists (Some BioLincc studiues are not registered)
 
             string title = GetElementAsString(r.Element("title"));
-            if (title.Contains("<"))
-            {
-                title = mh.replace_tags(title);
-                title = mh.strip_tags(title);
-            }
+            title = sh.ReplaceTags(title);
+            title = sh.ReplaceApos(title);
 
             string nct_name = GetElementAsString(r.Element("nct_base_name"));
             bool in_multiple_biolincc_group = GetElementAsBool(r.Element("in_multiple_biolincc_group"));
@@ -96,15 +92,9 @@ namespace DataHarvester.biolincc
             }
 
             string brief_description = GetElementAsString(r.Element("brief_description"));
-            if (brief_description.Contains("<"))
-            {
-                s.brief_description = mh.replace_tags(brief_description);
-                s.bd_contains_html = mh.check_for_tags(s.brief_description);
-            }
-            else
-            {
-                s.brief_description = brief_description;
-            }
+
+            brief_description = sh.ReplaceTags(brief_description);
+            s.brief_description = sh.ReplaceApos(brief_description);
 
 
             s.study_type_id = GetElementAsInt(r.Element("study_type_id"));

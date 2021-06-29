@@ -5,13 +5,11 @@ namespace DataHarvester
 {
     public class StringHelpers
     {
-        HtmlHelpers mh;
         private readonly ILogger _logger;
 
-        public StringHelpers(ILogger logger, IMonitorDataLayer mon_repo)
+        public StringHelpers(ILogger logger)
         {
             _logger = logger;
-            mh = new HtmlHelpers(_logger);
         }
 
         public string TidyName(string in_name)
@@ -45,6 +43,11 @@ namespace DataHarvester
         {
             try
             {
+                if (apos_name == null)
+                {
+                    return null;
+                }
+
                 while (apos_name.Contains("'"))
                 {
                     int apos_pos = apos_name.IndexOf("'");
@@ -70,6 +73,7 @@ namespace DataHarvester
                         }
                     }
                 }
+
                 return apos_name;
             }
             catch (Exception e)
@@ -80,7 +84,262 @@ namespace DataHarvester
 
         }
 
-        public string CheckTitle(string in_title)
+
+        public string ReplaceTags(string input_string)
+        {
+            try
+            {
+                if (input_string == null)
+                {
+                    return null;
+                }
+
+                // needs to have opening and closing tags for further processing
+
+                if (!(input_string.Contains("<") && input_string.Contains(">")))
+                {
+                    return input_string;
+                }
+
+                // The commonest case
+
+                string output_string = input_string
+                                .Replace("<br>", "\n")
+                                .Replace("<br/>", "\n")
+                                .Replace("<br />", "\n");
+
+                // Check need to continue
+
+                if (!(output_string.Contains("<") && output_string.Contains(">")))
+                {
+                    return output_string;
+                }
+
+                // Look for paragraph tags
+
+                while (output_string.Contains("<p"))
+                {
+                    // replace any p start tags with a carriage return
+
+                    int start_pos = output_string.IndexOf("<p");
+                    int end_pos = output_string.IndexOf(">", start_pos);
+                    output_string = output_string.Substring(0, start_pos) + "\n" + output_string.Substring(end_pos + 1);
+                }
+
+                output_string = output_string.Replace("</p>", "");
+
+                // Check for any list structures
+
+                if (output_string.Contains("<li>"))
+                {
+                    while (output_string.Contains("<li"))
+                    {
+                        // replace any li start tags with a carriage return and bullet
+
+                        int start_pos = output_string.IndexOf("<li ");
+                        int end_pos = output_string.IndexOf(">", start_pos);
+                        output_string = output_string.Substring(0, start_pos) + "\n\u2022 " + output_string.Substring(end_pos + 1);
+                    }
+
+                    // remove any list start and end tags
+
+                    while (output_string.Contains("<ul"))
+                    {
+                        int start_pos = output_string.IndexOf("<ul");
+                        int end_pos = output_string.IndexOf(">", start_pos);
+                        output_string = output_string.Substring(0, start_pos) + output_string.Substring(end_pos + 1);
+                    }
+
+                    while (output_string.Contains("<ol"))
+                    {
+                        int start_pos = output_string.IndexOf("<ol");
+                        int end_pos = output_string.IndexOf(">", start_pos);
+                        output_string = output_string.Substring(0, start_pos) + output_string.Substring(end_pos + 1);
+                    }
+
+                    output_string = output_string.Replace("</li>", "").Replace("</ul>", "").Replace("</ol>", "");
+                }
+
+                while (output_string.Contains("<div"))
+                {
+                    // remove any div start tags
+                    int start_pos = output_string.IndexOf("<div");
+                    int end_pos = output_string.IndexOf(">", start_pos);
+                    output_string = output_string.Substring(0, start_pos) + output_string.Substring(end_pos + 1);
+                }
+
+                while (output_string.Contains("<span"))
+                {
+                    // remove any span start tags
+                    int start_pos = output_string.IndexOf("<span");
+                    int end_pos = output_string.IndexOf(">", start_pos);
+                    output_string = output_string.Substring(0, start_pos) + output_string.Substring(end_pos + 1);
+                }
+
+                output_string = output_string.Replace("</span>", "").Replace("</div>", "");
+
+                // check need to continue
+
+                if (!(output_string.Contains("<") && output_string.Contains(">")))
+                {
+                    return output_string;
+                }
+
+                // Assume these will be simple tags, without classes
+                output_string = output_string.Replace("<b>", "").Replace("</b>", "").Replace("<i>", "").Replace("</i>", "");
+                output_string = output_string.Replace("<em>", "").Replace("</em>", "").Replace("<u>", "").Replace("</u>", "");
+                output_string = output_string.Replace("<strong>", "").Replace("</strong>", "");
+
+
+                while (output_string.Contains("<a"))
+                {
+                    // remove any link start tags - appears to be very rare
+                    int start_pos = output_string.IndexOf("<a");
+                    int end_pos = output_string.IndexOf(">", start_pos);
+                    output_string = output_string.Substring(0, start_pos) + output_string.Substring(end_pos + 1);
+                }
+
+                output_string = output_string.Replace("</a>", "");
+
+                // try and replace sub and super scripts
+
+                while (output_string.Contains("<sub>"))
+                {
+                    int start_pos = output_string.IndexOf("<sub>");
+                    int start_string = start_pos + 5;
+                    int end_string = output_string.IndexOf("</sub>", start_string);
+                    if (end_string != -1) // would indicate a non matched sub entry
+                    {
+                        int end_pos = end_string + 5;
+                        string string_to_change = output_string.Substring(start_string, end_string - start_string);
+                        string new_string = "";
+                        for (int i = 0; i < string_to_change.Length; i++)
+                        {
+                            new_string += ChangeToSubUnicode(string_to_change[i]);
+                        }
+                        if (end_pos > output_string.Length - 1)
+                        {
+                            output_string = output_string.Substring(0, start_pos) + new_string;
+                        }
+                        else
+                        {
+                            output_string = output_string.Substring(0, start_pos) + new_string + output_string.Substring(end_pos + 1);
+                        }
+                    }
+                    else
+                    {
+                        // drop any that are left (to get out of the loop)
+                        output_string = output_string.Replace("</sub>", "");
+                        output_string = output_string.Replace("<sub>", "");
+                    }
+                }
+
+                while (output_string.Contains("<sup>"))
+                {
+                    int start_pos = output_string.IndexOf("<sup>");
+                    int start_string = start_pos + 5;
+                    int end_string = output_string.IndexOf("</sup>", start_string);
+                    if (end_string != -1) // would indicate a non matched sup entry
+                    {
+                        int end_pos = end_string + 5;
+                        string string_to_change = output_string.Substring(start_string, end_string - start_string);
+                        string new_string = "";
+                        for (int i = 0; i < string_to_change.Length; i++)
+                        {
+                            new_string += ChangeToSupUnicode(string_to_change[i]);
+                        }
+                        if (end_pos > output_string.Length - 1)
+                        {
+                            output_string = output_string.Substring(0, start_pos) + new_string;
+                        }
+                        else
+                        {
+                            output_string = output_string.Substring(0, start_pos) + new_string + output_string.Substring(end_pos + 1);
+                        }
+                    }
+                    else
+                    {
+                        // drop any that are left  (to get out of the loop)
+                        output_string = output_string.Replace("</sup>", "");
+                        output_string = output_string.Replace("<sup>", "");
+                    }
+                }
+
+                return output_string;
+            }
+
+            catch (Exception e)
+            {
+                _logger.Error("In replace_tags: " + e.Message + " (Input was '" + input_string + "')");
+                return null;
+            }
+        }
+
+        private char ChangeToSupUnicode(char a)
+        {
+            char unicode = a;
+            switch (a)
+            {
+                case '0': unicode = '\u2070'; break;
+                case '1': unicode = '\u0B09'; break;
+                case '2': unicode = '\u0B02'; break;
+                case '3': unicode = '\u0B03'; break;
+                case '4': unicode = '\u2074'; break;
+                case '5': unicode = '\u2075'; break;
+                case '6': unicode = '\u2076'; break;
+                case '7': unicode = '\u2077'; break;
+                case '8': unicode = '\u2078'; break;
+                case '9': unicode = '\u2079'; break;
+                case 'i': unicode = '\u2071'; break;
+                case '+': unicode = '\u207A'; break;
+                case '-': unicode = '\u207B'; break;
+                case '=': unicode = '\u207C'; break;
+                case '(': unicode = '\u207D'; break;
+                case ')': unicode = '\u207E'; break;
+                case 'n': unicode = '\u207F'; break;
+            }
+            return unicode;
+        }
+
+        private char ChangeToSubUnicode(char a)
+        {
+            char unicode = a;
+            switch (a)
+            {
+                case '0': unicode = '\u2080'; break;
+                case '1': unicode = '\u2081'; break;
+                case '2': unicode = '\u2082'; break;
+                case '3': unicode = '\u2083'; break;
+                case '4': unicode = '\u2084'; break;
+                case '5': unicode = '\u2085'; break;
+                case '6': unicode = '\u2086'; break;
+                case '7': unicode = '\u2087'; break;
+                case '8': unicode = '\u2088'; break;
+                case '9': unicode = '\u2089'; break;
+                case '+': unicode = '\u208A'; break;
+                case '-': unicode = '\u208B'; break;
+                case '=': unicode = '\u208C'; break;
+                case '(': unicode = '\u208D'; break;
+                case ')': unicode = '\u208E'; break;
+                case 'a': unicode = '\u2090'; break;
+                case 'e': unicode = '\u2091'; break;
+                case 'o': unicode = '\u2092'; break;
+                case 'x': unicode = '\u2093'; break;
+                case 'h': unicode = '\u2095'; break;
+                case 'k': unicode = '\u2096'; break;
+                case 'l': unicode = '\u2097'; break;
+                case 'm': unicode = '\u2098'; break;
+                case 'n': unicode = '\u2099'; break;
+                case 'p': unicode = '\u209A'; break;
+                case 's': unicode = '\u209B'; break;
+                case 't': unicode = '\u209C'; break;
+
+            }
+            return unicode;
+        }
+
+
+        public string CheckWHOTitle(string in_title)
         {
             string out_title = "";
             if (!string.IsNullOrEmpty(in_title))
@@ -90,15 +349,7 @@ namespace DataHarvester
                     && lower_title != "n.a" && lower_title != "n/a"
                     && lower_title != "no disponible" && lower_title != "not available")
                 {
-                    if (in_title.Contains("<"))
-                    {
-                        out_title = mh.replace_tags(in_title);
-                        out_title = mh.strip_tags(out_title);
-                    }
-                    else
-                    {
-                        out_title = in_title;
-                    }
+                    out_title = ReplaceApos(out_title);
                 }
             }
             return out_title;
@@ -124,21 +375,21 @@ namespace DataHarvester
                     name = name.Replace("|org", ".org");
                 }
 
-                // do this as a loop as there may be several apostrophes that
-                // need replacing to different types of quote
-                while (name.Contains("'"))
-                {
-                    name = ReplaceApos(name);
-                }
+                // Replace any apostrophes
 
-                if (name.ToLower().Contains("newcastle") && name.ToLower().Contains("university")
-                    && !name.Contains("hospital"))
+                name = ReplaceApos(name);
+
+                // try and deal with possible ambiguities (organmisations with genuinely the same name)
+
+                string nlower = name.ToLower();
+                if (nlower.Contains("newcastle") && nlower.Contains("university")
+                    && !nlower.Contains("hospital"))
                 {
-                    if (name.ToLower().Contains("nsw") || name.ToLower().Contains("australia"))
+                    if (nlower.Contains("nsw") || nlower.Contains("australia"))
                     {
                         name = "University of Newcastle (Australia)";
                     }
-                    else if (name.ToLower().Contains("uk") || name.ToLower().Contains("tyne"))
+                    else if (nlower.Contains("uk") || nlower.Contains("tyne"))
                     {
                         name = "University of Newcastle (UK)";
                     }
@@ -152,6 +403,33 @@ namespace DataHarvester
                     }
                 }
 
+                if (nlower.Contains("china medical") && nlower.Contains("university"))
+                {
+                    if (nlower.Contains("taiwan") || nlower.Contains("taichung"))
+                    {
+                        name = "China Medical University, Taiwan";
+                    }
+                    else if (nlower.Contains("Shenyang") || nlower.Contains("prc"))
+                    {
+                        name = "China Medical University";
+                    }
+                    else if (sid.StartsWith("Chi"))
+                    {
+                        name = "China Medical University";
+                    }
+                }
+
+                if (nlower.Contains("national") && nlower.Contains("cancer center"))
+                {
+                    if (sid.StartsWith("KCT"))
+                    {
+                        name = "National Cancer Center, Korea";
+                    }
+                    else if (sid.StartsWith("JPRN"))
+                    {
+                        name = "National Cancer Center, Japan";
+                    }
+                }
             }
 
             return name;

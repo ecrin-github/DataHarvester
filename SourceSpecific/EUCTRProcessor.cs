@@ -33,8 +33,7 @@ namespace DataHarvester.euctr
             List<ObjectInstance> object_instances = new List<ObjectInstance>();
 
             MD5Helpers hh = new MD5Helpers();
-            StringHelpers sh = new StringHelpers(_logger, _mon_repo);
-            HtmlHelpers mh = new HtmlHelpers(_logger);
+            StringHelpers sh = new StringHelpers(_logger);
 
             // First convert the XML document to a Linq XML Document.
 
@@ -160,6 +159,7 @@ namespace DataHarvester.euctr
 
             // do the sponsor's id
             string sponsor_id = GetElementAsString(r.Element("sponsor_id"));
+
             if (!string.IsNullOrEmpty(sponsor_id))
             {
                 if (!string.IsNullOrEmpty(sponsor_name))
@@ -204,6 +204,7 @@ namespace DataHarvester.euctr
                                                     st_name != "not done" && st_name != "same as above" && st_name != "in preparation" &&
                                                     !st_name.StartsWith("non dispo") && st_name != "non fornito")
                                                 {
+                                                    name = sh.ReplaceApos(name);
                                                     titles.Add(new StudyTitle(sid, name, 16, "Trial Registry title", false));
                                                 }
                                             }
@@ -232,6 +233,7 @@ namespace DataHarvester.euctr
                                                     !st_name.StartsWith("non dispo") && st_name != "non fornito")
                                                 {
                                                     k++;
+                                                    name = sh.ReplaceApos(name);
                                                     titles.Add(new StudyTitle(sid, name, 15, "Public title", (k == 1)));
                                                 }
                                             }
@@ -883,8 +885,7 @@ namespace DataHarvester.euctr
             // Check brief description for html
             // after getting rid of any sup / subs, divs and spans.
 
-            s.brief_description = mh.replace_tags(s.brief_description);
-            s.bd_contains_html = mh.check_for_tags(s.brief_description);
+            s.brief_description = sh.ReplaceTags(s.brief_description);
 
             s.identifiers = identifiers;
             s.titles = titles;

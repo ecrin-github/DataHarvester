@@ -51,7 +51,7 @@ namespace DataHarvester.ctg
             string sponsor_name = null;
             SplitDate firstpost = null, resultspost = null, updatepost = null, startdate = null;
 
-            StringHelpers sh = new StringHelpers(_logger, _mon_repo);
+            StringHelpers sh = new StringHelpers(_logger);
             DateHelpers dh = new DateHelpers();
             TypeHelpers th = new TypeHelpers();
             MD5Helpers hh = new MD5Helpers();
@@ -362,7 +362,9 @@ namespace DataHarvester.ctg
 
             if (DescriptionModule != null)
             {
-                s.brief_description = FieldValue(DescriptionModule, "BriefSummary");
+                // CTG descriptions do not seem to include tags
+
+                s.brief_description = sh.ReplaceApos(FieldValue(DescriptionModule, "BriefSummary"));
             }
 
 
@@ -650,7 +652,7 @@ namespace DataHarvester.ctg
                             string infoitemlist = itemlist.Substring(1);
                             sharing_statement += "\r\nInformation available: " + infoitemlist;
                         }
-                        s.data_sharing_statement = sharing_statement;
+                        s.data_sharing_statement = sh.ReplaceApos(sharing_statement);
                     }
                 }
             }
@@ -1373,11 +1375,10 @@ namespace DataHarvester.ctg
                             sc.organisation_name = null;
                             sc.is_individual = true;
                         }
-
-                        // seems to be unique to Clinical Trials.gov
-                        if (orgname == "sponsor"  || orgname == "company internal")
+                        else if (orgname == "sponsor"  || orgname == "company internal")
                         {
-                            orgname = sponsor_name;
+                            // seems to be unique to Clinical Trials.gov
+                            sc.organisation_name = sponsor_name;
                         }
                     }
                 }

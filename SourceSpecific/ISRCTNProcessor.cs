@@ -36,10 +36,9 @@ namespace DataHarvester.isrctn
             List<ObjectInstance> object_instances = new List<ObjectInstance>();
 
             MD5Helpers hh = new MD5Helpers();
-            StringHelpers sh = new StringHelpers(_logger, _mon_repo);
+            StringHelpers sh = new StringHelpers(_logger);
             DateHelpers dh = new DateHelpers();
             TypeHelpers th = new TypeHelpers();
-            HtmlHelpers mh = new HtmlHelpers(_logger);
             IdentifierHelpers ih = new IdentifierHelpers();
 
             SplitDate date_assigned = null;
@@ -59,6 +58,7 @@ namespace DataHarvester.isrctn
 
             // get basic study attributes
             string study_name = GetElementAsString(r.Element("study_name"));
+            study_name = sh.ReplaceApos(study_name);
             s.display_title = study_name;   // = public title, default
             s.datetime_of_data_fetch = download_datetime;
 
@@ -229,12 +229,12 @@ namespace DataHarvester.isrctn
                                 }
                             case "Primary contact":
                                 {
-                                    c.person_full_name = item_value;
+                                    c.person_full_name = sh.ReplaceApos(item_value);
                                     break;
                                 }
                             case "Additional contact":
                                 {
-                                    c.person_full_name = item_value;
+                                    c.person_full_name = sh.ReplaceApos(item_value);
                                     break;
                                 }
                             case "ORCID ID":
@@ -403,7 +403,7 @@ namespace DataHarvester.isrctn
                         {
                             case "Scientific title":
                                 {
-                                    titles.Add(new StudyTitle(sid, item_value, 16, "Trial Registry title", false));
+                                    titles.Add(new StudyTitle(sid, sh.ReplaceApos(item_value), 16, "Trial Registry title", false));
                                     break;
                                 }
                             case "Acronym":
@@ -1188,22 +1188,13 @@ namespace DataHarvester.isrctn
             }
 
 
-            // Check brief description and 
-            // data sharing statement for html
-            // after getting rid of any sup / subs, divs and spans.
-            if (s.brief_description != null)
-            {
-                s.brief_description = sh.ReplaceApos(s.brief_description);
-                s.brief_description = mh.replace_tags(s.brief_description);
-                s.bd_contains_html = mh.check_for_tags(s.brief_description);
-            }
+            // Clean brief description and data sharing statement for html
+            
+            s.brief_description = sh.ReplaceApos(s.brief_description);
+            s.brief_description = sh.ReplaceTags(s.brief_description);
 
-            if (s.data_sharing_statement != null)
-            {
-                s.data_sharing_statement = sh.ReplaceApos(s.data_sharing_statement);
-                s.data_sharing_statement = mh.replace_tags(s.data_sharing_statement);
-                s.dss_contains_html = mh.check_for_tags(s.data_sharing_statement);
-            }
+            s.data_sharing_statement = sh.ReplaceApos(s.data_sharing_statement);
+            s.data_sharing_statement = sh.ReplaceTags(s.data_sharing_statement);
 
             s.identifiers = identifiers;
             s.titles = titles;

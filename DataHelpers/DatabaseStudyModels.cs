@@ -11,9 +11,7 @@ namespace DataHarvester
         public string title_lang_code { get; set; }
 
         public string brief_description { get; set; }
-        public bool bd_contains_html { get; set; }
         public string data_sharing_statement { get; set; }
-        public bool dss_contains_html { get; set; }
         public int? study_start_year { get; set; }
         public int? study_start_month { get; set; }
 
@@ -60,9 +58,7 @@ namespace DataHarvester
         public string title_lang_code { get; set; }
 
         public string brief_description { get; set; }
-        public bool bd_contains_html { get; set; }
         public string data_sharing_statement { get; set; }
-        public bool dss_contains_html { get; set; }
         public int? study_start_year { get; set; }
         public int? study_start_month { get; set; }
 
@@ -89,9 +85,7 @@ namespace DataHarvester
             display_title = s.display_title;
             title_lang_code = s.title_lang_code ?? "en";
             brief_description = s.brief_description;
-            bd_contains_html = s.bd_contains_html;
             data_sharing_statement = s.data_sharing_statement;
-            dss_contains_html = s.dss_contains_html;
             study_start_year = s.study_start_year;
             study_start_month = s.study_start_month;
             study_type_id = s.study_type_id;

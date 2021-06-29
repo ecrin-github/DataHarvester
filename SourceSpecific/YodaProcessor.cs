@@ -38,9 +38,8 @@ namespace DataHarvester.yoda
             List<ObjectTitle> data_object_titles = new List<ObjectTitle>();
             List<ObjectInstance> data_object_instances = new List<ObjectInstance>();
 
-            StringHelpers sh = new StringHelpers(_logger, _mon_repo);
+            StringHelpers sh = new StringHelpers(_logger);
             MD5Helpers hh = new MD5Helpers();
-            HtmlHelpers mh = new HtmlHelpers(_logger);
 
             // First convert the XML document to a Linq XML Document.
 
@@ -63,21 +62,13 @@ namespace DataHarvester.yoda
             string last_revised_date = GetElementAsString(r.Element("last_revised_date")); ;
 
             string yoda_title = GetElementAsString(r.Element("yoda_title"));
-            string display_title = GetElementAsString(r.Element("display_title"));
-            if (yoda_title.Contains("<"))
-            {
-                yoda_title = mh.replace_tags(yoda_title);
-                yoda_title = mh.strip_tags(yoda_title);
-            }
+            yoda_title = sh.ReplaceApos(yoda_title);
+            yoda_title = sh.ReplaceTags(yoda_title);
 
-            if (string.IsNullOrEmpty(display_title))
-            {
-                s.display_title = yoda_title;
-            }
-            else
-            {
-                s.display_title = display_title;
-            }
+            // display title derived rom CTG during download, if possible
+            string display_title = GetElementAsString(r.Element("display_title"));
+            s.display_title = string.IsNullOrEmpty(display_title) ? yoda_title : display_title;
+            
 
             // create study references (pmids)
             XElement st_titles = r.Element("study_titles");
@@ -88,7 +79,7 @@ namespace DataHarvester.yoda
                 {
                     foreach (XElement t in titles)
                     {
-                        string title_text = GetElementAsString(t.Element("title_text"));
+                        string title_text = sh.ReplaceApos(GetElementAsString(t.Element("title_text")));
                         int? title_type_id = GetElementAsInt(t.Element("title_type_id"));
                         string title_type = GetElementAsString(t.Element("title_type"));
                         bool is_default = GetElementAsBool(t.Element("is_default"));
@@ -98,7 +89,7 @@ namespace DataHarvester.yoda
                 }
             }
             
-            // brief description mostly as derived
+            // brief description mostly as derived from CTG
             s.brief_description = GetElementAsString(r.Element("brief_description"));
 
             s.study_status_id = 21;
@@ -171,7 +162,7 @@ namespace DataHarvester.yoda
                     int? identifier_type_id = GetElementAsInt(i.Element("identifier_type_id"));
                     string identifier_type = GetElementAsString(i.Element("identifier_type"));
                     int? identifier_org_id = GetElementAsInt(i.Element("identifier_org_id"));
-                    string identifier_org = GetElementAsString(i.Element("identifier_org"));
+                    string identifier_org = sh.ReplaceApos(GetElementAsString(i.Element("identifier_org")));
                     study_identifiers.Add(new StudyIdentifier(sid, identifier_value, identifier_type_id, identifier_type,
                                                         identifier_org_id, identifier_org));
                 }

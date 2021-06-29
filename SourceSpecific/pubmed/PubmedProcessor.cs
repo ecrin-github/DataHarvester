@@ -22,10 +22,9 @@ namespace DataHarvester.pubmed
        
         public FullDataObject ProcessData(XmlDocument d, DateTime? download_datetime)
         {
-            StringHelpers sh = new StringHelpers(_logger, _mon_repo);
+            StringHelpers sh = new StringHelpers(_logger);
             DateHelpers dh = new DateHelpers();
             TypeHelpers th = new TypeHelpers();
-            HtmlHelpers mh = new HtmlHelpers(_logger);
             IdentifierHelpers ih = new IdentifierHelpers();
 
             // First convert the XML document to a Linq XML Document.
@@ -43,7 +42,6 @@ namespace DataHarvester.pubmed
 
             // Establish main citation object
             // and list structures to receive data
-
 
             List<ObjectInstance> instances = new List<ObjectInstance>();
             List<ObjectDate> dates = new List<ObjectDate>();
@@ -230,11 +228,8 @@ namespace DataHarvester.pubmed
                 atitle = areader.ReadInnerXml().Trim();
                 if (atitle != "")
                 {
-                    if (atitle.Contains("<"))
-                    {
-                        atitle = mh.replace_tags(atitle);
-                        atitle = mh.strip_tags(atitle);
-                    }
+                   atitle = sh.ReplaceTags(atitle);
+                   atitle = sh.ReplaceApos(atitle);
                 }
                 else
                 {
@@ -265,11 +260,8 @@ namespace DataHarvester.pubmed
 
                 if (vtitle != "")
                 {
-                    if (atitle.Contains("<"))
-                    {
-                        vtitle = mh.replace_tags(vtitle);
-                        vtitle = mh.strip_tags(vtitle);
-                    }
+                    vtitle = sh.ReplaceTags(vtitle);
+                    vtitle = sh.ReplaceApos(vtitle);
 
                     // Try and get vernacular code language - not explicitly given so
                     // all methods imperfect but seem to work in most situations so far.
@@ -1120,6 +1112,7 @@ namespace DataHarvester.pubmed
                         {
                             full_name = (given_name + " " + family_name + suffix).Trim();
                         }
+                        full_name = sh.ReplaceApos(full_name);
 
                         string identifier = "", identifier_source = "";
                         if (a.Elements("Identifier").Count() > 0)
