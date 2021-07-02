@@ -2,6 +2,7 @@
 using Serilog;
 using System;
 using System.Collections.Generic;
+using System.Linq;
 
 namespace DataHarvester
 {
@@ -38,28 +39,48 @@ namespace DataHarvester
             }
         }
 
-
         // Parse command line arguments and return true if values are valid.
-            // Otherwise log errors and return false.
+        // Otherwise log errors and return false.
+
         public bool ValidArgumentValues(Options opts)
         {
             try
             {
-                int harvest_type_id = opts.harvest_type_id;
-                if (harvest_type_id != 1 && harvest_type_id != 2 && harvest_type_id != 3)
+                if (opts.setup_expected_data_only)
                 {
-                    throw new Exception("The t (harvest type) parameter is not one of the allowed values - 1,2 or 3");
+                    // set the 'manual input of test data' source id
+                    List<int> ids = new List<int>();
+                    ids.Add(999999);
+                    opts.source_ids = ids;
+                    opts.harvest_type_id = 3;
+                    opts.org_update_only = false;
+                    return true; // can always run if -E parameter present
                 }
-
-                foreach (int source_id in opts.source_ids)
+                else if (opts.harvest_all_test_data)
                 {
-                    if (!_mon_repo.SourceIdPresent(source_id))
+                    // source ids to be provided in harvester class
+                    opts.harvest_type_id = 3;
+                    opts.org_update_only = false;
+                    return true; // should always run if -F parameter present
+                }
+                else
+                { 
+                    int harvest_type_id = opts.harvest_type_id;
+                    if (harvest_type_id != 1 && harvest_type_id != 2 && harvest_type_id != 3)
                     {
-                        throw new ArgumentException("Source argument " + source_id.ToString() +
-                                                    " does not correspond to a known source");
+                        throw new Exception("The t (harvest type) parameter is not one of the allowed values - 1,2 or 3");
                     }
+
+                    foreach (int source_id in opts.source_ids)
+                    {
+                        if (!_mon_repo.SourceIdPresent(source_id))
+                        {
+                            throw new ArgumentException("Source argument " + source_id.ToString() +
+                                                        " does not correspond to a known source");
+                        }
+                    }
+                    return true;    // Got this far - the program can run!
                 }
-                return true;    // Got this far - the program can run!
             }
 
             catch (Exception e)  
@@ -107,15 +128,20 @@ namespace DataHarvester
     {
         // Lists the command line arguments and options
 
-        [Option('s', "source_ids", Required = true, Separator = ',', HelpText = "Comma separated list of Integer ids of data sources.")]
+        [Option('s', "source_ids", Required = false, Separator = ',', HelpText = "Comma separated list of Integer ids of data sources.")]
         public IEnumerable<int> source_ids { get; set; }
 
-        [Option('t', "harvest_type_id", Required = true, HelpText = "Integer representing type of harvest (1 = full, i.e. all available files, 2 = only files downloaded since last import, 3 = test data only.")]
+        [Option('t', "harvest_type_id", Required = false, HelpText = "Integer representing type of harvest (1 = full, i.e. all available files, 2 = only files downloaded since last import, 3 = test data only.")]
         public int harvest_type_id { get; set; }
 
         [Option('G', "organisation_update_only", Required = false, HelpText = "If present does not recreate sd tables - only updates organisation ids")]
         public bool org_update_only { get; set; }
 
+        [Option('E', "establish_expected_test_data", Required = false, HelpText = "If present only creates and fills tables for the 'expected' data. for comparisonm with processed test data")]
+        public bool setup_expected_data_only { get; set; }
+
+        [Option('F', "harvest_all_test_data", Required = false, HelpText = "If present only creates and fills tables for the 'expected' data. for comparisonm with processed test data")]
+        public bool harvest_all_test_data { get; set; }
     }
 
 }

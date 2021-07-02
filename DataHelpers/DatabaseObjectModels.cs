@@ -535,7 +535,6 @@ namespace DataHarvester
         public string label { get; set; }
         public string description_text { get; set; }
         public string lang_code { get; set; }
-        public bool? contains_html { get; set; }
     }
 
 

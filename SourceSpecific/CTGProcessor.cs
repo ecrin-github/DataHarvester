@@ -908,7 +908,7 @@ namespace DataHarvester.ctg
                     foreach (XElement reference in refs)
                     {
                         string ref_type = FieldValue(reference, "ReferenceType");
-                        if (ref_type == "result")
+                        if (ref_type == "result" || ref_type == "derived")
                         {
                             string pmid = FieldValue(reference, "ReferencePMID");
                             string citation = FieldValue(reference, "ReferenceCitation");

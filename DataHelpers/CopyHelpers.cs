@@ -236,8 +236,7 @@ namespace DataHarvester
                 .MapVarchar("description_type", x => x.description_type)
                 .MapVarchar("label", x => x.label)
                 .MapVarchar("description_text", x => x.description_text)
-                .MapVarchar("lang_code", x => x.lang_code)
-                .MapBoolean("contains_html", x => x.contains_html);
+                .MapVarchar("lang_code", x => x.lang_code);
 
 
         public PostgreSQLCopyHelper<ObjectDBLink> object_db_links_helper =

@@ -1,20 +1,21 @@
 ﻿using Dapper;
 using Npgsql;
-
+using System;
+using System.Collections.Generic;
+using System.Text;
 
 namespace DataHarvester
 {
-    public class StudyTableBuilder
+    public class SDCompStudyTableBuilder
     {
         string _db_conn;
 
-        public StudyTableBuilder(string db_conn)
+        public SDCompStudyTableBuilder(string db_conn)
         {
             _db_conn = db_conn;
         }
 
-
-        public void Execute_SQL(string sql_string)
+        private void Execute_SQL(string sql_string)
         {
             using (var conn = new NpgsqlConnection(_db_conn))
             {
@@ -22,12 +23,13 @@ namespace DataHarvester
             }
         }
 
-
         public void create_table_studies()
         {
-            string sql_string = @"DROP TABLE IF EXISTS sd.studies;
-            CREATE TABLE sd.studies(
+            string sql_string = @"CREATE SCHEMA IF NOT EXISTS sdcomp;
+            DROP TABLE IF EXISTS sdcomp.studies;
+            CREATE TABLE sdcomp.studies(
                 id                     INT             GENERATED ALWAYS AS IDENTITY PRIMARY KEY
+              , source_id              INT             NOT NULL
               , sd_sid                 VARCHAR         NOT NULL
               , display_title          VARCHAR         NULL
               , title_lang_code        VARCHAR         NULL default 'en'
@@ -52,7 +54,7 @@ namespace DataHarvester
               , record_hash            CHAR(32)        NULL
               , study_full_hash        CHAR(32)        NULL
             );
-            CREATE INDEX studies_sid ON sd.studies(sd_sid);";
+            CREATE INDEX studies_sid ON sdcomp.studies(sd_sid);";
 
             Execute_SQL(sql_string);
         }
@@ -60,9 +62,10 @@ namespace DataHarvester
 
         public void create_table_study_identifiers()
         {
-            string sql_string = @"DROP TABLE IF EXISTS sd.study_identifiers;
-            CREATE TABLE sd.study_identifiers(
+            string sql_string = @"DROP TABLE IF EXISTS sdcomp.study_identifiers;
+            CREATE TABLE sdcomp.study_identifiers(
                 id                     INT             GENERATED ALWAYS AS IDENTITY PRIMARY KEY
+              , source_id              INT             NOT NULL
               , sd_sid                 VARCHAR         NOT NULL
               , identifier_value       VARCHAR         NULL
               , identifier_type_id     INT             NULL
@@ -73,7 +76,7 @@ namespace DataHarvester
               , identifier_link        VARCHAR         NULL
               , record_hash            CHAR(32)        NULL
             );
-            CREATE INDEX study_identifiers_sd_sid ON sd.study_identifiers(sd_sid);";
+            CREATE INDEX study_identifiers_sd_sid ON sdcomp.study_identifiers(sd_sid);";
 
             Execute_SQL(sql_string);
         }
@@ -81,17 +84,18 @@ namespace DataHarvester
 
         public void create_table_study_relationships()
         {
-            string sql_string = @"DROP TABLE IF EXISTS sd.study_relationships;
-            CREATE TABLE sd.study_relationships(
+            string sql_string = @"DROP TABLE IF EXISTS sdcomp.study_relationships;
+            CREATE TABLE sdcomp.study_relationships(
                 id                     INT             GENERATED ALWAYS AS IDENTITY PRIMARY KEY
+              , source_id              INT             NOT NULL
               , sd_sid                 VARCHAR         NOT NULL
               , relationship_type_id   INT             NULL
               , relationship_type      VARCHAR         NULL
               , target_sd_sid          VARCHAR         NULL
               , record_hash            CHAR(32)        NULL
             );
-            CREATE INDEX study_relationships_sd_sid ON sd.study_relationships(sd_sid);
-            CREATE INDEX study_relationships_target_sd_sid ON sd.study_relationships(target_sd_sid);";
+            CREATE INDEX study_relationships_sd_sid ON sdcomp.study_relationships(sd_sid);
+            CREATE INDEX study_relationships_target_sd_sid ON sdcomp.study_relationships(target_sd_sid);";
 
             Execute_SQL(sql_string);
         }
@@ -99,9 +103,10 @@ namespace DataHarvester
 
         public void create_table_study_references()
         {
-            string sql_string = @"DROP TABLE IF EXISTS sd.study_references;
-            CREATE TABLE sd.study_references(
+            string sql_string = @"DROP TABLE IF EXISTS sdcomp.study_references;
+            CREATE TABLE sdcomp.study_references(
                 id                     INT             GENERATED ALWAYS AS IDENTITY PRIMARY KEY
+              , source_id              INT             NOT NULL
               , sd_sid                 VARCHAR         NOT NULL
               , pmid                   VARCHAR         NULL
               , citation               VARCHAR         NULL
@@ -109,7 +114,7 @@ namespace DataHarvester
               , comments               VARCHAR         NULL
               , record_hash            CHAR(32)        NULL
             );
-            CREATE INDEX study_references_sd_sid ON sd.study_references(sd_sid);";
+            CREATE INDEX study_references_sd_sid ON sdcomp.study_references(sd_sid);";
 
             Execute_SQL(sql_string);
         }
@@ -117,9 +122,10 @@ namespace DataHarvester
 
         public void create_table_study_titles()
         {
-            string sql_string = @"DROP TABLE IF EXISTS sd.study_titles;
-            CREATE TABLE sd.study_titles(
+            string sql_string = @"DROP TABLE IF EXISTS sdcomp.study_titles;
+            CREATE TABLE sdcomp.study_titles(
                 id                     INT             GENERATED ALWAYS AS IDENTITY PRIMARY KEY
+              , source_id              INT             NOT NULL
               , sd_sid                 VARCHAR         NOT NULL
               , title_type_id          INT             NULL
               , title_type             VARCHAR         NULL
@@ -131,7 +137,7 @@ namespace DataHarvester
               , comparison_text        VARCHAR         NULL
               , record_hash            CHAR(32)        NULL
             );
-            CREATE INDEX study_titles_sd_sid ON sd.study_titles(sd_sid);";
+            CREATE INDEX study_titles_sd_sid ON sdcomp.study_titles(sd_sid);";
 
             Execute_SQL(sql_string);
         }
@@ -139,9 +145,10 @@ namespace DataHarvester
 
         public void create_table_study_contributors()
         {
-            string sql_string = @"DROP TABLE IF EXISTS sd.study_contributors;
-            CREATE TABLE sd.study_contributors(
+            string sql_string = @"DROP TABLE IF EXISTS sdcomp.study_contributors;
+            CREATE TABLE sdcomp.study_contributors(
                 id                     INT             GENERATED ALWAYS AS IDENTITY PRIMARY KEY
+              , source_id              INT             NOT NULL
               , sd_sid                 VARCHAR         NOT NULL
               , contrib_type_id        INT             NULL
               , contrib_type           VARCHAR         NULL
@@ -159,7 +166,7 @@ namespace DataHarvester
               , affil_org_id_type      VARCHAR         NULL
               , record_hash            CHAR(32)        NULL
             );
-            CREATE INDEX study_contributors_sd_sid ON sd.study_contributors(sd_sid);";
+            CREATE INDEX study_contributors_sd_sid ON sdcomp.study_contributors(sd_sid);";
 
             Execute_SQL(sql_string);
         }
@@ -167,9 +174,10 @@ namespace DataHarvester
 
         public void create_table_study_topics()
         {
-            string sql_string = @"DROP TABLE IF EXISTS sd.study_topics;
-            CREATE TABLE sd.study_topics(
+            string sql_string = @"DROP TABLE IF EXISTS sdcomp.study_topics;
+            CREATE TABLE sdcomp.study_topics(
                 id                     INT             GENERATED ALWAYS AS IDENTITY PRIMARY KEY
+              , source_id              INT             NOT NULL
               , sd_sid                 VARCHAR         NOT NULL
               , topic_type_id          INT             NULL
               , topic_type             VARCHAR         NULL
@@ -184,7 +192,7 @@ namespace DataHarvester
               , comments               VARCHAR         NULL
               , record_hash            CHAR(32)        NULL
             );
-            CREATE INDEX study_topics_sd_sid ON sd.study_topics(sd_sid);";
+            CREATE INDEX study_topics_sd_sid ON sdcomp.study_topics(sd_sid);";
 
             Execute_SQL(sql_string);
         }
@@ -192,9 +200,10 @@ namespace DataHarvester
 
         public void create_table_study_features()
         {
-            string sql_string = @"DROP TABLE IF EXISTS sd.study_features;
-            CREATE TABLE sd.study_features(
+            string sql_string = @"DROP TABLE IF EXISTS sdcomp.study_features;
+            CREATE TABLE sdcomp.study_features(
                 id                     INT             GENERATED ALWAYS AS IDENTITY PRIMARY KEY
+              , source_id              INT             NOT NULL
               , sd_sid                 VARCHAR         NOT NULL
               , feature_type_id        INT             NULL
               , feature_type           VARCHAR         NULL
@@ -202,22 +211,24 @@ namespace DataHarvester
               , feature_value          VARCHAR         NULL
               , record_hash            CHAR(32)        NULL
             );
-            CREATE INDEX study_features_sid ON sd.study_features(sd_sid);";
+            CREATE INDEX study_features_sd_sid ON sdcomp.study_features(sd_sid);";
 
             Execute_SQL(sql_string);
         }
 
+
         public void create_table_study_links()
         {
-            string sql_string = @"DROP TABLE IF EXISTS sd.study_links;
-            CREATE TABLE sd.study_links(
+            string sql_string = @"DROP TABLE IF EXISTS sdcomp.study_links;
+           CREATE TABLE sdcomp.study_links(
                 id                     INT             GENERATED ALWAYS AS IDENTITY PRIMARY KEY
+              , source_id              INT             NOT NULL
               , sd_sid                 VARCHAR         NOT NULL
               , link_label             VARCHAR         NULL
               , link_url               VARCHAR         NULL
               , record_hash            CHAR(32)        NULL
             );
-            CREATE INDEX study_links_sd_sid ON sd.study_links(sd_sid);";
+            CREATE INDEX study_links_sd_sid ON sdcomp.study_links(sd_sid);";
 
             Execute_SQL(sql_string);
         }
@@ -225,9 +236,10 @@ namespace DataHarvester
 
         public void create_table_ipd_available()
         {
-            string sql_string = @"DROP TABLE IF EXISTS sd.study_ipd_available;
-            CREATE TABLE sd.study_ipd_available(
+            string sql_string = @"DROP TABLE IF EXISTS sdcomp.study_ipd_available;
+            CREATE TABLE sdcomp.study_ipd_available(
                 id                     INT             GENERATED ALWAYS AS IDENTITY PRIMARY KEY
+              , source_id              INT             NOT NULL
               , sd_sid                 VARCHAR         NOT NULL
               , ipd_id                 VARCHAR         NULL
               , ipd_type               VARCHAR         NULL
@@ -235,26 +247,26 @@ namespace DataHarvester
               , ipd_comment            VARCHAR         NULL
               , record_hash            CHAR(32)        NULL
             );
-            CREATE INDEX study_ipd_available_sd_sid ON sd.study_ipd_available(sd_sid);";
+            CREATE INDEX study_ipd_available_sd_sid ON sdcomp.study_ipd_available(sd_sid);";
 
             Execute_SQL(sql_string);
         }
 
-        /*
+
         public void create_table_study_hashes()
         {
-            string sql_string = @"DROP TABLE IF EXISTS sd.study_hashes;
-            CREATE TABLE sd.study_hashes(
+            string sql_string = @"DROP TABLE IF EXISTS sdcomp.study_hashes;
+            CREATE TABLE sdcomp.study_hashes(
                 id                     INT             GENERATED ALWAYS AS IDENTITY PRIMARY KEY
+              , source_id              INT             NOT NULL
               , sd_sid                 VARCHAR         NOT NULL
               , hash_type_id           INT             NULL
               , hash_type              VARCHAR         NULL
               , composite_hash         CHAR(32)        NULL
             );
-            CREATE INDEX study_hashes_sd_sid ON sd.study_hashes(sd_sid);";
+            CREATE INDEX study_hashes_sd_sid ON sdcomp.study_hashes(sd_sid);";
 
             Execute_SQL(sql_string);
         }
-        */
     }
 }

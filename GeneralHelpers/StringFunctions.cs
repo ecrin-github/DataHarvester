@@ -349,7 +349,7 @@ namespace DataHarvester
                     && lower_title != "n.a" && lower_title != "n/a"
                     && lower_title != "no disponible" && lower_title != "not available")
                 {
-                    out_title = ReplaceApos(out_title);
+                    out_title = ReplaceApos(in_title);
                 }
             }
             return out_title;

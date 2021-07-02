@@ -28,6 +28,16 @@ namespace DataHarvester
 
         public void LogCommandLineParameters(Options opts)
         {
+            if (opts.harvest_all_test_data)
+            {
+                Logheader("HARVESTING ALL TEST DATA");
+            }
+
+            if (opts.setup_expected_data_only)
+            {
+                Logheader("HARVESTING EXPECTED (MANUAL INPUT) DATA");
+            }
+
             int[] source_ids = opts.source_ids.ToArray();
             if (source_ids.Length == 1)
             {

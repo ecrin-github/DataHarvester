@@ -20,24 +20,37 @@ namespace DataHarvester
         ILoggerHelper _logger_helper;
         IMonitorDataLayer _mon_repo;
         IStorageDataLayer _storage_repo;
+        ITestingDataLayer _test_repo;
 
         public Harvester(ILogger logger, ILoggerHelper logger_helper,
-                         IMonitorDataLayer mon_repo, IStorageDataLayer storage_repo)
+                         IMonitorDataLayer mon_repo, IStorageDataLayer storage_repo, 
+                         ITestingDataLayer test_repo
+                         )
         {
             _logger = logger;
             _logger_helper = logger_helper;
             _mon_repo = mon_repo;
             _storage_repo = storage_repo;
+            _test_repo = test_repo;
         }
 
         public int Run(Options opts)
+
         {
             try
             {
-                _logger_helper.Logheader("STARTING HARVESTER");
-                _logger_helper.LogCommandLineParameters(opts);
                 int harvest_type_id = opts.harvest_type_id;
                 bool org_update_only = opts.org_update_only;
+
+                if (opts.harvest_all_test_data)
+                {
+                    // set up array of source ids to reflect
+                    // those in the test data set
+                    opts.source_ids = _test_repo.ObtainTestSourceIDs();
+                }
+
+                _logger_helper.Logheader("STARTING HARVESTER");
+                _logger_helper.LogCommandLineParameters(opts);
 
                 foreach (int source_id in opts.source_ids)
                 {
@@ -57,7 +70,6 @@ namespace DataHarvester
             }
         }
 
-
         private void HarvestData(int source_id, int harvest_type_id, bool org_update_only)
         {
             // Obtain source details, augment with connection string for this database
@@ -70,103 +82,126 @@ namespace DataHarvester
             if (!org_update_only)
             {
                 // Bulk of the harvesting process can be skipped if this run is just for updating 
-                // tables with context values. Otherwise...
-                // construct the sd tables. (Some sources may be data objects only.)
+                // tables with context values. 
 
-                _logger_helper.Logheader("Recreate database tables");
-                SchemaBuilder sdb = new SchemaBuilder(source, _logger);
-                sdb.RecreateTables();
-
-                // Construct the harvest_event record.
-
-                _logger_helper.Logheader("Process data");
-                int harvest_id = _mon_repo.GetNextHarvestEventId();
-                HarvestEvent harvest = new HarvestEvent(harvest_id, source.id, harvest_type_id);
-                _logger.Information("Harvest event " + harvest_id.ToString() + " began");
-
-                // Harvest the data from the local XML files
-                IStudyProcessor study_processor = null;
-                IObjectProcessor object_processor = null;
-                harvest.num_records_available = _mon_repo.FetchFullFileCount(source.id, source.source_type, harvest_type_id);
-
-                if (source.source_type == "study")
+                if (source.source_type == "test")
                 {
-                    if (source.uses_who_harvest)
+                    // Set up expected data for later processing.
+                    // This is data derived from manual inspection of files and requires
+                    // a very different method, using stored procedures in the test db
+                    _test_repo.EstablishExpectedData();   
+                }
+                else
+                {   
+                    // Otherwise...
+                    // construct the sd tables. (Some sources may be data objects only.)
+
+                    _logger_helper.Logheader("Recreate database tables");
+                    SchemaBuilder sdb = new SchemaBuilder(source, _logger);
+                    sdb.RecreateTables();
+
+                    // Construct the harvest_event record.
+
+                    _logger_helper.Logheader("Process data");
+                    int harvest_id = _mon_repo.GetNextHarvestEventId();
+                    HarvestEvent harvest = new HarvestEvent(harvest_id, source.id, harvest_type_id);
+                    _logger.Information("Harvest event " + harvest_id.ToString() + " began");
+
+                    // Harvest the data from the local XML files
+                    IStudyProcessor study_processor = null;
+                    IObjectProcessor object_processor = null;
+                    harvest.num_records_available = _mon_repo.FetchFullFileCount(source.id, source.source_type, harvest_type_id);
+
+                    if (source.source_type == "study")
                     {
-                        study_processor = new WHOProcessor(_mon_repo, _logger);
+                        if (source.uses_who_harvest)
+                        {
+                            study_processor = new WHOProcessor(_mon_repo, _logger);
+                        }
+                        else
+                        {
+                            switch (source.id)
+                            {
+                                case 101900:
+                                    {
+                                        study_processor = new BioLinccProcessor(_mon_repo, _logger);
+                                        break;
+                                    }
+                                case 101901:
+                                    {
+                                        study_processor = new YodaProcessor(_mon_repo, _logger);
+                                        break;
+                                    }
+                                case 100120:
+                                    {
+                                        study_processor = new CTGProcessor(_mon_repo, _logger);
+                                        break;
+                                    }
+                                case 100123:
+                                    {
+                                        study_processor = new EUCTRProcessor(_mon_repo, _logger);
+                                        break;
+                                    }
+                                case 100126:
+                                    {
+                                        study_processor = new ISRCTNProcessor(_mon_repo, _logger);
+                                        break;
+                                    }
+                            }
+                        }
+
+                        StudyController c = new StudyController(_logger, _mon_repo, _storage_repo, source, study_processor);
+                        harvest.num_records_harvested = c.LoopThroughFiles(harvest_type_id, harvest_id);
                     }
                     else
                     {
+                        // source type is 'object'
                         switch (source.id)
                         {
-                            case 101900:
+                            case 100135:
                                 {
-                                    study_processor = new BioLinccProcessor(_mon_repo, _logger);
-                                    break;
-                                }
-                            case 101901:
-                                {
-                                    study_processor = new YodaProcessor(_mon_repo, _logger);
-                                    break;
-                                }
-                            case 100120:
-                                {
-                                    study_processor = new CTGProcessor(_mon_repo, _logger);
-                                    break;
-                                }
-                            case 100123:
-                                {
-                                    study_processor = new EUCTRProcessor(_mon_repo, _logger);
-                                    break;
-                                }
-                            case 100126:
-                                {
-                                    study_processor = new ISRCTNProcessor(_mon_repo, _logger);
+                                    object_processor = new PubmedProcessor(_mon_repo, _logger);
                                     break;
                                 }
                         }
+
+                        ObjectController c = new ObjectController(_logger, _mon_repo, _storage_repo, source, object_processor);
+                        harvest.num_records_harvested = c.LoopThroughFiles(harvest_type_id, harvest_id);
+                        c.DoPostProcessing();
                     }
-                    
-                    StudyController c = new StudyController(_logger, _mon_repo, _storage_repo, source, study_processor);
-                    harvest.num_records_harvested = c.LoopThroughFiles(harvest_type_id, harvest_id);
+
+                    harvest.time_ended = DateTime.Now;
+                    _mon_repo.StoreHarvestEvent(harvest);
+
+                    _logger.Information("Number of source XML files: " + harvest.num_records_available.ToString());
+                    _logger.Information("Number of files harvested: " + harvest.num_records_harvested.ToString());
+                    _logger.Information("Harvest event " + harvest_id.ToString() + " ended");
                 }
-                else
-                {
-                    // source type is 'object'
-                    switch (source.id)
-                    {
-                        case 100135:
-                            {
-                                object_processor = new PubmedProcessor(_mon_repo, _logger);
-                                break;
-                            }
-                    }
-
-                    ObjectController c = new ObjectController(_logger, _mon_repo, _storage_repo, source, object_processor);
-                    harvest.num_records_harvested = c.LoopThroughFiles(harvest_type_id, harvest_id);
-                    c.DoPostProcessing();
-                }  
-
-                harvest.time_ended = DateTime.Now;
-                _mon_repo.StoreHarvestEvent(harvest);
-
-                _logger.Information("Number of source XML files: " + harvest.num_records_available.ToString());
-                _logger.Information("Number of files harvested: " + harvest.num_records_harvested.ToString());
-                _logger.Information("Harvest event " + harvest_id.ToString() + " ended");
             }
 
-            // These functions have to be run even if the harvest is 'org_update_only'.
+            // The functions below have to be run even if the harvest is 'org_update_only',
+            // and also for the expected data in the test database.
 
-            ContextDataManager.Source context_source = new ContextDataManager.Source(source.id, source.database_name, source.db_conn,
+            // -------------------------------------------------------------------
+            // MAKE USE OF SEPARATE 'CONTEXT' PROJECT (Same Solution, not DLL) 
+            // -------------------------------------------------------------------
+
+            ContextDataManager.Source context_source = new ContextDataManager.Source(source.id, source.source_type, source.database_name, source.db_conn,
                                                        source.has_study_tables, source.has_study_topics, source.has_study_contributors);
             ContextDataManager.Credentials context_creds = new ContextDataManager.Credentials(creds.Host, creds.Username, creds.Password);
 
             _logger_helper.Logheader("Updating context data");
-            ContextMain context_entry_point = new ContextMain(_logger);
-            context_entry_point.UpdateDataFromContext(context_creds, context_source);
+            ContextMain context_main = new ContextMain(_logger);
+
+            string schema = (source.source_type == "test") ? "expected" : "sd";
+            context_main.UpdateDataFromContext(context_creds, context_source, schema);
+
+            // -------------------------------------------------------------------
+            // MAKE USE OF SEPARATE 'HASH' PROJECT (Same Solution, not DLL) 
+            // -------------------------------------------------------------------
 
             // Note the hashes can only be done after all the data is complete, including 
-            // the organisation codes and names derived above
+            // the organisation and topic codes and names derived above
 
             HashDataLibrary.Source hash_source = new HashDataLibrary.Source(source.id, source.database_name, source.db_conn,
                       source.has_study_tables, source.has_study_topics, source.has_study_features,
@@ -176,11 +211,28 @@ namespace DataHarvester
                       source.has_object_pubmed_set);
 
             _logger_helper.Logheader("Creating Record Hashes");
-            HashMain hash_entry_point = new HashMain(_logger);
-            hash_entry_point.HashData(hash_source);
+            HashMain hash_main = new HashMain(_logger);
+            hash_main.HashData(hash_source, schema);
 
-            // finally summarise results by p[roviding stats on the sd tables
-            _logger_helper.LogTableStatistics(source, "sd");
+            // If harvesting test data it need to be transferred  
+            // to the sdcomp schema for safekeeping and further processing
+            // If a normal harvest from a full source statistics should be produced.
+            // If the harvest was of the manual 'expected' data do neither.
+
+            if (source.source_type != "test")
+            {
+                if (harvest_type_id == 3)
+                {
+                    // transfer sd data to test composite data store for later comparison
+                    // otherwise it will be overwritten by the next harvest of sd data
+                    _test_repo.TransferTestSDData(source);
+                }
+                else
+                {
+                    // summarise results by providing stats on the sd tables
+                    _logger_helper.LogTableStatistics(source, "sd");
+                }
+            }
         }
     }
 }
