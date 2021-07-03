@@ -250,19 +250,7 @@ namespace DataHarvester
                 return (int)conn.Insert<HarvestEvent>(harvest);
             }
         }
-
-
-        // Stores an 'extraction note', e.g. an unusual occurence found and
-        // logged during the extraction, in the associated table.
-
-        public void StoreExtractionNote(ExtractionNote ext_note)
-        {
-            using (var conn = new NpgsqlConnection(connString))
-            {
-                conn.Insert<ExtractionNote>(ext_note);
-            }
-        }
-
+        
 
         // gets a 2 letter language code rather than thean the original 3
         public string lang_3_to_2(string lang_code_3)

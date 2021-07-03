@@ -89,10 +89,10 @@ namespace DataHarvester
         {
             string sql_string = @"INSERT INTO sdcomp.object_titles(source_id, sd_oid,
             title_type_id, title_type, title_text, lang_code,
-            lang_usage_id, is_default, comments, comparison_text, record_hash)
+            lang_usage_id, is_default, comments, record_hash)
             SELECT " + _source_id + @", sd_oid,
             title_type_id, title_type, title_text, lang_code,
-            lang_usage_id, is_default, comments, comparison_text, record_hash
+            lang_usage_id, is_default, comments, record_hash
             FROM sd.object_titles";
 
             Execute_SQL(sql_string);

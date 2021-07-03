@@ -9,6 +9,8 @@
     <Compile Remove="DataHelpers\TableBuildersAD.cs" />
     <Compile Remove="SourceSpecific\pubmed\PubmedController.cs" />
     <Compile Remove="SourceSpecific\pubmed\PubmedPostProcBuilder.cs" />
+    <Compile Remove="TestHelpers\DataHelpers\ADCompObjectTableBuilder.cs" />
+    <Compile Remove="TestHelpers\DataHelpers\ADCompStudyTableBuilder.cs" />
   </ItemGroup>
 
   <ItemGroup>

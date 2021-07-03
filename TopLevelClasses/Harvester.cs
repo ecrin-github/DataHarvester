@@ -42,13 +42,6 @@ namespace DataHarvester
                 int harvest_type_id = opts.harvest_type_id;
                 bool org_update_only = opts.org_update_only;
 
-                if (opts.harvest_all_test_data)
-                {
-                    // set up array of source ids to reflect
-                    // those in the test data set
-                    opts.source_ids = _test_repo.ObtainTestSourceIDs();
-                }
-
                 _logger_helper.Logheader("STARTING HARVESTER");
                 _logger_helper.LogCommandLineParameters(opts);
 

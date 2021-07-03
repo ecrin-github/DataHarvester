@@ -12,14 +12,17 @@ namespace DataHarvester
         private ILoggerHelper _logger_helper;
         private ICredentials _credentials;
         private IMonitorDataLayer _mon_repo;
+        private ITestingDataLayer _test_repo;
 
         public ParametersChecker(ILogger logger, ILoggerHelper logger_helper, 
-                  ICredentials credentials, IMonitorDataLayer mon_repo)
+                  ICredentials credentials, IMonitorDataLayer mon_repo,
+                  ITestingDataLayer test_repo)
         {
             _logger = logger;
             _logger_helper = logger_helper;
             _credentials = credentials;
             _mon_repo = mon_repo;
+            _test_repo = test_repo;
         }
 
         // Parse command line arguments and return true only if no errors.
@@ -48,7 +51,8 @@ namespace DataHarvester
             {
                 if (opts.setup_expected_data_only)
                 {
-                    // set the 'manual input of test data' source id
+                    // Set the 'manual input of test data' source id.
+
                     List<int> ids = new List<int>();
                     ids.Add(999999);
                     opts.source_ids = ids;
@@ -58,10 +62,13 @@ namespace DataHarvester
                 }
                 else if (opts.harvest_all_test_data)
                 {
-                    // source ids to be provided in harvester class
-                    opts.harvest_type_id = 3;
-                    opts.org_update_only = false;
-                    return true; // should always run if -F parameter present
+                   // Set up array of source ids to reflect
+                   // those in the test data set.
+
+                   opts.source_ids = _test_repo.ObtainTestSourceIDs();
+                   opts.harvest_type_id = 3;
+                   opts.org_update_only = false;
+                   return true; // should always run if -F parameter present
                 }
                 else
                 { 

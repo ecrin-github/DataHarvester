@@ -128,7 +128,6 @@ namespace DataHarvester
               , lang_usage_id          INT             NOT NULL default 11
               , is_default             BOOLEAN         NULL
               , comments               VARCHAR         NULL
-              , comparison_text        VARCHAR         NULL
               , record_hash            CHAR(32)        NULL
             );
             CREATE INDEX study_titles_sd_sid ON sd.study_titles(sd_sid);";

@@ -65,8 +65,12 @@ namespace DataHarvester.yoda
             yoda_title = sh.ReplaceApos(yoda_title);
             yoda_title = sh.ReplaceTags(yoda_title);
 
-            // display title derived rom CTG during download, if possible
+            // display title derived from CTG during download, if possible
             string display_title = GetElementAsString(r.Element("display_title"));
+
+            // this required for the moment until nct names improved
+            display_title = sh.ReplaceApos(display_title);
+             
             s.display_title = string.IsNullOrEmpty(display_title) ? yoda_title : display_title;
             
 

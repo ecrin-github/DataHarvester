@@ -148,7 +148,7 @@ namespace DataHarvester.ctg
 
                 // add title records
                 bool default_found = false, is_default = false;
-                brief_title = FieldValue(IdentificationModule, "BriefTitle");
+                brief_title = sh.ReplaceApos(FieldValue(IdentificationModule, "BriefTitle"));
                 if (brief_title != null)
                 {
                     is_default = true;
@@ -156,7 +156,7 @@ namespace DataHarvester.ctg
                     titles.Add(new StudyTitle(sid, brief_title, 15, "Public Title", is_default));
                 }
 
-                official_title = FieldValue(IdentificationModule, "OfficialTitle");
+                official_title = sh.ReplaceApos(FieldValue(IdentificationModule, "OfficialTitle"));
                 if (official_title != null)
                 {
                     is_default = !default_found;

@@ -69,6 +69,10 @@ namespace DataHarvester.biolincc
             title = sh.ReplaceApos(title);
 
             string nct_name = GetElementAsString(r.Element("nct_base_name"));
+
+            // this statement temporarily required until nct names improved
+            nct_name = sh.ReplaceApos(nct_name);
+
             bool in_multiple_biolincc_group = GetElementAsBool(r.Element("in_multiple_biolincc_group"));
             if (!in_multiple_biolincc_group && !string.IsNullOrEmpty(nct_name))
             {

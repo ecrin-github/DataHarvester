@@ -13,11 +13,11 @@ namespace DataHarvester
         private string _db_conn;
         private ISource _source;
 
-        public TransferSDDataBuilder(ISource source, string db_conn)
+        public TransferSDDataBuilder(ISource source)
         {
             _source = source;
             _source_id = source.id;
-            _db_conn = db_conn;
+            _db_conn = source.db_conn;
         }
 
 

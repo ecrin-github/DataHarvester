@@ -36,30 +36,7 @@ namespace DataHarvester
         public bool has_object_pubmed_set { get; }
     }
 
-    [Table("sf.extraction_notes")]
-    public class ExtractionNote
-    {
-        public int id { get; set; }
-        public int source_id { get; set; }
-        public string sd_id { get; set; }
-        public string event_type { get; set; }
-        public int event_type_id { get; set; }
-        public int? note_type_id { get; set; }
-        public string note { get; set; }
-
-        public ExtractionNote(int _source_id, string _sd_id, string _event_type,
-                              int _event_type_id, int? _note_type_id, string _note)
-        {
-            source_id = _source_id;
-            sd_id = _sd_id;
-            event_type = _event_type;
-            event_type_id = _event_type_id;
-            note_type_id = _note_type_id;
-            note = _note;
-        }
-    }
-
-
+    
     [Table("sf.harvest_events")]
     public class HarvestEvent
     {

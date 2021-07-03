@@ -7,7 +7,7 @@ using System.Text;
 
 namespace DataHarvester
 {
-    class TestingDataLayer : ITestingDataLayer
+    public class TestingDataLayer : ITestingDataLayer
     {
         ICredentials _credentials;
         NpgsqlConnectionStringBuilder builder;
@@ -56,9 +56,6 @@ namespace DataHarvester
                 tsb.SetUpSDCompositeTables();
                 _logger.Information("SD composite test data tables recreated");
 
-                tsb.SetUpADCompositeTables();
-                _logger.Information("AD composite test data tables recreated");
-
                 ExpectedDataBuilder edb = new ExpectedDataBuilder(_db_conn);
 
                 edb.InitialiseTestStudiesList();
@@ -87,7 +84,7 @@ namespace DataHarvester
 
         public void TransferTestSDData(ISource source)
         {
-            TransferSDDataBuilder tdb = new TransferSDDataBuilder(source, _db_conn);
+            TransferSDDataBuilder tdb = new TransferSDDataBuilder(source);
             tdb.DeleteExistingStudyData();
             tdb.DeleteExistingObjectData();
             _logger.Information("Any existing SD test data for source " + source.id + " removed from CompSD");

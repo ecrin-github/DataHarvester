@@ -32,6 +32,8 @@ namespace DataHarvester.euctr
             List<ObjectTitle> object_titles = new List<ObjectTitle>();
             List<ObjectInstance> object_instances = new List<ObjectInstance>();
 
+            List<IMP> imp_list = new List<IMP>();
+
             MD5Helpers hh = new MD5Helpers();
             StringHelpers sh = new StringHelpers(_logger);
 
@@ -177,6 +179,7 @@ namespace DataHarvester.euctr
             var idents = r.Element("identifiers");
             if (idents != null)
             {
+                string second_language = "";
                 var detail_lines = idents.Elements("DetailLine");
                 if (detail_lines != null && detail_lines.Count() > 0)
                 {
@@ -185,27 +188,73 @@ namespace DataHarvester.euctr
                         string item_code = GetElementAsString(dline.Element("item_code"));
                         switch (item_code)
                         {
+                            case "A.1":
+                                {
+                                    // 'member state concerned'
+                                    // used here to estimate any non Englilsh title text listed
+                                    var values = dline.Elements("values");
+                                    if (values != null)
+                                    {
+                                        string member_state = GetElementAsString(values.First());
+                                        if (member_state.ToLower().Contains("spain")) second_language = "es";
+                                        else if (member_state.ToLower().Contains("portug")) second_language = "pt";
+                                        else if (member_state.ToLower().Contains("france") || member_state.ToLower().Contains("french")) second_language = "fr";
+                                        else if (member_state.ToLower().Contains("german")) second_language = "de";
+                                        else if (member_state.ToLower().Contains("ital")) second_language = "it";
+                                        else if (member_state.ToLower().Contains("dutch") || member_state.ToLower().Contains("neder") || member_state.ToLower().Contains("nether")) second_language = "nl";
+                                        else if (member_state.ToLower().Contains("danish") || member_state.ToLower().Contains("denm")) second_language = "da";
+                                        else if (member_state.ToLower().Contains("swed")) second_language = "sv";
+                                        else if (member_state.ToLower().Contains("norw")) second_language = "no";
+                                        else if (member_state.ToLower().Contains("fin")) second_language = "fi";
+                                        else if (member_state.ToLower().Contains("polish")) second_language = "pl";
+                                        else if (member_state.ToLower().Contains("hung")) second_language = "hu";
+                                        else if (member_state.ToLower().Contains("czech")) second_language = "cs";
+                                        else if (member_state.ToLower().Contains("slovak")) second_language = "sk";
+                                        else if (member_state.ToLower().Contains("sloven")) second_language = "sl";
+                                        else if (member_state.ToLower().Contains("greece") || member_state.ToLower().Contains("greek")) second_language = "el";
+                                        else if (member_state.ToLower().Contains("cypr")) second_language = "el";
+                                    }
+                                    break;
+                                }
+
                             case "A.3":
                                 {
-                                    // may be multiple
+                                    // may be multiple (but may just repeat)
                                     var values = dline.Elements("values");
-                                    if (values != null && values.Count() > 0)
+                                    if (values != null)
                                     {
-                                        foreach (XElement value in values)
+                                        var indiv_values = values.Elements("value");
+                                        if (indiv_values != null && indiv_values.Count() > 0)
                                         {
-                                            string name = GetElementAsString(value);
-                                            if (name != null && name.Length >= 4)
+                                            int indiv_value_num = 0;
+                                            foreach (XElement v in indiv_values)
                                             {
-                                                string st_name = name.Trim().ToLower();
-                                                if (st_name != "n.a." && st_name != "none" &&
-                                                    !st_name.StartsWith("see ") && !st_name.StartsWith("not avail") &&
-                                                    !st_name.StartsWith("not applic") && !st_name.StartsWith("non applic") && !st_name.StartsWith("non aplic") &&
-                                                    !st_name.StartsWith("no applic") && !st_name.StartsWith("no aplic") && !st_name.StartsWith("not aplic") &&
-                                                    st_name != "not done" && st_name != "same as above" && st_name != "in preparation" &&
-                                                    !st_name.StartsWith("non dispo") && st_name != "non fornito")
+                                                string name = GetElementAsString(v);
+                                                indiv_value_num++;
+                                                if (name != null && name.Length >= 4)
                                                 {
-                                                    name = sh.ReplaceApos(name);
-                                                    titles.Add(new StudyTitle(sid, name, 16, "Trial Registry title", false));
+                                                    string st_name = name.Trim().ToLower();
+                                                    if (st_name != "n.a." && st_name != "none" &&
+                                                        !st_name.StartsWith("see ") && !st_name.StartsWith("not avail") &&
+                                                        !st_name.StartsWith("not applic") && !st_name.StartsWith("non applic") && !st_name.StartsWith("non aplic") &&
+                                                        !st_name.StartsWith("no applic") && !st_name.StartsWith("no aplic") && !st_name.StartsWith("not aplic") &&
+                                                        st_name != "not done" && st_name != "same as above" && st_name != "in preparation" &&
+                                                        !st_name.StartsWith("non dispo") && st_name != "non fornito")
+                                                    {
+                                                        name = sh.ReplaceApos(name);
+                                                        if (!NameAlreadyPresent(name))
+                                                        {
+                                                            if (indiv_value_num == 1)
+                                                            {
+                                                                titles.Add(new StudyTitle(sid, name, 16, "Trial Registry title", "en", 11, false, null));
+
+                                                            }
+                                                            else
+                                                            {
+                                                                titles.Add(new StudyTitle(sid, name, 16, "Trial Registry title", second_language, 22, false, null));
+                                                            }
+                                                        }
+                                                    }
                                                 }
                                             }
                                         }
@@ -214,27 +263,42 @@ namespace DataHarvester.euctr
                                 }
                             case "A.3.1":
                                 {
-                                    // may be multiple
+                                    // may be multiple (but may just repeat)
                                     int k = 0; 
                                     var values = dline.Elements("values");
-                                    if (values != null && values.Count() > 0)
+                                    if (values != null)
                                     {
-                                        foreach (XElement value in values)
+                                        var indiv_values = values.Elements("value");
+                                        if (indiv_values != null && indiv_values.Count() > 0)
                                         {
-                                            string name = GetElementAsString(value);
-                                            if (name != null && name.Length >= 4)
+                                            int indiv_value_num = 0;
+                                            foreach (XElement v in indiv_values)
                                             {
-                                                string st_name = name.Trim().ToLower();
-                                                if (st_name != "n.a." && st_name != "none" &&
-                                                    !st_name.StartsWith("see ") && !st_name.StartsWith("not avail") &&
-                                                    !st_name.StartsWith("not applic") && !st_name.StartsWith("non applic") && !st_name.StartsWith("non aplic") &&
-                                                    !st_name.StartsWith("no applic") && !st_name.StartsWith("no aplic") && !st_name.StartsWith("not aplic") &&
-                                                    st_name != "not done" && st_name != "same as above" && st_name != "in preparation" &&
-                                                    !st_name.StartsWith("non dispo") && st_name != "non fornito")
+                                                string name = GetElementAsString(v);
+                                                if (name != null && name.Length >= 4)
                                                 {
-                                                    k++;
-                                                    name = sh.ReplaceApos(name);
-                                                    titles.Add(new StudyTitle(sid, name, 15, "Public title", (k == 1)));
+                                                    string st_name = name.Trim().ToLower();
+                                                    if (st_name != "n.a." && st_name != "none" &&
+                                                        !st_name.StartsWith("see ") && !st_name.StartsWith("not avail") &&
+                                                        !st_name.StartsWith("not applic") && !st_name.StartsWith("non applic") && !st_name.StartsWith("non aplic") &&
+                                                        !st_name.StartsWith("no applic") && !st_name.StartsWith("no aplic") && !st_name.StartsWith("not aplic") &&
+                                                        st_name != "not done" && st_name != "same as above" && st_name != "in preparation" &&
+                                                        !st_name.StartsWith("non dispo") && st_name != "non fornito")
+                                                    {
+                                                        k++;
+                                                        name = sh.ReplaceApos(name);
+                                                        if (!NameAlreadyPresent(name))
+                                                        {
+                                                            if (indiv_value_num == 1)
+                                                            {
+                                                                titles.Add(new StudyTitle(sid, name, 15, "Public title", "en", 11, true, null));
+                                                            }
+                                                            else
+                                                            {
+                                                                titles.Add(new StudyTitle(sid, name, 15, "Public title", second_language, 22, false, null));
+                                                            }
+                                                        }
+                                                    }
                                                 }
                                             }
                                         }
@@ -244,22 +308,30 @@ namespace DataHarvester.euctr
                             case "A.3.2":
                                 {
                                     var values = dline.Elements("values");
-                                    if (values != null && values.Count() > 0)
+
+                                    // may be multiple (but if so is assumed to repeat - only first used)
+                                    if (values != null)
                                     {
-                                        string topic_name = GetElementAsString(values.First());
-                                        string name = topic_name.Trim().ToLower();
-                                        if (!name.StartsWith("not ") && !name.StartsWith("non ") && name.Length > 2 &&
-                                            name != "n/a" && name != "n.a." && name != "none" && !name.StartsWith("no ap")
-                                            && !name.StartsWith("no av"))
+                                        var indiv_values = values.Elements("value");
+                                        if (indiv_values != null && indiv_values.Count() > 0)
                                         {
-                                            titles.Add(new StudyTitle(sid, topic_name, 14, "Acronym or Abbreviation", false));
+                                            foreach (XElement v in indiv_values)
+                                            {
+                                                string acronym = GetElementAsString(v);
+                                                string name = acronym.Trim().ToLower();
+                                                if (!name.StartsWith("not ") && !name.StartsWith("non ") && name.Length > 2 &&
+                                                    name != "n/a" && name != "n.a." && name != "none" && !name.StartsWith("no ap")
+                                                    && !name.StartsWith("no av"))
+                                                {
+                                                    name = sh.ReplaceApos(name);
+                                                    if (!NameAlreadyPresent(name) && name.Length < 20)
+                                                    {
+                                                        titles.Add(new StudyTitle(sid, acronym, 14, "Acronym or Abbreviation", false));
+                                                    }
+                                                }
+                                            }
                                         }
                                     }
-                                    break;
-                                }
-                            case "A.1":
-                                {
-                                    // do nothing
                                     break;
                                 }
                             case "A.2":
@@ -324,6 +396,21 @@ namespace DataHarvester.euctr
                         }
                     }
                 }
+            }
+
+
+            bool NameAlreadyPresent(string candidate_name)
+            {
+                bool res = false;
+                foreach(StudyTitle t in titles)
+                {
+                    if(t.title_text.ToLower() == candidate_name.ToLower() )
+                    {
+                        res = true;
+                        break;
+                    }
+                }
+                return res;
             }
 
             // ensure a default and display title
@@ -397,14 +484,18 @@ namespace DataHarvester.euctr
                                 {
                                     // conditions under study
                                     var values = dline.Elements("values");
-                                    if (values != null && values.Count() > 0)
+                                    if (values != null)
                                     {
-                                        foreach (XElement value in values)
+                                        var indiv_values = values.Elements("value");
+                                        if (indiv_values != null && indiv_values.Count() > 0)
                                         {
-                                            string name = GetElementAsString(value);
-                                            topics.Add(new StudyTopic(sid, 13, "condition", name, "conditions under study"));
+                                            foreach (XElement value in indiv_values)
+                                            {
+                                                string name = GetElementAsString(value);
+                                                topics.Add(new StudyTopic(sid, 13, "condition", name, "conditions under study"));
+                                            }
                                         }
-                                    }
+                                    } 
                                     break;
                                 }
                             case "E.2.1":
@@ -701,15 +792,29 @@ namespace DataHarvester.euctr
             var imps = r.Element("imps");
             if (imps != null)
             {
-                var imp_lines = feats.Elements("ImpLine");
+                var imp_lines = imps.Elements("ImpLine");
                 if (imp_lines?.Any() == true)
                 {
+                    int current_num = 0;
+                    IMP imp = null;
                     foreach (XElement iline in imp_lines)
                     {
+                        int imp_num = (int)GetElementAsInt(iline.Element("imp_number"));
+                        
+                        if (imp_num > current_num)
+                        {
+                            // new imp class required to hold the values found below
+                            // store the old one first
+
+                            if (current_num != 0) imp_list.Add(imp);
+                            current_num = imp_num;
+                            imp = new IMP(current_num);
+                        }
+
                         string item_code = GetElementAsString(iline.Element("item_code"));
+
                         switch (item_code)
                         {
-
                             case "D.2.1.1.1":
                                 {
                                     // Trade name
@@ -720,23 +825,10 @@ namespace DataHarvester.euctr
                                         string name = topic_name.ToLower();
                                         if (name != "not available" && name != "n/a" && name != "na" && name != "not yet extablished")
                                         {
-                                            string trade_name = topic_name.Replace(((char)174).ToString(), "");    // drop reg mark
-                                            // but is it already there?
-                                            bool new_topic = true;
-                                            foreach (StudyTopic t in topics)
-                                            {
-                                                if (t.topic_value.ToLower() == trade_name.ToLower())
-                                                {
-                                                    new_topic = false; break;
-                                                }
-                                            }
-                                            if (new_topic)
-                                            {
-                                                topics.Add(new StudyTopic(sid, 12, "chemical / agent", trade_name, "trade name"));
-                                            }
+                                            imp.trade_name = topic_name.Replace(((char)174).ToString(), "");    // drop reg mark
                                         }
                                     }
-                                    break;
+                                    break;                           
                                 }
                             case "D.3.1":
                                 {
@@ -748,20 +840,7 @@ namespace DataHarvester.euctr
                                         string name = topic_name.ToLower();
                                         if (name != "not available" && name != "n/a" && name != "na" && name != "not yet extablished")
                                         {
-                                            string product_name = topic_name.Replace(((char)174).ToString(), "");    // drop reg mark
-                                            // but is it already there?
-                                            bool new_topic = true;
-                                            foreach (StudyTopic t in topics)
-                                            {
-                                                if (t.topic_value.ToLower() == product_name.ToLower())
-                                                {
-                                                    new_topic = false; break;
-                                                }
-                                            }
-                                            if (new_topic)
-                                            {
-                                                topics.Add(new StudyTopic(sid, 12, "chemical / agent", product_name, "product name"));
-                                            }
+                                            imp.product_name = topic_name.Replace(((char)174).ToString(), "");    // drop reg mark
                                         }
                                     }
                                     break;
@@ -776,19 +855,7 @@ namespace DataHarvester.euctr
                                         string name = topic_name.ToLower();
                                         if (name != "not available" && name != "n/a" && name != "na" && name != "not yet extablished")
                                         {
-                                            // but is it already there?
-                                            bool new_topic = true;
-                                            foreach (StudyTopic t in topics)
-                                            {
-                                                if (t.topic_value.ToLower() == name)
-                                                {
-                                                    new_topic = false; break;
-                                                }
-                                            }
-                                            if (new_topic)
-                                            {
-                                                topics.Add(new StudyTopic(sid, 12, "chemical / agent", topic_name, "INN or proposed INN"));
-                                            }
+                                            imp.inn = topic_name;
                                         }
                                     }
                                     break;
@@ -800,7 +867,7 @@ namespace DataHarvester.euctr
                                 }
                             case "D.3.9.3":
                                 {
-                                    // other ddescriptive name, do nothing
+                                    // other descriptive name, do nothing
                                     break;
                                 }
                             default:
@@ -809,9 +876,54 @@ namespace DataHarvester.euctr
                                 }
                         }
                     }
+                    
+                    // add the last one 
+                    if (current_num != 0) imp_list.Add(imp);
+
+                    // process the imp list
+                    if (imp_list.Count > 0)
+                    {
+                        // use the poroduct name, or the INN, or the trade name, in that order
+
+                        foreach (IMP i in imp_list)
+                        {
+                            string imp_name = "";
+                            if (i.product_name != null)
+                            {
+                                imp_name = i.product_name;
+                            }
+                            else if (i.inn != null)
+                            {
+                                imp_name = i.inn;
+                            }
+                            else if (i.trade_name != null)
+                            {
+                                imp_name = i.trade_name;
+                            }
+
+                            if (imp_name != "" && !IMPAlreadyThere(imp_name))
+                            {
+                                 topics.Add(new StudyTopic(sid, 12, "chemical / agent", imp_name));
+                            }
+                        }
+                    }
                 }
             }
 
+
+            bool IMPAlreadyThere(string imp_name)
+            {
+                bool res = false;
+                foreach(StudyTopic t in topics)
+                {
+                    if(imp_name.ToLower() == t.topic_value.ToLower())
+                    {
+                        res = true;
+                        break;
+                    }
+                }
+                return res;
+            }
 
             // public List<MeddraTerm> meddra_terms { get; set; }
             var meddra_terms = r.Element("meddra_terms");
@@ -898,9 +1010,23 @@ namespace DataHarvester.euctr
             s.object_instances = object_instances;
 
             return s;
-
+        
         }
-         
+
+
+        class IMP
+        {
+            public int num { get; set; }
+            public string product_name { get; set; }
+            public string trade_name { get; set; }
+            public string inn { get; set; }
+
+            public IMP(int _num)
+            {
+                num = _num;
+            }
+        }
+
 
         private string GetElementAsString(XElement e) => (e == null) ? null : (string)e;
 

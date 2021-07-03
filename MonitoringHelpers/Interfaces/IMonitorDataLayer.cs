@@ -19,7 +19,6 @@ namespace DataHarvester
         int GetNextHarvestEventId();
         string lang_3_to_2(string lang_code_3);
         bool SourceIdPresent(int source_id);
-        void StoreExtractionNote(ExtractionNote ext_note);
         int StoreHarvestEvent(HarvestEvent harvest);
         void UpdateFileRecLastHarvested(int id, string source_type, int last_harvest_id);
     }
