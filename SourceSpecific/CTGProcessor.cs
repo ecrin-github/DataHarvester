@@ -362,7 +362,7 @@ namespace DataHarvester.ctg
 
             if (DescriptionModule != null)
             {
-                // CTG descriptions do not seem to include tags
+                // CTG descriptions do not seem to include tags, but to be safe....
 
                 s.brief_description = sh.StringClean(FieldValue(DescriptionModule, "BriefSummary"));
             }

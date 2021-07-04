@@ -95,25 +95,25 @@ namespace DataHarvester
                 }
 
                 // needs to have opening and closing tags for further processing
+                // except in a few cases commas may be in a string as "&#44;"
+                string output_string = input_string.Replace("&#44;", ",");
 
-                if (!(input_string.Contains("<") && input_string.Contains(">")))
+                if (!(output_string.Contains("<") && output_string.Contains(">")))
                 {
-                    return input_string;
+                    return output_string;
                 }
 
 
                 // The commonest case
 
-                string output_string = input_string
+                output_string = input_string
                                 .Replace("<br>", "\n")
                                 .Replace("<br/>", "\n")
                                 .Replace("<br />", "\n")
-                                .Replace("<br/ > ", "\n")
+                                .Replace("<br/ >", "\n")
                                 .Replace("< br / >", "\n");
 
 
-                // in a few cases commas may be in a string as "&#44;"
-                output_string = output_string.Replace("&#44;", ",");
 
                 // Check need to continue
 
@@ -363,7 +363,7 @@ namespace DataHarvester
         public string StringClean(string input_string)
         {
             string output_string = ReplaceApos(input_string);
-            output_string = ReplaceTags(input_string);
+            output_string = ReplaceTags(output_string);
             return TidyString(output_string);
         }
 

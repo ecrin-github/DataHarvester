@@ -420,7 +420,7 @@ namespace DataHarvester.isrctn
                                         item_value = sh.StringClean(item_value);
                                         if (!item_value.ToLower().StartsWith("study"))
                                         {
-                                            study_description = "Study hypothesis: ";
+                                            item_value = "Study hypothesis: " + item_value;
                                         }
                                         study_description = item_value;
                                     }
@@ -655,8 +655,8 @@ namespace DataHarvester.isrctn
                                 {
                                     if (item_value != "Not provided at time of registration")
                                     {
-                                        CultureInfo culture = new CultureInfo("en-UK", false);
-                                        if (DateTime.TryParse(item_value, culture, DateTimeStyles.AssumeLocal, out DateTime start_date))
+                                        CultureInfo eu_cultureinfo = new CultureInfo("fr-FR");
+                                        if (DateTime.TryParse(item_value, eu_cultureinfo, DateTimeStyles.None, out DateTime start_date))
                                         {
                                             s.study_start_year = start_date.Year;
                                             s.study_start_month = start_date.Month;
