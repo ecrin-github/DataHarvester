@@ -60,33 +60,34 @@ namespace DataHarvester.biolincc
             // For the study, set up two titles, acronym and display title
             // NHLBI title not always exactly the same as the trial registry entry.
 
-            // revise title using nct entry... but only if the study is not one of those
-            // that are in a group, corresponding to a single NCT entry and public title
-            // and only for those where an nct entry exists (Some BioLincc studiues are not registered)
-
             string title = GetElementAsString(r.Element("title"));
             title = sh.ReplaceTags(title);
             title = sh.ReplaceApos(title);
+
+            // study disploay title (= default title) always the bniolincc one
+            s.display_title = title;
+            study_titles.Add(new StudyTitle(sid, title, 18, "Other scientific title", true, "From study page on BioLINCC web site"));
+
+            // but set up a 'name base' for data object names
+            // which will be the CGT name if one exists as this is usually shorter
+            // Only possible if the study is not one of those that are in a group,
+            // collectively corresponding to a single NCT entry and public title, 
+            // and only for those where an nct entry exists (Some BioLincc studiues are not registered)
 
             string nct_name = GetElementAsString(r.Element("nct_base_name"));
 
             // this statement temporarily required until nct names improved
             nct_name = sh.ReplaceApos(nct_name);
 
+            string name_base = "";
             bool in_multiple_biolincc_group = GetElementAsBool(r.Element("in_multiple_biolincc_group"));
             if (!in_multiple_biolincc_group && !string.IsNullOrEmpty(nct_name))
             {
-                s.display_title = nct_name;
-                study_titles.Add(new StudyTitle(sid, nct_name, 15, "Public title", true));
-                if (nct_name != title)
-                {
-                    study_titles.Add(new StudyTitle(sid, title, 18, "Other scientific title", false, "From study page on BioLINCC web site"));
-                }
+                name_base = nct_name;
             }
             else
             {
-                s.display_title = title;
-                study_titles.Add(new StudyTitle(sid, title, 18, "Other scientific title", true, "From study page on BioLINCC web site")); ;
+                name_base = title;
             }
 
             string acronym = GetElementAsString(r.Element("acronym"));
@@ -96,9 +97,7 @@ namespace DataHarvester.biolincc
             }
 
             string brief_description = GetElementAsString(r.Element("brief_description"));
-
-            brief_description = sh.ReplaceTags(brief_description);
-            s.brief_description = sh.ReplaceApos(brief_description);
+            s.brief_description = sh.StringClean(brief_description);
 
 
             s.study_type_id = GetElementAsInt(r.Element("study_type_id"));
@@ -178,7 +177,6 @@ namespace DataHarvester.biolincc
             // For the BioLincc web page, set up new data object, object title, object_instance and object dates
             int? pub_year = GetElementAsInt(r.Element("publication_year"));
             string remote_url = GetElementAsString(r.Element("remote_url"));
-            string name_base = s.display_title;
             string object_display_title = name_base + " :: " + "NHLBI web page";
 
             // create hash Id for the data object

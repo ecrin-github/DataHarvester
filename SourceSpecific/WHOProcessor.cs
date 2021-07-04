@@ -43,7 +43,7 @@ namespace DataHarvester.who
             MD5Helpers hh = new MD5Helpers();
             IdentifierHelpers ih = new IdentifierHelpers();
 
-
+          
             // First convert the XML document to a Linq XML Document.
 
             XDocument xDoc = XDocument.Load(new XmlNodeReader(d));
@@ -114,61 +114,59 @@ namespace DataHarvester.who
             // e.g. Spanish, German, French - may be linkable to the source registry
 
             // brief description
-            string interventions = GetElementAsString(r.Element("interventions"));
-            string primary_outcome = GetElementAsString(r.Element("primary_outcome"));
-            string design_string = GetElementAsString(r.Element("design_string"));
 
+            string interventions = GetElementAsString(r.Element("interventions")) ?? "";
             if (!string.IsNullOrEmpty(interventions))
             {
-                interventions = interventions.Trim();
-                if (!interventions.ToLower().StartsWith("intervention"))
+                if (!interventions.ToLower().Contains("not applicable") && !interventions.ToLower().Contains("not selected")
+                    && !(interventions.ToLower() == "n/a") && !(interventions.ToLower() == "na"))
                 {
-                    interventions = "Interventions: " + interventions;
-                }
-                if (!interventions.EndsWith(".") && !interventions.EndsWith(";"))
-                {
-                    interventions += ".";
+                    interventions = sh.StringClean(interventions);
+                    if (!interventions.ToLower().StartsWith("intervention"))
+                    {
+                        interventions = "Interventions: " + interventions;
+                    }
+                    s.brief_description = interventions;
                 }
             }
 
+
+            string primary_outcome = GetElementAsString(r.Element("primary_outcome")) ?? "";
             if (!string.IsNullOrEmpty(primary_outcome))
             {
-                primary_outcome = primary_outcome.Trim();
-                if (!primary_outcome.ToLower().StartsWith("primary"))
+                if (!primary_outcome.ToLower().Contains("not applicable") && !primary_outcome.ToLower().Contains("not selected")
+                    && !(primary_outcome.ToLower() == "n/a") && !(primary_outcome.ToLower() == "na"))
                 {
-                    primary_outcome = "Primary outcome(s): " + primary_outcome;
-                }
-
-                if (!primary_outcome.EndsWith(".") && !primary_outcome.EndsWith(";")
-                    && !primary_outcome.EndsWith("?"))
-                {
-                    primary_outcome += ".";
+                    primary_outcome = sh.StringClean(primary_outcome);
+                    if (!primary_outcome.ToLower().StartsWith("primary"))
+                    {
+                        primary_outcome = "Primary outcome(s): " + primary_outcome;
+                    }
+                    s.brief_description += string.IsNullOrEmpty(s.brief_description) ? primary_outcome : "\n" + primary_outcome;
                 }
             }
+            
 
-            string study_design = "";
-            if (!string.IsNullOrEmpty(design_string)
-                && !design_string.ToLower().Contains("not selected"))
+            string design_string = GetElementAsString(r.Element("design_string")) ?? "";
+            if (!string.IsNullOrEmpty(design_string))
             {
-                study_design = design_string.Trim();
-                if (!study_design.ToLower().StartsWith("primary"))
+                if (!design_string.ToLower().Contains("not applicable") && !design_string.ToLower().Contains("not selected")
+                    && !(design_string.ToLower() == "n/a") && !(design_string.ToLower() == "na"))
                 {
-                    study_design = "Study Design: " + study_design;
-                }
-
-                if (!study_design.EndsWith(".") && !study_design.EndsWith(";"))
-                {
-                    study_design += ".";
+                    design_string = sh.StringClean(design_string);
+                    if (!design_string.ToLower().StartsWith("primary"))
+                    {
+                        design_string = "Study Design: " + design_string;
+                    }
+                    s.brief_description += string.IsNullOrEmpty(s.brief_description) ? design_string : "\n" + design_string;
                 }
             }
-
-            string brief_description = (interventions + " " + primary_outcome + " " + study_design).Trim();
-            brief_description = sh.ReplaceApos(brief_description);
-            s.brief_description = sh.ReplaceTags(brief_description);
+            
 
 
             // data sharing statement
-            string ipd_description = GetElementAsString(r.Element("ipd_description"));
+
+            string ipd_description = GetElementAsString(r.Element("ipd_description")) ?? "";
             if (!string.IsNullOrEmpty(ipd_description)
                 && ipd_description.Length > 10
                 && ipd_description.ToLower() != "not available"
@@ -176,8 +174,7 @@ namespace DataHarvester.who
                 && ipd_description.ToLower() != "not applicable"
                 && !ipd_description.Contains("justification or reason for"))
             {
-                ipd_description = sh.ReplaceApos(ipd_description);
-                s.data_sharing_statement = sh.ReplaceTags(ipd_description);
+                s.data_sharing_statement = sh.StringClean(ipd_description);
             }
 
             string date_enrolment = GetElementAsString(r.Element("date_enrolment"));

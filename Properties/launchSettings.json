@@ -2,7 +2,7 @@
   "profiles": {
     "DataHarvester": {
       "commandName": "Project",
-      "commandLineArgs": "-s 100123 -t 3"
+      "commandLineArgs": "-F"
     }
   }
 }

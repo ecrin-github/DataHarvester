@@ -43,6 +43,8 @@ namespace DataHarvester.isrctn
 
             SplitDate date_assigned = null;
             SplitDate last_edit = null;
+            string study_description = null;
+            string sharing_statement = null;
 
             // First convert the XML document to a Linq XML Document.
 
@@ -413,11 +415,15 @@ namespace DataHarvester.isrctn
                                 }
                             case "Study hypothesis":
                                 {
-                                    if (!item_value.StartsWith("Study"))
+                                    if (item_value != "Not provided at time of registration")
                                     {
-                                        s.brief_description += "Study hypothesis: ";
+                                        item_value = sh.StringClean(item_value);
+                                        if (!item_value.ToLower().StartsWith("study"))
+                                        {
+                                            study_description = "Study hypothesis: ";
+                                        }
+                                        study_description = item_value;
                                     }
-                                    s.brief_description += item_value;
                                     break;
                                 }
                             case "Primary study design":
@@ -629,13 +635,18 @@ namespace DataHarvester.isrctn
                                 {
                                     if (item_value != "Not provided at time of registration")
                                     {
-                                        if (item_value.StartsWith("Primary"))
+                                        item_value = sh.StringClean(item_value);
+                                        if (!string.IsNullOrEmpty(study_description))
                                         {
-                                            s.brief_description += " " + item_value;
+                                            study_description += "\n";
+                                        }
+                                        if (item_value.ToLower().StartsWith("primary"))
+                                        {
+                                            study_description += item_value;
                                         }
                                         else
                                         {
-                                            s.brief_description += " Primary outcome measures: " + item_value;
+                                            study_description += "Primary outcome(s): " + item_value;
                                         }
                                     }
                                     break;
@@ -655,9 +666,14 @@ namespace DataHarvester.isrctn
                                 }
                             case "Reason abandoned (if study stopped)":
                                 {
+                                    item_value = sh.StringClean(item_value);
                                     if (item_value != "Not provided at time of registration")
                                     {
-                                        s.brief_description += " Reason study stopped: " + item_value;
+                                        if (!string.IsNullOrEmpty(study_description))
+                                        {
+                                            study_description += "\n";
+                                        }
+                                        study_description += "Reason study stopped: " + sh.StringClean(item_value);
                                     }
                                     break;
                                 }
@@ -915,7 +931,7 @@ namespace DataHarvester.isrctn
                                 {
                                     if (item_value != "Not provided at time of registration")
                                     {
-                                        s.data_sharing_statement = "General: " + item_value;
+                                        sharing_statement = sh.StringClean("General: " + item_value);
                                     }
                                     break;
                                 }
@@ -923,7 +939,12 @@ namespace DataHarvester.isrctn
                                 {
                                     if (item_value != "Not provided at time of registration")
                                     {
-                                        s.data_sharing_statement += " IPD: " + item_value;
+                                        if (!string.IsNullOrEmpty(sharing_statement))
+                                        {
+                                            sharing_statement += "\n";
+                                        }
+
+                                        sharing_statement += sh.StringClean("IPD: " + item_value);
                                     }
                                     break;
                                 }
@@ -1187,14 +1208,7 @@ namespace DataHarvester.isrctn
                 } 
             }
 
-
-            // Clean brief description and data sharing statement for html
-            
-            s.brief_description = sh.ReplaceApos(s.brief_description);
-            s.brief_description = sh.ReplaceTags(s.brief_description);
-
-            s.data_sharing_statement = sh.ReplaceApos(s.data_sharing_statement);
-            s.data_sharing_statement = sh.ReplaceTags(s.data_sharing_statement);
+            s.brief_description = study_description;
 
             s.identifiers = identifiers;
             s.titles = titles;

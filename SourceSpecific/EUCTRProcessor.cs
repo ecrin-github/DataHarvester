@@ -37,6 +37,8 @@ namespace DataHarvester.euctr
             MD5Helpers hh = new MD5Helpers();
             StringHelpers sh = new StringHelpers(_logger);
 
+            string study_description = null;
+
             // First convert the XML document to a Linq XML Document.
 
             XDocument xDoc = XDocument.Load(new XmlNodeReader(d));
@@ -264,7 +266,6 @@ namespace DataHarvester.euctr
                             case "A.3.1":
                                 {
                                     // may be multiple (but may just repeat)
-                                    int k = 0; 
                                     var values = dline.Elements("values");
                                     if (values != null)
                                     {
@@ -285,7 +286,7 @@ namespace DataHarvester.euctr
                                                         st_name != "not done" && st_name != "same as above" && st_name != "in preparation" &&
                                                         !st_name.StartsWith("non dispo") && st_name != "non fornito")
                                                     {
-                                                        k++;
+                                                        indiv_value_num++;
                                                         name = sh.ReplaceApos(name);
                                                         if (!NameAlreadyPresent(name))
                                                         {
@@ -500,63 +501,62 @@ namespace DataHarvester.euctr
                                 }
                             case "E.2.1":
                                 {
-                                    // primary objectives
-                                    string objectives = "";
+                                    // primary objectives -  may be multiple (i.e. in 2 languages, but may just repeat)
                                     var values = dline.Elements("values");
-                                    if (values != null && values.Count() > 0)
+                                    if (values != null)
                                     {
-                                        string obs = GetElementAsString(values.First());
-                                        if (obs != null && obs.Length >= 4 &&
-                                            !obs.StartsWith("see ") && !obs.StartsWith("not "))
+                                        var indiv_values = values.Elements("value");
+                                        if (indiv_values != null && indiv_values.Count() > 0)
                                         {
-                                            char[] charsToLose = { '\n', '\r', ' ' };
-                                            obs.Trim(charsToLose);
-                                            if (obs.StartsWith("Primary") && obs.Length > 16)
+                                            int indiv_value_num = 0;
+                                            foreach (XElement v in indiv_values)
                                             {
-                                                objectives = obs;
+                                                string primary_obs = GetElementAsString(v);
+                                                primary_obs = sh.StringClean(primary_obs);
+                                                indiv_value_num++;
+                                                if (primary_obs != null && primary_obs.Length >= 16 &&
+                                                    !primary_obs.ToLower().StartsWith("see ") &&
+                                                    !primary_obs.ToLower().StartsWith("not "))
+                                                {
+                                                    if (indiv_value_num == 1)
+                                                    {
+                                                        study_description = primary_obs;
+                                                    }
+                                                    else
+                                                    {
+                                                        study_description += "\n(" + primary_obs + ")";
+                                                    }
+                                                }
                                             }
-                                            else
+
+                                            if (!study_description.ToLower().StartsWith("primary"))
                                             {
-                                                objectives = "Primary objectives: " + obs;
+                                                study_description = "Primary objectives: " + study_description;
                                             }
                                         }
                                     }
-                                    s.brief_description = objectives;
                                     break;
                                 }
                             case "E.5.1":
                                 {
                                     // primary end points
-                                    string end_points = "";
                                     var values = dline.Elements("values");
                                     if (values != null && values.Count() > 0)
                                     {
-                                        string points = GetElementAsString(values.First());
-                                        if (points != null && points.Length >= 4 &&
-                                            !points.StartsWith("see ") && !points.StartsWith("not "))
-                                        {
-                                            if (points.StartsWith("Primary") && points.Length > 16)
-                                            {
-                                                end_points = points;
-                                            }
-                                            else
-                                            {
-                                                end_points = "Primary endpoints: " + points;
-                                            }
-                                        }
-                                    }
+                                        string end_points = GetElementAsString(values.First());
+                                        end_points = sh.StringClean(end_points);
 
-                                    if (end_points != "")
-                                    {
-                                        if (string.IsNullOrEmpty(s.brief_description))
+                                        if (end_points != null && end_points.Length >= 16 &&
+                                            !end_points.ToLower().StartsWith("see ") && 
+                                            !end_points.ToLower().StartsWith("not "))
                                         {
-                                            s.brief_description = end_points;
-                                        }
-                                        else
-                                        {
-                                            s.brief_description += " " + end_points;
-                                        }
-                                    }
+                                            if (!end_points.ToLower().StartsWith("primary"))
+                                            {
+                                                end_points = "Primary endpoints: " + end_points;
+                                            }
+                                            study_description += string.IsNullOrEmpty(study_description) ? end_points : "\n" + end_points;
+                                        } 
+                                    }  
                                     break;
 
                                 }
@@ -994,10 +994,7 @@ namespace DataHarvester.euctr
             }
 
 
-            // Check brief description for html
-            // after getting rid of any sup / subs, divs and spans.
-
-            s.brief_description = sh.ReplaceTags(s.brief_description);
+            s.brief_description = study_description;
 
             s.identifiers = identifiers;
             s.titles = titles;

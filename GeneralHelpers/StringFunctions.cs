@@ -101,12 +101,19 @@ namespace DataHarvester
                     return input_string;
                 }
 
+
                 // The commonest case
 
                 string output_string = input_string
                                 .Replace("<br>", "\n")
                                 .Replace("<br/>", "\n")
-                                .Replace("<br />", "\n");
+                                .Replace("<br />", "\n")
+                                .Replace("<br/ > ", "\n")
+                                .Replace("< br / >", "\n");
+
+
+                // in a few cases commas may be in a string as "&#44;"
+                output_string = output_string.Replace("&#44;", ",");
 
                 // Check need to continue
 
@@ -336,6 +343,28 @@ namespace DataHarvester
 
             }
             return unicode;
+        }
+
+
+        public string TidyString (string input_string)
+        {
+            // removes beginning or trailing carriage returns, tabs and spaces
+            if (input_string == null)
+            {
+                return null;
+            }
+            else
+            {
+                return input_string.Trim('\r', '\n', '\t', ' ');
+            }
+        }
+
+
+        public string StringClean(string input_string)
+        {
+            string output_string = ReplaceApos(input_string);
+            output_string = ReplaceTags(input_string);
+            return TidyString(output_string);
         }
 
 

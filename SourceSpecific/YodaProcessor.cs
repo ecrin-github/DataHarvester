@@ -64,15 +64,16 @@ namespace DataHarvester.yoda
             string yoda_title = GetElementAsString(r.Element("yoda_title"));
             yoda_title = sh.ReplaceApos(yoda_title);
             yoda_title = sh.ReplaceTags(yoda_title);
+            s.display_title = yoda_title;
 
-            // display title derived from CTG during download, if possible
-            string display_title = GetElementAsString(r.Element("display_title"));
+           // display title derived from CTG during download, if possible
+            string name_base_title = GetElementAsString(r.Element("name_base_title"));
 
             // this required for the moment until nct names improved
-            display_title = sh.ReplaceApos(display_title);
+            name_base_title = sh.ReplaceApos(name_base_title);
              
-            s.display_title = string.IsNullOrEmpty(display_title) ? yoda_title : display_title;
-            
+            // In most cases the name_base will be the NCT title
+            string name_base = string.IsNullOrEmpty(name_base_title) ? yoda_title : name_base_title;
 
             // create study references (pmids)
             XElement st_titles = r.Element("study_titles");
@@ -95,6 +96,9 @@ namespace DataHarvester.yoda
             
             // brief description mostly as derived from CTG
             s.brief_description = GetElementAsString(r.Element("brief_description"));
+
+            // temp for now until ctg descriptions are cleaner
+            s.brief_description = sh.StringClean(s.brief_description);
 
             s.study_status_id = 21;
             s.study_status = "Completed";  // assumption for entry onto web site
@@ -250,8 +254,6 @@ namespace DataHarvester.yoda
         
             // data objects...
 
-            string name_base = s.display_title;  // will be the NCT display title in most cases, otherwise the yoda title
-            
             // do the yoda web page itself first...
             string object_display_title = name_base + " :: " + "Yoda web page";
 
@@ -396,6 +398,7 @@ namespace DataHarvester.yoda
                     }
                 }
             }
+
 
             // add in the study properties
             s.identifiers = study_identifiers;

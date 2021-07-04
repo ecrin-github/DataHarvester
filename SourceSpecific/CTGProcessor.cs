@@ -364,7 +364,7 @@ namespace DataHarvester.ctg
             {
                 // CTG descriptions do not seem to include tags
 
-                s.brief_description = sh.ReplaceApos(FieldValue(DescriptionModule, "BriefSummary"));
+                s.brief_description = sh.StringClean(FieldValue(DescriptionModule, "BriefSummary"));
             }
 
 
@@ -631,14 +631,25 @@ namespace DataHarvester.ctg
                     string IPDSharingDescription = FieldValue(IPDSharingModule, "IPDSharingDescription");
                     if (IPDSharingDescription != null)
                     {
-                        string sharing_statement = "(As of " + status_verified_date + "): " + IPDSharingDescription;
-                        string IPDSharingTimeFrame = FieldValue(IPDSharingModule, "IPDSharingTimeFrame") ?? "";
-                        string IPDSharingAccessCriteria = FieldValue(IPDSharingModule, "IPDSharingAccessCriteria") ?? "";
-                        string IPDSharingURL = FieldValue(IPDSharingModule, "IPDSharingURL") ?? "";
+                        string sharing_statement = "(As of " + status_verified_date + "): " + sh.StringClean(IPDSharingDescription);
 
-                        if (IPDSharingTimeFrame != "") sharing_statement += "\r\nTime frame: " + IPDSharingTimeFrame;
-                        if (IPDSharingAccessCriteria != "") sharing_statement += "\r\nAccess Criteria: " + IPDSharingAccessCriteria;
-                        if (IPDSharingURL != "") sharing_statement += "\r\nURL: " + IPDSharingURL;
+                        string IPDSharingTimeFrame = FieldValue(IPDSharingModule, "IPDSharingTimeFrame") ?? "";
+                        if (IPDSharingTimeFrame != "")
+                        {
+                            sharing_statement += "\nTime frame: " + sh.StringClean(IPDSharingTimeFrame);
+                        }
+
+                        string IPDSharingAccessCriteria = FieldValue(IPDSharingModule, "IPDSharingAccessCriteria") ?? "";
+                        if (IPDSharingAccessCriteria != "")
+                        {
+                            sharing_statement += "\nAccess Criteria: " + sh.StringClean(IPDSharingAccessCriteria);
+                        }
+
+                        string IPDSharingURL = FieldValue(IPDSharingModule, "IPDSharingURL") ?? "";
+                        if (IPDSharingURL != "")
+                        {
+                            sharing_statement += "\nURL: " + sh.StringClean(IPDSharingURL);
+                        }
 
                         var IPDSharingInfoTypeList = RetrieveListElements(IPDSharingModule, "IPDSharingInfoTypeList");
                         if (IPDSharingInfoTypeList != null && IPDSharingInfoTypeList.Count() > 0)
@@ -647,12 +658,14 @@ namespace DataHarvester.ctg
                             foreach (XElement infotype in IPDSharingInfoTypeList)
                             {
                                 string item_type = (infotype == null) ? null : (string)infotype;
-                                itemlist += ", " + item_type;
+                                itemlist += (item_type != null) ? ", " + item_type : "";
                             }
-                            string infoitemlist = itemlist.Substring(1);
-                            sharing_statement += "\r\nInformation available: " + infoitemlist;
+                            string infoitemlist = sh.StringClean(itemlist.Substring(1));
+
+                            sharing_statement += "\nInformation available: " + infoitemlist;
                         }
-                        s.data_sharing_statement = sh.ReplaceApos(sharing_statement);
+
+                        s.data_sharing_statement = sharing_statement;
                     }
                 }
             }
