@@ -12,6 +12,7 @@ namespace DataHarvester
                 .MapVarchar("identifier_type", x => x.identifier_type)
                 .MapInteger("identifier_org_id", x => x.identifier_org_id)
                 .MapVarchar("identifier_org", x => x.identifier_org)
+                .MapVarchar("identifier_org_ror_id", x => x.identifier_org_ror_id)
                 .MapVarchar("identifier_date", x => x.identifier_date)
                 .MapVarchar("identifier_link", x => x.identifier_link);
 
@@ -33,10 +34,10 @@ namespace DataHarvester
                 .MapInteger("topic_type_id", x => x.topic_type_id)
                 .MapVarchar("topic_type", x => x.topic_type)
                 .MapBoolean("mesh_coded", x => x.mesh_coded)
-                .MapVarchar("topic_code", x => x.topic_code)
-                .MapVarchar("topic_value", x => x.topic_value)
-                .MapVarchar("topic_qualcode", x => x.topic_qualcode)
-                .MapVarchar("topic_qualvalue", x => x.topic_qualvalue)
+                .MapVarchar("mesh_code", x => x.mesh_code)
+                .MapVarchar("mesh_value", x => x.mesh_value)
+                .MapVarchar("mesh_qualcode", x => x.mesh_qualcode)
+                .MapVarchar("mesh_qualvalue", x => x.mesh_qualvalue)
                 .MapInteger("original_ct_id", x => x.original_ct_id)
                 .MapVarchar("original_ct_code", x => x.original_ct_code)
                 .MapVarchar("original_value", x => x.original_value)
@@ -49,17 +50,15 @@ namespace DataHarvester
                 .MapInteger("contrib_type_id", x => x.contrib_type_id)
                 .MapVarchar("contrib_type", x => x.contrib_type)
                 .MapBoolean("is_individual", x => x.is_individual)
-                .MapInteger("organisation_id", x => x.organisation_id)
-                .MapVarchar("organisation_name", x => x.organisation_name)
                 .MapInteger("person_id", x => x.person_id)
                 .MapVarchar("person_given_name", x => x.person_given_name)
                 .MapVarchar("person_family_name", x => x.person_family_name)
                 .MapVarchar("person_full_name", x => x.person_full_name)
-                .MapVarchar("person_identifier", x => x.person_identifier)
-                .MapVarchar("identifier_type", x => x.person_ident_srce)
-                .MapVarchar("person_affiliation", x => x.person_aff_org)
-                .MapVarchar("affil_org_id", x => x.person_aff_org_id)
-                .MapVarchar("affil_org_id_type", x => x.person_aff_org_id_srce);
+                .MapVarchar("orcid_id", x => x.orcid_id)
+                .MapVarchar("person_affiliation", x => x.person_affiliation)
+                .MapInteger("organisation_id", x => x.organisation_id)
+                .MapVarchar("organisation_name", x => x.organisation_name)
+                .MapVarchar("organisation_ror_id", x => x.organisation_ror_id);
 
 
         public PostgreSQLCopyHelper<StudyRelationship> study_relationships_helper =
@@ -123,6 +122,7 @@ namespace DataHarvester
                 .MapVarchar("object_type", x => x.object_type)
                 .MapInteger("managing_org_id", x => x.managing_org_id)
                 .MapVarchar("managing_org", x => x.managing_org)
+                .MapVarchar("managing_org_ror_id", x => x.managing_org_ror_id)
                 .MapVarchar("lang_code", x => x.lang_code)
                 .MapInteger("access_type_id", x => x.access_type_id)
                 .MapVarchar("access_type", x => x.access_type)
@@ -193,10 +193,16 @@ namespace DataHarvester
                 .MapVarchar("sd_oid", x => x.sd_oid)
                 .MapInteger("date_type_id", x => x.date_type_id)
                 .MapVarchar("date_type", x => x.date_type)
+                .MapBoolean("date_is_range", x => x.date_is_range)
                 .MapInteger("start_year", x => x.start_year)
                 .MapInteger("start_month", x => x.start_month)
                 .MapInteger("start_day", x => x.start_day)
-                .MapVarchar("date_as_string", x => x.date_as_string);
+                .MapInteger("end_year", x => x.end_year)
+                .MapInteger("end_month", x => x.end_month)
+                .MapInteger("end_day", x => x.end_day)
+                .MapVarchar("date_as_string", x => x.date_as_string)
+                .MapVarchar("details", x => x.details);
+
 
 
         public PostgreSQLCopyHelper<ObjectContributor> object_contributors_helper =
@@ -207,15 +213,16 @@ namespace DataHarvester
                 .MapBoolean("is_individual", x => x.is_individual)
                 .MapInteger("organisation_id", x => x.organisation_id)
                 .MapVarchar("organisation_name", x => x.organisation_name)
+                .MapVarchar("organisation_ror_id", x => x.organisation_ror_id)
                 .MapInteger("person_id", x => x.person_id)
                 .MapVarchar("person_given_name", x => x.person_given_name)
                 .MapVarchar("person_family_name", x => x.person_family_name)
                 .MapVarchar("person_full_name", x => x.person_full_name)
-                .MapVarchar("person_identifier", x => x.person_identifier)
-                .MapVarchar("identifier_type", x => x.person_ident_srce)
-                .MapVarchar("person_affiliation", x => x.person_aff_org)
-                .MapVarchar("affil_org_id", x => x.person_aff_org_id)
-                .MapVarchar("affil_org_id_type", x => x.person_aff_org_id_srce);
+                .MapVarchar("orcid_id", x => x.orcid_id)
+                .MapVarchar("person_affiliation", x => x.person_affiliation)
+                .MapInteger("organisation_id", x => x.organisation_id)
+                .MapVarchar("organisation_name", x => x.organisation_name)
+                .MapVarchar("organisation_ror_id", x => x.organisation_ror_id);
 
 
         public PostgreSQLCopyHelper<ObjectIdentifier> object_identifiers_helper =
@@ -226,6 +233,7 @@ namespace DataHarvester
                 .MapVarchar("identifier_value", x => x.identifier_value)
                 .MapInteger("identifier_org_id", x => x.identifier_org_id)
                 .MapVarchar("identifier_org", x => x.identifier_org)
+                .MapVarchar("identifier_org_ror_id", x => x.identifier_org_ror_id)
                 .MapVarchar("identifier_date", x => x.identifier_date);
 
 
@@ -269,10 +277,10 @@ namespace DataHarvester
                 .MapInteger("topic_type_id", x => x.topic_type_id)
                 .MapVarchar("topic_type", x => x.topic_type)
                 .MapBoolean("mesh_coded", x => x.mesh_coded)
-                .MapVarchar("topic_code", x => x.topic_code)
-                .MapVarchar("topic_value", x => x.topic_value)
-                .MapVarchar("topic_qualcode", x => x.topic_qualcode)
-                .MapVarchar("topic_qualvalue", x => x.topic_qualvalue)
+                .MapVarchar("mesh_code", x => x.mesh_code)
+                .MapVarchar("mesh_value", x => x.mesh_value)
+                .MapVarchar("mesh_qualcode", x => x.mesh_qualcode)
+                .MapVarchar("mesh_qualvalue", x => x.mesh_qualvalue)
                 .MapInteger("original_ct_id", x => x.original_ct_id)
                 .MapVarchar("original_ct_code", x => x.original_ct_code)
                 .MapVarchar("original_value", x => x.original_value)

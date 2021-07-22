@@ -105,6 +105,11 @@ namespace DataHarvester.biolincc
             s.study_status_id = 21;
             s.study_status = "Completed";  // assumption for entry onto web site
 
+            // Gender eligibility is never provided for biolincc entries
+
+            s.study_gender_elig_id = 915;
+            s.study_gender_elig = "Not provided";
+
             string study_period = GetElementAsString(r.Element("study_period"));
             study_period = study_period.Trim();
             if (study_period.Length > 3)
@@ -169,8 +174,10 @@ namespace DataHarvester.biolincc
             string sponsor_name = GetElementAsString(r.Element("sponsor_name"));
             if (sponsor_id != null)
             {
-                study_contributors.Add(new StudyContributor(sid, 54, "trial sponsor", sponsor_id, sponsor_name, null, null));
+                study_contributors.Add(new StudyContributor(sid, 54, "Trial sponsor", sponsor_id, sponsor_name));
             }
+
+
 
             // Create data object records.
 
@@ -233,7 +240,7 @@ namespace DataHarvester.biolincc
                                     "Study short name :: object type", true));
                 data_object_instances.Add(new ObjectInstance(sd_oid, sponsor_id, sponsor_name,
                                     study_website, true, 35, "Web text"));
-            }
+            }  
 
 
             // create the data object relating to the dataset, instance not available, title possible...
@@ -253,11 +260,11 @@ namespace DataHarvester.biolincc
             string resources_available = GetElementAsString(r.Element("resources_available"));
             if (resources_available.ToLower().Contains("datasets"))
             {
-                object_display_title = name_base + " :: " + "IPD Datasets";
+                object_display_title = name_base + " :: " + "Individual participant data";
                 sd_oid = hh.CreateMD5(sid + object_display_title);
 
                 data_objects.Add(new DataObject(sd_oid, sid, object_display_title, null, 14, "Datasets",
-                        80, "Individual Participant Data", 100167, "National Heart, Lung, and Blood Institute (US)",
+                        80, "Individual participant data", 100167, "National Heart, Lung, and Blood Institute (US)",
                         17, "Case by case download", access_details,
                         "https://biolincc.nhlbi.nih.gov/media/guidelines/handbook.pdf?link_time=2019-12-13_11:33:44.807479#page=15",
                         download_datetime, download_datetime));
@@ -392,6 +399,7 @@ namespace DataHarvester.biolincc
                 }
             }
 
+            
             // add in the study properties
             s.titles = study_titles;
             s.identifiers = study_identifiers;

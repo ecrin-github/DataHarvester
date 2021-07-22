@@ -54,10 +54,10 @@ namespace DataHarvester
         {
             string sql_string = @"INSERT INTO sdcomp.study_identifiers(source_id, sd_sid,
             identifier_value, identifier_type_id, identifier_type, identifier_org_id, 
-            identifier_org, identifier_date, identifier_link, record_hash)
+            identifier_org, identifier_org_ror_id, identifier_date, identifier_link, record_hash)
             SELECT " + _source_id + @", sd_sid,
             identifier_value, identifier_type_id, identifier_type, identifier_org_id, 
-            identifier_org, identifier_date, identifier_link, record_hash
+            identifier_org, identifier_org_ror_id, identifier_date, identifier_link, record_hash
             FROM sd.study_identifiers";
 
             Execute_SQL(sql_string);
@@ -110,15 +110,15 @@ namespace DataHarvester
         public void TransferStudyContributors()
         {
             string sql_string = @"INSERT INTO sdcomp.study_contributors(source_id, sd_sid, 
-            contrib_type_id, contrib_type, is_individual, organisation_id, organisation_name,
+            contrib_type_id, contrib_type, is_individual, 
             person_id, person_given_name, person_family_name, person_full_name,
-            person_identifier, identifier_type, person_affiliation, affil_org_id,
-            affil_org_id_type, record_hash)
+            orcid_id, person_affiliation, organisation_id, 
+            organisation_name, organisation_ror_id, record_hash)
             SELECT " + _source_id + @", sd_sid,
-            contrib_type_id, contrib_type, is_individual, organisation_id, organisation_name,
+            contrib_type_id, contrib_type, is_individual, 
             person_id, person_given_name, person_family_name, person_full_name,
-            person_identifier, identifier_type, person_affiliation, affil_org_id,
-            affil_org_id_type, record_hash
+            orcid_id, person_affiliation, organisation_id, 
+            organisation_name, organisation_ror_id, record_hash
             FROM sd.study_contributors";
 
             Execute_SQL(sql_string);
@@ -129,12 +129,12 @@ namespace DataHarvester
         public void TransferStudyTopics()
         {
             string sql_string = @"INSERT INTO sdcomp.study_topics(source_id, sd_sid,
-            topic_type_id, topic_type, mesh_coded, topic_code, topic_value, 
-            topic_qualcode, topic_qualvalue, original_ct_id, original_ct_code,
+            topic_type_id, topic_type, mesh_coded, mesh_code, mesh_value, 
+            mesh_qualcode, mesh_qualvalue, original_ct_id, original_ct_code,
             original_value, comments, record_hash)
             SELECT " + _source_id + @", sd_sid,
-            topic_type_id, topic_type, mesh_coded, topic_code, topic_value, 
-            topic_qualcode, topic_qualvalue, original_ct_id, original_ct_code,
+            topic_type_id, topic_type, mesh_coded, mesh_code, mesh_value, 
+            mesh_qualcode, mesh_qualvalue, original_ct_id, original_ct_code,
             original_value, comments, record_hash
             FROM sd.study_topics";
 

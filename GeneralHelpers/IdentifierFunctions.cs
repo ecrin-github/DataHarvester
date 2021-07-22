@@ -483,6 +483,21 @@ namespace DataHarvester
         }
 
 
+        public bool CheckIfOrganisation(string fullname)
+        {
+            bool make_org = false;
+
+            if (fullname.Contains(" group") || fullname.StartsWith("group") ||
+                fullname.Contains(" assoc") || fullname.Contains(" team") ||
+                fullname.Contains("collab") || fullname.Contains("network"))
+            {
+                make_org = true;
+            }
+
+            return make_org;
+        }
+            
+
         // A helper function called from the WHO processor. Returns the source name
         // from the source id
 

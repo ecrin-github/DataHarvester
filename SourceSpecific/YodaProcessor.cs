@@ -119,13 +119,13 @@ namespace DataHarvester.yoda
             }
 
 
-            string enrolment = GetElementAsString(r.Element("enrolment"));
-            string percent_female = GetElementAsString(r.Element("percent_female"));
-
-            if (Int32.TryParse(enrolment, out int enrolment_number))
+            string study_enrolment = GetElementAsString(r.Element("enrolment")).Trim();
+            if (!string.IsNullOrEmpty(study_enrolment))
             {
-                s.study_enrolment = enrolment_number;
+                s.study_enrolment = study_enrolment;
             }
+
+            string percent_female = GetElementAsString(r.Element("percent_female"));
 
             if (!string.IsNullOrEmpty(percent_female) && percent_female != "N/A")
             {
@@ -196,7 +196,7 @@ namespace DataHarvester.yoda
 
             if (is_yoda_only)
             {
-                study_contributors.Add(new StudyContributor(sid, 54, "Study Sponsor", sponsor_org_id, sponsor_org, null, null));
+                study_contributors.Add(new StudyContributor(sid, 54, "Study Sponsor", sponsor_org_id, sponsor_org));
             }
 
             // study topics
@@ -216,7 +216,7 @@ namespace DataHarvester.yoda
                 bool add_product = true;
                 foreach(StudyTopic t in study_topics)
                 {
-                    if (product_name.ToLower() == t.topic_value.ToLower())
+                    if (product_name.ToLower() == t.original_value.ToLower())
                     {
                         add_product = false;
                         break;
@@ -288,14 +288,14 @@ namespace DataHarvester.yoda
                             case "Collected Datasets":
                                 {
                                     object_type_id = 80;
-                                    object_type = "Individual Participant Data";
+                                    object_type = "Individual participant data";
                                     object_class_id = 14; object_class = "Datasets";
                                     break;
                                 }
                             case "Data Definition Specification":
                                 {
                                     object_type_id = 31;
-                                    object_type = "Data Dictionary";
+                                    object_type = "Data dictionary";
                                     object_class_id = 23; object_class = "Text";
                                     break;
                                 }
@@ -309,14 +309,14 @@ namespace DataHarvester.yoda
                             case "CSR Summary":
                                 {
                                     object_type_id = 79;
-                                    object_type = "CSR Summary";
+                                    object_type = "CSR summary";
                                     object_class_id = 23; object_class = "Text";
                                     break;
                                 }
                             case "Annotated Case Report Form":
                                 {
                                     object_type_id = 30;
-                                    object_type = "Annotated Data Collection Forms";
+                                    object_type = "Annotated data collection forms";
                                     object_class_id = 23; object_class = "Text";
                                     break;
                                 }
@@ -330,14 +330,14 @@ namespace DataHarvester.yoda
                             case "Protocol with Amendments":
                                 {
                                     object_type_id = 11;
-                                    object_type = "Study Protocol";
+                                    object_type = "Study protocol";
                                     object_class_id = 23; object_class = "Text";
                                     break;
                                 }
                             case "Clinical Study Report":
                                 {
                                     object_type_id = 26;
-                                    object_type = "Clinical Study Report";
+                                    object_type = "Clinical study report";
                                     object_class_id = 23; object_class = "Text";
                                     break;
                                 }

@@ -32,13 +32,13 @@ namespace DataHarvester
             string sql_string = @"INSERT INTO sdcomp.data_objects(source_id, sd_oid, sd_sid, 
             display_title, version, doi, doi_status_id, publication_year,
             object_class_id, object_class, object_type_id, object_type, 
-            managing_org_id, managing_org, lang_code, access_type_id,
+            managing_org_id, managing_org, managing_org_ror_id, lang_code, access_type_id,
             access_details, access_details_url, url_last_checked, eosc_category, add_study_contribs,
             add_study_topics, datetime_of_data_fetch, record_hash, object_full_hash)
             SELECT " + _source_id + @", sd_oid, sd_sid, 
             display_title, version, doi, doi_status_id, publication_year,
             object_class_id, object_class, object_type_id, object_type, 
-            managing_org_id, managing_org, lang_code, access_type_id,
+            managing_org_id, managing_org, managing_org_ror_id, lang_code, access_type_id,
             access_details, access_details_url, url_last_checked, eosc_category, add_study_contribs,
             add_study_topics, datetime_of_data_fetch, record_hash, object_full_hash
             FROM sd.data_objects;";
@@ -102,10 +102,10 @@ namespace DataHarvester
         public void TransferObjectDates()
         {
             string sql_string = @"INSERT INTO sdcomp.object_dates(source_id, sd_oid, 
-            date_type_id, date_type, is_date_range, date_as_string, start_year, 
+            date_type_id, date_type, date_is_range, date_as_string, start_year, 
             start_month, start_day, end_year, end_month, end_day, details, record_hash)
             SELECT " + _source_id + @", sd_oid,
-            date_type_id, date_type, is_date_range, date_as_string, start_year, 
+            date_type_id, date_type, date_is_range, date_as_string, start_year, 
             start_month, start_day, end_year, end_month, end_day, details, record_hash
             FROM sd.object_dates";
 
@@ -116,15 +116,15 @@ namespace DataHarvester
         public void TransferObjectContributors()
         {
             string sql_string = @"INSERT INTO sdcomp.object_contributors(source_id, sd_oid,
-            contrib_type_id, contrib_type, is_individual, organisation_id, organisation_name,
+            contrib_type_id, contrib_type, is_individual, 
             person_id, person_given_name, person_family_name, person_full_name,
-            person_identifier, identifier_type, person_affiliation, affil_org_id,
-            affil_org_id_type, record_hash)
+            orcid_id, person_affiliation, organisation_id, 
+            organisation_name, organisation_ror_id, record_hash)
             SELECT " + _source_id + @", sd_oid,
-            contrib_type_id, contrib_type, is_individual, organisation_id, organisation_name,
+            contrib_type_id, contrib_type, is_individual, 
             person_id, person_given_name, person_family_name, person_full_name,
-            person_identifier, identifier_type, person_affiliation, affil_org_id,
-            affil_org_id_type, record_hash
+            orcid_id, person_affiliation, organisation_id, 
+            organisation_name, organisation_ror_id, record_hash
             FROM sd.object_contributors";
 
             Execute_SQL(sql_string);
@@ -134,12 +134,12 @@ namespace DataHarvester
         public void TransferObjectTopics()
         {
             string sql_string = @"INSERT INTO sdcomp.object_topics(source_id, sd_oid, 
-            topic_type_id, topic_type, mesh_coded, topic_code, topic_value, 
-            topic_qualcode, topic_qualvalue, original_ct_id, original_ct_code,
+            topic_type_id, topic_type, mesh_coded, mesh_code, mesh_value, 
+            mesh_qualcode, mesh_qualvalue, original_ct_id, original_ct_code,
             original_value, comments, record_hash)
             SELECT " + _source_id + @", sd_oid,
-            topic_type_id, topic_type, mesh_coded, topic_code, topic_value, 
-            topic_qualcode, topic_qualvalue, original_ct_id, original_ct_code,
+            topic_type_id, topic_type, mesh_coded, mesh_code, mesh_value, 
+            mesh_qualcode, mesh_qualvalue, original_ct_id, original_ct_code,
             original_value, comments, record_hash
             FROM sd.object_topics";
 
@@ -176,10 +176,12 @@ namespace DataHarvester
         public void TransferObjectidentifiers()
         {
             string sql_string = @"INSERT INTO sdcomp.object_identifiers(source_id, sd_oid, 
-            identifier_value, identifier_type_id, identifier_type, identifier_org_id, identifier_org,
+            identifier_value, identifier_type_id, identifier_type, identifier_org_id, 
+            identifier_org, identifier_org_ror_id,
             identifier_date, record_hash)
             SELECT " + _source_id + @", sd_oid, 
-            identifier_value, identifier_type_id, identifier_type, identifier_org_id, identifier_org,
+            identifier_value, identifier_type_id, identifier_type, identifier_org_id, 
+            identifier_org, identifier_org_ror_id,
             identifier_date, record_hash
             FROM sd.object_identifiers";
 

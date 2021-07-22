@@ -42,6 +42,7 @@ namespace DataHarvester
               , object_type            VARCHAR         NULL
               , managing_org_id        INT             NULL
               , managing_org           VARCHAR         NULL
+              , managing_org_ror_id    VARCHAR         NULL
               , lang_code              VARCHAR         NULL
               , access_type_id         INT             NULL
               , access_type            VARCHAR         NULL
@@ -105,7 +106,7 @@ namespace DataHarvester
               , sd_oid                 CHAR(24)        NOT NULL
               , date_type_id           INT             NULL
               , date_type              VARCHAR         NULL
-              , is_date_range          BOOLEAN         NULL default false
+              , date_is_range          BOOLEAN         NULL default false
               , date_as_string         VARCHAR         NULL
               , start_year             INT             NULL
               , start_month            INT             NULL
@@ -159,17 +160,15 @@ namespace DataHarvester
               , contrib_type_id        INT             NULL
               , contrib_type           VARCHAR         NULL
               , is_individual          BOOLEAN         NULL
-              , organisation_id        INT             NULL
-              , organisation_name      VARCHAR         NULL
               , person_id              INT             NULL
               , person_given_name      VARCHAR         NULL
               , person_family_name     VARCHAR         NULL
               , person_full_name       VARCHAR         NULL
-              , person_identifier      VARCHAR         NULL
-              , identifier_type        VARCHAR         NULL
+              , orcid_id               VARCHAR         NULL
               , person_affiliation     VARCHAR         NULL
-              , affil_org_id           VARCHAR         NULL
-              , affil_org_id_type      VARCHAR         NULL
+              , organisation_id        INT             NULL
+              , organisation_name      VARCHAR         NULL
+              , organisation_ror_id    VARCHAR         NULL
               , record_hash            CHAR(32)        NULL
             );
             CREATE INDEX object_contributors_sd_oid ON sdcomp.object_contributors(sd_oid);";
@@ -210,10 +209,10 @@ namespace DataHarvester
               , topic_type_id          INT             NULL
               , topic_type             VARCHAR         NULL
               , mesh_coded             BOOLEAN         NULL
-              , topic_code             VARCHAR         NULL
-              , topic_value            VARCHAR         NULL
-              , topic_qualcode         VARCHAR         NULL
-              , topic_qualvalue        VARCHAR         NULL
+              , mesh_code              VARCHAR         NULL
+              , mesh_value             VARCHAR         NULL
+              , mesh_qualcode          VARCHAR         NULL
+              , mesh_qualvalue         VARCHAR         NULL
               , original_ct_id         INT             NULL
               , original_ct_code       VARCHAR         NULL
               , original_value         VARCHAR         NULL
@@ -278,6 +277,7 @@ namespace DataHarvester
               , identifier_type        VARCHAR         NULL
               , identifier_org_id      INT             NULL
               , identifier_org         VARCHAR         NULL
+              , identifier_org_ror_id  VARCHAR         NULL
               , identifier_date        VARCHAR         NULL
               , record_hash            CHAR(32)        NULL
             );

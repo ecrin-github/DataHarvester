@@ -31,11 +31,14 @@ namespace DataHarvester.euctr
             List<DataObject> data_objects = new List<DataObject>();
             List<ObjectTitle> object_titles = new List<ObjectTitle>();
             List<ObjectInstance> object_instances = new List<ObjectInstance>();
+            List<ObjectDate> object_dates = new List<ObjectDate>();
 
             List<IMP> imp_list = new List<IMP>();
 
             MD5Helpers hh = new MD5Helpers();
             StringHelpers sh = new StringHelpers(_logger);
+            DateHelpers dh = new DateHelpers();
+            IdentifierHelpers ih = new IdentifierHelpers();
 
             string study_description = null;
 
@@ -109,14 +112,14 @@ namespace DataHarvester.euctr
             // contributor - sponsor
             string sponsor_name = "No organisation name provided in source data";
             string sponsor = GetElementAsString(r.Element("sponsor_name"));
-            if (sh.FilterOut_Null_OrgNames(sponsor?.ToLower()) != "")
+            if (sh.AppearsGenuineOrgName(sponsor))
             {
                 sponsor_name = sh.TidyOrgName(sponsor, sid);
                 string lower_sponsor = sponsor_name.ToLower();
                 if (!string.IsNullOrEmpty(lower_sponsor) && lower_sponsor.Length > 1
                     && lower_sponsor != "dr" && lower_sponsor != "no profit")
                 {
-                    contributors.Add(new StudyContributor(sid, 54, "Trial Sponsor", null, sponsor_name, null, null));
+                    contributors.Add(new StudyContributor(sid, 54, "Trial Sponsor", null, sponsor_name));
                 }
             }
 
@@ -137,7 +140,7 @@ namespace DataHarvester.euctr
                             {
                                 string org_value = GetElementAsString(values.First());
                                 // check a funder is not simply the sponsor...
-                                if (sh.FilterOut_Null_OrgNames(org_value?.ToLower()) != "")
+                                if (sh.AppearsGenuineOrgName(org_value))
                                 {
                                     string funder = sh.TidyOrgName(org_value, sid);
                                     if (funder != sponsor_name)
@@ -146,7 +149,7 @@ namespace DataHarvester.euctr
                                         if (!string.IsNullOrEmpty(fund) && fund.Length > 1
                                         && fund != "dr" && fund != "no profit")
                                         {
-                                            contributors.Add(new StudyContributor(sid, 58, "Study Funder", null, funder, null, null));
+                                            contributors.Add(new StudyContributor(sid, 58, "Study Funder", null, funder));
                                         }
                                     }
                                 }
@@ -639,7 +642,7 @@ namespace DataHarvester.euctr
             var population = r.Element("population");
             if (population != null)
             {
-                var detail_lines = feats.Elements("DetailLine");
+                var detail_lines = population.Elements("DetailLine");
                 if (detail_lines?.Any() == true)
                 {
 
@@ -722,6 +725,7 @@ namespace DataHarvester.euctr
                     {
                         s.study_gender_elig = "Male"; s.study_gender_elig_id = 910;
                     }
+
 
                     if (!includes_under18)
                     {
@@ -916,7 +920,7 @@ namespace DataHarvester.euctr
                 bool res = false;
                 foreach(StudyTopic t in topics)
                 {
-                    if(imp_name.ToLower() == t.topic_value.ToLower())
+                    if(imp_name.ToLower() == t.original_value.ToLower())
                     {
                         res = true;
                         break;
@@ -952,7 +956,10 @@ namespace DataHarvester.euctr
             //public string competent_authority { get; set; }
 
             // DATA OBJECTS and their attributes
+
+            // ----------------------------------------------------------
             // initial data object is the EUCTR registry entry
+            // ----------------------------------------------------------
 
             string object_display_title = s.display_title + " :: EU CTR registry entry";
 
@@ -973,15 +980,27 @@ namespace DataHarvester.euctr
             object_instances.Add(new ObjectInstance(sd_oid, 100123, "EU Clinical Trials Register",
                         details_url, true, 35, "Web text"));
 
+
+            // ----------------------------------------------------------
             // if there is a results url, add that in as well
+            // ----------------------------------------------------------
+
             string results_url = GetElementAsString(r.Element("results_url"));
             if (!string.IsNullOrEmpty(results_url))
             {
                 object_display_title = s.display_title + " :: EU CTR results entry";
                 sd_oid = hh.CreateMD5(sid + object_display_title);
 
-                data_objects.Add(new DataObject(sd_oid, sid, object_display_title, s.study_start_year,
-                      23, "Text", 28, "Trial registry results summary", 100123, 
+                // get the date data if available
+
+                string results_first_date = GetElementAsString(r.Element("results_first_date"));
+                string results_revision_date = GetElementAsString(r.Element("results_revision_date"));
+
+                SplitDate results_date = dh.GetDatePartsFromEUCTRString(results_first_date);
+                SplitDate results_revision = dh.GetDatePartsFromEUCTRString(results_revision_date);
+
+                data_objects.Add(new DataObject(sd_oid, sid, object_display_title, results_date.year,
+                      23, "Text", 28, "Trial registry results summary", 100123,
                       "EU Clinical Trials Register", 12, download_datetime));
 
                 // data object title is the single display title...
@@ -989,8 +1008,114 @@ namespace DataHarvester.euctr
                                                          22, "Study short name :: object type", true));
 
                 // instance url 
-                object_instances.Add(new ObjectInstance(sd_oid,  100123, "EU Clinical Trials Register",
+                object_instances.Add(new ObjectInstance(sd_oid, 100123, "EU Clinical Trials Register",
                             results_url, true, 36, "Web text with download"));
+
+                // dates
+                object_dates.Add(new ObjectDate(sd_oid, 12, "Available", 
+                         results_date.year, results_date.month, results_date.day, results_date.date_string));
+
+                object_dates.Add(new ObjectDate(sd_oid, 18, "Updated",
+                         results_revision.year, results_revision.month, results_revision.day, results_revision.date_string));
+
+                // if there is a reference to a CSR pdf to download...
+                // Seems to be on the web pages in two forms
+
+                // Form A 
+
+                string results_summary_link = GetElementAsString(r.Element("results_summary_link"));
+
+                if (!string.IsNullOrEmpty(results_summary_link))
+                {
+                    string results_summary_name = GetElementAsString(r.Element("results_summary_name"));
+
+                    int title_type_id = 0; string title_type = "";
+                    if (!string.IsNullOrEmpty(results_summary_name))
+                    {
+                        object_display_title = s.display_title + " :: " + results_summary_name;
+                        title_type_id = 21;
+                        title_type = "Study short name :: object name";
+                    }
+                    else
+                    {
+                        object_display_title = s.display_title + " :: CSR summary";
+                        title_type_id = 22;
+                        title_type = "Study short name :: object type";
+                    }
+                    
+                    sd_oid = hh.CreateMD5(sid + object_display_title);
+
+                    data_objects.Add(new DataObject(sd_oid, sid, object_display_title, results_date.year,
+                          23, "Text", 79, "CSR summary", null, sponsor_name, 11, download_datetime));
+
+                    // data object title is the single display title...
+                    object_titles.Add(new ObjectTitle(sd_oid, object_display_title,
+                                                             title_type_id, title_type, true));
+
+                    // instance url 
+                    object_instances.Add(new ObjectInstance(sd_oid, 100123, "EU Clinical Trials Register",
+                                         results_summary_link, true, 11, "PDF"));
+
+                }
+
+                // Form B
+
+                string results_pdf_link = GetElementAsString(r.Element("results_pdf_link"));
+
+                if (!string.IsNullOrEmpty(results_pdf_link))
+                {
+                    object_display_title = s.display_title + " :: CSR summary";
+                    int title_type_id = 22;
+                    string title_type = "Study short name :: object type";
+
+                    sd_oid = hh.CreateMD5(sid + object_display_title);
+
+                    data_objects.Add(new DataObject(sd_oid, sid, object_display_title, results_date.year,
+                          23, "Text", 79, "CSR summary", null, sponsor_name, 11, download_datetime));
+
+                    // data object title is the single display title...
+                    object_titles.Add(new ObjectTitle(sd_oid, object_display_title,
+                                                             title_type_id, title_type, true));
+
+                    // instance url 
+                    object_instances.Add(new ObjectInstance(sd_oid, 100123, "EU Clinical Trials Register",
+                                         results_pdf_link, true, 11, "PDF"));
+
+                }
+            }
+
+
+            // edit contributors - try to ensure properly categorised
+
+            if (contributors.Count > 0)
+            {
+                foreach (StudyContributor sc in contributors)
+                {
+                    if (!sc.is_individual)
+                    {
+                        // identify individuals down as organisations
+
+                        string orgname = sc.organisation_name.ToLower();
+                        if (ih.CheckIfIndividual(orgname))
+                        {
+                            sc.person_full_name = sh.TidyPersonName(sc.organisation_name);
+                            sc.organisation_name = null;
+                            sc.is_individual = true;
+                        }
+                    }
+                    else
+                    {
+                        // check if a group inserted as an individual
+
+                        string fullname = sc.person_full_name.ToLower();
+                        if (ih.CheckIfOrganisation(fullname))
+                        {
+                            sc.organisation_name = sh.TidyOrgName(sid, sc.person_full_name);
+                            sc.person_full_name = null;
+                            sc.is_individual = false;
+                        }
+                    }
+                }
             }
 
 

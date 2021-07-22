@@ -168,10 +168,10 @@ namespace DataHarvester.isrctn
                         string item_value = GetElementAsString(item.Element("item_value"));
                         if (item_name == "Organisation")
                         {
-                            if (sh.FilterOut_Null_OrgNames(item_value.ToLower()) != "")
+                            if (sh.AppearsGenuineOrgName(item_value))
                             {
-                                contributors.Add(new StudyContributor(sid, 54, "Trial Sponsor", null, 
-                                    sh.TidyOrgName(item_value, sid), null, null));
+                                contributors.Add(new StudyContributor(sid, 54, "Trial Sponsor",
+                                    null, sh.TidyOrgName(item_value, sid)));
                             }
                         }
                        
@@ -206,8 +206,16 @@ namespace DataHarvester.isrctn
                                     // also need to store any pre-existing record
                                     if (c != null)
                                     {
-                                        contributors.Add(c);
+                                        if (sh.CheckPersonName(c.person_full_name))
+                                        {
+                                            c.person_full_name = sh.TidyPersonName(c.person_full_name);
+                                            if (c.person_full_name != null)
+                                            {
+                                                contributors.Add(c);
+                                            }
+                                        }
                                     }
+
                                     c = new StudyContributor(sid, null, null, null, null, null, null);
                                     if (item_value == "Scientific")
                                     {
@@ -250,7 +258,6 @@ namespace DataHarvester.isrctn
                                     {
                                         orcid = item_value;
                                     }
-                                    c.person_identifier = orcid;
                                     break;
                                 }
                             case "email_address":
@@ -270,7 +277,14 @@ namespace DataHarvester.isrctn
                     // do not forget the last contributor
                     if (c != null)
                     {
-                       contributors.Add(c);
+                        if (sh.CheckPersonName(c.person_full_name))
+                        {
+                            c.person_full_name = sh.TidyPersonName(c.person_full_name);
+                            if (c.person_full_name != null)
+                            {
+                                contributors.Add(c);
+                            }
+                        }
                     }
                 }
             }
@@ -288,13 +302,13 @@ namespace DataHarvester.isrctn
                         if (item_name == "Funder name")
                         {
                             string item_value = GetElementAsString(item.Element("item_value"));
-                            if (sh.FilterOut_Null_OrgNames(item_value.ToLower()) != "")
+                            if (sh.AppearsGenuineOrgName(item_value))
                             {
                                 // check a funder is not simply the sponsor...
                                 string funder = sh.TidyOrgName(item_value, sid);
                                 if (funder != study_sponsor)
                                 {
-                                    contributors.Add(new StudyContributor(sid, 58, "Study Funder", null, funder, null, null));
+                                    contributors.Add(new StudyContributor(sid, 58, "Study Funder", null, funder));
                                 }
 
                             }
@@ -766,26 +780,32 @@ namespace DataHarvester.isrctn
                                     }
                                 }
                                 break;
-
                             case "Gender":
                                 {
-                                    s.study_gender_elig = item_value;
-                                    switch (s.study_gender_elig)
+                                    switch (item_value)
                                     {
                                         case "Both":
                                             {
-                                                s.study_gender_elig = "All";
                                                 s.study_gender_elig_id = 900;
+                                                s.study_gender_elig = "All";
                                                 break;
                                             }
                                         case "Female":
                                             {
                                                 s.study_gender_elig_id = 905;
+                                                s.study_gender_elig = "Female";
                                                 break;
                                             }
                                         case "Male":
                                             {
                                                 s.study_gender_elig_id = 910;
+                                                s.study_gender_elig = "Male";
+                                                break;
+                                            }
+                                        case "Not Specified":
+                                            {
+                                                s.study_gender_elig_id = 915;
+                                                s.study_gender_elig = "Not provided";
                                                 break;
                                             }
                                     }
@@ -793,18 +813,18 @@ namespace DataHarvester.isrctn
                                 }
                             case "Target number of participants":
                                 {
-                                    if (Int32.TryParse(item_value, out int enrollment))
+                                    if (item_value != "Not provided at time of registration")
                                     {
-                                        s.study_enrolment = enrollment;
+                                        s.study_enrolment = item_value;
                                     }
                                     break;
                                 }
                             case "Total final enrolment":
                                 {
-                                    // if available replace with this...
-                                    if (Int32.TryParse(item_value, out int enrollment))
+                                    if (item_value != "Not provided at time of registration")
                                     {
-                                        s.study_enrolment = enrollment;
+                                        // if available replace with this...
+                                        s.study_enrolment = item_value;
                                     }
                                     break;
                                 }
@@ -931,7 +951,21 @@ namespace DataHarvester.isrctn
                                 {
                                     if (item_value != "Not provided at time of registration")
                                     {
-                                        sharing_statement = sh.StringClean("General: " + item_value);
+                                        if (item_value.Contains("IPD sharing statement:<br>"))
+                                        {
+                                            item_value = item_value.Substring(item_value.IndexOf("IPD sharing statement") + 26);
+                                            sharing_statement = "IPD sharing statement: " + sh.StringClean(item_value);
+                                        }
+
+                                        else if (item_value.Contains("IPD sharing statement"))
+                                        {
+                                            item_value = item_value.Substring(item_value.IndexOf("IPD sharing statement") + 21);
+                                            sharing_statement =  "IPD sharing statement: " + sh.StringClean(item_value);
+                                        }
+                                        else
+                                        {
+                                            sharing_statement = sh.StringClean("General dissemination plan: " + item_value);
+                                        }
                                     }
                                     break;
                                 }
@@ -1171,7 +1205,7 @@ namespace DataHarvester.isrctn
                             res_type = "PowerPoint";
                         }
 
-                        object_display_title = item_name;
+                        object_display_title = s.display_title + " :: " + item_name;
                         sd_oid = hh.CreateMD5(sid + object_display_title);
 
                         data_objects.Add(new DataObject(sd_oid, sid, object_display_title, s.study_start_year,
@@ -1208,7 +1242,44 @@ namespace DataHarvester.isrctn
                 } 
             }
 
+
+            // edit contributors - try to ensure properly categorised
+
+            if (contributors.Count > 0)
+            {
+                foreach (StudyContributor sc in contributors)
+                {
+                    if (!sc.is_individual)
+                    {
+                        // identify individuals down as organisations
+
+                        string orgname = sc.organisation_name.ToLower();
+                        if (ih.CheckIfIndividual(orgname))
+                        {
+                            sc.person_full_name = sh.TidyPersonName(sc.organisation_name);
+                            sc.organisation_name = null;
+                            sc.is_individual = true;
+                        }
+                    }
+                    else
+                    {
+                        // check if a group inserted as an individual
+
+                        string fullname = sc.person_full_name.ToLower();
+                        if (ih.CheckIfOrganisation(fullname))
+                        {
+                            sc.organisation_name = sh.TidyOrgName(sid, sc.person_full_name);
+                            sc.person_full_name = null;
+                            sc.is_individual = false;
+                        }
+                    }
+                }
+            }
+
+
+
             s.brief_description = study_description;
+            s.data_sharing_statement = sharing_statement;
 
             s.identifiers = identifiers;
             s.titles = titles;

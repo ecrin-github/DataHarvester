@@ -12,32 +12,72 @@ namespace DataHarvester
             _logger = logger;
         }
 
-        public string TidyName(string in_name)
+        public string TidyPersonName(string in_name)
         {
 
             string name = in_name.Replace(".", "");
+            name = name.Replace("-", "");
+
             string low_name = name.ToLower();
 
             if (low_name.StartsWith("professor "))
             {
-                name = name.Substring(4, name.Length - 10);
-                low_name = name.ToLower();
+                name = name.Substring(10);
             }
             else if (low_name.StartsWith("prof "))
             {
-                name = name.Substring(5, name.Length - 5);
-                low_name = name.ToLower();
+                name = name.Substring(5);
+            }
+            else if (low_name.StartsWith("dr med "))
+            {
+                name = name.Substring(7);
+            }
+            if (low_name.StartsWith("dr ") || low_name.StartsWith("mr ")
+                || low_name.StartsWith("ms ")) 
+            { 
+                name = name.Substring(3); 
+            }
+            else if (low_name.StartsWith("dr") 
+                && name[2].ToString() == low_name[2].ToString().ToUpper())
+            {
+                name = name.Substring(2);
             }
 
-            if (low_name.StartsWith("dr ")) { name = name.Substring(3, name.Length - 3); }
-            else if (low_name.StartsWith("dr med ")) { name = name.Substring(7, name.Length - 7); }
-
             int comma_pos = name.IndexOf(',');
-            if (comma_pos > -1) { name = name.Substring(0, comma_pos); }
+            if (comma_pos > -1) 
+            { 
+                name = name.Substring(0, comma_pos); 
+            }
+            name = name.Trim();
+
+            if (name == "")
+            {
+                name = null;
+            }
 
             return name;
         }
 
+
+        public bool CheckPersonName(string in_name)
+        {
+
+            bool result = true;
+            string low_name = in_name.ToLower();
+
+            if (low_name.Contains("research") ||
+                low_name.Contains("development") ||
+                low_name.Contains("trials") ||
+                low_name.Contains("pharma") ||
+                low_name.Contains("ltd") ||
+                low_name.Contains("inc") 
+               )
+            {
+                result = false;
+            }
+            
+            return result;
+        }
 
         public string ReplaceApos(string apos_name)
         {
@@ -346,7 +386,7 @@ namespace DataHarvester
         }
 
 
-        public string TidyString (string input_string)
+        public string TrimString(string input_string)
         {
             // removes beginning or trailing carriage returns, tabs and spaces
             if (input_string == null)
@@ -360,11 +400,28 @@ namespace DataHarvester
         }
 
 
+        public string RegulariseStringEndings(string input_string)
+        {
+            // removes beginning or trailing carriage returns, tabs and spaces
+            if (input_string == null)
+            {
+                return null;
+            }
+            else
+            {
+                string output_string = input_string.Replace("\r\n", "|@@|");
+                output_string = output_string.Replace("\r", "\n");
+                return output_string.Replace("|@@|", "\r\n");
+            }
+        }
+
+
         public string StringClean(string input_string)
         {
             string output_string = ReplaceApos(input_string);
             output_string = ReplaceTags(output_string);
-            return TidyString(output_string);
+            output_string = TrimString(output_string);
+            return RegulariseStringEndings(output_string);
         }
 
 
@@ -465,35 +522,104 @@ namespace DataHarvester
         }
 
 
-        public string FilterOut_Null_OrgNames(string in_name)
+        public bool AppearsGenuineOrgName(string org_name)
         {
-            string out_name = in_name;
-            // in_name should be in lower case...
-            if (in_name == "-" || in_name == "n.a." || in_name == "n a" || in_name == "n/a" ||
-                in_name == "na" || in_name == "nil" || in_name == "nill" || in_name == "no" || in_name == "non")
+            if (org_name == null)
             {
-                out_name = "";
-            }
-            else if (in_name.StartsWith("no ") || in_name == "not applicable" || in_name.StartsWith("not prov"))
-            {
-                out_name = "";
-            }
-            else if (in_name == "none" || in_name.StartsWith("non fund") || in_name.StartsWith("non spon")
-                || in_name.StartsWith("nonfun") || in_name.StartsWith("noneno"))
-            {
-                out_name = "";
-            }
-            else if (in_name.StartsWith("investigator ") || in_name == "investigator" || in_name == "self"
-                || in_name.StartsWith("Organisation name "))
-            {
-                out_name = "";
+                return false;
             }
             else
+            {            
+                bool result = true;
+                string in_name = org_name.ToLower();
+
+                if (in_name == "-" || in_name == "n.a." || in_name == "n a" || in_name == "n/a" ||
+                    in_name == "na" || in_name == "nil" || in_name == "nill" || in_name == "no" || in_name == "non")
+                {
+                    result = false;
+                }
+                else if (in_name.StartsWith("no ") || in_name == "not applicable" || in_name.StartsWith("not prov"))
+                {
+                    result = false;
+                }
+                else if (in_name == "none" || in_name.StartsWith("non fund") || in_name.StartsWith("non spon")
+                    || in_name.StartsWith("nonfun") || in_name.StartsWith("noneno"))
+                {
+                    result = false;
+                }
+                else if (in_name.StartsWith("investigator ") || in_name == "investigator" || in_name == "self"
+                    || in_name.StartsWith("Organisation name "))
+                {
+                    result = false;
+                }
+
+                return result;
+            }
+        }
+
+
+        public string ExtractOrganisation(string affiliation)
+        {
+            string affil_organisation = "";
+            string aff = affiliation.ToLower();
+
+            if (aff.Contains("univers"))
             {
-                out_name = in_name;
+                affil_organisation = FindSubPhrase(affiliation, "univers");
+            }
+            else if (aff.Contains("hospit"))
+            {
+                affil_organisation = FindSubPhrase(affiliation, "hospit");
+            }
+            else if (aff.Contains("clinic"))
+            {
+                affil_organisation = FindSubPhrase(affiliation, "clinic");
+            }
+            else if (aff.Contains("klinik"))
+            {
+                affil_organisation = FindSubPhrase(affiliation, "klinik");
+            }
+            else if (aff.Contains("instit"))
+            {
+                affil_organisation = FindSubPhrase(affiliation, "instit");
+            }
+            else if (aff.Contains(" inc."))
+            {
+                affil_organisation = FindSubPhrase(affiliation, " inc.");
+            }
+            else if (aff.Contains(" ltd"))
+            {
+                affil_organisation = FindSubPhrase(affiliation, " ltd");
             }
 
-            return out_name;
+            return affil_organisation;
+        }
+
+
+        public string FindSubPhrase(string phrase, string target)
+        {
+            string phrase1 = phrase.Replace("&#44;", ",");
+            string p = phrase1.ToLower();
+
+            // ignore trailing commas after some states names
+            p = p.Replace("california,", "california*");
+            p = p.Replace("wisconsin,", "wisconsin*");
+
+            int startpos = p.IndexOf(target);
+            int commapos1 = p.LastIndexOf(",", startpos);  // if -1 becomes 0 
+            int commapos2 = p.IndexOf(",", startpos + target.Length - 1);
+            if (commapos2 == -1)
+            {
+                commapos2 = p.Length;
+            }
+
+            string org_name = phrase1.Substring(commapos1 + 1, commapos2 - commapos1 - 1).Trim();
+            if (org_name.ToLower().StartsWith("the "))
+            {
+                org_name = org_name.Substring(4);
+                
+            }
+            return org_name;
         }
 
 

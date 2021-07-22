@@ -233,55 +233,36 @@ namespace DataHarvester.who
 
 
             // enrolment targets, gender and age groups
-            int? enrolment = 0;
+            string enrolment = null;
 
-            // use actual enrolment figure if present and not a data or a dummy figure
-            string results_actual_enrollment = GetElementAsString(r.Element("results_actual_enrollment"));
-            if (!string.IsNullOrEmpty(results_actual_enrollment)
-                && !results_actual_enrollment.Contains("9999")
-                && !Regex.Match(results_actual_enrollment, @"\d{4}-\d{2}-\d{2}").Success)
+            // use actual enrolment figure if present and not an ISO date or a dummy figure
+            // but only if the status of the trial is 'completed'
+
+            if (study_status != null && study_status.ToLower() == "completed")
             {
-                if (Regex.Match(results_actual_enrollment, @"\d+").Success)
+                string results_actual_enrollment = GetElementAsString(r.Element("results_actual_enrollment"));
+
+                if (!string.IsNullOrEmpty(results_actual_enrollment)
+                    && !results_actual_enrollment.Contains("9999")
+                    && !Regex.Match(results_actual_enrollment, @"\d{4}-\d{2}-\d{2}").Success)
                 {
-                    string enrolment_as_string = Regex.Match(results_actual_enrollment, @"\d+").Value;
-                    if (Int32.TryParse(enrolment_as_string, out int numeric_value))
-                    {
-                        if (numeric_value < 10000)
-                        {
-                            enrolment = numeric_value;
-                        }
-                    }
-                    else
-                    {
-                        // what is going on?
-                        _logger.Error("Odd enrolment string: " + enrolment_as_string + " for " + sid);
-                    }
+                    enrolment = results_actual_enrollment;
                 }
             }
 
-            // use the target if that is all that is available
-            string target_size = GetElementAsString(r.Element("target_size"));
-            if (enrolment == 0 && !string.IsNullOrEmpty(target_size)
-                && !target_size.Contains("9999"))
+            // use the target if that is all that is available (it usually is)
+
+            if (enrolment == null)
             {
-                if (Regex.Match(target_size, @"\d+").Success)
+                string target_size = GetElementAsString(r.Element("target_size"));
+                if (!string.IsNullOrEmpty(target_size) 
+                    && !target_size.Contains("9999"))
                 {
-                    string enrolment_as_string = Regex.Match(target_size, @"\d+").Value;
-                    if (Int32.TryParse(enrolment_as_string, out int numeric_value))
-                    {
-                        if (numeric_value < 10000)
-                        {
-                            enrolment = numeric_value;
-                        }
-                    }
-                    else
-                    {
-                        // what is going on?
-                        _logger.Error("Odd enrolment string: " + enrolment_as_string + " for " + sid);
-                    }
+                    enrolment = target_size;
                 }
             }
-            s.study_enrolment = enrolment > 0 ? enrolment : null;
+
+            s.study_enrolment = enrolment;
 
             string agemin = GetElementAsString(r.Element("agemin"));
             string agemin_units = GetElementAsString(r.Element("agemin_units"));
@@ -348,17 +329,18 @@ namespace DataHarvester.who
             {
                 sponsor_name = sh.TidyOrgName(primary_sponsor, sid);
                 string sponsor = sponsor_name.ToLower();
-                if (sh.FilterOut_Null_OrgNames(sponsor) != "")
+                if (sh.AppearsGenuineOrgName(sponsor))
                 {
                     if (sponsor.StartsWith("dr ") || sponsor.StartsWith("dr. ")
                         || sponsor.StartsWith("prof ") || sponsor.StartsWith("prof. ")
                         || sponsor.StartsWith("professor "))
                     {
-                        study_contributors.Add(new StudyContributor(sid, 54, "Trial Sponsor", null, null, sponsor_name, null));
+                        string person_name = sponsor_name;
+                        study_contributors.Add(new StudyContributor(sid, 54, "Trial Sponsor", person_name, null, null));
                     }
                     else
                     {
-                        study_contributors.Add(new StudyContributor(sid, 54, "Trial Sponsor", null, sponsor_name, null, null));
+                        study_contributors.Add(new StudyContributor(sid, 54, "Trial Sponsor", null, sponsor_name));
                     }
                 }
             }
@@ -375,8 +357,19 @@ namespace DataHarvester.who
                 string full_name = (givenname + " " + familyname).Trim();
                 full_name = sh.ReplaceApos(full_name);
                 study_lead = full_name;  // for later comparison
-                string affiliation = scientific_contact_affiliation ?? "";
-                study_contributors.Add(new StudyContributor(sid, 51, "Study Lead", null, null, full_name, affiliation));
+
+                if (sh.CheckPersonName(full_name))
+                {
+                    full_name = sh.TidyPersonName(full_name);
+                    if (full_name != null)
+                    { 
+                        string affiliation = scientific_contact_affiliation ?? "";
+                        string affil_org = sh.ExtractOrganisation(affiliation);
+
+                        study_contributors.Add(new StudyContributor(sid, 51, "Study Lead", full_name, affiliation, affil_org));
+                    }
+
+                }
             }
 
             // public contact
@@ -391,8 +384,17 @@ namespace DataHarvester.who
                 full_name = sh.ReplaceApos(full_name);
                 if (full_name != study_lead)  // often duplicated
                 {
-                    string affiliation = public_contact_affiliation ?? "";
-                    study_contributors.Add(new StudyContributor(sid, 56, "Public Contact", null, null, full_name, affiliation));
+                    if (sh.CheckPersonName(full_name))
+                    {
+                        full_name = sh.TidyPersonName(full_name);
+                        if (full_name != null)
+                        {
+                            string affiliation = public_contact_affiliation ?? "";
+                            string affil_org = sh.ExtractOrganisation(affiliation);
+
+                            study_contributors.Add(new StudyContributor(sid, 56, "Public Contact", full_name, affiliation, affil_org));
+                        }
+                    }
                 }
             }
 
@@ -498,8 +500,10 @@ namespace DataHarvester.who
 
             // Create data object records.
             // registry entry
+
             string name_base = s.display_title;
-            string object_display_title = name_base + " :: " + "Registry web page";
+            string reg_prefix = get_registry_prefix(source_id);
+            string object_display_title = name_base + " :: " + reg_prefix + "registry web page";
             string sd_oid = hh.CreateMD5(sid + object_display_title);
 
             int? pub_year = registration_date?.year;
@@ -615,12 +619,12 @@ namespace DataHarvester.who
                     if (prot_url.Contains("results summary"))
                     {
                         object_type_id = 79;
-                        object_type = "CSR Summary";
+                        object_type = "CSR summary";
                     }
                     else
                     {
                         object_type_id = 11;
-                        object_type = "Study Protocol";
+                        object_type = "Study protocol";
                     }
 
                     object_display_title = name_base + " :: " + object_type;
@@ -639,7 +643,7 @@ namespace DataHarvester.who
                 }
             }
 
-            // edit contributors - identify individuals down as organisations
+            // edit contributors - try to ensure properly categorised
 
             if (study_contributors.Count > 0)
             {
@@ -647,12 +651,26 @@ namespace DataHarvester.who
                 {
                     if (!sc.is_individual)
                     {
+                        // identify individuals down as organisations
+
                         string orgname = sc.organisation_name.ToLower();
                         if (ih.CheckIfIndividual(orgname))
                         {
-                            sc.person_full_name = sc.organisation_name;
+                            sc.person_full_name = sh.TidyPersonName(sc.organisation_name);
                             sc.organisation_name = null;
                             sc.is_individual = true;
+                        }
+                    }
+                    else
+                    {
+                        // check if a group inserted as an individual
+
+                        string fullname = sc.person_full_name.ToLower();
+                        if (ih.CheckIfOrganisation(fullname))
+                        {
+                            sc.organisation_name = sh.TidyOrgName(sid, sc.person_full_name);
+                            sc.person_full_name = null;
+                            sc.is_individual = false;
                         }
                     }
                 }
@@ -737,6 +755,31 @@ namespace DataHarvester.who
             {
                 return false;
             }
+        }
+
+
+        public string get_registry_prefix(int? source_id)
+        {
+            string prefix = "";
+            switch (source_id)
+            {
+                case 100116: { prefix = "Australian / NZ "; break; }
+                case 100117: { prefix = "Brazilian "; break; }
+                case 100118: { prefix = "Chinese "; break; }
+                case 100119: { prefix = "South Korean "; break; }
+                case 100121: { prefix = "Indian "; break; }
+                case 100122: { prefix = "Peruvian "; break; }
+                case 100124: { prefix = "German "; break; }
+                case 100125: { prefix = "Iranian "; break; }
+                case 100127: { prefix = "Japanese "; break; }
+                case 100128: { prefix = "Pan African "; break; }
+                case 100129: { prefix = "Peruvian "; break; }
+                case 100130: { prefix = "Sri Lankan "; break; }
+                case 100131: { prefix = "Thai "; break; }
+                case 100132: { prefix = "Dutch "; break; }
+                case 101989: { prefix = "Lebanese "; break; }
+            }
+            return prefix;
         }
 
     }

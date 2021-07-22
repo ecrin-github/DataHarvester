@@ -6,13 +6,14 @@ namespace DataHarvester
 {
     public class DateHelpers
     {
-        public SplitDate GetDateParts(string dateString)
+        public SplitDate GetDatePartsFromCTGString(string dateString)
         {
+            // Designed to deal with CTG dates...
             // input date string is in the form of "<month name> day, year"
             // or in some cases in the form "<month name> year"
             // split the string on the comma
             string year_string, month_name, day_string;
-            int? year_num, month_num, day_num;
+            int? year_num = null, month_num, day_num = null;
 
             int comma_pos = dateString.IndexOf(',');
             if (comma_pos > 0)
@@ -34,9 +35,9 @@ namespace DataHarvester
             }
 
             // convert strings into integers
-            if (int.TryParse(year_string, out int y)) year_num = y; else year_num = null;
+            if (int.TryParse(year_string, out int y)) year_num = y;
             month_num = GetMonthAsInt(month_name);
-            if (int.TryParse(day_string, out int d)) day_num = d; else day_num = null;
+            if (int.TryParse(day_string, out int d)) day_num = d;
             string month_as3 = ((Months3)month_num).ToString();
 
             // get date as string
@@ -61,6 +62,56 @@ namespace DataHarvester
             return new SplitDate(year_num, month_num, day_num, date_as_string);
         }
 
+                    
+        public SplitDate GetDatePartsFromEUCTRString(string dateString)
+        {
+            // date here is in the format dd Mon yyyy, e.g. 16 Aug 2017
+
+            try
+            {
+                if (dateString == null) return null;
+
+                // check format 
+                if (Regex.Match(dateString, @"^\d{2} \w{3} \d{4}$").Success)
+                {
+                    string year_string, month_string, day_string;
+                    int? year_num = null, month_num = null, day_num = null;
+
+                    day_string = dateString.Substring(0, 2);
+                    month_string = dateString.Substring(3, 3);
+                    year_string = dateString.Substring(7, 4);
+
+                    year_num = null;
+                    // convert strings into integers
+                    if (int.TryParse(year_string, out int y)) year_num = y;
+                    if (int.TryParse(day_string, out int d)) day_num = d;
+
+                    // convert month name to integer using the enumeration
+                    month_num = GetMonth3AsInt(month_string);
+
+                    if (year_num != null && month_num != 0 && day_num != null)
+                    {
+                        // get date as standard string
+                        string date_as_string = year_num.ToString() + " " + month_string + " " + day_num.ToString();
+
+                        return new SplitDate(year_num, month_num, day_num, date_as_string);
+                    }
+                    else
+                    {
+                        return null;
+                    }
+                }
+                else
+                {
+                    return null;
+                }
+            }
+            catch (Exception e)
+            {
+                string s = e.Message;
+                return null;
+            }
+        }
 
         public SplitDate GetDatePartsFromISOString(string dateString)
         {
@@ -136,7 +187,7 @@ namespace DataHarvester
             int? year = (composite_date.Element("Year") == null) ? null : (int?)composite_date.Element("Year");
             int? day = (composite_date.Element("Day") == null) ? null : (int?)composite_date.Element("Day");
 
-            // month may ne a number or a 3 letter month abbreviation
+            // month may be a number or a 3 letter month abbreviation
             int? month = null;
             string monthas3 = (composite_date.Element("Month") == null) ? 
                                           null : (string)composite_date.Element("Month");
@@ -227,7 +278,7 @@ namespace DataHarvester
                 }
                 else if (!year_at_start && year_at_end)
                 {
-                    // very occasionally happens - switch year to beginning
+                    // occasionally happens, as with EUCTR dates - switch year to beginning
                     date_string = pub_year.ToString() + " " + date_string.Substring(date_string.Length - 4, 4).Trim();
                 }
             }
@@ -320,9 +371,9 @@ namespace DataHarvester
         }
 
 
-        public string StandardiseDateFormat(string inputDate)
+        public string StandardiseCTGDateFormat(string inputDate)
         {
-            SplitDate SD = GetDateParts(inputDate);
+            SplitDate SD = GetDatePartsFromCTGString(inputDate);
             return SD.date_string;
         }
 
@@ -332,6 +383,19 @@ namespace DataHarvester
             try
             {
                 return (int)(Enum.Parse<MonthsFull>(month_name));
+            }
+            catch (ArgumentException)
+            {
+                return 0;
+            }
+        }
+
+
+        public int GetMonth3AsInt(string month_abbrev)
+        {
+            try
+            {
+                return (int)(Enum.Parse<Months3>(month_abbrev));
             }
             catch (ArgumentException)
             {

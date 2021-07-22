@@ -699,10 +699,10 @@ namespace DataHarvester.pubmed
 
                     // Create a simple mesh heading record.
 
-                    string topic_ct_code = null, topic_value = null, topic_type = null;
+                    string topic_ct_code = null, topic_orig_value = null, topic_type = null;
                     if (desc != null)
                     {
-                        topic_value = GetElementAsString(desc);
+                        topic_orig_value = GetElementAsString(desc);
                         topic_ct_code = GetAttributeAsString(desc.Attribute("UI"));
                         topic_type = GetAttributeAsString(desc.Attribute("Type"))?.ToLower();
                     }
@@ -712,7 +712,7 @@ namespace DataHarvester.pubmed
                     bool new_topic = true;
                     foreach (ObjectTopic t in topics)
                     {
-                        if (t.topic_value.ToLower() == topic_value.ToLower()
+                        if (t.original_value.ToLower() == topic_orig_value.ToLower()
                             && (t.topic_type == topic_type || (t.topic_type == "chemical / agent" && topic_type == null)))
                         {
                             new_topic = false;
@@ -723,7 +723,7 @@ namespace DataHarvester.pubmed
                     if (new_topic)
                     {
                         topics.Add(new ObjectTopic(sdoid, 0, topic_type, true,
-                                 topic_ct_code, topic_value, "mesh headings"));
+                                 topic_ct_code, topic_orig_value, "mesh headings"));
                     }
 
 
@@ -739,7 +739,7 @@ namespace DataHarvester.pubmed
                             qualvalue = GetElementAsString(em);
 
                             topics.Add(new ObjectTopic(sdoid, 0, topic_type, true,
-                                topic_ct_code, topic_value, qualcode, qualvalue, "mesh headings"));
+                                topic_ct_code, topic_orig_value, qualcode, qualvalue, "mesh headings"));
 
                         }
                     }
@@ -1143,19 +1143,36 @@ namespace DataHarvester.pubmed
                             }
                         }
 
-                        string affiliation = "", affil_identifier = ""; string affil_ident_source = "";
+                        string affiliation = "", affil_identifier = "", affil_organisation = ""; 
+                        string affil_ident_source = "";
                         if (a.Elements("AffiliationInfo").Count() > 0)
                         {
-                            // N.fob. ensure there is an identifier element or the attempted attribute access will throw an exception
-                            // occasionally may be multiple affiliations
                             var person_affiliations = a.Elements("AffiliationInfo");
                             foreach (XElement e in person_affiliations)
                             {
                                 affiliation = GetElementAsString(e.Element("Affiliation")) ?? "";
                                 affil_identifier = GetElementAsString(e.Element("Identifier")) ?? "";
-                                if (affil_identifier != "")
+                                affil_ident_source = GetAttributeAsString(e.Element("Identifier")?.Attribute("Source")) ?? "";
+
+                                
+                                if (affil_ident_source == "INSI")
                                 {
-                                    affil_ident_source = GetAttributeAsString(e.Element("Identifier").Attribute("Source"));
+                                     /*
+                                     * Needs writing to look up affil id and turn it into an organisation
+                                     * ***********************************************************************
+                                     */
+                                }
+                                else if (affil_ident_source == "GRID")
+                                {
+                                    /*
+                                     * Needs writing to look up affil id and turn it into an organisation
+                                     * ***********************************************************************
+                                     */
+                                }
+                                else
+                                {
+                                    // look at affiliation string
+                                    affil_organisation = sh.ExtractOrganisation(affiliation);
                                 }
                             }
 
@@ -1163,8 +1180,7 @@ namespace DataHarvester.pubmed
 
                         contributors.Add(new ObjectContributor(sdoid, 11, "Creator",
                                                             given_name, family_name, full_name,
-                                                            identifier, identifier_source,
-                                                            affiliation, affil_identifier, affil_ident_source));
+                                                            identifier, affiliation, affil_organisation));
 
                     }
 
@@ -1211,8 +1227,27 @@ namespace DataHarvester.pubmed
                 }
 
                 author_string = author_string.Trim();
-            }
 
+                // some contributors may be teams or groups
+
+                if (contributors.Count > 0)
+                {
+                    foreach (ObjectContributor oc in contributors)
+                    {
+                        // check if a group inserted as an individual
+
+                        string fullname = oc.person_full_name.ToLower();
+                        if (ih.CheckIfOrganisation(fullname))
+                        {
+                            oc.organisation_name = oc.person_full_name;
+                            oc.person_full_name = null;
+                            oc.person_given_name = null;
+                            oc.person_family_name = null;
+                            oc.is_individual = false;
+                        }
+                    }
+                }
+            }
             #endregion
 
 

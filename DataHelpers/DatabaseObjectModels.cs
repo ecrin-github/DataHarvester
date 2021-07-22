@@ -19,6 +19,7 @@ namespace DataHarvester
         public string object_type { get; set; }
         public int? managing_org_id { get; set; }
         public string managing_org { get; set; }
+        public string managing_org_ror_id { get; set; }
         public string lang_code { get; set; }
         public int? access_type_id { get; set; }
         public string access_type { get; set; }
@@ -68,6 +69,7 @@ namespace DataHarvester
         public string object_type { get; set; }
         public int? managing_org_id { get; set; }
         public string managing_org { get; set; }
+        public string managing_org_ror_id { get; set; }
         public string lang_code { get; set; }
         public int? access_type_id { get; set; }
         public string access_type { get; set; }
@@ -109,8 +111,8 @@ namespace DataHarvester
 
         public DataObject(string _sd_oid, string _sd_sid, string _display_title, int? _publication_year, int _object_class_id,
                             string _object_class, int? _object_type_id, string _object_type,
-                            int? _managing_org_id, string _managing_org, int? _access_type_id,
-                            DateTime? _datetime_of_data_fetch)
+                            int? _managing_org_id, string _managing_org, 
+                            int? _access_type_id, DateTime? _datetime_of_data_fetch)
         {
             sd_oid = _sd_oid;
             sd_sid = _sd_sid;
@@ -275,9 +277,9 @@ namespace DataHarvester
     public class ObjectTitle
     {
         public string sd_oid { get; set; }
-        public string title_text { get; set; }
         public int? title_type_id { get; set; }
         public string title_type { get; set; }
+        public string title_text { get; set; }
         public string lang_code { get; set; }
         public int lang_usage_id { get; set; }
         public bool is_default { get; set; }
@@ -440,6 +442,7 @@ namespace DataHarvester
         public string identifier_value { get; set; }
         public int? identifier_org_id { get; set; }
         public string identifier_org { get; set; }
+        public string identifier_org_ror_id { get; set; }
         public string identifier_date { get; set; }
 
         public ObjectIdentifier(string _sd_oid, int _type_id, string _type_name,
@@ -493,7 +496,7 @@ namespace DataHarvester
         }
 
         public ObjectDate(string _sd_oid, int _date_type_id, string _date_type,
-                                    string _date_as_string, bool _is_date_range,
+                                    string _date_as_string, bool _date_is_range,
                                     int? _start_year, int? _start_month, int? _start_day,
                                     int? _end_year, int? _end_month, int? _end_day,
                                     string _details)
@@ -502,7 +505,7 @@ namespace DataHarvester
             date_type_id = _date_type_id;
             date_type = _date_type;
             date_as_string = _date_as_string;
-            date_is_range = _is_date_range;
+            date_is_range = _date_is_range;
             start_year = _start_year;
             start_month = _start_month;
             start_day = _start_day;
@@ -568,10 +571,10 @@ namespace DataHarvester
         public int topic_type_id { get; set; }
         public string topic_type { get; set; }
         public bool? mesh_coded { get; set; }
-        public string topic_code { get; set; }
-        public string topic_value { get; set; }
-        public string topic_qualcode { get; set; }
-        public string topic_qualvalue { get; set; }
+        public string mesh_code { get; set; }
+        public string mesh_value { get; set; }
+        public string mesh_qualcode { get; set; }
+        public string mesh_qualvalue { get; set; }
         public int? original_ct_id { get; set; }
         public string original_ct_code { get; set; }
         public string original_value { get; set; }
@@ -580,37 +583,37 @@ namespace DataHarvester
         // used for a mesh coded topic
 
         public ObjectTopic(string _sd_oid, int _topic_type_id, string _topic_type,
-                     bool _mesh_coded, string _topic_code, string _topic_value, string _comments)
+                     bool _mesh_coded, string _mesh_code, string _mesh_value, string _comments)
         {
             sd_oid = _sd_oid;
             topic_type_id = _topic_type_id;
             topic_type = _topic_type;
             mesh_coded = _mesh_coded;
-            topic_code = _topic_code;
-            topic_value = _topic_value;
+            mesh_code = _mesh_code;
+            mesh_value = _mesh_value;
             original_ct_id = 14;
-            original_ct_code = _topic_code;
-            original_value = _topic_value;
+            original_ct_code = _mesh_code;
+            original_value = _mesh_value;
             comments = _comments;
         }
 
         // used for a mesh coded topic with a mesh qualifier
 
         public ObjectTopic(string _sd_oid, int _topic_type_id, string _topic_type,
-                     bool _mesh_coded, string _topic_code, string _topic_value, 
-                     string _topic_qualcode, string _topic_qualvalue, string _comments)
+                     bool _mesh_coded, string _mesh_code, string _mesh_value, 
+                     string _mesh_qualcode, string _mesh_qualvalue, string _comments)
         {
             sd_oid = _sd_oid;
             topic_type_id = _topic_type_id;
             topic_type = _topic_type;
             mesh_coded = _mesh_coded;
-            topic_code = _topic_code;
-            topic_value = _topic_value;
-            topic_qualcode = _topic_qualcode;
-            topic_qualvalue = _topic_qualvalue;
+            mesh_code = _mesh_code;
+            mesh_value = _mesh_value;
+            mesh_qualcode = _mesh_qualcode;
+            mesh_qualvalue = _mesh_qualvalue;
             original_ct_id = 14;
-            original_ct_code = _topic_code + "/" + _topic_qualcode;
-            original_value = _topic_value + '/' + _topic_qualvalue;
+            original_ct_code = _mesh_code + "/" + _mesh_qualcode;
+            original_value = _mesh_value + '/' + _mesh_qualvalue;
             comments = _comments;
         }
         
@@ -623,7 +626,6 @@ namespace DataHarvester
             topic_type_id = _topic_type_id;
             topic_type = _topic_type;
             mesh_coded = false;
-            topic_value = _topic_value;
             original_ct_id = 0;
             original_value = _topic_value;
         }
@@ -638,7 +640,6 @@ namespace DataHarvester
             topic_type_id = _topic_type_id;
             topic_type = _topic_type;
             mesh_coded = false;
-            topic_value = _topic_value;
             original_ct_id = _original_ct_id;
             original_ct_code = _original_ct_code;
             original_value = _topic_value;
@@ -647,28 +648,26 @@ namespace DataHarvester
 
     }
 
-
+      
     public class ObjectContributor
     {
         public string sd_oid { get; set; }
         public int? contrib_type_id { get; set; }
         public string contrib_type { get; set; }
         public bool is_individual { get; set; }
-        public int? organisation_id { get; set; }
-        public string organisation_name { get; set; }
         public int? person_id { get; set; }
         public string person_given_name { get; set; }
         public string person_family_name { get; set; }
         public string person_full_name { get; set; }
-        public string person_identifier { get; set; }
-        public string person_ident_srce { get; set; }
-        public string person_aff_org { get; set; }
-        public string person_aff_org_id { get; set; }
-        public string person_aff_org_id_srce { get; set; }
+        public string orcid_id { get; set; }
+        public string person_affiliation { get; set; }
+        public int? organisation_id { get; set; }
+        public string organisation_name { get; set; }
+        public string organisation_ror_id { get; set; }
 
         public ObjectContributor(string _sd_oid, int? _contrib_type_id, string _contrib_type,
                                 int? _organisation_id, string _organisation_name, string _person_full_name,
-                                string _person_aff_org)
+                                string _person_affiliation)
         {
             sd_oid = _sd_oid;
             contrib_type_id = _contrib_type_id;
@@ -677,13 +676,14 @@ namespace DataHarvester
             organisation_id = _organisation_id;
             organisation_name = _organisation_name;
             person_full_name = _person_full_name;
-            person_aff_org = _person_aff_org;
+            person_affiliation = _person_affiliation;
         }
+
 
         public ObjectContributor(string _sd_oid, int? _contrib_type_id, string _contrib_type,
                                 string _person_given_name, string _person_family_name, string _person_full_name,
-                                string _person_identifier, string _person_ident_srce,
-                                string _person_aff_org, string _person_aff_org_id, string _person_aff_org_id_srce)
+                                string _orcid_id, string _person_affiliation,
+                                string _organisation_name)
         {
             sd_oid = _sd_oid;
             contrib_type_id = _contrib_type_id;
@@ -692,13 +692,32 @@ namespace DataHarvester
             person_given_name = _person_given_name;
             person_family_name = _person_family_name;
             person_full_name = _person_full_name;
-            person_identifier = _person_identifier;
-            person_ident_srce = _person_ident_srce;
-            person_aff_org = _person_aff_org;
-            person_aff_org_id = _person_aff_org_id;
-            person_aff_org_id_srce = _person_aff_org_id_srce;
+            orcid_id = _orcid_id;
+            person_affiliation = _person_affiliation;
+            organisation_name = _organisation_name;
+        }
+
+
+        public ObjectContributor(string _sd_oid, int? _contrib_type_id, string _contrib_type,
+                                string _person_given_name, string _person_family_name, string _person_full_name,
+                                string _orcid_id, string _person_affiliation, 
+                                int _organisation_id, string _organisation_name)
+        {
+            sd_oid = _sd_oid;
+            contrib_type_id = _contrib_type_id;
+            contrib_type = _contrib_type;
+            is_individual = (_person_full_name == null) ? false : true;
+            person_given_name = _person_given_name;
+            person_family_name = _person_family_name;
+            person_full_name = _person_full_name;
+            orcid_id = _orcid_id;
+            person_affiliation = _person_affiliation;
+            organisation_id = _organisation_id;
+            organisation_name = _organisation_name;
         }
     }
+
+    
 
     // The Object Right class
 

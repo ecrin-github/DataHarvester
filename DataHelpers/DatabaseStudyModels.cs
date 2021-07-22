@@ -19,7 +19,7 @@ namespace DataHarvester
         public string study_type { get; set; }
         public int? study_status_id { get; set; }
         public string study_status { get; set; }
-        public int? study_enrolment { get; set; }
+        public string study_enrolment { get; set; }
         public int? study_gender_elig_id { get; set; }
         public string study_gender_elig { get; set; }
 
@@ -66,7 +66,7 @@ namespace DataHarvester
         public string study_type { get; set; }
         public int? study_status_id { get; set; }
         public string study_status { get; set; }
-        public int? study_enrolment { get; set; }
+        public string study_enrolment { get; set; }
         public int? study_gender_elig_id { get; set; }
         public string study_gender_elig { get; set; }
 
@@ -160,21 +160,19 @@ namespace DataHarvester
         public int? contrib_type_id { get; set; }
         public string contrib_type { get; set; }
         public bool is_individual { get; set; }
-        public int? organisation_id { get; set; }
-        public string organisation_name { get; set; }
         public int? person_id { get; set; }
         public string person_given_name { get; set; }
         public string person_family_name { get; set; }
         public string person_full_name { get; set; }
-        public string person_identifier { get; set; }
-        public string person_ident_srce { get; set; }
-        public string person_aff_org { get; set; }
-        public string person_aff_org_id { get; set; }
-        public string person_aff_org_id_srce { get; set; }
+        public string orcid_id { get; set; }
+        public string person_affiliation { get; set; }
+        public int? organisation_id { get; set; }
+        public string organisation_name { get; set; }
+        public string organisation_ror_id { get; set; }
 
         public StudyContributor(string _sd_sid, int? _contrib_type_id, string _contrib_type,
                                 int? _organisation_id, string _organisation_name, string _person_full_name,
-                                string _person_aff_org)
+                                string _person_affiliation)
         {
             sd_sid = _sd_sid;
             contrib_type_id = _contrib_type_id;
@@ -183,10 +181,37 @@ namespace DataHarvester
             organisation_id = _organisation_id;
             organisation_name = _organisation_name;
             person_full_name = _person_full_name;
-            person_aff_org = _person_aff_org;
+            person_affiliation = _person_affiliation;
         }
 
-        // more constructors needed here
+        // adding personal contributor, usually from CTG
+        
+        public StudyContributor(string _sd_sid, int? _contrib_type_id, string _contrib_type,
+                                string _person_full_name,
+                                string _person_affiliation, string _affil_organisation_name)
+        {
+            sd_sid = _sd_sid;
+            contrib_type_id = _contrib_type_id;
+            contrib_type = _contrib_type;
+            is_individual = true;
+            person_full_name = _person_full_name;
+            person_affiliation = _person_affiliation;
+            organisation_name = _affil_organisation_name;
+        }
+
+        // adding organisational contributor
+        
+        public StudyContributor(string _sd_sid, int? _contrib_type_id, string _contrib_type,
+                                int? _organisation_id, string _organisation_name)
+        {
+            sd_sid = _sd_sid;
+            contrib_type_id = _contrib_type_id;
+            contrib_type = _contrib_type;
+            is_individual = false;
+            organisation_id = _organisation_id;
+            organisation_name = _organisation_name;
+        }
+
     }
 
 
@@ -230,11 +255,12 @@ namespace DataHarvester
     public class StudyIdentifier
     {
         public string sd_sid { get; set; }
-        public string identifier_value { get; set; }
         public int? identifier_type_id { get; set; }
         public string identifier_type { get; set; }
+        public string identifier_value { get; set; }
         public int? identifier_org_id { get; set; }
         public string identifier_org { get; set; }
+        public string identifier_org_ror_id { get; set; }
         public string identifier_date { get; set; }
         public string identifier_link { get; set; }
 
@@ -275,10 +301,10 @@ namespace DataHarvester
         public int topic_type_id { get; set; }
         public string topic_type { get; set; }
         public bool? mesh_coded { get; set; }
-        public string topic_code { get; set; }
-        public string topic_value { get; set; }
-        public string topic_qualcode { get; set; }
-        public string topic_qualvalue { get; set; }
+        public string mesh_code { get; set; }
+        public string mesh_value { get; set; }
+        public string mesh_qualcode { get; set; }
+        public string mesh_qualvalue { get; set; }
         public int? original_ct_id { get; set; }
         public string original_ct_code { get; set; }
         public string original_value { get; set; }
@@ -287,17 +313,17 @@ namespace DataHarvester
         // used for a mesh coded topic (no qualifiers for study topic codes)
 
         public StudyTopic(string _sd_sid, int _topic_type_id, string _topic_type,
-                     bool _mesh_coded, string _topic_code, string _topic_value, string _comments)
+                     bool _mesh_coded, string _mesh_code, string _mesh_value, string _comments)
         {
             sd_sid = _sd_sid;
             topic_type_id = _topic_type_id;
             topic_type = _topic_type;
             mesh_coded = _mesh_coded;
-            topic_code = _topic_code;
-            topic_value = _topic_value;
+            mesh_code = _mesh_code;
+            mesh_value = _mesh_value;
             original_ct_id = 14;
-            original_ct_code = _topic_code;
-            original_value = _topic_value;
+            original_ct_code = _mesh_code;
+            original_value = _mesh_value;
             comments = _comments;
         }
 
@@ -310,7 +336,6 @@ namespace DataHarvester
             topic_type_id = _topic_type_id;
             topic_type = _topic_type;
             mesh_coded = false;
-            topic_value = _topic_value;
             original_ct_id = 0;
             original_value = _topic_value;
         }
@@ -324,7 +349,6 @@ namespace DataHarvester
             topic_type_id = _topic_type_id;
             topic_type = _topic_type;
             mesh_coded = false;
-            topic_value = _topic_value;
             original_ct_id = 0;
             original_value = _topic_value;
             comments = _comments;
@@ -341,7 +365,6 @@ namespace DataHarvester
             topic_type_id = _topic_type_id;
             topic_type = _topic_type;
             mesh_coded = false;
-            topic_value = _topic_value;
             original_ct_id = _original_ct_id;
             original_ct_code = _original_ct_code;
             original_value = _topic_value;

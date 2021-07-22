@@ -41,7 +41,7 @@ namespace DataHarvester
               , study_type             VARCHAR         NULL
               , study_status_id        INT             NULL
               , study_status           VARCHAR         NULL
-              , study_enrolment        INT             NULL
+              , study_enrolment        VARCHAR         NULL
               , study_gender_elig_id   INT             NULL
               , study_gender_elig      VARCHAR         NULL
               , min_age                INT             NULL
@@ -72,6 +72,7 @@ namespace DataHarvester
               , identifier_type        VARCHAR         NULL
               , identifier_org_id      INT             NULL
               , identifier_org         VARCHAR         NULL
+              , identifier_org_ror_id  VARCHAR         NULL
               , identifier_date        VARCHAR         NULL
               , identifier_link        VARCHAR         NULL
               , record_hash            CHAR(32)        NULL
@@ -152,17 +153,15 @@ namespace DataHarvester
               , contrib_type_id        INT             NULL
               , contrib_type           VARCHAR         NULL
               , is_individual          BOOLEAN         NULL
-              , organisation_id        INT             NULL
-              , organisation_name      VARCHAR         NULL
               , person_id              INT             NULL
               , person_given_name      VARCHAR         NULL
               , person_family_name     VARCHAR         NULL
               , person_full_name       VARCHAR         NULL
-              , person_identifier      VARCHAR         NULL
-              , identifier_type        VARCHAR         NULL
+              , orcid_id               VARCHAR         NULL
               , person_affiliation     VARCHAR         NULL
-              , affil_org_id           VARCHAR         NULL
-              , affil_org_id_type      VARCHAR         NULL
+              , organisation_id        INT             NULL
+              , organisation_name      VARCHAR         NULL
+              , organisation_ror_id    VARCHAR         NULL
               , record_hash            CHAR(32)        NULL
             );
             CREATE INDEX study_contributors_sd_sid ON sdcomp.study_contributors(sd_sid);";
@@ -181,10 +180,10 @@ namespace DataHarvester
               , topic_type_id          INT             NULL
               , topic_type             VARCHAR         NULL
               , mesh_coded             BOOLEAN         NULL
-              , topic_code             VARCHAR         NULL
-              , topic_value            VARCHAR         NULL
-              , topic_qualcode         VARCHAR         NULL
-              , topic_qualvalue        VARCHAR         NULL
+              , mesh_code              VARCHAR         NULL
+              , mesh_value             VARCHAR         NULL
+              , mesh_qualcode          VARCHAR         NULL
+              , mesh_qualvalue         VARCHAR         NULL
               , original_ct_id         INT             NULL
               , original_ct_code       VARCHAR         NULL
               , original_value         VARCHAR         NULL
