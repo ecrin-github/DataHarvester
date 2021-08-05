@@ -31,7 +31,7 @@ namespace DataHarvester
         public bool add_study_topics { get; set; }
         public DateTime? datetime_of_data_fetch { get; set; }
 
-        public List<string> language_list { get; set; }
+        public JournalDetails journal_details { get; set; }
         public List<ObjectDate> object_dates { get; set; }
         public List<ObjectTitle> object_titles { get; set; }
         public List<ObjectIdentifier> object_identifiers { get; set; }
@@ -45,6 +45,8 @@ namespace DataHarvester
         public List<ObjectRight> object_rights { get; set; }
         public List<ObjectDBLink> object_db_ids { get; set; }
 
+        // only used from the pubmed processing
+
         public FullDataObject(string _sd_oid, DateTime? _datetime_of_data_fetch)
         {
             sd_oid = _sd_oid;
@@ -53,7 +55,7 @@ namespace DataHarvester
 
     }
 
-    [Table("sd.DataObjects")]
+    [Table("sd.data_objects")]
     public class DataObject
     {
         public string sd_oid { get; set; }
@@ -293,6 +295,7 @@ namespace DataHarvester
             title_type_id = _title_type_id;
             title_type = _title_type;
             lang_code = "en";
+            lang_usage_id = 11;  // default
             is_default = _is_default;
         }
 
@@ -304,6 +307,7 @@ namespace DataHarvester
             title_type_id = _title_type_id;
             title_type = _title_type;
             lang_code = "en";
+            lang_usage_id = 11;  // default
             is_default = _is_default;
             comments = _comments;
         }
@@ -578,12 +582,11 @@ namespace DataHarvester
         public int? original_ct_id { get; set; }
         public string original_ct_code { get; set; }
         public string original_value { get; set; }
-        public string comments { get; set; }
 
         // used for a mesh coded topic
 
         public ObjectTopic(string _sd_oid, int _topic_type_id, string _topic_type,
-                     bool _mesh_coded, string _mesh_code, string _mesh_value, string _comments)
+                     bool _mesh_coded, string _mesh_code, string _mesh_value)
         {
             sd_oid = _sd_oid;
             topic_type_id = _topic_type_id;
@@ -594,14 +597,13 @@ namespace DataHarvester
             original_ct_id = 14;
             original_ct_code = _mesh_code;
             original_value = _mesh_value;
-            comments = _comments;
         }
 
         // used for a mesh coded topic with a mesh qualifier
 
         public ObjectTopic(string _sd_oid, int _topic_type_id, string _topic_type,
                      bool _mesh_coded, string _mesh_code, string _mesh_value, 
-                     string _mesh_qualcode, string _mesh_qualvalue, string _comments)
+                     string _mesh_qualcode, string _mesh_qualvalue)
         {
             sd_oid = _sd_oid;
             topic_type_id = _topic_type_id;
@@ -614,7 +616,6 @@ namespace DataHarvester
             original_ct_id = 14;
             original_ct_code = _mesh_code + "/" + _mesh_qualcode;
             original_value = _mesh_value + '/' + _mesh_qualvalue;
-            comments = _comments;
         }
         
         // non mesh coded topic - topic type and name only
@@ -634,7 +635,7 @@ namespace DataHarvester
 
         public ObjectTopic(string _sd_sid, int _topic_type_id, string _topic_type,
                            string _topic_value, int? _original_ct_id, 
-                           string _original_ct_code, string _comments)
+                           string _original_ct_code)
         {
             sd_oid = _sd_sid;
             topic_type_id = _topic_type_id;
@@ -643,7 +644,6 @@ namespace DataHarvester
             original_ct_id = _original_ct_id;
             original_ct_code = _original_ct_code;
             original_value = _topic_value;
-            comments = _comments;
         }
 
     }
@@ -757,7 +757,24 @@ namespace DataHarvester
         }
     }
 
-    
+
+    [Table("sd.journal_details")]
+    public class JournalDetails
+    {
+        public string sd_oid { get; set; }
+        public int? publisher_id { get; set; }
+        public string publisher { get; set; }
+        public string journal_title { get; set; }
+        public string pissn { get; set; }
+        public string eissn { get; set; }
+
+        public JournalDetails(string _sd_oid)
+        {
+            sd_oid = _sd_oid;
+        }
+    }
+
+    /*
     public class CitationObject
     {
         public string sd_oid { get; set; }
@@ -805,7 +822,7 @@ namespace DataHarvester
     }
 
 
-    [Table("sd.Citation_objects")]
+    [Table("sd.citation_objects")]
     public class CitationObjectInDB
     {
         public string sd_oid { get; set; }
@@ -862,4 +879,5 @@ namespace DataHarvester
             eissn = c.eissn;
         }
     }
+        */
 }

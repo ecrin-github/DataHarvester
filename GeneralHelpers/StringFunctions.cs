@@ -14,15 +14,21 @@ namespace DataHarvester
 
         public string TidyPersonName(string in_name)
         {
+            // Remove periods and dashes
 
             string name = in_name.Replace(".", "");
-            name = name.Replace("-", "");
+
+            // Check for professional titles
 
             string low_name = name.ToLower();
 
             if (low_name.StartsWith("professor "))
             {
                 name = name.Substring(10);
+            }
+            else if (low_name.StartsWith("associate professor "))
+            {
+                name = name.Substring(20);
             }
             else if (low_name.StartsWith("prof "))
             {
@@ -32,30 +38,45 @@ namespace DataHarvester
             {
                 name = name.Substring(7);
             }
-            if (low_name.StartsWith("dr ") || low_name.StartsWith("mr ")
-                || low_name.StartsWith("ms ")) 
+            else if (low_name.StartsWith("dr ") || low_name.StartsWith("mr ")
+                || low_name.StartsWith("ms "))
             { 
                 name = name.Substring(3); 
             }
-            else if (low_name.StartsWith("dr") 
+            else if (low_name.StartsWith("dr") && low_name.Length > 2
                 && name[2].ToString() == low_name[2].ToString().ToUpper())
             {
                 name = name.Substring(2);
             }
+            else if (low_name =="dr" || low_name =="mr"
+                || low_name =="ms")
+            {
+                name = "";
+            }
+
+            // Remove trailing qualifications
 
             int comma_pos = name.IndexOf(',');
             if (comma_pos > -1) 
             { 
                 name = name.Substring(0, comma_pos); 
             }
-            name = name.Trim();
 
-            if (name == "")
+            string low_name2 = name.ToLower();
+            if (low_name2.EndsWith(" phd") || low_name2.EndsWith(" msc"))
             {
-                name = null;
+                name = name.Substring(0, name.Length - 3);
+            }
+            else if (low_name2.EndsWith(" ms"))
+            {
+                name = name.Substring(0, name.Length - 2);
+            }
+            else if (low_name2.EndsWith(" ms(ophthal)"))
+            {
+                name = name.Substring(0, name.Length - 12);
             }
 
-            return name;
+            return name.Trim(' ', '-');
         }
 
 
@@ -70,7 +91,7 @@ namespace DataHarvester
                 low_name.Contains("trials") ||
                 low_name.Contains("pharma") ||
                 low_name.Contains("ltd") ||
-                low_name.Contains("inc") 
+                low_name.Contains("inc.") 
                )
             {
                 result = false;
@@ -79,14 +100,18 @@ namespace DataHarvester
             return result;
         }
 
+
         public string ReplaceApos(string apos_name)
         {
             try
             {
+
                 if (apos_name == null)
                 {
                     return null;
                 }
+
+                apos_name = apos_name.Replace("&#44;", ",");
 
                 while (apos_name.Contains("'"))
                 {
@@ -183,7 +208,7 @@ namespace DataHarvester
                     {
                         // replace any li start tags with a carriage return and bullet
 
-                        int start_pos = output_string.IndexOf("<li ");
+                        int start_pos = output_string.IndexOf("<li");
                         int end_pos = output_string.IndexOf(">", start_pos);
                         output_string = output_string.Substring(0, start_pos) + "\n\u2022 " + output_string.Substring(end_pos + 1);
                     }
@@ -425,20 +450,43 @@ namespace DataHarvester
         }
 
 
-        public string CheckWHOTitle(string in_title)
+        public bool AppearsGenuineTitle(string in_title)
         {
-            string out_title = "";
-            if (!string.IsNullOrEmpty(in_title))
+            if (string.IsNullOrEmpty(in_title))
             {
-                string lower_title = in_title.ToLower().Trim();
-                if (lower_title != "n.a." && lower_title != "na"
-                    && lower_title != "n.a" && lower_title != "n/a"
-                    && lower_title != "no disponible" && lower_title != "not available")
-                {
-                    out_title = ReplaceApos(in_title);
-                }
+                return false;
             }
-            return out_title;
+            else
+            {
+                bool result = true;
+                string lower_title = in_title.ToLower().Trim();
+
+                if (lower_title == "n.a." || lower_title == "na" 
+                        || lower_title == "n.a" || lower_title == "n/a")
+                {
+                    result = false;
+                }
+                else if (lower_title.StartsWith("not applic") || lower_title.StartsWith("not aplic")
+                        || lower_title.StartsWith("non applic") || lower_title.StartsWith("non aplic")
+                        || lower_title.StartsWith("no applic") || lower_title.StartsWith("no aplic"))
+                {
+                    result = false;
+                }
+                else if (lower_title.StartsWith("see ") || lower_title.StartsWith("not avail")
+                        || lower_title.StartsWith("non dispo"))
+                {
+                    result = false;
+                }
+                else if ( lower_title == "none" || lower_title == "not done" 
+                        || lower_title == "same as above" || lower_title == "in preparation" 
+                        || lower_title == "non fornito")
+                {
+                    result = false;
+                }
+
+                // out_title = ReplaceApos(in_title);
+                return result;
+            }
         }
 
 
@@ -465,7 +513,11 @@ namespace DataHarvester
 
                 name = ReplaceApos(name);
 
-                // try and deal with possible ambiguities (organmisations with genuinely the same name)
+                // Trim any odd' characters
+
+                name = name.Trim(',', '-', '*', ';', ' ');
+
+                // try and deal with possible ambiguities (organisations with genuinely the same name)
 
                 string nlower = name.ToLower();
                 if (nlower.Contains("newcastle") && nlower.Contains("university")
@@ -533,8 +585,12 @@ namespace DataHarvester
                 bool result = true;
                 string in_name = org_name.ToLower();
 
-                if (in_name == "-" || in_name == "n.a." || in_name == "n a" || in_name == "n/a" ||
-                    in_name == "na" || in_name == "nil" || in_name == "nill" || in_name == "no" || in_name == "non")
+                if (in_name.Length < 3 )
+                {
+                    result = false;
+                }
+                else if (in_name == "n.a." || in_name == "n a" || in_name == "n/a" ||
+                   in_name == "nil" || in_name == "nill" || in_name == "non")
                 {
                     result = false;
                 }
@@ -552,18 +608,46 @@ namespace DataHarvester
                 {
                     result = false;
                 }
+                else if (in_name.Contains("thesis") || in_name.Contains(" none."))
+                {
+                    result = false;
+                }
+                else if (in_name.StartsWith("professor") || in_name.StartsWith("prof ")
+                    || in_name.StartsWith("prof. ") || in_name.StartsWith("associate prof"))
+                {
+                    result = false;
+                }
+                else if (in_name.StartsWith("dr med ") || in_name.StartsWith("dr ") || in_name.StartsWith("mr ")
+                    || in_name.StartsWith("ms "))
+                {
+                    result = false;
+                }
+                else if (in_name.StartsWith("dr")
+                    && org_name[2].ToString() == in_name[2].ToString().ToUpper())
+                {
+                    result = false;
+                }
 
                 return result;
             }
         }
 
 
-        public string ExtractOrganisation(string affiliation)
+        public string ExtractOrganisation(string affiliation, string sid)
         {
+            if (affiliation == null)
+            {
+                return null;
+            }
+
             string affil_organisation = "";
             string aff = affiliation.ToLower();
-
-            if (aff.Contains("univers"))
+            
+            if (!aff.Contains(","))
+            {
+                affil_organisation = affiliation;
+            }
+            else if (aff.Contains("univers"))
             {
                 affil_organisation = FindSubPhrase(affiliation, "univers");
             }
@@ -583,6 +667,10 @@ namespace DataHarvester
             {
                 affil_organisation = FindSubPhrase(affiliation, "instit");
             }
+            else if (aff.Contains("nation"))
+            {
+                affil_organisation = FindSubPhrase(affiliation, "nation");
+            }
             else if (aff.Contains(" inc."))
             {
                 affil_organisation = FindSubPhrase(affiliation, " inc.");
@@ -592,7 +680,7 @@ namespace DataHarvester
                 affil_organisation = FindSubPhrase(affiliation, " ltd");
             }
 
-            return affil_organisation;
+            return TidyOrgName(affil_organisation, sid);
         }
 
 
@@ -617,7 +705,6 @@ namespace DataHarvester
             if (org_name.ToLower().StartsWith("the "))
             {
                 org_name = org_name.Substring(4);
-                
             }
             return org_name;
         }

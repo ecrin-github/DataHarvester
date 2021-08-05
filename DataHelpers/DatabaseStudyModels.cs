@@ -125,6 +125,7 @@ namespace DataHarvester
             title_type_id = _title_type_id;
             title_type = _title_type;
             lang_code = "en";
+            lang_usage_id = 11;  // default
             is_default = _is_default;
         }
 
@@ -135,6 +136,7 @@ namespace DataHarvester
             title_type_id = _title_type_id;
             title_type = _title_type;
             lang_code = "en";
+            lang_usage_id = 11;  // default
             is_default = _is_default;
             comments = _comments;
         }
@@ -308,12 +310,11 @@ namespace DataHarvester
         public int? original_ct_id { get; set; }
         public string original_ct_code { get; set; }
         public string original_value { get; set; }
-        public string comments { get; set; }
 
         // used for a mesh coded topic (no qualifiers for study topic codes)
 
         public StudyTopic(string _sd_sid, int _topic_type_id, string _topic_type,
-                     bool _mesh_coded, string _mesh_code, string _mesh_value, string _comments)
+                     bool _mesh_coded, string _mesh_code, string _mesh_value)
         {
             sd_sid = _sd_sid;
             topic_type_id = _topic_type_id;
@@ -324,7 +325,6 @@ namespace DataHarvester
             original_ct_id = 14;
             original_ct_code = _mesh_code;
             original_value = _mesh_value;
-            comments = _comments;
         }
 
         // non mesh coded topic - topic type and name only
@@ -336,22 +336,7 @@ namespace DataHarvester
             topic_type_id = _topic_type_id;
             topic_type = _topic_type;
             mesh_coded = false;
-            original_ct_id = 0;
             original_value = _topic_value;
-        }
-
-        // non mesh coded topic - topic type and name with comments
-
-        public StudyTopic(string _sd_sid, int _topic_type_id,
-                          string _topic_type, string _topic_value, string _comments)
-        {
-            sd_sid = _sd_sid;
-            topic_type_id = _topic_type_id;
-            topic_type = _topic_type;
-            mesh_coded = false;
-            original_ct_id = 0;
-            original_value = _topic_value;
-            comments = _comments;
         }
 
 
@@ -359,7 +344,7 @@ namespace DataHarvester
 
         public StudyTopic(string _sd_sid, int _topic_type_id, string _topic_type,
                           string _topic_value, int? _original_ct_id, 
-                          string _original_ct_code, string _comments)
+                          string _original_ct_code)
         {
             sd_sid = _sd_sid;
             topic_type_id = _topic_type_id;
@@ -368,7 +353,6 @@ namespace DataHarvester
             original_ct_id = _original_ct_id;
             original_ct_code = _original_ct_code;
             original_value = _topic_value;
-            comments = _comments;
         }
 
     }

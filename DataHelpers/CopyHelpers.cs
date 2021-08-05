@@ -40,8 +40,7 @@ namespace DataHarvester
                 .MapVarchar("mesh_qualvalue", x => x.mesh_qualvalue)
                 .MapInteger("original_ct_id", x => x.original_ct_id)
                 .MapVarchar("original_ct_code", x => x.original_ct_code)
-                .MapVarchar("original_value", x => x.original_value)
-                .MapVarchar("comments", x => x.comments);
+                .MapVarchar("original_value", x => x.original_value);
 
 
         public PostgreSQLCopyHelper<StudyContributor> study_contributors_helper =
@@ -211,9 +210,6 @@ namespace DataHarvester
                 .MapInteger("contrib_type_id", x => x.contrib_type_id)
                 .MapVarchar("contrib_type", x => x.contrib_type)
                 .MapBoolean("is_individual", x => x.is_individual)
-                .MapInteger("organisation_id", x => x.organisation_id)
-                .MapVarchar("organisation_name", x => x.organisation_name)
-                .MapVarchar("organisation_ror_id", x => x.organisation_ror_id)
                 .MapInteger("person_id", x => x.person_id)
                 .MapVarchar("person_given_name", x => x.person_given_name)
                 .MapVarchar("person_family_name", x => x.person_family_name)
@@ -283,8 +279,7 @@ namespace DataHarvester
                 .MapVarchar("mesh_qualvalue", x => x.mesh_qualvalue)
                 .MapInteger("original_ct_id", x => x.original_ct_id)
                 .MapVarchar("original_ct_code", x => x.original_ct_code)
-                .MapVarchar("original_value", x => x.original_value)
-                .MapVarchar("comments", x => x.comments);
+                .MapVarchar("original_value", x => x.original_value);
 
 
         public PostgreSQLCopyHelper<ObjectRight> object_rights_helper =

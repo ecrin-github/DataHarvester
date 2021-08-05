@@ -54,6 +54,7 @@ namespace DataHarvester.pubmed
             List<ObjectComment> comments = new List<ObjectComment>();
             List<ObjectDBLink> db_ids = new List<ObjectDBLink>();
 
+            List<string> language_list = new List<string>();
             string author_string = "";
             string art_title = "";
             string journal_title = "";
@@ -69,6 +70,15 @@ namespace DataHarvester.pubmed
             string sdoid = GetElementAsString(citation.Element("PMID"));
 
             FullDataObject fob = new FullDataObject(sdoid, download_datetime);
+
+            // add in the defaults foprm puibmed articles
+            fob.object_class_id = 23;
+            fob.object_class = "Text";
+            fob.object_type_id = 12;
+            fob.object_type = "Journal Article";
+            fob.add_study_contribs = false;
+            fob.add_study_topics = false;
+            fob.eosc_category = 0;
 
             identifiers.Add(new ObjectIdentifier(sdoid, 16, "PMID", sdoid, 100133, "National Library of Medicine"));
 
@@ -143,7 +153,6 @@ namespace DataHarvester.pubmed
             var languages = article.Elements("Language");
             if (languages.Count() > 0)
             {
-                fob.language_list = languages.Select(g => GetElementAsString(g)).ToList();
                 string lang_list = "";
                 foreach (string g in languages)
                 {
@@ -161,6 +170,7 @@ namespace DataHarvester.pubmed
                             lang_2code = _mon_repo.lang_3_to_2(g);
                         }
                     }
+                    language_list.Add(lang_2code);
                     lang_list += ", " + lang_2code;
                 }
                 fob.lang_code = lang_list.Substring(2);
@@ -187,7 +197,9 @@ namespace DataHarvester.pubmed
 
             if (journal != null)
             {
-                string journalTitle = GetElementAsString(journal.Element("Title"));
+                JournalDetails jd = new JournalDetails(sdoid);
+                jd.journal_title = GetElementAsString(journal.Element("Title"));
+
                 IEnumerable<XElement> ISSNs = journal.Elements("ISSN");
                 if (ISSNs.Count() > 0)
                 {
@@ -203,6 +215,7 @@ namespace DataHarvester.pubmed
                             {
                                 pissn = pissn.Substring(0, 4) + pissn.Substring(5, 4);
                             }
+                            jd.pissn = pissn;
                         }
                         if (ISSN_type == "Electronic")
                         {
@@ -211,10 +224,14 @@ namespace DataHarvester.pubmed
                             {
                                 eissn = eissn.Substring(0, 4) + eissn.Substring(5, 4);
                             }
+                            jd.eissn = eissn;
                         }
                     }
                 }
+
+                fob.journal_details = jd;
             }
+
 
             // Get the main article title and check for any html. Log any exception conditions.
             // Can't use the standard helper methods here as these strip out contained html,
@@ -266,17 +283,13 @@ namespace DataHarvester.pubmed
                     // Try and get vernacular code language - not explicitly given so
                     // all methods imperfect but seem to work in most situations so far.
 
-                    foreach (string s in fob.language_list)
+                    // Find first, if any, of non english in language list
+
+                    foreach (string s in language_list)
                     {
-                        if (s != "eng")
+                        if (s != "en")
                         {
-                            string lang_2code = sh.lang_3_to_2(s);
-                            if (lang_2code == "??")
-                            {
-                                // need to use the database
-                                lang_2code = _mon_repo.lang_3_to_2(s);
-                            }
-                            vlang_code = lang_2code;
+                            vlang_code = s;
                             break;
                         }
                     }
@@ -352,7 +365,7 @@ namespace DataHarvester.pubmed
 
                 if (atitle.StartsWith("["))
                 {
-                    string poss_comment = "";
+                    string poss_comment = null;
 
                     // Strip off any final full stops from brackets, parenthesis, to make testing below easier.
 
@@ -416,7 +429,7 @@ namespace DataHarvester.pubmed
                         // Both titles are present, add them both, with the vernacular title as the default.
 
                         titles.Add(new ObjectTitle(sdoid, atitle, 19, "Journal article title", "en", 12, false, poss_comment));
-                        titles.Add(new ObjectTitle(sdoid, vtitle, 19, "Journal article title", vlang_code, 21, true, ""));
+                        titles.Add(new ObjectTitle(sdoid, vtitle, 19, "Journal article title", vlang_code, 21, true, null));
                     }
 
                 }
@@ -430,12 +443,12 @@ namespace DataHarvester.pubmed
                         // Possibly something odd, vernacular title but no indication of translation in article title.
                         // Add the vernacular title, will not be the default in this case.
 
-                        titles.Add(new ObjectTitle(sdoid, vtitle, 19, "Journal article title", vlang_code, 21, false, ""));
+                        titles.Add(new ObjectTitle(sdoid, vtitle, 19, "Journal article title", vlang_code, 21, false, null));
                     }
 
                     // The most common, default situation - simply add only title as the default title record in English.
 
-                    titles.Add(new ObjectTitle(sdoid, atitle, 19, "Journal article title", "en", 11, true, ""));
+                    titles.Add(new ObjectTitle(sdoid, atitle, 19, "Journal article title", "en", 11, true, null));
                 }
             }
             else
@@ -444,7 +457,7 @@ namespace DataHarvester.pubmed
 
                 if (vernacular_title_present)
                 {
-                    titles.Add(new ObjectTitle(sdoid, vtitle, 19, "Journal article title", vlang_code, 21, true, ""));
+                    titles.Add(new ObjectTitle(sdoid, vtitle, 19, "Journal article title", vlang_code, 21, true, null));
                 }
             }
 
@@ -464,8 +477,7 @@ namespace DataHarvester.pubmed
 
 
             // Obtain and store publication status.
-
-            string publication_status = GetElementAsString(pubmed.Element("PublicationStatus"));
+            //string publication_status = GetElementAsString(pubmed.Element("PublicationStatus"));
 
             // Obtain any article databank list - to identify links to
             // registries and / or gene or protein databases. Each distinct bank
@@ -682,7 +694,7 @@ namespace DataHarvester.pubmed
                         }
 
                         topics.Add(new ObjectTopic(sdoid, 12, "chemical / agent", true, 
-                                 topic_ct_code, GetElementAsString(chemName), "chemicals list"));
+                                 topic_ct_code, GetElementAsString(chemName)));
                     }
                 }
             }
@@ -723,7 +735,7 @@ namespace DataHarvester.pubmed
                     if (new_topic)
                     {
                         topics.Add(new ObjectTopic(sdoid, 0, topic_type, true,
-                                 topic_ct_code, topic_orig_value, "mesh headings"));
+                                 topic_ct_code, topic_orig_value));
                     }
 
 
@@ -739,7 +751,7 @@ namespace DataHarvester.pubmed
                             qualvalue = GetElementAsString(em);
 
                             topics.Add(new ObjectTopic(sdoid, 0, topic_type, true,
-                                topic_ct_code, topic_orig_value, qualcode, qualvalue, "mesh headings"));
+                                topic_ct_code, topic_orig_value, qualcode, qualvalue));
 
                         }
                     }
@@ -758,14 +770,14 @@ namespace DataHarvester.pubmed
                     foreach (XElement s in supp_mesh_names)
                     {
                         topics.Add(new ObjectTopic(sdoid, 0, GetAttributeAsString(s.Attribute("Type"))?.ToLower(), true,
-                                 GetAttributeAsString(s.Attribute("UI")), GetElementAsString(s), "supp mesh list"));
+                                 GetAttributeAsString(s.Attribute("UI")), GetElementAsString(s)));
 
                     }
                 }
             }
 
 
-            // Keywords.
+            // Keywords
 
             var keywords_lists = citation.Elements("KeywordList");
             if (keywords_lists.Count() > 0)
@@ -778,14 +790,8 @@ namespace DataHarvester.pubmed
                     {
                         foreach (XElement k in words)
                         {
-                            if (this_owner == "NOTNLM")
-                            {
-                                topics.Add(new ObjectTopic(sdoid, 11, "keyword", GetElementAsString(k), 11, null, "Author generated"));
-                            }
-                            else
-                            {
-                                topics.Add(new ObjectTopic(sdoid, 11, "keyword", GetElementAsString(k), 0, null, this_owner));
-                            }
+                            int ct_id = (this_owner == "NOTNLM") ? 11 : 0;
+                            topics.Add(new ObjectTopic(sdoid, 11, "keyword", GetElementAsString(k), ct_id, null));
                         }
                     }
 
@@ -1172,7 +1178,7 @@ namespace DataHarvester.pubmed
                                 else
                                 {
                                     // look at affiliation string
-                                    affil_organisation = sh.ExtractOrganisation(affiliation);
+                                    affil_organisation = sh.ExtractOrganisation(affiliation, sdoid);
                                 }
                             }
 
@@ -1378,6 +1384,7 @@ namespace DataHarvester.pubmed
             #endregion
 
 
+
             #region Miscellaneous
 
             // Comment corrections list.
@@ -1456,7 +1463,7 @@ namespace DataHarvester.pubmed
             {
                 fob.access_type_id = 15;
                 fob.access_type = "Restricted download";
-                fob.access_details = "Not in PMC - presumed behind pay wall, but to check'";
+                fob.access_details = "Not in PMC - presumed behind pay wall, but to check";
             }
 
 
@@ -1466,7 +1473,7 @@ namespace DataHarvester.pubmed
             // fob.managing_org
 
 
-            // Assign repeating properties to citationn object
+            // Assign repeating properties to citation object
             // and return the fully constructed citation object.
 
             fob.object_instances = instances;

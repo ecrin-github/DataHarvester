@@ -72,11 +72,18 @@ namespace DataHarvester
                 }
                 else
                 { 
+                    // check valid harvest type id
+
                     int harvest_type_id = opts.harvest_type_id;
-                    if (harvest_type_id != 1 && harvest_type_id != 2 && harvest_type_id != 3)
+                    if (!opts.org_update_only)
                     {
-                        throw new Exception("The t (harvest type) parameter is not one of the allowed values - 1,2 or 3");
+                        if (harvest_type_id != 1 && harvest_type_id != 2 && harvest_type_id != 3)
+                        {
+                            throw new Exception("The t (harvest type) parameter is not one of the allowed values - 1,2 or 3");
+                        }
                     }
+
+                    // check the source(s) validity
 
                     foreach (int source_id in opts.source_ids)
                     {
@@ -95,7 +102,7 @@ namespace DataHarvester
                 _logger.Error(e.Message);
                 _logger.Error(e.StackTrace);
                 _logger.Information("Harvester application aborted");
-                _logger_helper.Logheader("Closing Log");
+                _logger_helper.LogHeader("Closing Log");
                 return false;
             }
 
@@ -125,7 +132,7 @@ namespace DataHarvester
                 }
             }
             _logger.Information("Harvester application aborted");
-            _logger_helper.Logheader("Closing Log");
+            _logger_helper.LogHeader("Closing Log");
         }
 
     }

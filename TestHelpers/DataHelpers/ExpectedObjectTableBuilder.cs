@@ -28,7 +28,7 @@ namespace DataHarvester
             string sql_string = @"DROP TABLE IF EXISTS expected.data_objects;
               CREATE TABLE expected.data_objects(
                 id                     INT             GENERATED ALWAYS AS IDENTITY (START WITH 3001 INCREMENT BY 1) PRIMARY KEY
-              , sd_oid                 CHAR(24)        NULL
+              , sd_oid                 VARCHAR        NULL
               , sd_sid                 VARCHAR         NULL
               , seq_num                INT             NULL
               , display_title          VARCHAR         NULL
@@ -65,7 +65,7 @@ namespace DataHarvester
             string sql_string = @"DROP TABLE IF EXISTS expected.object_datasets;
             CREATE TABLE expected.object_datasets(
                 id                     INT             GENERATED ALWAYS AS IDENTITY (START WITH 4001 INCREMENT BY 1) PRIMARY KEY
-              , sd_oid                 CHAR(24)        NULL
+              , sd_oid                 VARCHAR        NULL
               , sd_sid                 VARCHAR         NULL
               , seq_num                INT             NULL
               , record_keys_type_id    INT             NULL 
@@ -97,7 +97,7 @@ namespace DataHarvester
             string sql_string = @"DROP TABLE IF EXISTS expected.object_dates;
             CREATE TABLE expected.object_dates(
                 id                     INT             GENERATED ALWAYS AS IDENTITY (START WITH 4001 INCREMENT BY 1) PRIMARY KEY
-              , sd_oid                 CHAR(24)        NULL
+              , sd_oid                 VARCHAR        NULL
               , sd_sid                 VARCHAR         NULL
               , seq_num                INT             NULL
               , date_type_id           INT             NULL
@@ -123,7 +123,7 @@ namespace DataHarvester
             string sql_string = @"DROP TABLE IF EXISTS expected.object_instances;
             CREATE TABLE expected.object_instances(
                 id                     INT             GENERATED ALWAYS AS IDENTITY (START WITH 4001 INCREMENT BY 1) PRIMARY KEY
-              , sd_oid                 CHAR(24)        NULL
+              , sd_oid                 VARCHAR        NULL
               , sd_sid                 VARCHAR         NULL
               , seq_num                INT             NULL
               , instance_type_id       INT             NOT NULL 
@@ -149,7 +149,7 @@ namespace DataHarvester
             string sql_string = @"DROP TABLE IF EXISTS expected.object_contributors;
             CREATE TABLE expected.object_contributors(
                 id                     INT             GENERATED ALWAYS AS IDENTITY (START WITH 4001 INCREMENT BY 1) PRIMARY KEY
-              , sd_oid                 CHAR(24)        NULL
+              , sd_oid                 VARCHAR        NULL
               , sd_sid                 VARCHAR         NULL
               , seq_num                INT             NULL
               , contrib_type_id        INT             NULL
@@ -176,7 +176,7 @@ namespace DataHarvester
             string sql_string = @"DROP TABLE IF EXISTS expected.object_titles;
             CREATE TABLE expected.object_titles(
                 id                     INT             GENERATED ALWAYS AS IDENTITY (START WITH 4001 INCREMENT BY 1) PRIMARY KEY
-              , sd_oid                 CHAR(24)        NULL
+              , sd_oid                 VARCHAR        NULL
               , sd_sid                 VARCHAR         NULL
               , seq_num                INT             NULL
               , title_type_id          INT             NULL
@@ -198,7 +198,7 @@ namespace DataHarvester
             string sql_string = @"DROP TABLE IF EXISTS expected.object_topics;
             CREATE TABLE expected.object_topics(
                 id                     INT             GENERATED ALWAYS AS IDENTITY (START WITH 4001 INCREMENT BY 1) PRIMARY KEY
-              , sd_oid                 CHAR(24)        NULL
+              , sd_oid                 VARCHAR        NULL
               , sd_sid                 VARCHAR         NULL
               , seq_num                INT             NULL
               , topic_type_id          INT             NULL
@@ -210,7 +210,6 @@ namespace DataHarvester
               , original_ct_id         INT             NULL
               , original_ct_code       VARCHAR         NULL
               , original_value         VARCHAR         NULL
-              , comments               VARCHAR         NULL
               , record_hash            CHAR(32)        NULL
             );
             CREATE INDEX object_topics_sd_oid ON expected.object_topics(sd_oid);";
@@ -224,7 +223,7 @@ namespace DataHarvester
             string sql_string = @"DROP TABLE IF EXISTS expected.object_comments;
             CREATE TABLE expected.object_comments(
                 id                     INT             GENERATED ALWAYS AS IDENTITY (START WITH 4001 INCREMENT BY 1) PRIMARY KEY
-              , sd_oid                 CHAR(24)        NULL
+              , sd_oid                 VARCHAR        NULL
               , sd_sid                 VARCHAR         NULL
               , seq_num                INT             NULL
               , ref_type               VARCHAR         NULL 
@@ -245,7 +244,7 @@ namespace DataHarvester
             string sql_string = @"DROP TABLE IF EXISTS expected.object_descriptions;
             CREATE TABLE expected.object_descriptions(
                 id                     INT             GENERATED ALWAYS AS IDENTITY (START WITH 4001 INCREMENT BY 1) PRIMARY KEY
-              , sd_oid                 CHAR(24)        NULL
+              , sd_oid                 VARCHAR        NULL
               , sd_sid                 VARCHAR         NULL
               , seq_num                INT             NULL
               , description_type_id    INT             NULL
@@ -265,7 +264,7 @@ namespace DataHarvester
             string sql_string = @"DROP TABLE IF EXISTS expected.object_identifiers;
             CREATE TABLE expected.object_identifiers(
                 id                     INT             GENERATED ALWAYS AS IDENTITY (START WITH 4001 INCREMENT BY 1) PRIMARY KEY
-              , sd_oid                 CHAR(24)        NULL
+              , sd_oid                 VARCHAR        NULL
               , sd_sid                 VARCHAR         NULL
               , seq_num                INT             NULL
               , identifier_value       VARCHAR         NULL
@@ -287,7 +286,7 @@ namespace DataHarvester
             string sql_string = @"DROP TABLE IF EXISTS expected.object_db_links;
             CREATE TABLE expected.object_db_links(
                 id                     INT             GENERATED ALWAYS AS IDENTITY (START WITH 4001 INCREMENT BY 1) PRIMARY KEY
-              , sd_oid                 CHAR(24)        NULL
+              , sd_oid                 VARCHAR        NULL
               , sd_sid                 VARCHAR         NULL
               , seq_num                INT             NULL
               , db_sequence            INT             NULL
@@ -306,7 +305,7 @@ namespace DataHarvester
             string sql_string = @"DROP TABLE IF EXISTS expected.object_publication_types;
             CREATE TABLE expected.object_publication_types(
                 id                     INT             GENERATED ALWAYS AS IDENTITY (START WITH 4001 INCREMENT BY 1) PRIMARY KEY
-              , sd_oid                 CHAR(24)        NULL
+              , sd_oid                 VARCHAR        NULL
               , sd_sid                 VARCHAR         NULL
               , seq_num                INT             NULL
               , type_name              VARCHAR         NULL
@@ -323,11 +322,11 @@ namespace DataHarvester
             string sql_string = @"DROP TABLE IF EXISTS expected.object_relationships;
             CREATE TABLE expected.object_relationships(
                 id                     INT             GENERATED ALWAYS AS IDENTITY (START WITH 4001 INCREMENT BY 1) PRIMARY KEY
-              , sd_oid                 CHAR(24)        NULL
+              , sd_oid                 VARCHAR        NULL
               , sd_sid                 VARCHAR         NULL
               , seq_num                INT             NULL
               , relationship_type_id   INT             NULL
-              , target_sd_oid          CHAR(24)        NULL
+              , target_sd_oid          VARCHAR        NULL
               , targetsd_sid           VARCHAR         NULL
               , targetseq_num          INT             NULL
               , record_hash            CHAR(32)        NULL
@@ -343,7 +342,7 @@ namespace DataHarvester
             string sql_string = @"DROP TABLE IF EXISTS expected.object_rights;
             CREATE TABLE expected.object_rights(
                 id                     INT             GENERATED ALWAYS AS IDENTITY (START WITH 4001 INCREMENT BY 1) PRIMARY KEY
-              , sd_oid                 CHAR(24)        NULL
+              , sd_oid                 VARCHAR        NULL
               , sd_sid                 VARCHAR         NULL
               , seq_num                INT             NULL
               , rights_name            VARCHAR         NULL
@@ -357,37 +356,20 @@ namespace DataHarvester
         }
 
 
-        public void create_table_citation_objects()
+        public void create_table_journal_details()
         {
-            string sql_string = @"DROP TABLE IF EXISTS expected.citation_objects;
-            CREATE TABLE expected.citation_objects(
-                id                     INT             GENERATED ALWAYS AS IDENTITY (START WITH 4001 INCREMENT BY 1) PRIMARY KEY
-              , sd_oid                 CHAR(24)        NULL
-              , sd_sid                 VARCHAR         NULL
-              , seq_num                INT             NULL
-              , display_title          VARCHAR         NULL
-              , version                VARCHAR         NULL
-              , doi                    VARCHAR         NULL 
-              , doi_status_id          INT             NULL
-              , publication_year       INT             NULL
-              , object_class_id        INT             NULL
-              , object_type_id         INT             NULL
-              , managing_org_id        INT             NULL
-              , managing_org           VARCHAR         NULL
-              , lang_code              VARCHAR         NULL
-              , access_type_id         INT             NULL
-              , access_details         VARCHAR         NULL
-              , access_details_url     VARCHAR         NULL
-              , url_last_checked       DATE            NULL
-              , eosc_category          INT             NULL
-              , add_study_contribs     BOOLEAN         NULL
-              , add_study_topics       BOOLEAN         NULL
-              , datetime_of_data_fetch TIMESTAMPTZ     NULL
-              , journal_title          VARCHAR         NULL
+            string sql_string = @"DROP TABLE IF EXISTS expected.journal_details;
+            CREATE TABLE sd.journal_details(
+                id                     INT             GENERATED ALWAYS AS IDENTITY PRIMARY KEY
+              , sd_oid                 VARCHAR         NOT NULL
               , pissn                  VARCHAR         NULL
               , eissn                  VARCHAR         NULL
+              , journal_title          VARCHAR         NULL
+              , publisher_id           INT             NULL
+              , publisher              VARCHAR         NULL
+              , publisher_suffix       VARCHAR         NULL
             );
-            CREATE INDEX citation_objects_sd_oid ON expected.citation_objects(sd_oid);";
+            CREATE INDEX journal_details_sd_oid ON sd.journal_details(sd_oid);";
 
             Execute_SQL(sql_string);
         }

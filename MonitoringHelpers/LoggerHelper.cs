@@ -18,7 +18,7 @@ namespace DataHarvester
             _logger = logger;
         }
 
-        public void Logheader(string header_text)
+        public void LogHeader(string header_text)
         {
             _logger.Information("");
             _logger.Information(header_text.ToUpper());
@@ -30,12 +30,12 @@ namespace DataHarvester
         {
             if (opts.harvest_all_test_data)
             {
-                Logheader("HARVESTING ALL TEST DATA");
+                LogHeader("HARVESTING ALL TEST DATA");
             }
 
             if (opts.setup_expected_data_only)
             {
-                Logheader("HARVESTING EXPECTED (MANUAL INPUT) DATA");
+                LogHeader("HARVESTING EXPECTED (MANUAL INPUT) DATA");
             }
 
             int[] source_ids = opts.source_ids.ToArray();
@@ -49,6 +49,26 @@ namespace DataHarvester
             }
             _logger.Information("Type_id is " + opts.harvest_type_id.ToString());
             _logger.Information("Update org ids only is " + opts.org_update_only);
+            _logger.Information("");
+        }
+
+
+        public void LogStudyHeader(Options opts, string dbline)
+        {
+            int harvest_type = opts.harvest_type_id;
+            string dividerline = "";
+            if (opts.harvest_all_test_data || opts.setup_expected_data_only)
+            {
+                dividerline = new string('-', 70);
+            }
+            else
+            {
+                dividerline = (harvest_type == 1 || harvest_type == 2) ? new string('=', 70) : new string('-', 70);
+            }
+            _logger.Information("");
+            _logger.Information(dividerline);
+            _logger.Information(dbline);
+            _logger.Information(dividerline);
             _logger.Information("");
         }
 
@@ -107,7 +127,7 @@ namespace DataHarvester
             if (s.has_object_rights) _logger.Information(GetTableRecordCount(db_conn, schema, "object_rights"));
             if (s.has_object_pubmed_set)
             {
-                _logger.Information(GetTableRecordCount(db_conn, schema, "citation_objects"));
+                _logger.Information(GetTableRecordCount(db_conn, schema, "journal_details"));
                 _logger.Information(GetTableRecordCount(db_conn, schema, "object_contributors"));
                 _logger.Information(GetTableRecordCount(db_conn, schema, "object_topics"));
                 _logger.Information(GetTableRecordCount(db_conn, schema, "object_comments"));

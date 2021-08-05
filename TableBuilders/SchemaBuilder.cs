@@ -54,7 +54,7 @@ namespace DataHarvester
             if (_source.has_object_rights) object_tablebuilder.create_table_object_rights();
             if (_source.has_object_pubmed_set)
             {
-                object_tablebuilder.create_table_citation_objects();
+                object_tablebuilder.create_table_journal_details();
                 object_tablebuilder.create_table_object_contributors();
                 object_tablebuilder.create_table_object_topics();
                 object_tablebuilder.create_table_object_comments();

@@ -169,7 +169,6 @@ namespace DataHarvester
               , original_ct_id         INT             NULL
               , original_ct_code       VARCHAR         NULL
               , original_value         VARCHAR         NULL
-              , comments               VARCHAR         NULL
               , record_hash            CHAR(32)        NULL
             );
             CREATE INDEX study_topics_sd_sid ON expected.study_topics(sd_sid);";

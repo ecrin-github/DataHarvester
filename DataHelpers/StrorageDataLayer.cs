@@ -177,17 +177,6 @@ namespace DataHarvester
                 conn.Insert<DataObject>(d);
             }
 
-            /*
-             * 
-            public void StoreCitationObject(CitationObjectInDB ctob)
-            {
-                using (var conn = new NpgsqlConnection(db_conn))
-                {
-                    conn.Insert<CitationObjectInDB>(ctob);
-                }
-            }
-            */
-
             if (b.object_instances.Count > 0)
             {
                 using (var conn = new NpgsqlConnection(db_conn))
@@ -299,6 +288,16 @@ namespace DataHarvester
                         och.publication_types_helper.SaveAll(conn, b.object_pubtypes);
                     }
                 }
+
+
+                if (b.journal_details != null)
+                {
+                    using (var conn = new NpgsqlConnection(db_conn))
+                    {
+                        conn.Insert<JournalDetails>(b.journal_details);
+                    }
+                }
+
             }
         }
     }

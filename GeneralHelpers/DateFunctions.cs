@@ -113,6 +113,58 @@ namespace DataHarvester
             }
         }
 
+
+        public SplitDate GetDatePartsFromUSString(string dateString)
+        {
+            // date here is in the format mm/dd/yyyy, e.g. 25/06/2018
+
+            try
+            {
+                if (dateString == null) return null;
+
+                // check format 
+                if (Regex.Match(dateString, @"^\d{2}/\d{2}/\d{4}$").Success)
+                {
+                    string year_string, month_string, day_string;
+                    int? year_num = null, month_num = null, day_num = null;
+
+                    month_string = dateString.Substring(0, 2);
+                    day_string = dateString.Substring(3, 2);
+                    year_string = dateString.Substring(6, 4);
+
+                    year_num = null;
+
+                    // convert strings into integers
+                    if (int.TryParse(year_string, out int y)) year_num = y; else year_num = null;
+                    if (int.TryParse(month_string, out int m)) month_num = m; else month_num = null;
+                    if (int.TryParse(day_string, out int d)) day_num = d; else day_num = null;
+                    string month_as3 = ((Months3)month_num).ToString();
+
+                    if (year_num != null && month_num != 0 && day_num != null)
+                    {
+                        // get date as standard string
+                        string date_as_string = year_num.ToString() + " " + month_as3 + " " + day_num.ToString();
+
+                        return new SplitDate(year_num, month_num, day_num, date_as_string);
+                    }
+                    else
+                    {
+                        return null;
+                    }
+                }
+                else
+                {
+                    return null;
+                }
+            }
+            catch (Exception e)
+            {
+                string s = e.Message;
+                return null;
+            }
+        }
+
+
         public SplitDate GetDatePartsFromISOString(string dateString)
         {
             try

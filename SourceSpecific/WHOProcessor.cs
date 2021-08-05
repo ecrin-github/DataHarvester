@@ -69,11 +69,24 @@ namespace DataHarvester.who
                                      ih.get_source_name(source_id), registration_date?.date_string, null));
 
             // titles
-            string public_title = sh.CheckWHOTitle(GetElementAsString(r.Element("public_title")));
-            string scientific_title = sh.CheckWHOTitle(GetElementAsString(r.Element("scientific_title")));
-            if (public_title == "")
+            string public_title = GetElementAsString(r.Element("public_title")) ?? "";
+            string scientific_title = GetElementAsString(r.Element("scientific_title")) ?? "";
+            bool public_title_present = sh.AppearsGenuineTitle(public_title);
+            bool scientific_title_present = sh.AppearsGenuineTitle(scientific_title);
+
+            if (public_title_present)
             {
-                if (scientific_title != "")
+                public_title = sh.ReplaceApos(public_title);
+            }
+
+            if (scientific_title_present)
+            {
+                scientific_title = sh.ReplaceApos(scientific_title);
+            }
+
+            if (!public_title_present)
+            {
+                if (scientific_title_present)
                 {
                     if (scientific_title.Length < 11)
                     {
@@ -83,6 +96,7 @@ namespace DataHarvester.who
                     {
                         study_titles.Add(new StudyTitle(sid, scientific_title, 16, "Trial registry title", true));
                     }
+
                     s.display_title = scientific_title;
                 }
                 else
@@ -92,6 +106,7 @@ namespace DataHarvester.who
             }
             else
             {
+                // public title available 
                 if (public_title.Length < 11)
                 {
                     study_titles.Add(new StudyTitle(sid, public_title, 14, "Acronym or Abbreviation", true));
@@ -100,12 +115,13 @@ namespace DataHarvester.who
                 {
                     study_titles.Add(new StudyTitle(sid, public_title, 15, "Public Title", true));
                 }
-                s.display_title = public_title;
 
-                if (scientific_title != "" && scientific_title.ToLower() != public_title.ToLower())
+                if (scientific_title_present && scientific_title.ToLower() != public_title.ToLower())
                 {
                     study_titles.Add(new StudyTitle(sid, scientific_title, 16, "Trial registry title", false));
                 }
+
+                s.display_title = public_title;
             }
 
             s.title_lang_code = "en";  // as a default
@@ -323,76 +339,100 @@ namespace DataHarvester.who
 
             // study contributors - Sponsor N.B. default below
             string sponsor_name = "No organisation name provided in source data";
+            bool? sponsor_is_org = null;
 
-            string primary_sponsor = GetElementAsString(r.Element("primary_sponsor"));
+            string primary_sponsor = GetElementAsString(r.Element("primary_sponsor")) ?? "";
             if (!string.IsNullOrEmpty(primary_sponsor))
             {
                 sponsor_name = sh.TidyOrgName(primary_sponsor, sid);
                 string sponsor = sponsor_name.ToLower();
                 if (sh.AppearsGenuineOrgName(sponsor))
                 {
-                    if (sponsor.StartsWith("dr ") || sponsor.StartsWith("dr. ")
-                        || sponsor.StartsWith("prof ") || sponsor.StartsWith("prof. ")
+                    sponsor_is_org = true;
+                    study_contributors.Add(new StudyContributor(sid, 54, "Trial Sponsor", null, sponsor_name));
+                }
+                else if (sponsor.StartsWith("dr ") || sponsor.StartsWith("prof ") 
                         || sponsor.StartsWith("professor "))
+                {
+                    string person_name = sponsor_name;
+                    sponsor_is_org = false;
+                    study_contributors.Add(new StudyContributor(sid, 54, "Trial Sponsor", person_name, null, null));
+                }
+            }
+
+
+            string funders = GetElementAsString(r.Element("source_support"));
+            if (!string.IsNullOrEmpty(funders))
+            {
+                string[] funder_names = funders.Split(";");  // can have multiple names separated by semi-colons
+                foreach (string funder in funder_names)
+                {
+                    string funder_name = sh.TidyOrgName(funder, sid);
+                    string funder_lower = funder_name.ToLower();
+
+                    if (funder_lower != sponsor_name.ToLower() && sh.AppearsGenuineOrgName(funder_lower))
                     {
-                        string person_name = sponsor_name;
-                        study_contributors.Add(new StudyContributor(sid, 54, "Trial Sponsor", person_name, null, null));
-                    }
-                    else
-                    {
-                        study_contributors.Add(new StudyContributor(sid, 54, "Trial Sponsor", null, sponsor_name));
+                        if (sponsor_name != "" && funder_name.Contains(sponsor_name))
+                        {
+                            funder_name = funder_name.Replace(sponsor_name, "").Trim();
+                        }
+
+                        if (funder_name == "" || funder_lower.StartsWith("dr ") || funder_lower.StartsWith("dr. ")
+                            || funder_lower.StartsWith("prof ") || funder_lower.StartsWith("prof. ")
+                            || funder_lower.StartsWith("professor "))
+                        {
+                            // do nothing - unlikely to be a funder...
+                        }
+                        else
+                        {
+                            study_contributors.Add(new StudyContributor(sid, 58, "Study Funder", null, funder_name));
+                        }
                     }
                 }
             }
 
+
             // Study lead
             string study_lead = "";
-            string scientific_contact_givenname = GetElementAsString(r.Element("scientific_contact_givenname"));
-            string scientific_contact_familyname = GetElementAsString(r.Element("scientific_contact_familyname"));
-            string scientific_contact_affiliation = GetElementAsString(r.Element("scientific_contact_affiliation"));
-            if (!string.IsNullOrEmpty(scientific_contact_givenname) || !string.IsNullOrEmpty(scientific_contact_familyname))
+            string s_givenname = GetElementAsString(r.Element("scientific_contact_givenname")) ?? "";
+            string s_familyname = GetElementAsString(r.Element("scientific_contact_familyname")) ?? "";
+            string s_affiliation = GetElementAsString(r.Element("scientific_contact_affiliation"));
+            if (s_givenname != "" || s_familyname != "")
             {
-                string givenname = scientific_contact_givenname ?? "";
-                string familyname = scientific_contact_familyname ?? "";
-                string full_name = (givenname + " " + familyname).Trim();
+                string full_name = (s_givenname + " " + s_familyname).Trim();
                 full_name = sh.ReplaceApos(full_name);
                 study_lead = full_name;  // for later comparison
 
                 if (sh.CheckPersonName(full_name))
                 {
                     full_name = sh.TidyPersonName(full_name);
-                    if (full_name != null)
-                    { 
-                        string affiliation = scientific_contact_affiliation ?? "";
-                        string affil_org = sh.ExtractOrganisation(affiliation);
-
-                        study_contributors.Add(new StudyContributor(sid, 51, "Study Lead", full_name, affiliation, affil_org));
+                    if (full_name != "")
+                    {
+                        s_affiliation = sh.TidyOrgName(s_affiliation, sid);
+                        string affil_org = sh.ExtractOrganisation(s_affiliation, sid);
+                        study_contributors.Add(new StudyContributor(sid, 51, "Study Lead", full_name, s_affiliation, affil_org));
                     }
-
                 }
             }
 
             // public contact
-            string public_contact_givenname = GetElementAsString(r.Element("public_contact_givenname"));
-            string public_contact_familyname = GetElementAsString(r.Element("public_contact_familyname"));
-            string public_contact_affiliation = GetElementAsString(r.Element("public_contact_affiliation"));
-            if (!string.IsNullOrEmpty(public_contact_givenname) || !string.IsNullOrEmpty(public_contact_familyname))
+            string p_givenname = GetElementAsString(r.Element("public_contact_givenname")) ?? "";
+            string p_familyname = GetElementAsString(r.Element("public_contact_familyname")) ?? "";
+            string p_affiliation = GetElementAsString(r.Element("public_contact_affiliation"));   
+            if (p_givenname != "" || p_familyname != "")
             {
-                string givenname = public_contact_givenname ?? "";
-                string familyname = public_contact_familyname ?? "";
-                string full_name = (givenname + " " + familyname).Trim();
+                string full_name = (p_givenname + " " + p_familyname).Trim();
                 full_name = sh.ReplaceApos(full_name);
                 if (full_name != study_lead)  // often duplicated
                 {
                     if (sh.CheckPersonName(full_name))
                     {
                         full_name = sh.TidyPersonName(full_name);
-                        if (full_name != null)
+                        if (full_name != "")
                         {
-                            string affiliation = public_contact_affiliation ?? "";
-                            string affil_org = sh.ExtractOrganisation(affiliation);
-
-                            study_contributors.Add(new StudyContributor(sid, 56, "Public Contact", full_name, affiliation, affil_org));
+                            p_affiliation = sh.TidyOrgName(p_affiliation, sid);
+                            string affil_org = sh.ExtractOrganisation(p_affiliation, sid);
+                            study_contributors.Add(new StudyContributor(sid, 56, "Public Contact", full_name, p_affiliation, affil_org));
                         }
                     }
                 }
@@ -428,6 +468,11 @@ namespace DataHarvester.who
                     {
                         int? sec_id_source = GetElementAsInt(id.Element("sec_id_source"));
                         string processed_id = GetElementAsString(id.Element("processed_id"));
+
+                        // ************************************************************************
+                        // Most of this code to be transferred to WHO helper in Download system
+                        // ************************************************************************
+
                         if (sec_id_source == null)
                         {
                             string sponsor_name_lower = sponsor_name.ToLower();
@@ -435,11 +480,360 @@ namespace DataHarvester.who
                                 || sponsor_name_lower == "none" || sponsor_name_lower == "not available"
                                 || sponsor_name_lower == "no sponsor" || sponsor_name == "-" || sponsor_name == "--")
                             {
-                                study_identifiers.Add(new StudyIdentifier(sid, processed_id, 14, "Sponsor ID", 12, "No organisation name provided in source data"));
+                                study_identifiers.Add(new StudyIdentifier(sid, processed_id, 1, "Type not provided", 12, "No organisation name provided in source data"));
                             }
-                            else 
+                            else if (source_id == 100116)
                             {
-                                study_identifiers.Add(new StudyIdentifier(sid, processed_id, 14, "Sponsor ID", null, sponsor_name));
+                                // australian nz identifiers
+                                if (processed_id.StartsWith("ADHB"))
+                                {
+                                    study_identifiers.Add(new StudyIdentifier(sid, processed_id, 41, "Regulatory body ID", 104531, "Aukland District Health Board"));
+                                }
+
+                                else if (processed_id.StartsWith("Auckland District Health Board"))
+                                {
+                                    processed_id = processed_id.Replace("Auckland District Health Board", "");
+                                    processed_id = processed_id.Replace("registration", "").Replace("research", "");
+                                    processed_id = processed_id.Replace("number", "").Replace(":", "").Trim();
+                                    study_identifiers.Add(new StudyIdentifier(sid, processed_id, 41, "Regulatory body ID", 104531, "Aukland District Health Board"));
+                                }
+
+                                else if (processed_id.StartsWith("AG01") || processed_id.StartsWith("AG02") || processed_id.StartsWith("AG03")
+                                    || processed_id.StartsWith("AG101") || processed_id.StartsWith("AGITG"))
+                                {
+                                    study_identifiers.Add(new StudyIdentifier(sid, processed_id, 43, "Collaborative Group ID", 104532, "Australian Gastrointestinal Trials Group"));
+                                }
+
+                                else if (processed_id.Contains("Australasian Gastro-Intestinal Trials Group: "))
+                                {
+                                    processed_id = processed_id.Replace("Australasian Gastro-Intestinal Trials Group:", "");
+                                    processed_id = processed_id.Replace("The", "").Replace("(AGITG)", "");
+                                    processed_id = processed_id.Replace("Protocol No:", "").Trim();
+                                    study_identifiers.Add(new StudyIdentifier(sid, processed_id, 43, "Collaborative Group ID", 104532, "Australian Gastrointestinal Trials Group"));
+                                }
+
+                                else if (processed_id.StartsWith("ALLG") || processed_id.StartsWith("AMLM"))
+                                {
+                                    study_identifiers.Add(new StudyIdentifier(sid, processed_id, 43, "Collaborative Group ID", 103289, "Australasian Leukaemia and Lymphoma Group"));
+                                }
+
+                                else if (processed_id.Contains("Australasian Leukaemia and Lymphoma Group"))
+                                {
+                                    processed_id = processed_id.Replace("Australasian Leukaemia and Lymphoma Group", "");
+                                    processed_id = processed_id.Replace("The", "").Replace("(ALLG):", "");
+                                    processed_id = processed_id.Replace(":", "").Replace("-", "").Trim();
+                                    study_identifiers.Add(new StudyIdentifier(sid, processed_id, 43, "Collaborative Group ID", 103289, "Australasian Leukaemia and Lymphoma Group"));
+                                }
+
+                                else if (processed_id.StartsWith("ANZGOG"))
+                                {
+                                    study_identifiers.Add(new StudyIdentifier(sid, processed_id, 43, "Collaborative Group ID", 104533, "Australia New Zealand Gynaecological Oncology Group"));
+                                }
+
+                                else if (processed_id.StartsWith("Australia and New Zealand Gynecological Oncology Group: "))
+                                {
+                                    processed_id = processed_id.Replace("Australia and New Zealand Gynecological Oncology Group:", "").Trim();
+                                    study_identifiers.Add(new StudyIdentifier(sid, processed_id, 43, "Collaborative Group ID", 104533, "Australia New Zealand Gynaecological Oncology Group"));
+                                }
+
+                                else if (processed_id.StartsWith("Australasian Sarcoma Study Group Number"))
+                                {
+                                    processed_id = processed_id.Replace("Australasian Sarcoma Study Group Number", "").Trim();
+                                    study_identifiers.Add(new StudyIdentifier(sid, processed_id, 43, "Collaborative Group ID", 104534, "Australasian Sarcoma Study Group"));
+                                }
+
+                                else if (processed_id.StartsWith("ANZMTG"))
+                                {
+                                    study_identifiers.Add(new StudyIdentifier(sid, processed_id, 43, "Collaborative Group ID", 104535, "Australia and New Zealand Melanoma Trials Group"));
+                                }
+
+                                else if (processed_id.StartsWith("ANZUP"))
+                                {
+                                    study_identifiers.Add(new StudyIdentifier(sid, processed_id, 43, "Collaborative Group ID", 104536, "Australian and New Zealand Urogenital and Prostate Cancer Trials Group"));
+                                }
+
+                                else if (processed_id.StartsWith("APP") || processed_id.StartsWith("GNT"))
+                                {
+                                    study_identifiers.Add(new StudyIdentifier(sid, processed_id, 13, "Funder’s ID", 100690, "National Health and Medical Research Council, Australia"));
+                                }
+
+                                else if (processed_id.StartsWith("Australian NH&MRC"))
+                                {
+                                    processed_id = processed_id.Replace("Australian NH&MRC", "");
+                                    processed_id = processed_id.Replace("Project", "").Replace("Grant", "");
+                                    processed_id = processed_id.Replace("Targeted Call for Research", "").Trim();
+
+                                    study_identifiers.Add(new StudyIdentifier(sid, processed_id, 13, "Funder’s ID", 100690, "National Health and Medical Research Council, Australia"));
+                                }
+
+                                else if (processed_id.StartsWith("National Health and Medical Research Council") ||
+                                         processed_id.StartsWith("National Health & Medical Research Council"))
+                                {
+                                    processed_id = processed_id.Replace("National Health", "").Replace("Medical Research Council", "");
+                                    processed_id = processed_id.Replace("and", "").Replace("&", "").Replace("NHMRC", "");
+                                    processed_id = processed_id.Replace("application", "", StringComparison.CurrentCultureIgnoreCase);
+                                    processed_id = processed_id.Replace("grant", "", StringComparison.CurrentCultureIgnoreCase).Replace("ID", "");
+                                    processed_id = processed_id.Replace("number", "", StringComparison.CurrentCultureIgnoreCase).Replace("No:", "");
+                                    processed_id = processed_id.Replace("project", "", StringComparison.CurrentCultureIgnoreCase);
+                                    processed_id = processed_id.Replace("(", "").Replace(")", "").Replace("funding", "").Replace("body", "");
+                                    processed_id = processed_id.Replace("of Australia", "").Replace("Postgraduate Scholarship", "");
+                                    processed_id = processed_id.Replace("protocol", "", StringComparison.CurrentCultureIgnoreCase);
+                                    processed_id = processed_id.Replace("Global Alliance for Chronic Diseases (GACD) initiative", "");
+                                    processed_id = processed_id.Replace(":", "").Replace(",", "").Replace("#", "").Trim();
+
+                                    study_identifiers.Add(new StudyIdentifier(sid, processed_id, 13, "Funder’s ID", 100690, "National Health and Medical Research Council, Australia"));
+                                }
+
+                                else if (processed_id.StartsWith("NHMRCC"))
+                                {
+                                    processed_id = processed_id.Replace("NHMRC", "");
+                                    processed_id = processed_id.Replace("grant", "", StringComparison.CurrentCultureIgnoreCase);
+                                    processed_id = processed_id.Replace("project", "", StringComparison.CurrentCultureIgnoreCase);
+                                    processed_id = processed_id.Replace("No:", "", StringComparison.CurrentCultureIgnoreCase).Replace("ID", "");
+                                    processed_id = processed_id.Replace("application", "", StringComparison.CurrentCultureIgnoreCase);
+                                    processed_id = processed_id.Replace("and FHF Centre for Research Excellence (CRE) in Diabetic Retinopathy App", "");
+                                    processed_id = processed_id.Replace("CIA_Campbell.", "");
+                                    processed_id = processed_id.Replace("partnership", "", StringComparison.CurrentCultureIgnoreCase);
+                                    processed_id = processed_id.Replace(":", "").Replace(",", "").Replace("#", "").Replace("_", "").Replace(".", "").Trim();
+
+                                    study_identifiers.Add(new StudyIdentifier(sid, processed_id, 13, "Funder’s ID", 100690, "National Health and Medical Research Council, Australia"));
+                                }
+
+                                else if (processed_id.StartsWith("Australian Research Council"))
+                                {
+                                    processed_id = processed_id.Replace("Australian Research Council", "");
+                                    processed_id = processed_id.Replace("(", "").Replace(")", "").Trim();
+
+                                    study_identifiers.Add(new StudyIdentifier(sid, processed_id, 13, "Funder’s ID", 104537, "Australian Research Council"));
+                                }
+
+                                else if (processed_id.StartsWith("Australian Therapeutic Goods Administration"))
+                                {
+                                    processed_id = processed_id.Replace("Australian Therapeutic Goods Administration", "");
+                                    processed_id = processed_id.Replace("Clinical Trial", "").Replace("TGA", "");
+                                    processed_id = processed_id.Replace("CTN", "").Replace("(", "").Replace(")", "");
+                                    processed_id = processed_id.Replace("number", "", StringComparison.CurrentCultureIgnoreCase);
+                                    processed_id = processed_id.Replace("-", "").Replace(".", "").Replace("Notification", "").Trim();
+
+                                    study_identifiers.Add(new StudyIdentifier(sid, processed_id, 41, "Regulatory body ID", 104538, "Australian Therapeutic Goods Administration CTN"));
+                                }
+                                
+                                else if (processed_id.Contains("Clinical Trial") && processed_id.Contains("CTN"))
+                                {
+                                    processed_id = processed_id.Replace("Clinical Trial", "").Replace("TGA", "");
+                                    processed_id = processed_id.Replace("CTN", "").Replace("(", "").Replace(")", "").Replace(":", "");
+                                    processed_id = processed_id.Replace("Network", "").Replace("Notification", "").Trim();
+
+                                    study_identifiers.Add(new StudyIdentifier(sid, processed_id, 41, "Regulatory body ID", 104538, "Australian Therapeutic Goods Administration CTN"));
+                                }
+
+                                else if (processed_id.StartsWith("TGA"))
+                                {
+                                    processed_id = processed_id.Replace("Clinical", "").Replace("TGA", "").Replace("CTN", "");
+                                    processed_id = processed_id.Replace("trial", "", StringComparison.CurrentCultureIgnoreCase)
+                                                               .Replace("trials", "", StringComparison.CurrentCultureIgnoreCase);
+                                    processed_id = processed_id.Replace("number", "", StringComparison.CurrentCultureIgnoreCase);
+                                    processed_id = processed_id.Replace(":", "").Replace("Notification", "").Trim();
+
+                                    study_identifiers.Add(new StudyIdentifier(sid, processed_id, 41, "Regulatory body ID", 104538, "Australian Therapeutic Goods Administration CTN"));
+                                }
+
+                                else if (processed_id.StartsWith("Therapeutic good administration") ||
+                                          processed_id.StartsWith("Therapeutic Goods Administration") ||
+                                          processed_id.StartsWith("Therapeutic Goods Association"))
+                                {
+                                    processed_id = processed_id.Replace("Therapeutic", "").Replace("goods", "").Replace("Goods", "");
+                                    processed_id = processed_id.Replace("TGA", "").Replace("CTN", "");
+                                    processed_id = processed_id.Replace("administration", "", StringComparison.CurrentCultureIgnoreCase);
+                                    processed_id = processed_id.Replace("association", "", StringComparison.CurrentCultureIgnoreCase);
+                                    processed_id = processed_id.Replace("clinical", "", StringComparison.CurrentCultureIgnoreCase);
+                                    processed_id = processed_id.Replace("trial", "", StringComparison.CurrentCultureIgnoreCase);
+                                    processed_id = processed_id.Replace("notification", "", StringComparison.CurrentCultureIgnoreCase);
+                                    processed_id = processed_id.Replace("number", "", StringComparison.CurrentCultureIgnoreCase);
+                                    processed_id = processed_id.Replace("protocol", "", StringComparison.CurrentCultureIgnoreCase);
+                                    processed_id = processed_id.Replace("reference", "", StringComparison.CurrentCultureIgnoreCase);
+                                    processed_id = processed_id.Replace("no.", "", StringComparison.CurrentCultureIgnoreCase);
+                                    processed_id = processed_id.Replace("Australian Govt, Dept of Health -", "");
+                                    processed_id = processed_id.Replace("scheme", "", StringComparison.CurrentCultureIgnoreCase);
+                                    processed_id = processed_id.Replace(":", "").Replace("(", "").Replace(")", "").Replace(",", "").Trim();
+                                    if (processed_id.StartsWith("-")) processed_id = processed_id.Substring(1).Trim();
+
+                                    study_identifiers.Add(new StudyIdentifier(sid, processed_id, 41, "Regulatory body ID", 104538, "Australian Therapeutic Goods Administration CTN"));
+                                }
+
+                                else if (processed_id.StartsWith("CRG") || processed_id.StartsWith("Cochrane Renal Group"))
+                                {
+                                    processed_id = processed_id.Replace("Cochrane Renal Group", "").Replace("CRG", "");
+                                    processed_id = processed_id.Replace("(", "").Replace(")", "").Replace("-", "").Replace(".", "").Replace(":", "").Trim();
+
+                                    study_identifiers.Add(new StudyIdentifier(sid, "CRG" + processed_id, 43, "Collaborative Group ID", 104539, "Cochrane Renal Group"));
+                                }
+
+                                else if (processed_id.StartsWith("Commonwealth Scientific and Industrial Research Organisation"))
+                                {
+                                    processed_id = processed_id.Replace("Commonwealth Scientific and Industrial Research Organisation", "");
+                                    processed_id = processed_id.Replace("(CSIRO)", "").Replace(":", "").Replace("and", "").Trim();
+
+                                    study_identifiers.Add(new StudyIdentifier(sid, processed_id, 13, "Funder’s ID", 104540, "Commonwealth Scientific and Industrial Research Organisation"));
+                                }
+
+                                else if (processed_id.StartsWith("Health Research Council") && !processed_id.Contains("Funding"))
+                                {
+                                    processed_id = processed_id.Replace("Health Research Council", "");
+                                    processed_id = processed_id.Replace("of New Zealand", "");
+                                    processed_id = processed_id.Replace("NZ", "").Replace("HRC", "");
+                                    processed_id = processed_id.Replace("reference", "", StringComparison.CurrentCultureIgnoreCase).Replace("Ref.", "");
+                                    processed_id = processed_id.Replace("number", "", StringComparison.CurrentCultureIgnoreCase).Replace("programme", "");
+                                    processed_id = processed_id.Replace("grant", "").Trim();
+
+                                    study_identifiers.Add(new StudyIdentifier(sid, processed_id, 13, "Funder’s ID", 104541, "Health Research Council of New Zealand"));
+                                }
+
+                                else if (processed_id.StartsWith("HRC"))
+                                {
+                                    processed_id = processed_id.Replace("HRC", "");
+                                    processed_id = processed_id.Replace("Emerging Research First Grant- ", "");
+                                    processed_id = processed_id.Replace("Project Grant Number #", "");
+                                    processed_id = processed_id.Replace("Ref:", "").Trim(); ;
+
+                                    study_identifiers.Add(new StudyIdentifier(sid, processed_id, 13, "Funder’s ID", 104541, "Health Research Council of New Zealand"));
+                                }
+
+                                else if (processed_id.StartsWith("HREC"))
+                                {
+                                    if (sponsor_is_org == true)
+                                    {
+                                        study_identifiers.Add(new StudyIdentifier(sid, processed_id, 12, "Ethics review ID", null, sponsor_name));
+                                    }
+                                    else
+                                    {
+                                        study_identifiers.Add(new StudyIdentifier(sid, processed_id, 12, "Ethics review ID", 12, "No organisation name provided in source data"));
+                                    }
+
+                                }
+
+                                else if (processed_id.StartsWith("Human Research Ethics Committee (HREC):"))
+                                {
+                                    // ??? change type and keep sponsor
+                                    processed_id = processed_id.Replace("Human Research Ethics Committee (HREC):", "");
+
+                                    if (sponsor_is_org == true)
+                                    {
+                                        study_identifiers.Add(new StudyIdentifier(sid, processed_id, 12, "Ethics review ID", null, sponsor_name));
+                                    }
+                                    else
+                                    {
+                                        study_identifiers.Add(new StudyIdentifier(sid, processed_id, 12, "Ethics review ID", 12, "No organisation name provided in source data"));
+                                    }
+                                }
+
+                                else if (processed_id.StartsWith("MRINZ"))
+                                {
+                                    study_identifiers.Add(new StudyIdentifier(sid, processed_id, 43, "Collaborative Group ID", 103010, "Medical Research Institute of New Zealand"));
+                                }
+
+                                else if (processed_id.StartsWith("National Clinical Trials Registry"))
+                                {
+                                    processed_id = processed_id.Replace("National Clinical Trials Registry:", "").Trim();
+                                    study_identifiers.Add(new StudyIdentifier(sid, processed_id, 11, "Trial registry ID", 104548, "National Clinical Trials Registry (Australia)"));
+                                }
+                                else if (processed_id.StartsWith("Perinatal Trials Registry:"))
+                                {
+                                    processed_id = processed_id.Replace("Perinatal Trials Registry:", "").Trim();
+                                    study_identifiers.Add(new StudyIdentifier(sid, processed_id, 11, "Trial registry ID", 104542, "Perinatal Trials Registry (Australia)"));
+                                }
+
+                                else if (processed_id.StartsWith("TROG"))
+                                {
+                                    study_identifiers.Add(new StudyIdentifier(sid, processed_id, 43, "Collaborative Group ID", 104543, "Trans Tasman Radiation Oncology Group"));
+                                }
+
+
+                                else
+                                {
+                                    if (sponsor_is_org == true)
+                                    {
+                                        study_identifiers.Add(new StudyIdentifier(sid, processed_id, 14, "Sponsor ID", null, sponsor_name));
+                                    }
+                                    else
+                                    {
+                                        study_identifiers.Add(new StudyIdentifier(sid, processed_id, 14, "Sponsor ID", 12, "No organisation name provided in source data"));
+                                    }
+                                }
+
+
+                            }
+                            else if (source_id == 100118)
+                            {
+                                if (!processed_id.EndsWith("#32"))    // first ignore these (small sub group)
+                                {
+                                    if (processed_id.StartsWith("AMCTR"))
+                                    {
+                                        study_identifiers.Add(new StudyIdentifier(sid, processed_id, 11, "Trial Registry ID", 104544, "Acupuncture-Moxibustion Clinical Trial Registry"));
+                                    }
+                                    else if (processed_id.StartsWith("ChiMCTR"))
+                                    {
+                                        study_identifiers.Add(new StudyIdentifier(sid, processed_id, 11, "Trial Registry ID", 104545, "Chinese Medicine Clinical Trials Registry"));
+                                    }
+                                    else if (processed_id.StartsWith("CUHK"))
+                                    {
+                                        study_identifiers.Add(new StudyIdentifier(sid, processed_id, 11, "Trial Registry ID", 104546, "CUHK Clinical Research and Biostatistics Clinical Trials Registry"));
+                                    }
+                                    else
+                                    {
+                                        if (sponsor_is_org == true)
+                                        {
+                                            study_identifiers.Add(new StudyIdentifier(sid, processed_id, 14, "Sponsor ID", null, sponsor_name));
+                                        }
+                                        else
+                                        {
+                                            study_identifiers.Add(new StudyIdentifier(sid, processed_id, 14, "Sponsor ID", 12, "No organisation name provided in source data"));
+                                        }
+                                    }
+                                }
+                            }
+
+                            else if (source_id == 100127)
+                            {
+                                if (processed_id.StartsWith("JapicCTI"))
+                                {
+                                    study_identifiers.Add(new StudyIdentifier(sid, processed_id, 11, "Trial Registry ID", 100157, "Japan Pharmaceutical Information Center"));
+                                }
+                                else if (processed_id.StartsWith("JMA"))
+                                {
+                                    study_identifiers.Add(new StudyIdentifier(sid, processed_id, 11, "Trial Registry ID", 100158, "Japan Medical Association – Center for Clinical Trials"));
+                                }
+                                else if (processed_id.StartsWith("jCRT") || processed_id.StartsWith("JCRT"))
+                                {
+                                    study_identifiers.Add(new StudyIdentifier(sid, processed_id, 11, "Trial Registry ID", 104547, "Japan Registry of Clinical Trials"));
+                                }
+                                else if (processed_id.StartsWith("UMIN"))
+                                {
+                                    processed_id = processed_id.Replace("ID", "").Replace("No", "").Replace(":", "").Replace(".  ", "").Trim();
+                                    study_identifiers.Add(new StudyIdentifier(sid, processed_id, 11, "Trial Registry ID", 100156, "University Hospital Medical Information Network CTR"));
+                                }
+                                else
+                                {
+                                    if (sponsor_is_org == true)
+                                    {
+                                        study_identifiers.Add(new StudyIdentifier(sid, processed_id, 14, "Sponsor ID", null, sponsor_name));
+                                    }
+                                    else
+                                    {
+                                        study_identifiers.Add(new StudyIdentifier(sid, processed_id, 14, "Sponsor ID", 12, "No organisation name provided in source data"));
+                                    }
+                                }
+                            }
+                            else
+                            {
+                                if (sponsor_is_org == true)
+                                {
+                                    study_identifiers.Add(new StudyIdentifier(sid, processed_id, 14, "Sponsor ID", null, sponsor_name));
+                                }
+                                else
+                                {
+                                    study_identifiers.Add(new StudyIdentifier(sid, processed_id, 14, "Sponsor ID", 12, "No organisation name provided in source data"));
+                                }
                             }
                         }
                         else
@@ -473,28 +867,43 @@ namespace DataHarvester.who
                         string condition = GetElementAsString(cn.Element("condition"));
                         if (!string.IsNullOrEmpty(condition))
                         {
-                            char[] chars_to_trim = { ' ', '?', ':', '*', '/', '-', '_', '+', '=' };
+                            char[] chars_to_trim = { ' ', '?', ':', '*', '/', '-', '_', '+', '=', '>', '<', '&' };
                             string cond = condition.Trim(chars_to_trim);
                             if (!string.IsNullOrEmpty(cond) && cond.ToLower() != "not applicable" && cond.ToLower() != "&quot")
                             {
-                                string code = GetElementAsString(cn.Element("code"));
-                                string code_system = GetElementAsString(cn.Element("code_system"));
+                                if (topic_is_new(cond))
+                                {
+                                    string code = GetElementAsString(cn.Element("code"));
+                                    string code_system = GetElementAsString(cn.Element("code_system"));
 
-                                if (code == null)
-                                {
-                                    study_topics.Add(new StudyTopic(sid, 13, "Condition", cond));
-                                }
-                                else
-                                {
-                                    if (code_system == "ICD 10")
+                                    if (code == null)
                                     {
-                                        study_topics.Add(new StudyTopic(sid, 13, "Condition", cond, 12, code, ""));
+                                        study_topics.Add(new StudyTopic(sid, 13, "Condition", cond));
+                                    }
+                                    else
+                                    {
+                                        if (code_system == "ICD 10")
+                                        {
+                                            study_topics.Add(new StudyTopic(sid, 13, "Condition", cond, 12, code));
+                                        }
                                     }
                                 }
                             }
                         }
                     }
                 }
+            }
+
+            bool topic_is_new(string candidate_topic)
+            {
+                foreach (StudyTopic k in study_topics)
+                {
+                    if (k.original_value.ToLower() == candidate_topic.ToLower())
+                    {
+                        return false;
+                    }
+                }
+                return true;
             }
 
 
@@ -534,25 +943,31 @@ namespace DataHarvester.who
 
             }
 
+            // there may be (rarely) a results link...usually but not always back tothe source registry 
+            // also rarely a results_url_protocol - meaning unclear
+
             string results_url_link = GetElementAsString(r.Element("results_url_link"));
+            string results_url_protocol = GetElementAsString(r.Element("results_url_protocol"));
             string results_date_posted = GetElementAsString(r.Element("results_date_posted"));
-            // there may be (rarely) a results link... (exclude those on CTG - should be picked up there)
+            string results_date_completed = GetElementAsString(r.Element("results_date_completed"));
+
+            SplitDate results_posted_date = dh.GetDatePartsFromISOString(results_date_posted);
+            SplitDate results_completed_date = dh.GetDatePartsFromISOString(results_date_completed);
+
             if (!string.IsNullOrEmpty(results_url_link))
             {
-                if (results_url_link.Contains("http") && !results_url_link.ToLower().Contains("clinicaltrials.gov"))
+                // (exclude those on CTG - should be picked up there)
+
+                string results_link = results_url_link.ToLower();
+                if (results_link.Contains("http") && !results_link.Contains("clinicaltrials.gov"))
                 {
                     object_display_title = name_base + " :: " + "Results summary";
                     sd_oid = hh.CreateMD5(sid + object_display_title);
-                    SplitDate results_date = null;
-                    if (results_date_posted != null)
-                    {
-                        results_date = dh.GetDatePartsFromISOString(results_date_posted);
-                    }
 
-                    int? posted_year = results_date?.year;
+                    int? results_pub_year = results_posted_date?.year;
 
                     // (in practice may not be in the registry)
-                    data_objects.Add(new DataObject(sd_oid, sid, object_display_title, posted_year, 
+                    data_objects.Add(new DataObject(sd_oid, sid, object_display_title, results_pub_year, 
                                      23, "Text", 28, "Trial registry results summary",
                                      source_id, source_name, 12, download_datetime));
 
@@ -563,17 +978,20 @@ namespace DataHarvester.who
                     data_object_instances.Add(new ObjectInstance(sd_oid, source_id, source_name,
                                         url_link, true, 35, "Web text"));
 
-                    if (results_date != null)
+                    if (results_posted_date != null)
                     {
-                        data_object_dates.Add(new ObjectDate(sd_oid, 15, "Created", results_date.year,
-                                  results_date.month, results_date.day, results_date.date_string));
+                        data_object_dates.Add(new ObjectDate(sd_oid, 12, "Available", results_posted_date.year,
+                                  results_posted_date.month, results_posted_date.day, results_posted_date.date_string));
+                    }
+                    if (results_completed_date != null)
+                    {
+                        data_object_dates.Add(new ObjectDate(sd_oid, 15, "Created", results_completed_date.year,
+                                  results_completed_date.month, results_completed_date.day, results_completed_date.date_string));
                     }
                 }
             }
 
 
-            // there may be (rarely) a protocol link...(exclude those simply referring to CTG - should be picked up there)
-            string results_url_protocol = GetElementAsString(r.Element("results_url_protocol"));
             if (!string.IsNullOrEmpty(results_url_protocol))
             {
                 string prot_url = results_url_protocol.ToLower();
@@ -583,6 +1001,7 @@ namespace DataHarvester.who
                     string resource_type = "";
                     int resource_type_id = 0;
                     string url_link = "";
+
                     int url_start = prot_url.IndexOf("http");
                     if (results_url_protocol.Contains(".pdf"))
                     {
@@ -616,30 +1035,32 @@ namespace DataHarvester.who
                     }
 
                     int object_type_id = 0; string object_type = "";
-                    if (prot_url.Contains("results summary"))
-                    {
-                        object_type_id = 79;
-                        object_type = "CSR summary";
-                    }
-                    else
+                    if (prot_url.Contains("study protocol"))
                     {
                         object_type_id = 11;
                         object_type = "Study protocol";
+                    }
+                    else
+                    {
+                        // most likely... but difficult to tell
+                        object_type_id = 79;
+                        object_type = "CSR summary";
                     }
 
                     object_display_title = name_base + " :: " + object_type;
                     sd_oid = hh.CreateMD5(sid + object_display_title);
 
-                    // almost certainly not in the registry
+                    // almost certainly not in or managed by the registry
+
                     data_objects.Add(new DataObject(sd_oid, sid, object_display_title, pub_year, 23, "Text", object_type_id, object_type,
                     null, null, 11, download_datetime));
 
                     data_object_titles.Add(new ObjectTitle(sd_oid, object_display_title, 22,
                                         "Study short name :: object type", true));
 
-                    data_object_instances.Add(new ObjectInstance(sd_oid, source_id, source_name,
+                    data_object_instances.Add(new ObjectInstance(sd_oid, null, null,
                                         url_link, true, resource_type_id, resource_type));
-                    
+
                 }
             }
 

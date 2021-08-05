@@ -80,6 +80,7 @@ namespace DataHarvester
             objecttablebuilder.create_table_object_rights();
             objecttablebuilder.create_table_object_comments();
             objecttablebuilder.create_table_object_relationships();
+            objecttablebuilder.create_table_journal_details();
 
         }
 

@@ -64,7 +64,7 @@ namespace DataHarvester.biolincc
             title = sh.ReplaceTags(title);
             title = sh.ReplaceApos(title);
 
-            // study disploay title (= default title) always the bniolincc one
+            // study disploay title (= default title) always the biolincc one
             s.display_title = title;
             study_titles.Add(new StudyTitle(sid, title, 18, "Other scientific title", true, "From study page on BioLINCC web site"));
 
@@ -93,7 +93,7 @@ namespace DataHarvester.biolincc
             string acronym = GetElementAsString(r.Element("acronym"));
             if (!string.IsNullOrEmpty(acronym))
             {
-                study_titles.Add(new StudyTitle(sid, acronym, 14, "Acronym or Abbreviation", false, ""));
+                study_titles.Add(new StudyTitle(sid, acronym, 14, "Acronym or Abbreviation", false));
             }
 
             string brief_description = GetElementAsString(r.Element("brief_description"));
@@ -216,7 +216,7 @@ namespace DataHarvester.biolincc
                 last_revised = dh.GetDatePartsFromISOString(last_revised_date.Substring(0, 10));
 
                 // only add last revised date if it is later than date prepared date
-                // Fort early trials run before BioLINCC waas set up this is not the case
+                // For early trials run before BioLINCC waas set up this is not the case
 
                 if ((last_revised.year * 400) + (last_revised.month * 32) + last_revised.day
                     >= (page_prepared.year * 400) + (page_prepared.month * 32) + page_prepared.day)
@@ -260,6 +260,8 @@ namespace DataHarvester.biolincc
             string resources_available = GetElementAsString(r.Element("resources_available"));
             if (resources_available.ToLower().Contains("datasets"))
             {
+                DateTime date_access_url_checked = new DateTime(2021, 7, 23);
+
                 object_display_title = name_base + " :: " + "Individual participant data";
                 sd_oid = hh.CreateMD5(sid + object_display_title);
 
@@ -267,7 +269,7 @@ namespace DataHarvester.biolincc
                         80, "Individual participant data", 100167, "National Heart, Lung, and Blood Institute (US)",
                         17, "Case by case download", access_details,
                         "https://biolincc.nhlbi.nih.gov/media/guidelines/handbook.pdf?link_time=2019-12-13_11:33:44.807479#page=15",
-                        download_datetime, download_datetime));
+                        date_access_url_checked, download_datetime));
 
                 data_object_titles.Add(new ObjectTitle(sd_oid, object_display_title, 22, "Study short name :: object type", true));
 
@@ -275,13 +277,12 @@ namespace DataHarvester.biolincc
                 string dataset_consent_restrictions = GetElementAsString(r.Element("dataset_consent_restrictions"));
 
                 int consent_type_id = 0;
-                string consent_type = "";
-                string restrictions = "";
+                string consent_type = null;
+                string restrictions = null;
                 if (string.IsNullOrEmpty(dataset_consent_restrictions))
                 {
                     consent_type_id = 0;
                     consent_type = "Not known";
-                    restrictions = "";
                 }
                 else if (dataset_consent_restrictions.ToLower() == "none"
                     || dataset_consent_restrictions.ToLower() == "none.")
@@ -299,7 +300,7 @@ namespace DataHarvester.biolincc
 
                 // do dataset object separately
                 object_datasets.Add(new ObjectDataset(sd_oid,
-                                         0, "Not known", "",
+                                         0, "Not known", null,
                                          2, "De-identification applied", de_identification, 
                                          consent_type_id, consent_type, restrictions));
             }
@@ -338,8 +339,15 @@ namespace DataHarvester.biolincc
                         string size = GetElementAsString(doc.Element("size"));
                         string size_units = GetElementAsString(doc.Element("size_units"));
 
+                        // for parity and test expectations
+                        if (size == "") size = null;
+                        if (size_units == "") size_units = null;
+
                         object_display_title = name_base + " :: " + doc_name;
                         sd_oid = hh.CreateMD5(sid + object_display_title);
+
+                        // N.B. 'pub_year' for these resources assumed to be the same as the biolincc entry
+                        // Exact date
 
                         data_objects.Add(new DataObject(sd_oid, sid, object_display_title, pub_year, 23, "Text", object_type_id, object_type,
                                         100167, "National Heart, Lung, and Blood Institute (US)", access_type_id, download_datetime));

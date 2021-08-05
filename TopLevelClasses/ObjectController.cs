@@ -34,13 +34,13 @@ namespace DataHarvester
             int k = 0;
             for (int m = 0; m < total_amount; m += chunk)
             {
-                // if (k > 50) break; // for testing...
+                //if (k > 10000) break; // for testing...
 
-                IEnumerable<StudyFileRecord> file_list = _mon_repo
-                        .FetchStudyFileRecordsByOffset(_source.id, m, chunk, harvest_type_id);
+                IEnumerable<ObjectFileRecord> file_list = _mon_repo
+                        .FetchObjectFileRecordsByOffset(_source.id, m, chunk, harvest_type_id);
 
                 int n = 0; string filePath = "";
-                foreach (StudyFileRecord rec in file_list)
+                foreach (ObjectFileRecord rec in file_list)
                 {
                     // if (k > 50) break; // for testing...
 
@@ -71,11 +71,5 @@ namespace DataHarvester
             return k;
         }
 
-
-        public void DoPostProcessing()
-        {
-            // Necessary for pubmed data
-
-        }
     }
 }

@@ -125,22 +125,6 @@ namespace DataHarvester.isrctn
                     }
             }
 
-            string conditions = GetElementAsString(r.Element("condition_category"));
-            if (conditions.Contains(","))
-            {
-                // add some topics
-                string[] conds = conditions.Split(',');
-                for (int i = 0; i < conds.Length; i++)
-                {
-                    topics.Add(new StudyTopic(sid, 13, "condition", conds[i]));
-                }
-            }
-            else
-            {
-                // add a single topic
-                topics.Add(new StudyTopic(sid, 13, "condition", conditions));
-            }
-
             // study registry entry dates
             string d_assigned = GetElementAsString(r.Element("date_assigned"));
             if (d_assigned != null)
@@ -209,7 +193,7 @@ namespace DataHarvester.isrctn
                                         if (sh.CheckPersonName(c.person_full_name))
                                         {
                                             c.person_full_name = sh.TidyPersonName(c.person_full_name);
-                                            if (c.person_full_name != null)
+                                            if (c.person_full_name != "")
                                             {
                                                 contributors.Add(c);
                                             }
@@ -249,14 +233,13 @@ namespace DataHarvester.isrctn
                                 }
                             case "ORCID ID":
                                 {
-                                    string orcid;
                                     if (item_value.Contains("/"))
                                     {
-                                        orcid = item_value.Substring(item_value.LastIndexOf("/") + 1);
+                                        c.orcid_id = item_value.Substring(item_value.LastIndexOf("/") + 1);
                                     }
                                     else
                                     {
-                                        orcid = item_value;
+                                        c.orcid_id = item_value;
                                     }
                                     break;
                                 }
@@ -280,7 +263,7 @@ namespace DataHarvester.isrctn
                         if (sh.CheckPersonName(c.person_full_name))
                         {
                             c.person_full_name = sh.TidyPersonName(c.person_full_name);
-                            if (c.person_full_name != null)
+                            if (c.person_full_name != "")
                             {
                                 contributors.Add(c);
                             }
@@ -403,6 +386,8 @@ namespace DataHarvester.isrctn
 
             // design info
 
+            string listed_condition = "";   //  defined here to use in later comparison
+
             string PIS_details = "";
             var study_info = r.Element("study_info");
             if (study_info != null)
@@ -419,7 +404,11 @@ namespace DataHarvester.isrctn
                         {
                             case "Scientific title":
                                 {
-                                    titles.Add(new StudyTitle(sid, sh.ReplaceApos(item_value), 16, "Trial Registry title", false));
+                                    string study_title = sh.ReplaceApos(item_value).Trim();
+                                    if (study_title.ToLower() != study_name.ToLower())
+                                    {
+                                        titles.Add(new StudyTitle(sid, sh.ReplaceApos(item_value), 16, "Trial Registry title", false));
+                                    }
                                     break;
                                 }
                             case "Acronym":
@@ -587,7 +576,7 @@ namespace DataHarvester.isrctn
                                 }
                             case "Condition":
                                 {
-                                    topics.Add(new StudyTopic(sid, 13, "condition", item_value));
+                                    listed_condition = item_value;
                                     break;
                                 }
                             case "Drug names":
@@ -638,7 +627,7 @@ namespace DataHarvester.isrctn
                                             }
                                         case "Not Specified":
                                             {
-                                                value_id = 140; value_name = "Not provided";
+                                                 value_id = 140; value_name = "Not provided";
                                                 break;
                                             }
                                     }
@@ -720,6 +709,32 @@ namespace DataHarvester.isrctn
                     }
                 }
             }
+
+
+            if (listed_condition != "")
+            {
+                topics.Add(new StudyTopic(sid, 13, "condition", listed_condition));
+            }
+            else
+            {
+                // these tend to be very general - high level classifcvations
+                string conditions = GetElementAsString(r.Element("condition_category"));
+                if (conditions.Contains(","))
+                {
+                    // add topics
+                    string[] conds = conditions.Split(',');
+                    for (int i = 0; i < conds.Length; i++)
+                    {
+                        topics.Add(new StudyTopic(sid, 13, "condition", conds[i]));
+                    }
+                }
+                else
+                {
+                    // add a single topic
+                    topics.Add(new StudyTopic(sid, 13, "condition", conditions));
+                }
+            }
+
 
             // eligibility 
             var eligibility = r.Element("eligibility");
@@ -1208,7 +1223,7 @@ namespace DataHarvester.isrctn
                         object_display_title = s.display_title + " :: " + item_name;
                         sd_oid = hh.CreateMD5(sid + object_display_title);
 
-                        data_objects.Add(new DataObject(sd_oid, sid, object_display_title, s.study_start_year,
+                        data_objects.Add(new DataObject(sd_oid, sid, object_display_title, null,
                                     23, "Text", object_type_id, object_type, 100126, "ISRCTN", 11, download_datetime));
                         object_titles.Add(new ObjectTitle(sd_oid, object_display_title,
                                     20, "Unique data object title", true));

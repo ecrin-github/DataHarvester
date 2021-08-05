@@ -35,22 +35,16 @@ namespace DataHarvester
         }
 
         public int Run(Options opts)
-
         {
             try
             {
-                int harvest_type_id = opts.harvest_type_id;
-                bool org_update_only = opts.org_update_only;
-
-                _logger_helper.Logheader("STARTING HARVESTER");
+                _logger_helper.LogHeader("STARTING HARVESTER");
                 _logger_helper.LogCommandLineParameters(opts);
-
                 foreach (int source_id in opts.source_ids)
                 {
-                    HarvestData(source_id, harvest_type_id, org_update_only);
+                    HarvestData(source_id, opts);
                 }
-
-                _logger_helper.Logheader("Closing Log");
+                _logger_helper.LogHeader("Closing Log");
                 return 0;
             }
 
@@ -58,21 +52,21 @@ namespace DataHarvester
             {
                 _logger.Error(e.Message);
                 _logger.Error(e.StackTrace);
-                _logger_helper.Logheader("Closing Log");
+                _logger_helper.LogHeader("Closing Log");
                 return -1;
             }
         }
 
-        private void HarvestData(int source_id, int harvest_type_id, bool org_update_only)
+        private void HarvestData(int source_id, Options opts)
         {
             // Obtain source details, augment with connection string for this database
 
             ISource source = _mon_repo.FetchSourceParameters(source_id);
             Credentials creds = _mon_repo.Credentials;
-            source.db_conn = creds.GetConnectionString(source.database_name, harvest_type_id);
-            _logger.Information("For source: " + source.id + ": " + source.database_name);
+            source.db_conn = creds.GetConnectionString(source.database_name, opts.harvest_type_id);
+            _logger_helper.LogStudyHeader(opts, "For source: " + source.id + ": " + source.database_name);
 
-            if (!org_update_only)
+            if (!opts.org_update_only)
             {
                 // Bulk of the harvesting process can be skipped if this run is just for updating 
                 // tables with context values. 
@@ -89,21 +83,21 @@ namespace DataHarvester
                     // Otherwise...
                     // construct the sd tables. (Some sources may be data objects only.)
 
-                    _logger_helper.Logheader("Recreate database tables");
+                    _logger_helper.LogHeader("Recreate database tables");
                     SchemaBuilder sdb = new SchemaBuilder(source, _logger);
                     sdb.RecreateTables();
 
                     // Construct the harvest_event record.
 
-                    _logger_helper.Logheader("Process data");
+                    _logger_helper.LogHeader("Process data");
                     int harvest_id = _mon_repo.GetNextHarvestEventId();
-                    HarvestEvent harvest = new HarvestEvent(harvest_id, source.id, harvest_type_id);
+                    HarvestEvent harvest = new HarvestEvent(harvest_id, source.id, opts.harvest_type_id);
                     _logger.Information("Harvest event " + harvest_id.ToString() + " began");
 
                     // Harvest the data from the local XML files
                     IStudyProcessor study_processor = null;
                     IObjectProcessor object_processor = null;
-                    harvest.num_records_available = _mon_repo.FetchFullFileCount(source.id, source.source_type, harvest_type_id);
+                    harvest.num_records_available = _mon_repo.FetchFullFileCount(source.id, source.source_type, opts.harvest_type_id);
 
                     if (source.source_type == "study")
                     {
@@ -144,7 +138,7 @@ namespace DataHarvester
                         }
 
                         StudyController c = new StudyController(_logger, _mon_repo, _storage_repo, source, study_processor);
-                        harvest.num_records_harvested = c.LoopThroughFiles(harvest_type_id, harvest_id);
+                        harvest.num_records_harvested = c.LoopThroughFiles(opts.harvest_type_id, harvest_id);
                     }
                     else
                     {
@@ -159,8 +153,7 @@ namespace DataHarvester
                         }
 
                         ObjectController c = new ObjectController(_logger, _mon_repo, _storage_repo, source, object_processor);
-                        harvest.num_records_harvested = c.LoopThroughFiles(harvest_type_id, harvest_id);
-                        c.DoPostProcessing();
+                        harvest.num_records_harvested = c.LoopThroughFiles(opts.harvest_type_id, harvest_id);
                     }
 
                     harvest.time_ended = DateTime.Now;
@@ -183,7 +176,7 @@ namespace DataHarvester
                                                        source.has_study_tables, source.has_study_topics, source.has_study_contributors);
             ContextDataManager.Credentials context_creds = new ContextDataManager.Credentials(creds.Host, creds.Username, creds.Password);
 
-            _logger_helper.Logheader("Updating context data");
+            _logger_helper.LogHeader("Updating context data");
             ContextMain context_main = new ContextMain(_logger);
 
             string schema = (source.source_type == "test") ? "expected" : "sd";
@@ -203,18 +196,18 @@ namespace DataHarvester
                       source.has_object_dates, source.has_object_rights, source.has_object_relationships,
                       source.has_object_pubmed_set);
 
-            _logger_helper.Logheader("Creating Record Hashes");
+            _logger_helper.LogHeader("Creating Record Hashes");
             HashMain hash_main = new HashMain(_logger);
             hash_main.HashData(hash_source, schema);
 
-            // If harvesting test data it need to be transferred  
+            // If harvesting test data it needs to be transferred  
             // to the sdcomp schema for safekeeping and further processing
             // If a normal harvest from a full source statistics should be produced.
             // If the harvest was of the manual 'expected' data do neither.
 
             if (source.source_type != "test")
             {
-                if (harvest_type_id == 3)
+                if (opts.harvest_type_id == 3)
                 {
                     // transfer sd data to test composite data store for later comparison
                     // otherwise it will be overwritten by the next harvest of sd data

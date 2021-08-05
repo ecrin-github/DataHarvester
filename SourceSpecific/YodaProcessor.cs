@@ -75,7 +75,7 @@ namespace DataHarvester.yoda
             // In most cases the name_base will be the NCT title
             string name_base = string.IsNullOrEmpty(name_base_title) ? yoda_title : name_base_title;
 
-            // create study references (pmids)
+
             XElement st_titles = r.Element("study_titles");
             if (st_titles != null)
             {
@@ -179,7 +179,7 @@ namespace DataHarvester.yoda
 
             // study contributors
             // only sponsor knowm, and only relevant for non registered studies (others will  
-            // have type identified in registered study entry).
+            // have the sponsor identified in registered study entry).
             int? sponsor_org_id; string sponsor_org;
             int? sponsor_id = GetElementAsInt(r.Element("sponsor_id"));
             string sponsor = GetElementAsString(r.Element("sponsor"));
@@ -193,18 +193,16 @@ namespace DataHarvester.yoda
                 sponsor_org_id = null; 
                 sponsor_org = "No organisation name provided in source data";
             }
+            // If study registered elsewhere this wil be ignored during the aggregation
+            study_contributors.Add(new StudyContributor(sid, 54, "Study Sponsor", sponsor_org_id, sponsor_org));
 
-            if (is_yoda_only)
-            {
-                study_contributors.Add(new StudyContributor(sid, 54, "Study Sponsor", sponsor_org_id, sponsor_org));
-            }
 
             // study topics
             string compound_generic_name = GetElementAsString(r.Element("compound_generic_name"));
             string compound_product_name = GetElementAsString(r.Element("compound_product_name"));
             if (!string.IsNullOrEmpty(compound_generic_name))
             {
-                study_topics.Add(new StudyTopic(sid, 12, "chemical / agent", compound_generic_name, "generic name"));
+                study_topics.Add(new StudyTopic(sid, 12, "chemical / agent", compound_generic_name));
             }
 
             if (!string.IsNullOrEmpty(compound_product_name))
@@ -225,7 +223,7 @@ namespace DataHarvester.yoda
                 if (add_product)
                 {
                     product_name = CultureInfo.CurrentCulture.TextInfo.ToTitleCase(product_name.ToLower());
-                    study_topics.Add(new StudyTopic(sid, 12, "chemical / agent", product_name, "trade name"));
+                    study_topics.Add(new StudyTopic(sid, 12, "chemical / agent", product_name));
                 }
             }
 
@@ -246,7 +244,7 @@ namespace DataHarvester.yoda
                         string pmid = GetElementAsString(sr.Element("pmid"));
                         string primary_citation_link = GetElementAsString(sr.Element("primary_citation_link"));
                         // normally only 1 if there is one there at all 
-                        study_references.Add(new StudyReference(sid, pmid, primary_citation_link, "", ""));
+                        study_references.Add(new StudyReference(sid, pmid, primary_citation_link, null, null));
                     }
                 }
             }
@@ -374,7 +372,7 @@ namespace DataHarvester.yoda
                         }
                         else
                         {
-                            DateTime date_access_url_checked = new DateTime(2020, 9, 23);
+                            DateTime date_access_url_checked = new DateTime(2021, 7, 23);
 
                             string access_details = "The YODA Project will require that requestors provide basic information about the Principal Investigator, Key Personnel, and the ";
                             access_details += "project Research Proposal, including a scientific abstract and research methods.The YODA Project will review proposals to ensure that: ";
@@ -383,17 +381,17 @@ namespace DataHarvester.yoda
 
                             data_objects.Add(new DataObject(sd_oid, sid, object_display_title, null, object_class_id, object_class, object_type_id, object_type,
                                             101901, "Yoda", 17, "Case by case download", access_details,
-                                            " ", date_access_url_checked, download_datetime));
+                                            "https://yoda.yale.edu/how-request-data", date_access_url_checked, download_datetime));
                             data_object_titles.Add(new ObjectTitle(sd_oid, object_display_title, 22, "Study short name :: object type", true));
                         }
 
                         // for datasets also add dataset properties - even if they are largely unknown
                         if (object_type_id == 80)
                         {
-                            object_datasets.Add(new ObjectDataset(sd_oid, 0, "Not known", "",
+                            object_datasets.Add(new ObjectDataset(sd_oid, 0, "Not known", null,
                                                       2, "De-identification applied",
-                                                      "Yoda states that '...researchers will be granted access to participant-level study data that are devoid of personally identifiable information; current best guidelines for de-identification of data will be used.'",
-                                                      0, "Not known", ""));
+                                                      "Yoda states that “...researchers will be granted access to participant-level study data that are devoid of personally identifiable information; current best guidelines for de-identification of data will be used.”",
+                                                      0, "Not known", null));
                         }
                     }
                 }

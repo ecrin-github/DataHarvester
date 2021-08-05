@@ -131,11 +131,11 @@ namespace DataHarvester
             string sql_string = @"INSERT INTO sdcomp.study_topics(source_id, sd_sid,
             topic_type_id, topic_type, mesh_coded, mesh_code, mesh_value, 
             mesh_qualcode, mesh_qualvalue, original_ct_id, original_ct_code,
-            original_value, comments, record_hash)
+            original_value, record_hash)
             SELECT " + _source_id + @", sd_sid,
             topic_type_id, topic_type, mesh_coded, mesh_code, mesh_value, 
             mesh_qualcode, mesh_qualvalue, original_ct_id, original_ct_code,
-            original_value, comments, record_hash
+            original_value, record_hash
             FROM sd.study_topics";
 
             Execute_SQL(sql_string);

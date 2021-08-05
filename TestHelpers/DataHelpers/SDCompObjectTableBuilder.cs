@@ -29,7 +29,7 @@ namespace DataHarvester
               CREATE TABLE sdcomp.data_objects(
                 id                     INT             GENERATED ALWAYS AS IDENTITY PRIMARY KEY
               , source_id              INT             NOT NULL       
-              , sd_oid                 CHAR(24)        NOT NULL
+              , sd_oid                 VARCHAR        NOT NULL
               , sd_sid                 VARCHAR         NULL
               , display_title          VARCHAR         NULL
               , version                VARCHAR         NULL
@@ -69,7 +69,7 @@ namespace DataHarvester
             CREATE TABLE sdcomp.object_datasets(
                 id                     INT             GENERATED ALWAYS AS IDENTITY PRIMARY KEY
               , source_id              INT             NOT NULL
-              , sd_oid                 CHAR(24)        NOT NULL
+              , sd_oid                 VARCHAR        NOT NULL
               , record_keys_type_id    INT             NULL 
               , record_keys_type       VARCHAR         NULL     	
               , record_keys_details    VARCHAR         NULL    
@@ -103,7 +103,7 @@ namespace DataHarvester
             CREATE TABLE sdcomp.object_dates(
                 id                     INT             GENERATED ALWAYS AS IDENTITY PRIMARY KEY
               , source_id              INT             NOT NULL
-              , sd_oid                 CHAR(24)        NOT NULL
+              , sd_oid                 VARCHAR        NOT NULL
               , date_type_id           INT             NULL
               , date_type              VARCHAR         NULL
               , date_is_range          BOOLEAN         NULL default false
@@ -129,7 +129,7 @@ namespace DataHarvester
             CREATE TABLE sdcomp.object_instances(
                 id                     INT             GENERATED ALWAYS AS IDENTITY PRIMARY KEY
               , source_id              INT             NOT NULL
-              , sd_oid                 CHAR(24)        NOT NULL
+              , sd_oid                 VARCHAR        NOT NULL
               , instance_type_id       INT             NOT NULL 
               , instance_type          VARCHAR         NULL
               , repository_org_id      INT             NULL
@@ -156,7 +156,7 @@ namespace DataHarvester
             CREATE TABLE sdcomp.object_contributors(
                 id                     INT             GENERATED ALWAYS AS IDENTITY PRIMARY KEY
               , source_id              INT             NOT NULL
-              , sd_oid                 CHAR(24)        NOT NULL
+              , sd_oid                 VARCHAR        NOT NULL
               , contrib_type_id        INT             NULL
               , contrib_type           VARCHAR         NULL
               , is_individual          BOOLEAN         NULL
@@ -183,7 +183,7 @@ namespace DataHarvester
             CREATE TABLE sdcomp.object_titles(
                 id                     INT             GENERATED ALWAYS AS IDENTITY PRIMARY KEY
               , source_id              INT             NOT NULL
-              , sd_oid                 CHAR(24)        NOT NULL
+              , sd_oid                 VARCHAR        NOT NULL
               , title_type_id          INT             NULL
               , title_type             VARCHAR         NULL
               , title_text             VARCHAR         NULL
@@ -205,7 +205,7 @@ namespace DataHarvester
             CREATE TABLE sdcomp.object_topics(
                 id                     INT             GENERATED ALWAYS AS IDENTITY PRIMARY KEY
               , source_id              INT             NOT NULL
-              , sd_oid                 CHAR(24)        NOT NULL
+              , sd_oid                 VARCHAR        NOT NULL
               , topic_type_id          INT             NULL
               , topic_type             VARCHAR         NULL
               , mesh_coded             BOOLEAN         NULL
@@ -216,7 +216,6 @@ namespace DataHarvester
               , original_ct_id         INT             NULL
               , original_ct_code       VARCHAR         NULL
               , original_value         VARCHAR         NULL
-              , comments               VARCHAR         NULL
               , record_hash            CHAR(32)        NULL
             );
             CREATE INDEX object_topics_sd_oid ON sdcomp.object_topics(sd_oid);";
@@ -231,7 +230,7 @@ namespace DataHarvester
             CREATE TABLE sdcomp.object_comments(
                 id                     INT             GENERATED ALWAYS AS IDENTITY PRIMARY KEY
               , source_id              INT             NOT NULL
-              , sd_oid                 CHAR(24)        NOT NULL
+              , sd_oid                 VARCHAR        NOT NULL
               , ref_type               VARCHAR         NULL 
               , ref_source             VARCHAR         NULL 
               , pmid                   VARCHAR         NULL 
@@ -251,7 +250,7 @@ namespace DataHarvester
             CREATE TABLE sdcomp.object_descriptions(
                 id                     INT             GENERATED ALWAYS AS IDENTITY PRIMARY KEY
               , source_id              INT             NOT NULL
-              , sd_oid                 CHAR(24)        NOT NULL
+              , sd_oid                 VARCHAR        NOT NULL
               , description_type_id    INT             NULL
               , description_type       VARCHAR         NULL
               , label                  VARCHAR         NULL
@@ -271,7 +270,7 @@ namespace DataHarvester
             CREATE TABLE sdcomp.object_identifiers(
                 id                     INT             GENERATED ALWAYS AS IDENTITY PRIMARY KEY
               , source_id              INT             NOT NULL
-              , sd_oid                 CHAR(24)        NOT NULL
+              , sd_oid                 VARCHAR        NOT NULL
               , identifier_value       VARCHAR         NULL
               , identifier_type_id     INT             NULL
               , identifier_type        VARCHAR         NULL
@@ -293,7 +292,7 @@ namespace DataHarvester
             CREATE TABLE sdcomp.object_db_links(
                 id                     INT             GENERATED ALWAYS AS IDENTITY PRIMARY KEY
               , source_id              INT             NOT NULL
-              , sd_oid                 CHAR(24)        NOT NULL
+              , sd_oid                 VARCHAR        NOT NULL
               , db_sequence            INT             NULL
               , db_name                VARCHAR         NULL
               , id_in_db               VARCHAR         NULL
@@ -311,7 +310,7 @@ namespace DataHarvester
             CREATE TABLE sdcomp.object_publication_types(
                 id                     INT             GENERATED ALWAYS AS IDENTITY PRIMARY KEY
               , source_id              INT             NOT NULL
-              , sd_oid                 CHAR(24)        NOT NULL
+              , sd_oid                 VARCHAR        NOT NULL
               , type_name              VARCHAR         NULL
               , record_hash            CHAR(32)        NULL
             );
@@ -327,10 +326,10 @@ namespace DataHarvester
             CREATE TABLE sdcomp.object_relationships(
                 id                     INT             GENERATED ALWAYS AS IDENTITY PRIMARY KEY
               , source_id              INT             NOT NULL
-              , sd_oid                 CHAR(24)        NOT NULL
+              , sd_oid                 VARCHAR        NOT NULL
               , relationship_type_id   INT             NULL
               , relationship_type      VARCHAR         NULL
-              , target_sd_oid          CHAR(24)        NULL
+              , target_sd_oid          VARCHAR        NULL
               , record_hash            CHAR(32)        NULL
             );
             CREATE INDEX object_relationships_sd_oid ON sdcomp.object_relationships(sd_oid);";
@@ -345,7 +344,7 @@ namespace DataHarvester
             CREATE TABLE sdcomp.object_rights(
                 id                     INT             GENERATED ALWAYS AS IDENTITY PRIMARY KEY
               , source_id              INT             NOT NULL
-              , sd_oid                 CHAR(24)        NOT NULL
+              , sd_oid                 VARCHAR        NOT NULL
               , rights_name            VARCHAR         NULL
               , rights_uri             VARCHAR         NULL
               , comments                  VARCHAR         NULL
@@ -363,7 +362,7 @@ namespace DataHarvester
             CREATE TABLE sdcomp.citation_objects(
                 id                     INT             GENERATED ALWAYS AS IDENTITY PRIMARY KEY
               , source_id              INT             NOT NULL
-              , sd_oid                 CHAR(24)        NOT NULL
+              , sd_oid                 VARCHAR        NOT NULL
               , sd_sid                 VARCHAR         NULL
               , display_title          VARCHAR         NULL
               , version                VARCHAR         NULL

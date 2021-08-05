@@ -148,61 +148,81 @@ namespace DataHarvester.ctg
                                             "ClinicalTrials.gov", submissionDate, null));
 
                 // add title records
-                bool default_found = false, is_default = false;
-                brief_title = sh.ReplaceApos(FieldValue(IdentificationModule, "BriefTitle"));
-                if (brief_title != null)
+
+                brief_title = sh.ReplaceApos(FieldValue(IdentificationModule, "BriefTitle"))?.Trim() ?? "";
+                official_title = sh.ReplaceApos(FieldValue(IdentificationModule, "OfficialTitle"))?.Trim() ?? ""; 
+                acronym = FieldValue(IdentificationModule, "Acronym")?.Trim() ?? ""; 
+
+                if (brief_title != "")
                 {
-                    is_default = true;
-                    default_found = true;
-                    titles.Add(new StudyTitle(sid, brief_title, 15, "Public Title", is_default));
-                }
+                    titles.Add(new StudyTitle(sid, brief_title, 15, "Public Title", true));
+                    s.display_title = brief_title;
 
-                official_title = sh.ReplaceApos(FieldValue(IdentificationModule, "OfficialTitle"));
-                if (official_title != null)
-                {
-                    is_default = !default_found;
-                    default_found = true;
-                    titles.Add(new StudyTitle(sid, official_title, 17, "Protocol Title", is_default));
-                }
-
-                acronym = FieldValue(IdentificationModule, "Acronym");
-                if (acronym != null)
-                {
-                    is_default = !default_found;
-                    default_found = true;
-                    titles.Add(new StudyTitle(sid, acronym, 14, "Acronym or Abbreviation", is_default));
-                }
-
-                // select the appropriate display title
-                s.display_title = (brief_title != null) ? brief_title : official_title;
-
-                // get the sponsor id information
-                string org = sh.TidyOrgName(StructFieldValue(IdentificationModule, "Organization", "OrgFullName"), sid);
-                string org_study_id = StructFieldValue(IdentificationModule, "OrgStudyIdInfo", "OrgStudyId");
-                string org_id_type = StructFieldValue(IdentificationModule, "OrgStudyIdInfo", "OrgStudyIdType");
-                string org_id_domain = sh.TidyOrgName(StructFieldValue(IdentificationModule, "OrgStudyIdInfo", "OrgStudyIdDomain"), sid);
-                string org_id_link = StructFieldValue(IdentificationModule, "OrgStudyIdInfo", "OrgStudyIdLink");
-
-                // add the sponsor's identifier
-                if (org_id_type == "U.S. NIH Grant/Contract")
-                {
-                    identifiers.Add(new StudyIdentifier(sid, org_study_id,
-                                            13, "Funder’s ID", 100134, "National Institutes of Health",
-                                            null, org_id_link));
+                    if (official_title != "" && official_title.ToLower() != brief_title.ToLower())
+                    {
+                        titles.Add(new StudyTitle(sid, official_title, 17, "Protocol Title", false));
+                    }
+                    if (acronym != ""
+                            && acronym.ToLower() != brief_title.ToLower()
+                            && acronym.ToLower() != official_title.ToLower())
+                    {
+                        titles.Add(new StudyTitle(sid, acronym, 14, "Acronym or Abbreviation", false));
+                    }
                 }
                 else
                 {
-                    if (org == "[Redacted]")
+                    // No Brief Title
+
+                    if (official_title != null)
                     {
-                        org = "(sponsor name redacted in registry record)";
-                        identifiers.Add(new StudyIdentifier(sid, org_study_id,
-                                14, "Sponsor’s ID", 13, org, null, null));
+                        titles.Add(new StudyTitle(sid, official_title, 17, "Protocol Title", true));
+                        s.display_title = official_title;
+
+                        if (acronym != null && acronym.ToLower() != official_title.ToLower())
+                        {
+                            titles.Add(new StudyTitle(sid, acronym, 14, "Acronym or Abbreviation", false));
+                        }
                     }
                     else
                     {
+                        titles.Add(new StudyTitle(sid, acronym, 14, "Acronym or Abbreviation", true));
+                        s.display_title = acronym;
+                    }
+                }
+            
+                // get the sponsor id information
+                string org = sh.TidyOrgName(StructFieldValue(IdentificationModule, "Organization", "OrgFullName") ?? "", sid);
+                string org_study_id = StructFieldValue(IdentificationModule, "OrgStudyIdInfo", "OrgStudyId") ?? "";
+                string org_id_type = StructFieldValue(IdentificationModule, "OrgStudyIdInfo", "OrgStudyIdType") ?? "";
+                string org_id_domain = sh.TidyOrgName(StructFieldValue(IdentificationModule, "OrgStudyIdInfo", "OrgStudyIdDomain") ?? "", sid);
+                string org_id_link = StructFieldValue(IdentificationModule, "OrgStudyIdInfo", "OrgStudyIdLink");
+
+                // add the sponsor's identifier
+                if (org_study_id.ToLower() != org.ToLower())
+                {
+                    // (Rarely, people put the same name in both org and org_study_id fields...)
+
+                    if (org_id_type == "U.S. NIH Grant/Contract")
+                    {
                         identifiers.Add(new StudyIdentifier(sid, org_study_id,
-                                14, "Sponsor’s ID", null, org_id_domain ?? org,
-                                null, org_id_link));
+                                                13, "Funder’s ID", 100134, "National Institutes of Health",
+                                                null, org_id_link));
+                    }
+                    else
+                    {
+                        if (org == "[Redacted]")
+                        {
+                            string org_name = "(sponsor name redacted in registry record)";
+                            identifiers.Add(new StudyIdentifier(sid, org_study_id,
+                                    14, "Sponsor’s ID", 13, org_name, null, null));
+                        }
+                        else
+                        {
+                            string org_name = (org_id_domain != "") ? org_id_domain : org;
+                            identifiers.Add(new StudyIdentifier(sid, org_study_id,
+                                    14, "Sponsor’s ID", null, org_name,
+                                    null, org_id_link));
+                        }
                     }
                 }
 
@@ -216,7 +236,7 @@ namespace DataHarvester.ctg
                     {
                         string id_value = FieldValue(id_element, "SecondaryId");
                         string id_link = FieldValue(id_element, "SecondaryIdLink");
-                        if (org_study_id == null || id_value.Trim().ToLower() != org_study_id.Trim().ToLower())
+                        if (org_study_id == "" || id_value.Trim().ToLower() != org_study_id.Trim().ToLower())
                         {
                             string identifier_type = FieldValue(id_element, "SecondaryIdType");
                             string identifier_org = sh.TidyOrgName(FieldValue(id_element, "SecondaryIdDomain"), sid);
@@ -293,6 +313,8 @@ namespace DataHarvester.ctg
             }
 
 
+            string rp_name = "";   // responsible party's name - define here to allow later comparison
+            
             if (SponsorCollaboratorsModule != null)
             {
                 XElement sponsor = RetrieveStruct(SponsorCollaboratorsModule, "LeadSponsor");
@@ -308,6 +330,7 @@ namespace DataHarvester.ctg
                     }
                 }
 
+                
                 XElement resp_party = RetrieveStruct(SponsorCollaboratorsModule, "ResponsibleParty");
                 if (resp_party != null)
                 {
@@ -315,32 +338,40 @@ namespace DataHarvester.ctg
 
                     if (rp_type != "Sponsor")
                     {
-                        string rp_name = FieldValue(resp_party, "ResponsiblePartyInvestigatorFullName");
-                        string rp_title = FieldValue(resp_party, "ResponsiblePartyInvestigatorTitle");
+                        rp_name = FieldValue(resp_party, "ResponsiblePartyInvestigatorFullName") ?? "";
                         string rp_affil = FieldValue(resp_party, "ResponsiblePartyInvestigatorAffiliation");
-                        string rp_oldnametitle = FieldValue(resp_party, "ResponsiblePartyOldNameTitle");
+                        string rp_oldnametitle = FieldValue(resp_party, "ResponsiblePartyOldNameTitle") ?? "";
                         string rp_oldorg = FieldValue(resp_party, "ResponsiblePartyOldOrganization");
 
-                        if (rp_name == null && rp_oldnametitle != null) rp_name = rp_oldnametitle;
+                        if (rp_name == "" && rp_oldnametitle != "") rp_name = rp_oldnametitle;
                         if (rp_affil == null && rp_oldorg != null) rp_affil = rp_oldorg;
 
-                        if (rp_name != null && rp_name != "[Redacted]")
+                        if (rp_name != "" && rp_name != "[Redacted]")
                         {
                             if (sh.CheckPersonName(rp_name))
                             {
                                 rp_name = sh.TidyPersonName(rp_name);
-                                if (rp_name != null)
+                                if (rp_name != "")
                                 {
-                                    string affil_organisation = "";
-                                    if (rp_affil.Contains(sponsor_name))
+                                    string affil_organisation = null;
+                                    if (!sh.AppearsGenuineOrgName(rp_affil))
                                     {
-                                        affil_organisation = sponsor_name;
-                                    }
-                                    else
-                                    {
-                                        affil_organisation = sh.ExtractOrganisation(rp_affil);
+                                        rp_affil = null;
                                     }
 
+                                    if (rp_affil != null)
+                                    {
+                                        rp_affil = sh.TidyOrgName(rp_affil, sid);
+                                        if (!string.IsNullOrEmpty(sponsor_name) 
+                                            && rp_affil.ToLower().Contains(sponsor_name.ToLower()))
+                                        {
+                                            affil_organisation = sponsor_name;
+                                        }
+                                        else
+                                        {
+                                            affil_organisation = sh.ExtractOrganisation(rp_affil, sid);
+                                        }
+                                    }
 
                                     if (rp_type == "Principal Investigator")
                                     {
@@ -394,7 +425,7 @@ namespace DataHarvester.ctg
                     { 
                         string mesh_code = FieldValue(condition, "ConditionMeshId");
                         string mesh_term = FieldValue(condition, "ConditionMeshTerm");
-                        topics.Add(new StudyTopic(sid, 13, "condition", true, mesh_code, mesh_term, "browse list"));
+                        topics.Add(new StudyTopic(sid, 13, "condition", true, mesh_code, mesh_term));
                     }
                 }
             }
@@ -409,7 +440,7 @@ namespace DataHarvester.ctg
                     {
                         string mesh_code = FieldValue(intervention, "InterventionMeshId");
                         string mesh_term = FieldValue(intervention, "InterventionMeshTerm");
-                        topics.Add(new StudyTopic(sid, 12, "chemical / agent", true, mesh_code, mesh_term, "browse list"));
+                        topics.Add(new StudyTopic(sid, 12, "chemical / agent", true, mesh_code, mesh_term));
                     }
                 }
             }
@@ -438,6 +469,14 @@ namespace DataHarvester.ctg
                     foreach (XElement keyword in keywords_list)
                     {
                         string keyword_name = (keyword == null) ? null : (string)keyword;
+
+                        // Regularise druig name
+                        if (keyword_name.Contains(((char)174).ToString()))
+                        {
+                            keyword_name = keyword_name.Replace(((char)174).ToString(), "");    // drop reg mark
+                            keyword_name = CultureInfo.CurrentCulture.TextInfo.ToTitleCase(keyword_name.ToLower());
+                        }
+
                         // only add the condition name if not already present in the mesh coded conditions
                         if (topic_is_new(keyword_name))
                         {
@@ -551,7 +590,7 @@ namespace DataHarvester.ctg
                         }
                     }
 
-                    var biospec_details = RetrieveStruct(design_info, "BioSpec");
+                    var biospec_details = RetrieveStruct(DesignModule, "BioSpec");
                     if (biospec_details != null)
                     {
                         string biospec_retention = FieldValue(biospec_details, "BioSpecRetention") ?? "Not provided";
@@ -622,38 +661,45 @@ namespace DataHarvester.ctg
             if (ContactsLocationsModule != null)
             {
                 var officials = RetrieveListElements(ContactsLocationsModule, "OverallOfficialList");
+
                 if (officials != null && officials.Count() > 0)
                 {
                     foreach (XElement official in officials)
                     {
-                        string official_name = FieldValue(official, "OverallOfficialName");
-                        if (official_name != null)
-                        {
-                            if (sh.CheckPersonName(official_name))
+                        string official_name = FieldValue(official, "OverallOfficialName") ?? "";
+                        if (official_name != "" && sh.CheckPersonName(official_name))
+                        { 
+                            official_name = sh.TidyPersonName(official_name);
+                            if (official_name != rp_name)     // check not already present
                             {
-                                official_name = sh.TidyPersonName(official_name);
-                                if (official_name != null)
-                                {
-                                    string official_affiliation = FieldValue(official, "OverallOfficialAffiliation");
+                                string official_affiliation = FieldValue(official, "OverallOfficialAffiliation");
 
-                                    string affil_organisation = "";
-                                    if (official_affiliation.Contains(sponsor_name))
+                                string affil_organisation = null;
+                                if (!sh.AppearsGenuineOrgName(official_affiliation))
+                                {
+                                    official_affiliation = null;
+                                }
+
+                                if (official_affiliation != null)
+                                {
+                                    official_affiliation = sh.TidyOrgName(official_affiliation, sid);
+                                    if (!string.IsNullOrEmpty(sponsor_name)
+                                            && official_affiliation.ToLower().Contains(sponsor_name.ToLower()))
                                     {
                                         affil_organisation = sponsor_name;
                                     }
                                     else
                                     {
-                                        affil_organisation = sh.ExtractOrganisation(official_affiliation);
+                                        affil_organisation = sh.ExtractOrganisation(official_affiliation, sid);
                                     }
-
-                                    contributors.Add(new StudyContributor(sid, 51, "Study Lead",
-                                                     official_name, official_affiliation, affil_organisation));
                                 }
+
+                                contributors.Add(new StudyContributor(sid, 51, "Study Lead",
+                                                    official_name, official_affiliation, affil_organisation));
                             }
                         }
                     }
                 }
-
             }
 
             
@@ -838,11 +884,18 @@ namespace DataHarvester.ctg
 
                             // create a new data object
 
-                            // decompose the doc date to get publication year
+                            // decompose the doc date to get creation year
+                            // and upload date to get publication year
                             SplitDate docdate = null;
                             if (doc_date != null)
                             {
                                 docdate = dh.GetDatePartsFromCTGString(doc_date);
+                            }
+                            SplitDate uploaddate = null;
+                            if (upload_date != null)
+                            {
+                                // machine generated - uses mm/dd/yyyy time format
+                                uploaddate = dh.GetDatePartsFromUSString(upload_date.Substring(0, 10));
                             }
 
                             switch (type_abbrev)
@@ -885,6 +938,9 @@ namespace DataHarvester.ctg
                             }
 
                             int t_type_id; string t_type;
+
+                            // title type depends on whether label is present
+
                             if (!string.IsNullOrEmpty(doc_label))
                             {
                                 object_display_title = title_base + " :: " + doc_label;
@@ -904,14 +960,13 @@ namespace DataHarvester.ctg
                             }
                             sd_oid = hh.CreateMD5(sid + object_display_title);
 
-                            data_objects.Add(new DataObject(sd_oid, sid, object_display_title, docdate.year,
+                            data_objects.Add(new DataObject(sd_oid, sid, object_display_title, uploaddate?.year,
                             23, "Text", object_type_id, object_type, 100120,
                             "ClinicalTrials.gov", 11, download_datetime));
 
                             // check here not a previous data object of the same type
                             // It may have the same url. If so ignore it.
                             // If it appears to be different, add a suffix to the data object name
-
 
                             // add in title
                             object_titles.Add(new ObjectTitle(sd_oid, object_display_title,
@@ -926,11 +981,8 @@ namespace DataHarvester.ctg
 
                             if (upload_date != null)
                             {
-                                if (DateTime.TryParseExact(upload_date, "MM/dd/yyyy HH:mm", null, DateTimeStyles.None, out DateTime uploaddate))
-                                {
-                                    object_dates.Add(new ObjectDate(sd_oid, 12, "Available",
-                                                            uploaddate.Year, uploaddate.Month, uploaddate.Day, uploaddate.ToString("yyyy MMM dd")));
-                                }
+                                object_dates.Add(new ObjectDate(sd_oid, 12, "Available",
+                                uploaddate.year, uploaddate.month, uploaddate.day, uploaddate.date_string));
                             }
 
                             // add in instance
@@ -957,7 +1009,7 @@ namespace DataHarvester.ctg
                         if (ref_type == "result" || ref_type == "derived")
                         {
                             string pmid = FieldValue(reference, "ReferencePMID");
-                            string citation = FieldValue(reference, "ReferenceCitation");
+                            string citation = sh.ReplaceApos(FieldValue(reference, "ReferenceCitation"));
                             references.Add(new StudyReference(sid, pmid, citation, null, null));
                         }
 
@@ -984,10 +1036,11 @@ namespace DataHarvester.ctg
                 {
                     foreach (XElement avail_ipd in avail_ipd_items)
                     {
-                        string ipd_id = FieldValue(avail_ipd, "AvailIPDId");
-                        string ipd_type = FieldValue(avail_ipd, "AvailIPDType");
-                        string ipd_url = FieldValue(avail_ipd, "AvailIPDURL");
-                        string ipd_comment = FieldValue(avail_ipd, "AvailIPDComment");
+                        string ipd_id = FieldValue(avail_ipd, "AvailIPDId") ?? "";
+                        string ipd_type = FieldValue(avail_ipd, "AvailIPDType") ?? "";
+                        string ipd_url = FieldValue(avail_ipd, "AvailIPDURL") ?? "";
+                        string ipd_comment = FieldValue(avail_ipd, "AvailIPDComment") ?? "";
+                        ipd_comment = sh.ReplaceApos(ipd_comment);
 
                         // Often a GSK store
 
@@ -1094,15 +1147,15 @@ namespace DataHarvester.ctg
                                     {
                                         object_datasets.Add(new ObjectDataset(sd_oid,
                                                     3, "Anonymised", "GSK states that... 'researchers are provided access to anonymized patient-level data '",
-                                                    2, "De-identification applied", "",
-                                                    0, "Not known", ""));
+                                                    2, "De-identification applied", null,
+                                                    0, "Not known", null));
                                     }
                                     else
                                     {
                                         object_datasets.Add(new ObjectDataset(sd_oid,
-                                                    0, "Not known", "",
-                                                    0, "Not known", "",
-                                                    0, "Not known", ""));
+                                                    0, "Not known", null,
+                                                    0, "Not known", null,
+                                                    0, "Not known", null));
                                     }
                                 }
                             }
@@ -1185,8 +1238,8 @@ namespace DataHarvester.ctg
                                 {
                                     object_datasets.Add(new ObjectDataset(sd_oid,
                                                 3, "Anonymised", "Sevier states that... 'Servier will provide anonymized patient-level and study-level clinical trial data'",
-                                                2, "De-identification applied", "",
-                                                0, "Not known", ""));
+                                                2, "De-identification applied", null,
+                                                0, "Not known", null));
                                 }
                             }
                             else
@@ -1272,7 +1325,7 @@ namespace DataHarvester.ctg
                                 ipd_type_lower = "study summary";
                             }
 
-                            // used as defaults if not over-written by v=best guesses
+                            // used as defaults if not over-written by best guesses
                             int resource_type_id = 0;
                             string resource_type = "Not yet known";
 
@@ -1382,9 +1435,9 @@ namespace DataHarvester.ctg
                                 if (object_type_id == 80)
                                 {
                                     object_datasets.Add(new ObjectDataset(sd_oid,
-                                            0, "Not known", "", 
-                                            0, "Not known", "",
-                                            0, "Not known", ""));
+                                            0, "Not known", null, 
+                                            0, "Not known", null,
+                                            0, "Not known", null));
                                 }
 
                                 string repo_org_name = null;
@@ -1415,6 +1468,7 @@ namespace DataHarvester.ctg
                             // store data for later inspection
 
                             // N.B. pubmed and other references that are marked as protocols need to be processed somehow...
+
                             ipd_info.Add(new AvailableIPD(sid, ipd_id, ipd_type, ipd_url, ipd_comment));
                         }
                     }
@@ -1428,14 +1482,20 @@ namespace DataHarvester.ctg
                 {
                     foreach (XElement see_also_ref in see_also_refs)
                     {
-                        string link_label = FieldValue(see_also_ref, "SeeAlsoLinkLabel");
-                        string link_url = FieldValue(see_also_ref, "SeeAlsoLinkURL");
+                        string link_label = FieldValue(see_also_ref, "SeeAlsoLinkLabel") ?? "";
+                        link_label = link_label.Trim(' ', '|', '.', ':', '\"');
+                        if (link_label.StartsWith('(') && link_label.EndsWith(')'))
+                        {
+                            link_label = link_label.Trim('(', ')');
+                        }
+                        link_label = sh.ReplaceApos(link_label);
 
-                        if (link_url != null)
+                        string link_url = FieldValue(see_also_ref, "SeeAlsoLinkURL") ?? "";
+                        link_url = link_url.Trim(' ', '/');
+
+                        if (link_url != "")
                         {
                             bool add_to_db = true;
-                            if (link_url.EndsWith("/")) link_url = link_url.Substring(0, link_url.Length - 1);
-
                             if (link_label == "NIH Clinical Center Detailed Web Page" && link_url.EndsWith(".html"))
                             {
                                 // add new data object
@@ -1580,24 +1640,12 @@ namespace DataHarvester.ctg
                             if (link_label == "AmgenTrials clinical trials website") add_to_db = false;
                             if (link_label == "Mayo Clinic Clinical Trials") add_to_db = false;
                             if (link_url == "http://trials.boehringer-ingelheim.com") add_to_db = false;
-
                             if ((link_label == null || link_label == "") && (link_url.EndsWith(".com") || link_url.EndsWith(".org"))) add_to_db = false;
 
                             // only add to links table if all tests above have failed
 
-                            if (add_to_db)
+                            if (add_to_db && link_label != "")
                             {
-                                if (link_label != null)
-                                {
-                                    link_label = link_label.Trim();
-                                    if (link_label.StartsWith("\"") && link_label.EndsWith("\"")) link_label = link_label.Substring(1, link_label.Length - 2);
-                                    if (link_label.StartsWith("((") && link_label.EndsWith("))")) link_label = link_label.Substring(2, link_label.Length - 4);
-                                    if (link_label.StartsWith("(") && link_label.EndsWith(")")) link_label = link_label.Substring(1, link_label.Length - 2);
-                                    if (link_label.StartsWith("|")) link_label = link_label.Substring(1, link_label.Length - 1);
-                                    if (link_label.StartsWith(".")) link_label = link_label.Substring(1, link_label.Length - 1);
-                                    if (link_label.StartsWith(":")) link_label = link_label.Substring(1, link_label.Length - 1);
-                                    link_label = link_label.Trim();
-                                }
                                 studylinks.Add(new StudyLink(sid, link_label, link_url));
                             }
                         }
@@ -1664,6 +1712,19 @@ namespace DataHarvester.ctg
                                 if (sc.person_full_name == sc2.person_full_name)
                                 {
                                     add_sc = false;
+
+                                    // but retain this info if needed / possible
+
+                                    if (string.IsNullOrEmpty(sc2.person_affiliation) 
+                                        && !string.IsNullOrEmpty(sc.person_affiliation))
+                                    {
+                                        sc2.person_affiliation = sc.person_affiliation;
+                                    }
+                                    if (string.IsNullOrEmpty(sc2.organisation_name)
+                                        && !string.IsNullOrEmpty(sc.organisation_name))
+                                    {
+                                        sc2.organisation_name = sc.organisation_name;
+                                    }
                                     break;
                                 }
                             }

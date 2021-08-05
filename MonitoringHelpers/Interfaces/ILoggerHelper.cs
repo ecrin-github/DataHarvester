@@ -3,7 +3,8 @@
     public interface ILoggerHelper
     {
         void LogCommandLineParameters(Options opts);
-        void Logheader(string header_text);
+        void LogHeader(string header_text);
+        void LogStudyHeader(Options opts, string dbline);
         void LogTableStatistics(ISource s, string schema);
     }
 }

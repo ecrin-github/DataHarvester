@@ -102,7 +102,15 @@ namespace DataHarvester
 
                 string idorg = id_org.ToLower();
 
-                if (idorg.Contains("ctrp") || idorg.Contains("pdq") || idorg.Contains("nci"))
+                if (idorg.Contains("who") || idorg.Contains("utn") 
+                    || idorg.Contains("ictrp") || idorg.Contains("universal"))
+                {
+                    // UTN number - check for ictrp before checking ctrp
+                    id.id_org_id = 100115;
+                    id.id_org = "International Clinical Trials Registry Platform";
+                }
+
+                else if (idorg.Contains("ctrp") || idorg.Contains("pdq") || idorg.Contains("nci"))
                 {
                     // NCI CTRP programme
                     id.id_org_id = 100162;
@@ -113,20 +121,14 @@ namespace DataHarvester
 
                 else if (idorg.Contains("daids"))
                 {
-                    // NCI CTRP programme
+                    // NAID programme
                     id.id_org_id = 100168;
                     id.id_org = "National Institute of Allergy and Infectious Diseases";
                     id.id_type_id = 40;
                     id.id_type = "DAIDS ID";
                 }
 
-                else if (idorg.Contains("who") || idorg.Contains("utn") || idorg.Contains("universal"))
-                {
-                    // NCI CTRP programme
-                    id.id_org_id = 100115;
-                    id.id_org = "International Clinical Trials Registry Platform";
-                }
-
+                
                 else if (idorg.Contains("japic") || idorg.Contains("cti"))
                 {
                     // japanese registry
@@ -212,6 +214,13 @@ namespace DataHarvester
                 }
 
                 else if (idorg.Contains("thai"))
+                {
+                    // thai registry
+                    id.id_org_id = 100131;
+                    id.id_org = "Thai Clinical Trials Register";
+                }
+
+                else if (idorg.Contains("utn"))
                 {
                     // thai registry
                     id.id_org_id = 100131;
