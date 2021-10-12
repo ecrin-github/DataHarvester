@@ -257,7 +257,7 @@ namespace DataHarvester
                 {
                     // derive month using the enumeration
                     // monthAs3 stays the same
-                    month = GetMonthAsInt(monthas3);
+                    month = GetMonth3AsInt(monthas3);
                 }
             }
 

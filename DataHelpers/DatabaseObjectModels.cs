@@ -577,8 +577,6 @@ namespace DataHarvester
         public bool? mesh_coded { get; set; }
         public string mesh_code { get; set; }
         public string mesh_value { get; set; }
-        public string mesh_qualcode { get; set; }
-        public string mesh_qualvalue { get; set; }
         public int? original_ct_id { get; set; }
         public string original_ct_code { get; set; }
         public string original_value { get; set; }
@@ -599,25 +597,6 @@ namespace DataHarvester
             original_value = _mesh_value;
         }
 
-        // used for a mesh coded topic with a mesh qualifier
-
-        public ObjectTopic(string _sd_oid, int _topic_type_id, string _topic_type,
-                     bool _mesh_coded, string _mesh_code, string _mesh_value, 
-                     string _mesh_qualcode, string _mesh_qualvalue)
-        {
-            sd_oid = _sd_oid;
-            topic_type_id = _topic_type_id;
-            topic_type = _topic_type;
-            mesh_coded = _mesh_coded;
-            mesh_code = _mesh_code;
-            mesh_value = _mesh_value;
-            mesh_qualcode = _mesh_qualcode;
-            mesh_qualvalue = _mesh_qualvalue;
-            original_ct_id = 14;
-            original_ct_code = _mesh_code + "/" + _mesh_qualcode;
-            original_value = _mesh_value + '/' + _mesh_qualvalue;
-        }
-        
         // non mesh coded topic - topic type and name only
 
         public ObjectTopic(string _sd_sid, int _topic_type_id, string _topic_type,

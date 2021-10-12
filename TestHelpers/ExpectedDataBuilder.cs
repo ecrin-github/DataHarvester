@@ -33,6 +33,17 @@ namespace DataHarvester
         }
 
 
+        private void LoadObjectData(string object_id)
+        {
+            // Used for Pubmed data
+
+            string sp_call = "call expected.object_" + object_id + "();";
+            using (var conn = new NpgsqlConnection(_db_conn))
+            {
+                conn.Execute(sp_call);
+            }
+        }
+
         public void InitialiseTestStudiesList()
         {
             string sql_string = @"DROP TABLE IF EXISTS expected.source_studies;
@@ -47,6 +58,27 @@ namespace DataHarvester
             sql_string = @"insert into expected.studies(sd_sid)
             select sd_id from 
             expected.source_studies 
+            order by source_id, sd_id;";
+
+            Execute_SQL(sql_string);
+        }
+
+         
+        public void InitialiseTestPubMedObjectsList()
+        {
+            string sql_string = @"DROP TABLE IF EXISTS expected.source_objects;
+            create table expected.source_objects as
+            select * from mon_sf.source_data_objects
+            where for_testing = true;";
+
+            Execute_SQL(sql_string);
+
+            // Initialise expected objects table with pmid ids from source studies table
+            // study related objects to be added later)
+
+            sql_string = @"insert into expected.data_objects(sd_oid, seq_num)
+            select sd_id, 1 from 
+            expected.source_objects 
             order by source_id, sd_id;";
 
             Execute_SQL(sql_string);
@@ -137,8 +169,15 @@ namespace DataHarvester
             LoadStudyData("ntr1437");
             LoadStudyData("per_015_19");
             LoadStudyData("tctr20161221005");
-        }
 
+            // pubmed objects
+            LoadObjectData("16287956");
+            LoadObjectData("27056882");
+            LoadObjectData("32739049");
+            LoadObjectData("32739569");
+            LoadObjectData("32740235");
+
+        }
 
         public void CalculateAndAddOIDs()
         {

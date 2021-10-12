@@ -58,6 +58,7 @@ namespace DataHarvester.who
 
             string date_registration = GetElementAsString(r.Element("date_registration"));
             int? source_id = GetElementAsInt(r.Element("source_id"));
+            string source_name = ih.get_source_name(source_id);
 
             SplitDate registration_date = null;
             if (!string.IsNullOrEmpty(date_registration))
@@ -66,13 +67,14 @@ namespace DataHarvester.who
             }
 
             study_identifiers.Add(new StudyIdentifier(sid, sid, 11, "Trial Registry ID", source_id,
-                                     ih.get_source_name(source_id), registration_date?.date_string, null));
+                                     source_name, registration_date?.date_string, null));
 
             // titles
             string public_title = GetElementAsString(r.Element("public_title")) ?? "";
             string scientific_title = GetElementAsString(r.Element("scientific_title")) ?? "";
             bool public_title_present = sh.AppearsGenuineTitle(public_title);
             bool scientific_title_present = sh.AppearsGenuineTitle(scientific_title);
+            string source_string = "From the " + source_name;
 
             if (public_title_present)
             {
@@ -90,11 +92,11 @@ namespace DataHarvester.who
                 {
                     if (scientific_title.Length < 11)
                     {
-                        study_titles.Add(new StudyTitle(sid, scientific_title, 14, "Acronym or Abbreviation", true));
+                        study_titles.Add(new StudyTitle(sid, scientific_title, 14, "Acronym or Abbreviation", true, source_string));
                     }
                     else
                     {
-                        study_titles.Add(new StudyTitle(sid, scientific_title, 16, "Trial registry title", true));
+                        study_titles.Add(new StudyTitle(sid, scientific_title, 16, "Registry scientific title", true, source_string));
                     }
 
                     s.display_title = scientific_title;
@@ -109,16 +111,16 @@ namespace DataHarvester.who
                 // public title available 
                 if (public_title.Length < 11)
                 {
-                    study_titles.Add(new StudyTitle(sid, public_title, 14, "Acronym or Abbreviation", true));
+                    study_titles.Add(new StudyTitle(sid, public_title, 14, "Acronym or Abbreviation", true, source_string));
                 }
                 else
                 {
-                    study_titles.Add(new StudyTitle(sid, public_title, 15, "Public Title", true));
+                    study_titles.Add(new StudyTitle(sid, public_title, 15, "Registry public title", true, source_string));
                 }
 
                 if (scientific_title_present && scientific_title.ToLower() != public_title.ToLower())
                 {
-                    study_titles.Add(new StudyTitle(sid, scientific_title, 16, "Trial registry title", false));
+                    study_titles.Add(new StudyTitle(sid, scientific_title, 16, "Registry scientific title", false, source_string));
                 }
 
                 s.display_title = public_title;
@@ -848,7 +850,7 @@ namespace DataHarvester.who
                             }
                             else
                             {
-                                study_identifiers.Add(new StudyIdentifier(sid, processed_id, 11, "Trial Registry ID", sec_id_source, ih.get_source_name(sec_id_source)));
+                                study_identifiers.Add(new StudyIdentifier(sid, processed_id, 11, "Trial Registry ID", sec_id_source, source_name));
                             }
                         }
                     }
@@ -911,13 +913,12 @@ namespace DataHarvester.who
             // registry entry
 
             string name_base = s.display_title;
-            string reg_prefix = get_registry_prefix(source_id);
+            string reg_prefix = ih.get_registry_prefix(source_id);
             string object_display_title = name_base + " :: " + reg_prefix + "registry web page";
             string sd_oid = hh.CreateMD5(sid + object_display_title);
 
             int? pub_year = registration_date?.year;
 
-            string source_name = ih.get_source_name(source_id);
             data_objects.Add(new DataObject(sd_oid, sid, object_display_title, pub_year, 23, "Text", 13, "Trial Registry entry",
                 source_id, source_name, 12, download_datetime));
 
@@ -1176,31 +1177,6 @@ namespace DataHarvester.who
             {
                 return false;
             }
-        }
-
-
-        public string get_registry_prefix(int? source_id)
-        {
-            string prefix = "";
-            switch (source_id)
-            {
-                case 100116: { prefix = "Australian / NZ "; break; }
-                case 100117: { prefix = "Brazilian "; break; }
-                case 100118: { prefix = "Chinese "; break; }
-                case 100119: { prefix = "South Korean "; break; }
-                case 100121: { prefix = "Indian "; break; }
-                case 100122: { prefix = "Peruvian "; break; }
-                case 100124: { prefix = "German "; break; }
-                case 100125: { prefix = "Iranian "; break; }
-                case 100127: { prefix = "Japanese "; break; }
-                case 100128: { prefix = "Pan African "; break; }
-                case 100129: { prefix = "Peruvian "; break; }
-                case 100130: { prefix = "Sri Lankan "; break; }
-                case 100131: { prefix = "Thai "; break; }
-                case 100132: { prefix = "Dutch "; break; }
-                case 101989: { prefix = "Lebanese "; break; }
-            }
-            return prefix;
         }
 
     }

@@ -64,9 +64,9 @@ namespace DataHarvester.biolincc
             title = sh.ReplaceTags(title);
             title = sh.ReplaceApos(title);
 
-            // study disploay title (= default title) always the biolincc one
+            // study display title (= default title) always the biolincc one
             s.display_title = title;
-            study_titles.Add(new StudyTitle(sid, title, 18, "Other scientific title", true, "From study page on BioLINCC web site"));
+            study_titles.Add(new StudyTitle(sid, title, 18, "Other scientific title", true, "From BioLINCC web page"));
 
             // but set up a 'name base' for data object names
             // which will be the CGT name if one exists as this is usually shorter
@@ -93,7 +93,7 @@ namespace DataHarvester.biolincc
             string acronym = GetElementAsString(r.Element("acronym"));
             if (!string.IsNullOrEmpty(acronym))
             {
-                study_titles.Add(new StudyTitle(sid, acronym, 14, "Acronym or Abbreviation", false));
+                study_titles.Add(new StudyTitle(sid, acronym, 14, "Acronym or Abbreviation", false, "From BioLINCC web page"));
             }
 
             string brief_description = GetElementAsString(r.Element("brief_description"));

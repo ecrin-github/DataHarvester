@@ -246,12 +246,12 @@ namespace DataHarvester.euctr
                                                         {
                                                             if (indiv_value_num == 1)
                                                             {
-                                                                titles.Add(new StudyTitle(sid, name, 16, "Trial Registry title", "en", 11, false, null));
+                                                                titles.Add(new StudyTitle(sid, name, 16, "Registry scientific title", "en", 11, false, "From the EU CTR"));
 
                                                             }
                                                             else
                                                             {
-                                                                titles.Add(new StudyTitle(sid, name, 16, "Trial Registry title", second_language, 22, false, null));
+                                                                titles.Add(new StudyTitle(sid, name, 16, "Registry scientific title", second_language, 22, false, "From the EU CTR"));
                                                             }
                                                         }
                                                     }
@@ -284,11 +284,11 @@ namespace DataHarvester.euctr
                                                         {
                                                             if (indiv_value_num == 1)
                                                             {
-                                                                titles.Add(new StudyTitle(sid, name, 15, "Public title", "en", 11, true, null));
+                                                                titles.Add(new StudyTitle(sid, name, 15, "Registry public title", "en", 11, true, "From the EU CTR"));
                                                             }
                                                             else
                                                             {
-                                                                titles.Add(new StudyTitle(sid, name, 15, "Public title", second_language, 22, false, null));
+                                                                titles.Add(new StudyTitle(sid, name, 15, "Registry public title", second_language, 22, false, "From the EU CTR"));
                                                             }
                                                         }
                                                     }
@@ -319,7 +319,7 @@ namespace DataHarvester.euctr
                                                     name = sh.ReplaceApos(name);
                                                     if (!NameAlreadyPresent(name) && name.Length < 20)
                                                     {
-                                                        titles.Add(new StudyTitle(sid, acronym, 14, "Acronym or Abbreviation", false));
+                                                        titles.Add(new StudyTitle(sid, acronym, 14, "Acronym or Abbreviation", false, "From the EU CTR"));
                                                     }
                                                 }
                                             }

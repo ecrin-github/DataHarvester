@@ -36,8 +36,6 @@ namespace DataHarvester
                 .MapBoolean("mesh_coded", x => x.mesh_coded)
                 .MapVarchar("mesh_code", x => x.mesh_code)
                 .MapVarchar("mesh_value", x => x.mesh_value)
-                .MapVarchar("mesh_qualcode", x => x.mesh_qualcode)
-                .MapVarchar("mesh_qualvalue", x => x.mesh_qualvalue)
                 .MapInteger("original_ct_id", x => x.original_ct_id)
                 .MapVarchar("original_ct_code", x => x.original_ct_code)
                 .MapVarchar("original_value", x => x.original_value);
@@ -275,8 +273,6 @@ namespace DataHarvester
                 .MapBoolean("mesh_coded", x => x.mesh_coded)
                 .MapVarchar("mesh_code", x => x.mesh_code)
                 .MapVarchar("mesh_value", x => x.mesh_value)
-                .MapVarchar("mesh_qualcode", x => x.mesh_qualcode)
-                .MapVarchar("mesh_qualvalue", x => x.mesh_qualvalue)
                 .MapInteger("original_ct_id", x => x.original_ct_id)
                 .MapVarchar("original_ct_code", x => x.original_ct_code)
                 .MapVarchar("original_value", x => x.original_value);

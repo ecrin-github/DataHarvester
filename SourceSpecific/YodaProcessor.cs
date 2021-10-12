@@ -220,6 +220,7 @@ namespace DataHarvester.yoda
                         break;
                     }
                 }
+
                 if (add_product)
                 {
                     product_name = CultureInfo.CurrentCulture.TextInfo.ToTitleCase(product_name.ToLower());

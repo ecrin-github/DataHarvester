@@ -155,18 +155,18 @@ namespace DataHarvester.ctg
 
                 if (brief_title != "")
                 {
-                    titles.Add(new StudyTitle(sid, brief_title, 15, "Public Title", true));
+                    titles.Add(new StudyTitle(sid, brief_title, 15, "Registry public title", true, "From Clinicaltrials.gov"));
                     s.display_title = brief_title;
 
                     if (official_title != "" && official_title.ToLower() != brief_title.ToLower())
                     {
-                        titles.Add(new StudyTitle(sid, official_title, 17, "Protocol Title", false));
+                        titles.Add(new StudyTitle(sid, official_title, 16, "Registry scientific title", false, "From Clinicaltrials.gov"));
                     }
                     if (acronym != ""
                             && acronym.ToLower() != brief_title.ToLower()
                             && acronym.ToLower() != official_title.ToLower())
                     {
-                        titles.Add(new StudyTitle(sid, acronym, 14, "Acronym or Abbreviation", false));
+                        titles.Add(new StudyTitle(sid, acronym, 14, "Acronym or Abbreviation", false, "From Clinicaltrials.gov"));
                     }
                 }
                 else
@@ -175,21 +175,22 @@ namespace DataHarvester.ctg
 
                     if (official_title != null)
                     {
-                        titles.Add(new StudyTitle(sid, official_title, 17, "Protocol Title", true));
+                        titles.Add(new StudyTitle(sid, official_title, 16, "Registry scientific title", true, "From Clinicaltrials.gov"));
                         s.display_title = official_title;
 
                         if (acronym != null && acronym.ToLower() != official_title.ToLower())
                         {
-                            titles.Add(new StudyTitle(sid, acronym, 14, "Acronym or Abbreviation", false));
+                            titles.Add(new StudyTitle(sid, acronym, 14, "Acronym or Abbreviation", false, "From Clinicaltrials.gov"));
                         }
                     }
                     else
                     {
-                        titles.Add(new StudyTitle(sid, acronym, 14, "Acronym or Abbreviation", true));
+                        titles.Add(new StudyTitle(sid, acronym, 14, "Acronym or Abbreviation", true, "From Clinicaltrials.gov"));
                         s.display_title = acronym;
                     }
                 }
             
+
                 // get the sponsor id information
                 string org = sh.TidyOrgName(StructFieldValue(IdentificationModule, "Organization", "OrgFullName") ?? "", sid);
                 string org_study_id = StructFieldValue(IdentificationModule, "OrgStudyIdInfo", "OrgStudyId") ?? "";

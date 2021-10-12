@@ -71,7 +71,7 @@ namespace DataHarvester.pubmed
 
             FullDataObject fob = new FullDataObject(sdoid, download_datetime);
 
-            // add in the defaults foprm puibmed articles
+            // add in the defaults form pubmed articles
             fob.object_class_id = 23;
             fob.object_class = "Text";
             fob.object_type_id = 12;
@@ -739,8 +739,12 @@ namespace DataHarvester.pubmed
                     }
 
 
+                    /*
+                     * DON'T COLLECT Qualifiers - at least for the moment
+                     * 
                     // if there are qualifiers, use these as the term type (or scope / context) 
                     // in further copies of the keyword
+
                     IEnumerable<XElement> qualifiers = e.Elements("QualifierName");
                     if (qualifiers.Count() > 0)
                     {
@@ -755,6 +759,7 @@ namespace DataHarvester.pubmed
 
                         }
                     }
+                    */
                 }
             }
 
@@ -826,14 +831,14 @@ namespace DataHarvester.pubmed
                                 case "pii":
                                     {
                                         identifiers.Add(new ObjectIdentifier(sdoid, 34, "Publisher article ID", value, null, null));
-                                        source_elocation_string += " pii:" + value + ".";
+                                        source_elocation_string += "pii:" + value + ". ";
                                         break;
                                     }
 
                                 case "doi":
                                     {
-                                        if (fob.doi == null) fob.doi = value.Trim().ToLower();
-                                        source_elocation_string += " doi:" + value + ".";
+                                        if (fob.doi == null) fob.doi = value.Trim();
+                                        source_elocation_string += "doi:" + value + ". ";
                                         break;
                                     }
                             }
@@ -906,7 +911,6 @@ namespace DataHarvester.pubmed
                             {
                                 case "doi":
                                     {
-                                        other_id = other_id.ToLower();
                                         if (fob.doi == null)
                                         {
                                             fob.doi = other_id;
@@ -1116,6 +1120,7 @@ namespace DataHarvester.pubmed
                         }
                         else
                         {
+                            if (suffix != "") { suffix = " " + suffix; }
                             full_name = (given_name + " " + family_name + suffix).Trim();
                         }
                         full_name = sh.ReplaceApos(full_name);
@@ -1157,32 +1162,45 @@ namespace DataHarvester.pubmed
                             foreach (XElement e in person_affiliations)
                             {
                                 affiliation = GetElementAsString(e.Element("Affiliation")) ?? "";
-                                affil_identifier = GetElementAsString(e.Element("Identifier")) ?? "";
-                                affil_ident_source = GetAttributeAsString(e.Element("Identifier")?.Attribute("Source")) ?? "";
 
-                                
-                                if (affil_ident_source == "INSI")
+                                if (affiliation.Length > 400)
                                 {
-                                     /*
-                                     * Needs writing to look up affil id and turn it into an organisation
-                                     * ***********************************************************************
-                                     */
-                                }
-                                else if (affil_ident_source == "GRID")
-                                {
-                                    /*
-                                     * Needs writing to look up affil id and turn it into an organisation
-                                     * ***********************************************************************
-                                     */
+                                    // Likely to be a compound affiliation ... do not use
+                                    affiliation = null;
                                 }
                                 else
                                 {
-                                    // look at affiliation string
-                                    affil_organisation = sh.ExtractOrganisation(affiliation, sdoid);
+                                    affil_identifier = GetElementAsString(e.Element("Identifier")) ?? "";
+                                    affil_ident_source = GetAttributeAsString(e.Element("Identifier")?.Attribute("Source")) ?? "";
+
+
+                                    if (affil_ident_source == "INSI")
+                                    {
+                                        /*
+                                        * Needs writing to look up affil id and turn it into an organisation
+                                        * ***********************************************************************
+                                        */
+                                    }
+                                    else if (affil_ident_source == "GRID")
+                                    {
+                                        /*
+                                         * Needs writing to look up affil id and turn it into an organisation
+                                         * ***********************************************************************
+                                         */
+                                    }
+                                    else
+                                    {
+                                        // look at affiliation string
+                                        affil_organisation = sh.ExtractOrganisation(affiliation, sdoid);
+                                    }
                                 }
                             }
 
                         }
+
+                        if (identifier == "") identifier = null;
+                        if (affiliation == "") affiliation = null;
+                        if (affil_organisation == "") affil_organisation = null;
 
                         contributors.Add(new ObjectContributor(sdoid, 11, "Creator",
                                                             given_name, family_name, full_name,
@@ -1249,6 +1267,8 @@ namespace DataHarvester.pubmed
                             oc.person_full_name = null;
                             oc.person_given_name = null;
                             oc.person_family_name = null;
+                            oc.person_affiliation = null;
+                            oc.orcid_id = null;
                             oc.is_individual = false;
                         }
                     }
@@ -1268,6 +1288,7 @@ namespace DataHarvester.pubmed
             if  (JournalInfo != null)
             {
                 string medline_ta = GetElementAsString(JournalInfo.Element("MedlineTA"));
+                medline_ta = (medline_ta == "") ? "" : medline_ta + ". ";
 
                 string date = (publication_date_string != null) ? publication_date_string : "";
 
@@ -1289,22 +1310,33 @@ namespace DataHarvester.pubmed
                 if (pagn != null)
                 {
                     pagination = GetElementAsString(pagn.Element("MedlinePgn"));
-                    if (pagination == null)
+                    if (string.IsNullOrEmpty(pagination))
                     {
                         pagination = "";
                     }
                     else
                     {
                         pagination = ":" + pagination;
+                        pagination = pagination.TrimEnd(';', ' ');
                     }
                 }
 
+                string vip = volume + issue + pagination;
+                vip = (vip == "") ? "" : vip + ". ";
+
+                if (string.IsNullOrEmpty(source_elocation_string))
+                {
+                    source_elocation_string = "";
+                }
+                else
+                {
+                    source_elocation_string = source_elocation_string.Trim();
+                }
+
+
                 string public_date = "";
                 string elec_date = "";
-                if (pagination.EndsWith(";"))
-                {
-                    pagination = pagination.Substring(0, pagination.Length - 1);
-                }
+                
 
                 switch (pub_model)
                 {
@@ -1312,8 +1344,8 @@ namespace DataHarvester.pubmed
                         {
                             // The date is taken from the PubDate element.
 
-                            public_date = (publication_date_string != null) ? publication_date_string : "";
-                            journal_source = medline_ta + ". " + public_date + ";" + volume + issue + pagination + ". " + source_elocation_string;
+                            public_date = (publication_date_string != null) ? publication_date_string + ". " : "";
+                            journal_source = medline_ta + public_date + vip + source_elocation_string;
                             break;
                         }
 
@@ -1324,9 +1356,9 @@ namespace DataHarvester.pubmed
                             // The date in the citation therefore comes from the print publication date, PubDate.
                             // The electronic publishing date is then shown afterwards, as "Epub YYY MMM DD".
 
-                            public_date = (publication_date_string != null) ? publication_date_string : "";
-                            elec_date = (electronic_date_string != null) ? electronic_date_string : "";
-                            journal_source = medline_ta + ". " + public_date + ";" + volume + issue + pagination + ". " + "Epub " + elec_date + "." + source_elocation_string;
+                            public_date = (publication_date_string != null) ? publication_date_string + ". " : "";
+                            elec_date = (electronic_date_string != null) ? electronic_date_string + ". " : "";
+                            journal_source = medline_ta + public_date + vip + "Epub " + elec_date + source_elocation_string;
                             break;
                         }
 
@@ -1337,12 +1369,12 @@ namespace DataHarvester.pubmed
                             // If no ArticleDate element was provided the publication date is assumed to be that of an electronic publication.
                             // In either case there is no explicit indication that this is an electronic publication in the citation.
 
-                            elec_date = (electronic_date_string != null) ? electronic_date_string : "";
-                            if (elec_date == null)
+                            elec_date = (electronic_date_string != null) ? electronic_date_string + ". " : "";
+                            if (elec_date == "")
                             {
-                                elec_date = (publication_date_string != null) ? publication_date_string : "";
+                                elec_date = (publication_date_string != null) ? publication_date_string + ". " : "";
                             }
-                            journal_source = medline_ta + ". " + elec_date + ";" + volume + issue + pagination + ". " + source_elocation_string;
+                            journal_source = medline_ta + elec_date + vip + source_elocation_string;
                             break;
                         }
 
@@ -1351,9 +1383,9 @@ namespace DataHarvester.pubmed
                             // The electronic date is before the print date, but – in contrast to "Print - Electronic" – the publisher wishes the main citation date to be based on the electronic date (ArticleDate). 
                             // The source is followed by the print date notation using the content of the PubDate element.
 
-                            public_date = (publication_date_string != null) ? publication_date_string : "";
-                            elec_date = (electronic_date_string != null) ? electronic_date_string : "";
-                            journal_source = medline_ta + ". " + elec_date + ";" + volume + issue + pagination + ". " + "Print " + public_date + "." + source_elocation_string;
+                            public_date = (publication_date_string != null) ? publication_date_string + ". " : "";
+                            elec_date = (electronic_date_string != null) ? electronic_date_string + ". " : "";
+                            journal_source = medline_ta + elec_date + vip + "Print " + public_date + source_elocation_string;
                             break;
                         }
 
@@ -1363,9 +1395,9 @@ namespace DataHarvester.pubmed
                             // The publisher wants articles cited by the electronic article publication date.The citation therefore uses the ArticleDate as the source of the date, 
                             // but the eCollection date can be obtained from the PubDate element.
 
-                            public_date = (publication_date_string != null) ? publication_date_string : "";
-                            elec_date = (electronic_date_string != null) ? electronic_date_string : "";
-                            journal_source = medline_ta + ". " + elec_date + ";" + volume + issue + pagination + ". " + "eCollection " + public_date + "." + source_elocation_string;
+                            public_date = (publication_date_string != null) ? publication_date_string + ". " : "";
+                            elec_date = (electronic_date_string != null) ? electronic_date_string + ". " : "";
+                            journal_source = medline_ta + elec_date + vip + "eCollection " + public_date + source_elocation_string;
                             break;
                         }
                 }
@@ -1376,7 +1408,7 @@ namespace DataHarvester.pubmed
                     sd_oid = sdoid,
                     description_type_id = 18,
                     description_type = "Journal Source String",
-                    description_text = journal_source,
+                    description_text = journal_source.Trim(),
                     lang_code = "en"
                 });
             }
@@ -1417,9 +1449,8 @@ namespace DataHarvester.pubmed
                     foreach (var pub in pub_types)
                     {
                         type_name = GetElementAsString(pub);
-                        if (type_name == "Review" || type_name == "Case Reports" || type_name == "Meta - Analysis" ||
-                            type_name == "Video - Audio Media" || type_name == "Systematic Review" || type_name == "English Abstract" ||
-                            type_name == "Retracted Publication" || type_name == "Webcasts")
+                        
+                        if(!type_name.Contains("Research Support"))
                         {
                             pubtypes.Add(new ObjectPublicationType(sdoid, type_name));
                         }
@@ -1433,11 +1464,20 @@ namespace DataHarvester.pubmed
 
             // Tidy up article title and then derive the display title.
 
-            if (!art_title.EndsWith(".") && !art_title.EndsWith("?") && !art_title.EndsWith(";"))
+            if (art_title.EndsWith(";"))
             {
-                art_title = art_title + ".";
+                art_title = art_title.TrimEnd(';') + ". ";
             }
-            fob.display_title = (author_string != "" ? author_string + ". " : "") + art_title + journal_source;
+            else if (!art_title.EndsWith(".") && !art_title.EndsWith("?"))
+            {
+                art_title = art_title + ". ";
+            }
+            else
+            {
+                art_title = art_title + " ";
+            }
+
+            fob.display_title = ((author_string != "" ? author_string + ". " : "") + art_title + journal_source).Trim();
 
             // Tidy up doi status.
 

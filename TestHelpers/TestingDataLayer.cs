@@ -59,10 +59,11 @@ namespace DataHarvester
                 ExpectedDataBuilder edb = new ExpectedDataBuilder(_db_conn);
 
                 edb.InitialiseTestStudiesList();
-                _logger.Information("List of test studies inserted");
+                edb.InitialiseTestPubMedObjectsList();
+                _logger.Information("List of test studies and pubmed objects inserted");
 
                 edb.LoadInitialInputTables();
-                _logger.Information("Data loaded from manual inspections");
+                _logger.Information("Data loaded from manual inspections");  
 
                 edb.CalculateAndAddOIDs();
                 _logger.Information("OIDs calculated and inserted");
@@ -85,20 +86,27 @@ namespace DataHarvester
         public void TransferTestSDData(ISource source)
         {
             TransferSDDataBuilder tdb = new TransferSDDataBuilder(source);
-            tdb.DeleteExistingStudyData();
-            tdb.DeleteExistingObjectData();
-            _logger.Information("Any existing SD test data for source " + source.id + " removed from CompSD");
 
-            tdb.TransferStudyData();
+            if (source.has_study_tables)
+            {
+                tdb.DeleteExistingStudyData();
+                tdb.TransferStudyData();  
+                _logger.Information("New study SD test data for source " + source.id + " added to CompSD");
+            }
+
+            tdb.DeleteExistingObjectData();
             tdb.TransferObjectData();
-            _logger.Information("New SD test data for source " + source.id + " added to CompSD");
+            _logger.Information("New object SD test data for source " + source.id + " added to CompSD");
         }
 
 
         public IEnumerable<int> ObtainTestSourceIDs()
         {
             string sql_string = @"select distinct source_id 
-                                 from expected.source_studies;";
+                                 from expected.source_studies
+                                 union
+                                 select distinct source_id 
+                                 from expected.source_objects;";
 
             using (var conn = new NpgsqlConnection(_db_conn))
             {

@@ -34,7 +34,7 @@ namespace DataHarvester
             int k = 0;
             for (int m = 0; m < total_amount; m += chunk)
             {
-                //if (k > 10000) break; // for testing...
+                // if (k > 2000) break; // for testing...
 
                 IEnumerable<ObjectFileRecord> file_list = _mon_repo
                         .FetchObjectFileRecordsByOffset(_source.id, m, chunk, harvest_type_id);

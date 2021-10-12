@@ -655,10 +655,6 @@ namespace DataHarvester
             {
                 affil_organisation = FindSubPhrase(affiliation, "hospit");
             }
-            else if (aff.Contains("clinic"))
-            {
-                affil_organisation = FindSubPhrase(affiliation, "clinic");
-            }
             else if (aff.Contains("klinik"))
             {
                 affil_organisation = FindSubPhrase(affiliation, "klinik");

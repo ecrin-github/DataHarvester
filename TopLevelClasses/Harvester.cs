@@ -179,8 +179,7 @@ namespace DataHarvester
             _logger_helper.LogHeader("Updating context data");
             ContextMain context_main = new ContextMain(_logger);
 
-            string schema = (source.source_type == "test") ? "expected" : "sd";
-            context_main.UpdateDataFromContext(context_creds, context_source, schema);
+            context_main.UpdateDataFromContext(context_creds, context_source);
 
             // -------------------------------------------------------------------
             // MAKE USE OF SEPARATE 'HASH' PROJECT (Same Solution, not DLL) 
@@ -189,7 +188,7 @@ namespace DataHarvester
             // Note the hashes can only be done after all the data is complete, including 
             // the organisation and topic codes and names derived above
 
-            HashDataLibrary.Source hash_source = new HashDataLibrary.Source(source.id, source.database_name, source.db_conn,
+            HashDataLibrary.Source hash_source = new HashDataLibrary.Source(source.id, source.source_type, source.database_name, source.db_conn,
                       source.has_study_tables, source.has_study_topics, source.has_study_features,
                       source.has_study_contributors, source.has_study_references, source.has_study_relationships,
                       source.has_study_links, source.has_study_ipd_available, source.has_object_datasets,
@@ -197,8 +196,8 @@ namespace DataHarvester
                       source.has_object_pubmed_set);
 
             _logger_helper.LogHeader("Creating Record Hashes");
-            HashMain hash_main = new HashMain(_logger);
-            hash_main.HashData(hash_source, schema);
+            HashMain hash_main = new HashMain(_logger, hash_source);
+            hash_main.HashData();
 
             // If harvesting test data it needs to be transferred  
             // to the sdcomp schema for safekeeping and further processing

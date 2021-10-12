@@ -64,7 +64,7 @@ namespace DataHarvester.isrctn
             s.display_title = study_name;   // = public title, default
             s.datetime_of_data_fetch = download_datetime;
 
-            titles.Add(new StudyTitle(sid, s.display_title, 15, "Public title", true));
+            titles.Add(new StudyTitle(sid, s.display_title, 15, "Registry public title", true, "From ISRCTN"));
 
             // study status from trial_status and recruitment_status
             // record for now and see what is available
@@ -407,13 +407,13 @@ namespace DataHarvester.isrctn
                                     string study_title = sh.ReplaceApos(item_value).Trim();
                                     if (study_title.ToLower() != study_name.ToLower())
                                     {
-                                        titles.Add(new StudyTitle(sid, sh.ReplaceApos(item_value), 16, "Trial Registry title", false));
+                                        titles.Add(new StudyTitle(sid, sh.ReplaceApos(item_value), 16, "Registry scientific title", false, "From ISRCTN"));
                                     }
                                     break;
                                 }
                             case "Acronym":
                                 {
-                                    titles.Add(new StudyTitle(sid, item_value, 14, "Acronym or Abbreviation", false));
+                                    titles.Add(new StudyTitle(sid, item_value, 14, "Acronym or Abbreviation", false, "From ISRCTN"));
                                     break;
                                 }
                             case "Study hypothesis":

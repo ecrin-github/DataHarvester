@@ -531,10 +531,37 @@ namespace DataHarvester
                 case 100129: { source_name = "Registro Peruano de Ensayos Clínicos"; break; }
                 case 100130: { source_name = "Sri Lanka Clinical Trials Registry"; break; }
                 case 100131: { source_name = "Thai Clinical Trials Register"; break; }
-                case 100132: { source_name = "The Netherlands National Trial Register"; break; }
+                case 100132: { source_name = "Netherlands National Trial Register"; break; }
                 case 101989: { source_name = "Lebanon Clinical Trials Registry"; break; }
             }
             return source_name;
+        }
+
+
+        public string get_registry_prefix(int? source_id)
+        {
+            // Used for WHO registries only
+
+            string prefix = "";
+            switch (source_id)
+            {
+                case 100116: { prefix = "Australian / NZ "; break; }
+                case 100117: { prefix = "Brazilian "; break; }
+                case 100118: { prefix = "Chinese "; break; }
+                case 100119: { prefix = "South Korean "; break; }
+                case 100121: { prefix = "Indian "; break; }
+                case 100122: { prefix = "Peruvian "; break; }
+                case 100124: { prefix = "German "; break; }
+                case 100125: { prefix = "Iranian "; break; }
+                case 100127: { prefix = "Japanese "; break; }
+                case 100128: { prefix = "Pan African "; break; }
+                case 100129: { prefix = "Peruvian "; break; }
+                case 100130: { prefix = "Sri Lankan "; break; }
+                case 100131: { prefix = "Thai "; break; }
+                case 100132: { prefix = "Dutch "; break; }
+                case 101989: { prefix = "Lebanese "; break; }
+            }
+            return prefix;
         }
 
     }

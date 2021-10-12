@@ -8,14 +8,14 @@ using Microsoft.Extensions.DependencyInjection;
 
 namespace DataHarvester
 {
-    class Program
+    class Program   
     {
         static void Main(string[] args)
         {
             // Set up file based configuration environment.
 
             var configFiles = new ConfigurationBuilder()
-                .SetBasePath(Directory.GetCurrentDirectory())
+                .SetBasePath(Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location))
                 .AddJsonFile("appsettings.json")
                 .AddJsonFile($"appsettings.{Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT")}.json", true)
                 .Build();

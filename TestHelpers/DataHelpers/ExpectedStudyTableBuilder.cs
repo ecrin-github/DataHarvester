@@ -164,8 +164,6 @@ namespace DataHarvester
               , mesh_coded             BOOLEAN         NULL
               , mesh_code              VARCHAR         NULL
               , mesh_value             VARCHAR         NULL
-              , mesh_qualcode          VARCHAR         NULL
-              , mesh_qualvalue         VARCHAR         NULL
               , original_ct_id         INT             NULL
               , original_ct_code       VARCHAR         NULL
               , original_value         VARCHAR         NULL

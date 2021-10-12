@@ -205,8 +205,6 @@ namespace DataHarvester
               , mesh_coded             BOOLEAN         NULL
               , mesh_code              VARCHAR         NULL
               , mesh_value             VARCHAR         NULL
-              , mesh_qualcode          VARCHAR         NULL
-              , mesh_qualvalue         VARCHAR         NULL
               , original_ct_id         INT             NULL
               , original_ct_code       VARCHAR         NULL
               , original_value         VARCHAR         NULL
@@ -359,7 +357,7 @@ namespace DataHarvester
         public void create_table_journal_details()
         {
             string sql_string = @"DROP TABLE IF EXISTS expected.journal_details;
-            CREATE TABLE sd.journal_details(
+            CREATE TABLE expected.journal_details(
                 id                     INT             GENERATED ALWAYS AS IDENTITY PRIMARY KEY
               , sd_oid                 VARCHAR         NOT NULL
               , pissn                  VARCHAR         NULL
@@ -369,7 +367,7 @@ namespace DataHarvester
               , publisher              VARCHAR         NULL
               , publisher_suffix       VARCHAR         NULL
             );
-            CREATE INDEX journal_details_sd_oid ON sd.journal_details(sd_oid);";
+            CREATE INDEX journal_details_sd_oid ON expected.journal_details(sd_oid);";
 
             Execute_SQL(sql_string);
         }
