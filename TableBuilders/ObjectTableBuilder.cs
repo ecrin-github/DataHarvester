@@ -28,10 +28,11 @@ namespace DataHarvester
             string sql_string = @"DROP TABLE IF EXISTS sd.data_objects;
               CREATE TABLE sd.data_objects(
                 id                     INT             GENERATED ALWAYS AS IDENTITY PRIMARY KEY
-              , sd_oid                 VARCHAR        NOT NULL
+              , sd_oid                 VARCHAR         NOT NULL
               , sd_sid                 VARCHAR         NULL
-              , display_title          VARCHAR         NULL
+              , title                  VARCHAR         NULL
               , version                VARCHAR         NULL
+              , display_title          VARCHAR         NULL
               , doi                    VARCHAR         NULL 
               , doi_status_id          INT             NULL
               , publication_year       INT             NULL
@@ -67,7 +68,7 @@ namespace DataHarvester
             string sql_string = @"DROP TABLE IF EXISTS sd.object_datasets;
             CREATE TABLE sd.object_datasets(
                 id                     INT             GENERATED ALWAYS AS IDENTITY PRIMARY KEY
-              , sd_oid                 VARCHAR        NOT NULL
+              , sd_oid                 VARCHAR         NOT NULL
               , record_keys_type_id    INT             NULL 
               , record_keys_type       VARCHAR         NULL     	
               , record_keys_details    VARCHAR         NULL    

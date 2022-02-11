@@ -914,12 +914,13 @@ namespace DataHarvester.who
 
             string name_base = s.display_title;
             string reg_prefix = ih.get_registry_prefix(source_id);
+            string object_title = reg_prefix + "registry web page";
             string object_display_title = name_base + " :: " + reg_prefix + "registry web page";
-            string sd_oid = hh.CreateMD5(sid + object_display_title);
+            string sd_oid = sid + " :: 13 :: " + object_title;
 
             int? pub_year = registration_date?.year;
 
-            data_objects.Add(new DataObject(sd_oid, sid, object_display_title, pub_year, 23, "Text", 13, "Trial Registry entry",
+            data_objects.Add(new DataObject(sd_oid, sid, object_title, object_display_title, pub_year, 23, "Text", 13, "Trial Registry entry",
                 source_id, source_name, 12, download_datetime));
 
             data_object_titles.Add(new ObjectTitle(sd_oid, object_display_title, 22,
@@ -962,13 +963,14 @@ namespace DataHarvester.who
                 string results_link = results_url_link.ToLower();
                 if (results_link.Contains("http") && !results_link.Contains("clinicaltrials.gov"))
                 {
+                    object_title = "Results summary";
                     object_display_title = name_base + " :: " + "Results summary";
-                    sd_oid = hh.CreateMD5(sid + object_display_title);
+                    sd_oid = sid + " :: 28 :: " + object_title;
 
                     int? results_pub_year = results_posted_date?.year;
 
                     // (in practice may not be in the registry)
-                    data_objects.Add(new DataObject(sd_oid, sid, object_display_title, results_pub_year, 
+                    data_objects.Add(new DataObject(sd_oid, sid, object_title, object_display_title, results_pub_year, 
                                      23, "Text", 28, "Trial registry results summary",
                                      source_id, source_name, 12, download_datetime));
 
@@ -1049,11 +1051,12 @@ namespace DataHarvester.who
                     }
 
                     object_display_title = name_base + " :: " + object_type;
-                    sd_oid = hh.CreateMD5(sid + object_display_title);
+                    sd_oid = sid + " :: " + object_type_id.ToString() + " :: " + object_title;
 
                     // almost certainly not in or managed by the registry
 
-                    data_objects.Add(new DataObject(sd_oid, sid, object_display_title, pub_year, 23, "Text", object_type_id, object_type,
+                    object_title = object_type;
+                    data_objects.Add(new DataObject(sd_oid, sid, object_title, object_display_title, pub_year, 23, "Text", object_type_id, object_type,
                     null, null, 11, download_datetime));
 
                     data_object_titles.Add(new ObjectTitle(sd_oid, object_display_title, 22,

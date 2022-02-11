@@ -1477,6 +1477,7 @@ namespace DataHarvester.pubmed
                 art_title = art_title + " ";
             }
 
+            fob.title = art_title;
             fob.display_title = ((author_string != "" ? author_string + ". " : "") + art_title + journal_source).Trim();
 
             // Tidy up doi status.

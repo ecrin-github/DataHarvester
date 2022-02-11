@@ -877,12 +877,13 @@ namespace DataHarvester.isrctn
             {
                 pub_year = (int)date_assigned.year;
             }
+            string object_title = "ISRCTN registry entry";
             string object_display_title = s.display_title + " :: ISRCTN registry entry";
 
             // create hash Id for the data object
-            string sd_oid = hh.CreateMD5(sid + object_display_title);
+            string sd_oid = sid + " :: 13 :: " + object_title;
 
-            DataObject dobj = new DataObject(sd_oid, sid, object_display_title, pub_year,
+            DataObject dobj = new DataObject(sd_oid, sid, object_title, object_display_title, pub_year,
                   23, "Text", 13, "Trial Registry entry", 100126, "ISRCTN", 12, download_datetime);
 
             dobj.doi = GetElementAsString(r.Element("doi"));
@@ -932,10 +933,11 @@ namespace DataHarvester.isrctn
                         res_type = "Word doc";
                     }
 
+                    object_title = "Patient information sheet";
                     object_display_title = s.display_title + " :: patient information sheet";
-                    sd_oid = hh.CreateMD5(sid + object_display_title);
+                    sd_oid = sid + " :: 19 :: " + object_title;
 
-                    data_objects.Add(new DataObject(sd_oid, sid, object_display_title, s.study_start_year,
+                    data_objects.Add(new DataObject(sd_oid, sid, object_title, object_display_title, s.study_start_year,
                       23, "Text", 19, "Patient information sheets", null, study_sponsor, 12, download_datetime));
                     object_titles.Add(new ObjectTitle(sd_oid, object_display_title,
                                                          22, "Study short name :: object type", true));
@@ -1117,10 +1119,11 @@ namespace DataHarvester.isrctn
                                                     res_type = "Word doc";
                                                 }
 
+                                                object_title = object_type;
                                                 object_display_title = s.display_title + " :: " + object_type;
-                                                sd_oid = hh.CreateMD5(sid + object_display_title);
+                                                sd_oid = sid + " :: " + object_type_id.ToString() + " :: " + object_title;
 
-                                                data_objects.Add(new DataObject(sd_oid, sid, s.display_title + " :: " + object_type, s.study_start_year,
+                                                data_objects.Add(new DataObject(sd_oid, sid, object_title, object_display_title, s.study_start_year,
                                                             23, "Text", object_type_id, object_type,
                                                             101418, "Servier", 11, download_datetime));
                                                 object_titles.Add(new ObjectTitle(sd_oid, s.display_title + " :: " + object_type,
@@ -1220,10 +1223,11 @@ namespace DataHarvester.isrctn
                             res_type = "PowerPoint";
                         }
 
+                        object_title = item_name;
                         object_display_title = s.display_title + " :: " + item_name;
-                        sd_oid = hh.CreateMD5(sid + object_display_title);
+                        sd_oid = sid + " :: " + object_type_id.ToString() + " :: " + object_title;
 
-                        data_objects.Add(new DataObject(sd_oid, sid, object_display_title, null,
+                        data_objects.Add(new DataObject(sd_oid, sid, object_title, object_display_title, null,
                                     23, "Text", object_type_id, object_type, 100126, "ISRCTN", 11, download_datetime));
                         object_titles.Add(new ObjectTitle(sd_oid, object_display_title,
                                     20, "Unique data object title", true));
@@ -1243,10 +1247,11 @@ namespace DataHarvester.isrctn
                 // first check website link does not provide a 404
                 if (true) //await HtmlHelpers.CheckURLAsync(fs.trial_website))
                 {
-                    object_display_title = s.display_title + " :: website";
-                    sd_oid = hh.CreateMD5(sid + object_display_title);
+                    object_title = "Study web site";
+                    object_display_title = s.display_title + " :: Study web site";
+                    sd_oid = sid + " :: 134 :: " + object_title;
 
-                    data_objects.Add(new DataObject(sd_oid, sid, object_display_title, s.study_start_year,
+                    data_objects.Add(new DataObject(sd_oid, sid, object_title, object_display_title, s.study_start_year,
                             23, "Text", 134, "Website", null, study_sponsor, 12, download_datetime));
                     object_titles.Add(new ObjectTitle(sd_oid, object_display_title, 
                                                          22, "Study short name :: object type", true));

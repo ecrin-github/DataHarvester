@@ -8,8 +8,9 @@ namespace DataHarvester
     {
         public string sd_oid { get; set; }
         public string sd_sid { get; set; }
-        public string display_title { get; set; }
+        public string title { get; set; }
         public string version { get; set; }
+        public string display_title { get; set; }
         public string doi { get; set; }
         public int doi_status_id { get; set; }
         public int? publication_year { get; set; }
@@ -60,8 +61,9 @@ namespace DataHarvester
     {
         public string sd_oid { get; set; }
         public string sd_sid { get; set; }
-        public string display_title { get; set; }
+        public string title { get; set; }
         public string version { get; set; }
+        public string display_title { get; set; }
         public string doi { get; set; }
         public int doi_status_id { get; set; }
         public int? publication_year { get; set; }
@@ -87,8 +89,9 @@ namespace DataHarvester
         {
             sd_oid = fob.sd_oid;
             sd_sid = fob.sd_sid;
-            display_title = fob.display_title;
+            title = fob.title;
             version = fob.version;
+            display_title = fob.display_title;
             doi = fob.doi;
             doi_status_id = fob.doi_status_id;
             publication_year = fob.publication_year;
@@ -111,13 +114,14 @@ namespace DataHarvester
         }
 
 
-        public DataObject(string _sd_oid, string _sd_sid, string _display_title, int? _publication_year, int _object_class_id,
+        public DataObject(string _sd_oid, string _sd_sid, string _title, string _display_title, int? _publication_year, int _object_class_id,
                             string _object_class, int? _object_type_id, string _object_type,
                             int? _managing_org_id, string _managing_org, 
                             int? _access_type_id, DateTime? _datetime_of_data_fetch)
         {
             sd_oid = _sd_oid;
             sd_sid = _sd_sid;
+            title = _title;
             display_title = _display_title;
             doi_status_id = 9;
             publication_year = _publication_year;
@@ -138,7 +142,7 @@ namespace DataHarvester
         }
 
 
-        public DataObject(string _sd_oid, string _sd_sid, string _display_title, int? _publication_year, int _object_class_id,
+        public DataObject(string _sd_oid, string _sd_sid, string _title, string _display_title, int? _publication_year, int _object_class_id,
                             string _object_class, int _object_type_id, string _object_type,
                             int? _managing_org_id, string _managing_org,
                             int? _access_type_id, string _access_type, string _access_details,
@@ -147,6 +151,7 @@ namespace DataHarvester
         {
             sd_oid = _sd_oid;
             sd_sid = _sd_sid;
+            title = _title;
             display_title = _display_title;
             doi_status_id = 9;
             publication_year = _publication_year;
@@ -169,7 +174,7 @@ namespace DataHarvester
         }
 
 
-        public DataObject(string _sd_oid, string _sd_sid, string _display_title, int? _publication_year, int _object_class_id,
+        public DataObject(string _sd_oid, string _sd_sid, string _title, string _display_title, int? _publication_year, int _object_class_id,
                             string _object_class, int _object_type_id, string _object_type,
                             int? _managing_org_id, string _managing_org, string _lang_code,
                             int? _access_type_id, string _access_type, string _access_details,
@@ -178,6 +183,7 @@ namespace DataHarvester
         {
             sd_oid = _sd_oid;
             sd_sid = _sd_sid;
+            title = _title;
             display_title = _display_title;
             doi_status_id = 9;
             publication_year = _publication_year;

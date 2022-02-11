@@ -798,16 +798,17 @@ namespace DataHarvester.ctg
             
             // first object is the protocol registration
             // title will be display title as well
+            string object_title = "CTG registry entry";
             string object_display_title = title_base + " :: CTG registry entry";
 
             // create hash Id for the data object
-            string sd_oid = hh.CreateMD5(sid + object_display_title);
+            string sd_oid = sid + " :: 13 :: " + object_title;
 
             // Define and provide intiial values
             int object_type_id = 13;
             int object_class_id = 23;
 
-            data_objects.Add(new DataObject(sd_oid, sid, object_display_title, firstpost.year,
+            data_objects.Add(new DataObject(sd_oid, sid, object_title, object_display_title, firstpost.year,
                                 23, "Text", 13, "Trial Registry entry", 100120,
                                 "ClinicalTrials.gov", 12, download_datetime));
 
@@ -834,10 +835,11 @@ namespace DataHarvester.ctg
             // if present, set up results data object
             if (resultspost != null && results_data_present)
             {
+                object_title = "CTG results entry";
                 object_display_title = title_base + " :: CTG results entry";
-                sd_oid = hh.CreateMD5(sid + object_display_title);
+                sd_oid = sid + " :: 28 :: " + object_title;
 
-                data_objects.Add(new DataObject(sd_oid, sid, object_display_title, resultspost.year,
+                data_objects.Add(new DataObject(sd_oid, sid, object_title, object_display_title, resultspost.year,
                                     23, "Text", 28, "Trial registry results summary", 100120,
                                     "ClinicalTrials.gov", 12, download_datetime));
 
@@ -959,9 +961,10 @@ namespace DataHarvester.ctg
                             {
                                 object_display_title += "_" + next_num.ToString();
                             }
-                            sd_oid = hh.CreateMD5(sid + object_display_title);
+                            object_title = object_display_title.Substring(title_base.Length + 4);
+                            sd_oid = sid + " :: " + object_type_id.ToString() + " :: " + object_title;
 
-                            data_objects.Add(new DataObject(sd_oid, sid, object_display_title, uploaddate?.year,
+                            data_objects.Add(new DataObject(sd_oid, sid, object_title, object_display_title, uploaddate?.year,
                             23, "Text", object_type_id, object_type, 100120,
                             "ClinicalTrials.gov", 11, download_datetime));
 
@@ -1127,11 +1130,12 @@ namespace DataHarvester.ctg
                                 {
                                     object_display_title += "_" + next_num.ToString();
                                 }
+                                object_title = object_display_title.Substring(t_base.Length + 4);
 
-                                sd_oid = hh.CreateMD5(sid + object_display_title);
+                                sd_oid = sid + " :: " + object_type_id.ToString() + " :: " + object_title;
 
                                 // add data object
-                                data_objects.Add(new DataObject(sd_oid, sid, object_display_title, null,
+                                data_objects.Add(new DataObject(sd_oid, sid, object_title, object_display_title, null,
                                 object_class_id, object_class, object_type_id, object_type, sponsor_id, sponsor_name,
                                 17, "Case by case download", gsk_access_details,
                                 "https://clinicalstudydatarequest.com/Help/Help-How-to-Request-Data.aspx",
@@ -1222,10 +1226,11 @@ namespace DataHarvester.ctg
                                 {
                                     object_display_title += "_" + next_num.ToString();
                                 }
+                                object_title = object_display_title.Substring(title_base.Length + 4);
 
-                                sd_oid = hh.CreateMD5(sid + object_display_title);
+                                sd_oid = sid + " :: " + object_type_id.ToString() + " :: " + object_title;
 
-                                data_objects.Add(new DataObject(sd_oid, sid, object_display_title, null,
+                                data_objects.Add(new DataObject(sd_oid, sid, object_title, object_display_title, null,
                                 object_class_id, object_class, object_type_id, object_type, 101418, "Servier",
                                 18, "Case by case on-screen access", servier_access_details,
                                 "https://clinicaltrials.servier.com/data-request-portal/", null, download_datetime));
@@ -1273,10 +1278,11 @@ namespace DataHarvester.ctg
                                 {
                                     object_display_title += "_" + next_num.ToString();
                                 }
+                                object_title = object_display_title.Substring(title_base.Length + 4);
 
-                                sd_oid = hh.CreateMD5(sid + object_display_title);
+                                sd_oid = sid + " :: " + object_type_id.ToString() + " :: " + object_title;
 
-                                data_objects.Add(new DataObject(sd_oid, sid, object_display_title, null,
+                                data_objects.Add(new DataObject(sd_oid, sid, object_title, object_display_title, null,
                                 object_class_id, object_class, object_type_id, object_type,
                                 100165, "Merck Sharp & Dohme", 11, download_datetime));
 
@@ -1421,10 +1427,10 @@ namespace DataHarvester.ctg
                                 {
                                     object_display_title += "_" + next_num.ToString();
                                 }
+                                object_title = object_display_title.Substring(title_base.Length + 4);
+                                sd_oid = sid + " :: " + object_type_id.ToString() + " :: " + object_title;
 
-                                sd_oid = hh.CreateMD5(sid + object_display_title);
-
-                                data_objects.Add(new DataObject(sd_oid, sid, object_display_title, null,
+                                data_objects.Add(new DataObject(sd_oid, sid, object_title, object_display_title, null,
                                 object_class_id, object_class, object_type_id, object_type, null, sponsor_name,
                                 11, download_datetime));
 
@@ -1512,10 +1518,10 @@ namespace DataHarvester.ctg
                                 {
                                     object_display_title += "_" + next_num.ToString();
                                 }
+                                object_title = object_display_title.Substring(title_base.Length + 4);
+                                sd_oid = sid + " :: " + object_type_id.ToString() + " :: " + object_title;
 
-                                sd_oid = hh.CreateMD5(sid + object_display_title);
-
-                                data_objects.Add(new DataObject(sd_oid, sid, object_display_title, null,
+                                data_objects.Add(new DataObject(sd_oid, sid, object_title, object_display_title, null,
                                 object_class_id, object_class, object_type_id, object_type, 100360,
                                 "National Institutes of Health Clinical Center", 11, download_datetime));
 
@@ -1606,15 +1612,15 @@ namespace DataHarvester.ctg
                                     {
                                         object_display_title += "_" + next_num.ToString();
                                     }
+                                    object_title = object_display_title.Substring(title_base.Length + 4);
 
-                                    sd_oid = hh.CreateMD5(sid + object_display_title);
+                                    sd_oid = sid + " :: " + object_type_id.ToString() + " :: " + object_title;
                                     // check here not a previous data object of the same type
                                     // It may have the same url. If so ignore it.
                                     // If it appears to be different, add a suffix to the data object name
 
                                     object_class_id = 23; object_class = "Text";
-
-                                    DataObject doc_object = new DataObject(sd_oid, sid, object_display_title, null,
+                                    DataObject doc_object = new DataObject(sd_oid, sid, object_title, object_display_title, null,
                                     23, "Text", object_type_id, object_type, null, sponsor_name, 11, download_datetime);
 
                                     // add data object

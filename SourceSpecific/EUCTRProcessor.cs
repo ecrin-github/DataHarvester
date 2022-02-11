@@ -975,14 +975,15 @@ namespace DataHarvester.euctr
             // initial data object is the EUCTR registry entry
             // ----------------------------------------------------------
 
+            string object_title = "EU CTR registry entry";
             string object_display_title = s.display_title + " :: EU CTR registry entry";
             SplitDate entered_in_db = dh.GetDatePartsFromISOString(GetElementAsString(r.Element("entered_in_db")));
             int? registry_pub_year = (entered_in_db != null) ? entered_in_db.year : s.study_start_year;
             
             // create hash Id for the data object
-            string sd_oid = hh.CreateMD5(sid + object_display_title);
+            string sd_oid = sid + " :: 13 :: " + object_title;
 
-            data_objects.Add(new DataObject(sd_oid, sid, object_display_title, registry_pub_year,
+            data_objects.Add(new DataObject(sd_oid, sid, object_title, object_display_title, registry_pub_year,
                   23, "Text", 13, "Trial Registry entry", 100123, "EU Clinical Trials Register", 
                   12, download_datetime));
 
@@ -1010,8 +1011,9 @@ namespace DataHarvester.euctr
             string results_url = GetElementAsString(r.Element("results_url"));
             if (!string.IsNullOrEmpty(results_url))
             {
+                object_title = "EU CTR results entry";
                 object_display_title = s.display_title + " :: EU CTR results entry";
-                sd_oid = hh.CreateMD5(sid + object_display_title);
+                sd_oid = sid + " :: 28 :: " + object_title;
 
                 // get the date data if available
 
@@ -1023,7 +1025,7 @@ namespace DataHarvester.euctr
 
                 int? results_pub_year = results_date?.year;
 
-                data_objects.Add(new DataObject(sd_oid, sid, object_display_title, results_pub_year,
+                data_objects.Add(new DataObject(sd_oid, sid, object_title, object_display_title, results_pub_year,
                       23, "Text", 28, "Trial registry results summary", 100123,
                       "EU Clinical Trials Register", 12, download_datetime));
 
@@ -1062,20 +1064,22 @@ namespace DataHarvester.euctr
                     int title_type_id = 0; string title_type = "";
                     if (!string.IsNullOrEmpty(results_summary_name))
                     {
+                        object_title = results_summary_name;
                         object_display_title = s.display_title + " :: " + results_summary_name;
                         title_type_id = 21;
                         title_type = "Study short name :: object name";
                     }
                     else
                     {
+                        object_title = "CSR summary";
                         object_display_title = s.display_title + " :: CSR summary";
                         title_type_id = 22;
                         title_type = "Study short name :: object type";
                     }
                     
-                    sd_oid = hh.CreateMD5(sid + object_display_title);
+                    sd_oid = sid + " :: 79 :: " + object_title;
 
-                    data_objects.Add(new DataObject(sd_oid, sid, object_display_title, results_date.year,
+                    data_objects.Add(new DataObject(sd_oid, sid, object_title, object_display_title, results_date.year,
                           23, "Text", 79, "CSR summary", null, sponsor_name, 11, download_datetime));
 
                     // data object title is the single display title...
@@ -1094,13 +1098,14 @@ namespace DataHarvester.euctr
 
                 if (!string.IsNullOrEmpty(results_pdf_link))
                 {
+                    object_title = "CSR summary";
                     object_display_title = s.display_title + " :: CSR summary";
                     int title_type_id = 22;
                     string title_type = "Study short name :: object type";
 
-                    sd_oid = hh.CreateMD5(sid + object_display_title);
+                    sd_oid = sid + " :: 79 :: " + object_title;
 
-                    data_objects.Add(new DataObject(sd_oid, sid, object_display_title, results_date.year,
+                    data_objects.Add(new DataObject(sd_oid, sid, object_title, object_display_title, results_date.year,
                           23, "Text", 79, "CSR summary", null, sponsor_name, 11, download_datetime));
 
                     // data object title is the single display title...

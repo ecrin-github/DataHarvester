@@ -184,12 +184,13 @@ namespace DataHarvester.biolincc
             // For the BioLincc web page, set up new data object, object title, object_instance and object dates
             int? pub_year = GetElementAsInt(r.Element("publication_year"));
             string remote_url = GetElementAsString(r.Element("remote_url"));
+            string object_title = "NHLBI web page";
             string object_display_title = name_base + " :: " + "NHLBI web page";
 
             // create hash Id for the data object
-            string sd_oid = hh.CreateMD5(sid + object_display_title);
+            string sd_oid = sid + " :: 38 :: " + object_title;
 
-            data_objects.Add(new DataObject(sd_oid, sid, object_display_title, pub_year, 23, "Text", 38, "Study Overview",
+            data_objects.Add(new DataObject(sd_oid, sid, object_title, object_display_title, pub_year, 23, "Text", 38, "Study Overview",
                 100167, "National Heart, Lung, and Blood Institute (US)", 12, download_datetime));
 
             data_object_titles.Add(new ObjectTitle(sd_oid, object_display_title, 22,
@@ -231,10 +232,11 @@ namespace DataHarvester.biolincc
             string study_website = GetElementAsString(r.Element("study_website"));
             if (!string.IsNullOrEmpty(study_website))
             {
+                object_title = "Study web site";
                 object_display_title = name_base + " :: " + "Study web site";
-                sd_oid = hh.CreateMD5(sid + object_display_title);
+                sd_oid = sid + " :: 134 :: " + object_title;
 
-                data_objects.Add(new DataObject(sd_oid, sid, object_display_title, null, 23, "Text", 134, "Website",
+                data_objects.Add(new DataObject(sd_oid, sid, object_title, object_display_title, null, 23, "Text", 134, "Website",
                                     sponsor_id, sponsor_name, 12, download_datetime));
                 data_object_titles.Add(new ObjectTitle(sd_oid, object_display_title, 22,
                                     "Study short name :: object type", true));
@@ -262,10 +264,11 @@ namespace DataHarvester.biolincc
             {
                 DateTime date_access_url_checked = new DateTime(2021, 7, 23);
 
+                object_title = "Individual participant data";
                 object_display_title = name_base + " :: " + "Individual participant data";
-                sd_oid = hh.CreateMD5(sid + object_display_title);
+                sd_oid = sid + " :: 80 :: " + object_title;
 
-                data_objects.Add(new DataObject(sd_oid, sid, object_display_title, null, 14, "Datasets",
+                data_objects.Add(new DataObject(sd_oid, sid, object_title, object_display_title, null, 14, "Datasets",
                         80, "Individual participant data", 100167, "National Heart, Lung, and Blood Institute (US)",
                         17, "Case by case download", access_details,
                         "https://biolincc.nhlbi.nih.gov/media/guidelines/handbook.pdf?link_time=2019-12-13_11:33:44.807479#page=15",
@@ -343,13 +346,14 @@ namespace DataHarvester.biolincc
                         if (size == "") size = null;
                         if (size_units == "") size_units = null;
 
+                        object_title = doc_name;
                         object_display_title = name_base + " :: " + doc_name;
-                        sd_oid = hh.CreateMD5(sid + object_display_title);
+                        sd_oid = sid + " :: " + object_type_id.ToString() + " :: " + object_title;
 
                         // N.B. 'pub_year' for these resources assumed to be the same as the biolincc entry
                         // Exact date
 
-                        data_objects.Add(new DataObject(sd_oid, sid, object_display_title, pub_year, 23, "Text", object_type_id, object_type,
+                        data_objects.Add(new DataObject(sd_oid, sid, object_title, object_display_title, pub_year, 23, "Text", object_type_id, object_type,
                                         100167, "National Heart, Lung, and Blood Institute (US)", access_type_id, download_datetime));
                         data_object_titles.Add(new ObjectTitle(sd_oid, object_display_title, 21, "Study short name :: object name", true));
                         data_object_instances.Add(new ObjectInstance(sd_oid, 101900, "BioLINCC", url, true, doc_type_id, doc_type, size, size_units));

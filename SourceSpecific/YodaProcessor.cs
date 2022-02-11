@@ -250,16 +250,17 @@ namespace DataHarvester.yoda
                 }
             }
 
-        
+
             // data objects...
 
             // do the yoda web page itself first...
+            string object_title = "Yoda web page";
             string object_display_title = name_base + " :: " + "Yoda web page";
 
             // create hash Id for the data object
-            string sd_oid = hh.CreateMD5(sid + object_display_title);
+            string sd_oid = sid + " :: 38 :: " + object_title;
 
-            data_objects.Add(new DataObject(sd_oid, sid, object_display_title, null, 23, "Text", 38, "Study Overview",
+            data_objects.Add(new DataObject(sd_oid, sid, object_title, object_display_title, null, 23, "Text", 38, "Study Overview",
                               101901, "Yoda", 12, download_datetime));
             data_object_titles.Add(new ObjectTitle(sd_oid, object_display_title, 22,
                             "Study short name :: object type", true));
@@ -281,6 +282,7 @@ namespace DataHarvester.yoda
                         string doc_name = GetElementAsString(sd.Element("doc_name"));
                         string comment = GetElementAsString(sd.Element("comment"));
                         string url = GetElementAsString(sd.Element("url"));
+                        object_title = doc_name;
 
                         switch (doc_name)
                         {
@@ -343,11 +345,11 @@ namespace DataHarvester.yoda
                         }
 
                         object_display_title = name_base + " :: " + object_type;
-                        sd_oid = hh.CreateMD5(sid + object_display_title);
+                        sd_oid = sid + " :: " + object_type_id.ToString() + " :: " + object_title;
 
                         if (comment == "Available now")
                         {
-                            data_objects.Add(new DataObject(sd_oid, sid, object_display_title, null, object_class_id, object_class, object_type_id, object_type,
+                            data_objects.Add(new DataObject(sd_oid, sid, object_title, object_display_title, null, object_class_id, object_class, object_type_id, object_type,
                                             101901, "Yoda", 11, download_datetime));
                             data_object_titles.Add(new ObjectTitle(sd_oid, object_display_title, 22, "Study short name :: object type", true));
 
@@ -380,7 +382,7 @@ namespace DataHarvester.yoda
                             access_details += "1) the scientific purpose is clearly described; 2) the data requested will be used to enhance scientific and/or medical knowledge; and ";
                             access_details += "3) the proposed research can be reasonably addressed using the requested data.";
 
-                            data_objects.Add(new DataObject(sd_oid, sid, object_display_title, null, object_class_id, object_class, object_type_id, object_type,
+                            data_objects.Add(new DataObject(sd_oid, sid, object_title, object_display_title, null, object_class_id, object_class, object_type_id, object_type,
                                             101901, "Yoda", 17, "Case by case download", access_details,
                                             "https://yoda.yale.edu/how-request-data", date_access_url_checked, download_datetime));
                             data_object_titles.Add(new ObjectTitle(sd_oid, object_display_title, 22, "Study short name :: object type", true));

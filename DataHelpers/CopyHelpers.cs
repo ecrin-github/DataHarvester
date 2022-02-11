@@ -108,6 +108,7 @@ namespace DataHarvester
             new PostgreSQLCopyHelper<DataObject>("sd", "data_objects")
                 .MapVarchar("sd_oid", x => x.sd_oid)
                 .MapVarchar("sd_sid", x => x.sd_sid)
+                .MapVarchar("title", x => x.title)
                 .MapVarchar("display_title", x => x.display_title)
                 .MapVarchar("version", x => x.version)
                 .MapVarchar("doi", x => x.doi)
