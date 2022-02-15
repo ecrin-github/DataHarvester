@@ -1051,11 +1051,11 @@ namespace DataHarvester.who
                     }
 
                     object_display_title = name_base + " :: " + object_type;
+                    object_title = object_type;
                     sd_oid = sid + " :: " + object_type_id.ToString() + " :: " + object_title;
 
                     // almost certainly not in or managed by the registry
 
-                    object_title = object_type;
                     data_objects.Add(new DataObject(sd_oid, sid, object_title, object_display_title, pub_year, 23, "Text", object_type_id, object_type,
                     null, null, 11, download_datetime));
 

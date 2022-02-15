@@ -1060,10 +1060,22 @@ namespace DataHarvester.euctr
                 if (!string.IsNullOrEmpty(results_summary_link))
                 {
                     string results_summary_name = GetElementAsString(r.Element("results_summary_name"));
-
                     int title_type_id = 0; string title_type = "";
+                    bool add_record = true;
+
                     if (!string.IsNullOrEmpty(results_summary_name))
                     {
+                        string title_to_check = results_summary_name.ToLower();
+
+                        // Don't add if the name implies a reference to a clinical trials.gov 
+                        // summary results records - over 700 do...
+
+                        if (title_to_check.Contains("ctg") || title_to_check.Contains("ct_g") ||
+                        title_to_check.Contains("ct.g") || title_to_check.Contains("clinicaltrials.gov"))
+                        {
+                            add_record = false;
+                        }
+
                         object_title = results_summary_name;
                         object_display_title = s.display_title + " :: " + results_summary_name;
                         title_type_id = 21;
@@ -1076,19 +1088,22 @@ namespace DataHarvester.euctr
                         title_type_id = 22;
                         title_type = "Study short name :: object type";
                     }
-                    
-                    sd_oid = sid + " :: 79 :: " + object_title;
 
-                    data_objects.Add(new DataObject(sd_oid, sid, object_title, object_display_title, results_date.year,
-                          23, "Text", 79, "CSR summary", null, sponsor_name, 11, download_datetime));
+                    if (add_record)
+                    {
+                        sd_oid = sid + " :: 79 :: " + object_title;
 
-                    // data object title is the single display title...
-                    object_titles.Add(new ObjectTitle(sd_oid, object_display_title,
-                                                             title_type_id, title_type, true));
+                        data_objects.Add(new DataObject(sd_oid, sid, object_title, object_display_title, results_date.year,
+                              23, "Text", 79, "CSR summary", null, sponsor_name, 11, download_datetime));
 
-                    // instance url 
-                    object_instances.Add(new ObjectInstance(sd_oid, 100123, "EU Clinical Trials Register",
-                                         results_summary_link, true, 11, "PDF"));
+                        // data object title is the single display title...
+                        object_titles.Add(new ObjectTitle(sd_oid, object_display_title,
+                                                                 title_type_id, title_type, true));
+
+                        // instance url 
+                        object_instances.Add(new ObjectInstance(sd_oid, 100123, "EU Clinical Trials Register",
+                                             results_summary_link, true, 11, "PDF"));
+                    }
 
                 }
 
@@ -1098,7 +1113,7 @@ namespace DataHarvester.euctr
 
                 if (!string.IsNullOrEmpty(results_pdf_link))
                 {
-                    object_title = "CSR summary";
+                    object_title = "CSR summary - PDF DL";
                     object_display_title = s.display_title + " :: CSR summary";
                     int title_type_id = 22;
                     string title_type = "Study short name :: object type";
