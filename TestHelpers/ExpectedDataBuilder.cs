@@ -76,8 +76,8 @@ namespace DataHarvester
             // Initialise expected objects table with pmid ids from source studies table
             // study related objects to be added later)
 
-            sql_string = @"insert into expected.data_objects(sd_oid, seq_num)
-            select sd_id, 1 from 
+            sql_string = @"insert into expected.data_objects(sd_oid)
+            select sd_id from 
             expected.source_objects 
             order by source_id, sd_id;";
 
@@ -129,11 +129,11 @@ namespace DataHarvester
 
             // yoda studies
 
-            LoadStudyData("0a663fd89b1c34636e462d011f1a97d7");
-            LoadStudyData("5f1f01152c98133141e01ce922814433");
-            LoadStudyData("85d4da6dbbfad175ca83961171be5ad7");
-            LoadStudyData("213154085c0a14f6998432e313a7cd86");
-            LoadStudyData("b534c4ec25b421860e600ed8b3131184");
+            LoadStudyData("y_nct02243202");
+            LoadStudyData("y_30_49");
+            LoadStudyData("y_gal_mvd_301");
+            LoadStudyData("y_nct01727258");
+            LoadStudyData("y_nct00433329");
 
             // euctr studies
 
@@ -177,75 +177,6 @@ namespace DataHarvester
             LoadObjectData("32739569");
             LoadObjectData("32740235");
 
-        }
-
-        public void CalculateAndAddOIDs()
-        {
-            // oids have to be calculated for each of the data objects
-            // of the manually derived studies - in the same way as 
-            // in normal data extraction
-
-            MD5Helpers hh = new MD5Helpers();
-
-            // get each data object - calulate oid as the 
-            // hash of the sd_sid and the object's display name
-            string sql_string = @"select sd_sid, display_title
-                                from expected.data_objects";
-
-            IEnumerable<DataObjectBasics> object_ids = null;
-
-            using (var conn = new NpgsqlConnection(_db_conn))
-            {
-                object_ids = conn.Query<DataObjectBasics>(sql_string);
-            }
-
-            foreach (DataObjectBasics d in object_ids)
-            {
-                string ids = d.sd_sid + d.display_title;
-                string sd_oid = hh.CreateMD5(ids);
-
-                sql_string = @"Update expected.data_objects 
-                             set sd_oid = '" + sd_oid + @"'
-                             where sd_sid = '" + d.sd_sid + @"'
-                             and display_title = '" + d.display_title + @"';";
-
-                Execute_SQL(sql_string);
-            }
-
-            // update the object attributes that share the 
-            // same study and sequence number
-
-            Update_sd_oid("object_datasets");
-            Update_sd_oid("object_dates");
-            Update_sd_oid("object_instances");
-            Update_sd_oid("object_titles");
-            Update_sd_oid("object_contributors");
-            Update_sd_oid("object_topics");
-            Update_sd_oid("object_descriptions");
-            Update_sd_oid("object_identifiers");
-            Update_sd_oid("object_db_links");
-            Update_sd_oid("object_publication_types");
-            Update_sd_oid("object_rights");
-            //Update_sd_oid("object_hashes");
-        }
-
-
-        private void Update_sd_oid (string table_name)
-        {
-            string sql_string = @"Update expected." + table_name +  @" b
-                             set sd_oid = d.sd_oid 
-                             from expected.data_objects d
-                             where b.sd_sid = d.sd_sid 
-                             and b.seq_num = d.seq_num;";
-
-            Execute_SQL(sql_string);
-
-        }
-
-        private class DataObjectBasics
-        { 
-            public string sd_sid { get; set; }
-            public string display_title { get; set; }
         }
 
     }

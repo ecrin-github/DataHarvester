@@ -177,12 +177,18 @@ namespace DataHarvester.biolincc
                 study_contributors.Add(new StudyContributor(sid, 54, "Trial sponsor", sponsor_id, sponsor_name));
             }
 
-
-
             // Create data object records.
 
             // For the BioLincc web page, set up new data object, object title, object_instance and object dates
-            int? pub_year = GetElementAsInt(r.Element("publication_year"));
+            
+            // Get publication year if one exists
+            int? pub_year = null;
+            int? pyear = GetElementAsInt(r.Element("publication_year"));
+            if (pyear != null && pyear > 0)
+            {
+                pub_year = pyear;
+            }
+
             string remote_url = GetElementAsString(r.Element("remote_url"));
             string object_title = "NHLBI web page";
             string object_display_title = name_base + " :: " + "NHLBI web page";
@@ -200,25 +206,31 @@ namespace DataHarvester.biolincc
                                 remote_url, true, 35, "Web text"));
 
             // Add dates if available
-            SplitDate page_prepared = null;
+            //SplitDate page_prepared = null;
             SplitDate last_revised = null;
 
-            string page_prepared_date = GetElementAsString(r.Element("page_prepared_date"));
+            /*
+            // This date no longer available... (explicitly - last revised date may be available in header)
+             //string page_prepared_date = GetElementAsString(r.Element("page_prepared_date"));
+
+
             if (!string.IsNullOrEmpty(page_prepared_date))
             {
                 page_prepared = dh.GetDatePartsFromISOString(page_prepared_date.Substring(0, 10));
                 data_object_dates.Add(new ObjectDate(sd_oid, 12, "Available", page_prepared.year,
                             page_prepared.month, page_prepared.day, page_prepared.date_string));
             }
+            */
 
             string last_revised_date = GetElementAsString(r.Element("last_revised_date"));
             if (!string.IsNullOrEmpty(last_revised_date))
             {
+                // date datasets revised
                 last_revised = dh.GetDatePartsFromISOString(last_revised_date.Substring(0, 10));
 
                 // only add last revised date if it is later than date prepared date
                 // For early trials run before BioLINCC waas set up this is not the case
-
+                /*
                 if ((last_revised.year * 400) + (last_revised.month * 32) + last_revised.day
                     >= (page_prepared.year * 400) + (page_prepared.month * 32) + page_prepared.day)
 
@@ -226,6 +238,7 @@ namespace DataHarvester.biolincc
                     data_object_dates.Add(new ObjectDate(sd_oid, 18, "Updated", last_revised.year,
                               last_revised.month, last_revised.day, last_revised.date_string));
                 }
+                */
             }
 
             // If there is a study web site...
@@ -268,13 +281,14 @@ namespace DataHarvester.biolincc
                 object_display_title = name_base + " :: " + "Individual participant data";
                 sd_oid = sid + " :: 80 :: " + object_title;
 
-                data_objects.Add(new DataObject(sd_oid, sid, object_title, object_display_title, null, 14, "Datasets",
+                data_objects.Add(new DataObject(sd_oid, sid, object_title, object_display_title, last_revised.year, 14, "Datasets",
                         80, "Individual participant data", 100167, "National Heart, Lung, and Blood Institute (US)",
                         17, "Case by case download", access_details,
                         "https://biolincc.nhlbi.nih.gov/media/guidelines/handbook.pdf?link_time=2019-12-13_11:33:44.807479#page=15",
                         date_access_url_checked, download_datetime));
 
                 data_object_titles.Add(new ObjectTitle(sd_oid, object_display_title, 22, "Study short name :: object type", true));
+                data_object_dates.Add(new ObjectDate(sd_oid, 18, "Updated", last_revised.year, last_revised.month, last_revised.day, last_revised.date_string));
 
                 // Datasets and consent restrictions
                 string dataset_consent_restrictions = GetElementAsString(r.Element("dataset_consent_restrictions"));
@@ -350,10 +364,9 @@ namespace DataHarvester.biolincc
                         object_display_title = name_base + " :: " + doc_name;
                         sd_oid = sid + " :: " + object_type_id.ToString() + " :: " + object_title;
 
-                        // N.B. 'pub_year' for these resources assumed to be the same as the biolincc entry
-                        // Exact date
+                        // N.B. 'pub_year' no longer known
 
-                        data_objects.Add(new DataObject(sd_oid, sid, object_title, object_display_title, pub_year, 23, "Text", object_type_id, object_type,
+                        data_objects.Add(new DataObject(sd_oid, sid, object_title, object_display_title, null, 23, "Text", object_type_id, object_type,
                                         100167, "National Heart, Lung, and Blood Institute (US)", access_type_id, download_datetime));
                         data_object_titles.Add(new ObjectTitle(sd_oid, object_display_title, 21, "Study short name :: object name", true));
                         data_object_instances.Add(new ObjectInstance(sd_oid, 101900, "BioLINCC", url, true, doc_type_id, doc_type, size, size_units));

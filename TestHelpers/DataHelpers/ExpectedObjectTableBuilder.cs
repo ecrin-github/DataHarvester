@@ -30,7 +30,6 @@ namespace DataHarvester
                 id                     INT             GENERATED ALWAYS AS IDENTITY (START WITH 3001 INCREMENT BY 1) PRIMARY KEY
               , sd_oid                 VARCHAR        NULL
               , sd_sid                 VARCHAR         NULL
-              , seq_num                INT             NULL
               , display_title          VARCHAR         NULL
               , version                VARCHAR         NULL
               , doi                    VARCHAR         NULL 
@@ -66,8 +65,6 @@ namespace DataHarvester
             CREATE TABLE expected.object_datasets(
                 id                     INT             GENERATED ALWAYS AS IDENTITY (START WITH 4001 INCREMENT BY 1) PRIMARY KEY
               , sd_oid                 VARCHAR        NULL
-              , sd_sid                 VARCHAR         NULL
-              , seq_num                INT             NULL
               , record_keys_type_id    INT             NULL 
               , record_keys_details    VARCHAR         NULL    
               , deident_type_id        INT             NULL  
@@ -98,8 +95,6 @@ namespace DataHarvester
             CREATE TABLE expected.object_dates(
                 id                     INT             GENERATED ALWAYS AS IDENTITY (START WITH 4001 INCREMENT BY 1) PRIMARY KEY
               , sd_oid                 VARCHAR        NULL
-              , sd_sid                 VARCHAR         NULL
-              , seq_num                INT             NULL
               , date_type_id           INT             NULL
               , date_is_range          BOOLEAN         NULL default false
               , date_as_string         VARCHAR         NULL
@@ -124,8 +119,6 @@ namespace DataHarvester
             CREATE TABLE expected.object_instances(
                 id                     INT             GENERATED ALWAYS AS IDENTITY (START WITH 4001 INCREMENT BY 1) PRIMARY KEY
               , sd_oid                 VARCHAR        NULL
-              , sd_sid                 VARCHAR         NULL
-              , seq_num                INT             NULL
               , instance_type_id       INT             NOT NULL 
               , repository_org_id      INT             NULL
               , repository_org         VARCHAR         NULL
@@ -150,8 +143,6 @@ namespace DataHarvester
             CREATE TABLE expected.object_contributors(
                 id                     INT             GENERATED ALWAYS AS IDENTITY (START WITH 4001 INCREMENT BY 1) PRIMARY KEY
               , sd_oid                 VARCHAR        NULL
-              , sd_sid                 VARCHAR         NULL
-              , seq_num                INT             NULL
               , contrib_type_id        INT             NULL
               , is_individual          BOOLEAN         NULL
               , person_id              INT             NULL
@@ -177,8 +168,6 @@ namespace DataHarvester
             CREATE TABLE expected.object_titles(
                 id                     INT             GENERATED ALWAYS AS IDENTITY (START WITH 4001 INCREMENT BY 1) PRIMARY KEY
               , sd_oid                 VARCHAR        NULL
-              , sd_sid                 VARCHAR         NULL
-              , seq_num                INT             NULL
               , title_type_id          INT             NULL
               , title_text             VARCHAR         NULL
               , lang_code              VARCHAR         NULL
@@ -199,8 +188,6 @@ namespace DataHarvester
             CREATE TABLE expected.object_topics(
                 id                     INT             GENERATED ALWAYS AS IDENTITY (START WITH 4001 INCREMENT BY 1) PRIMARY KEY
               , sd_oid                 VARCHAR        NULL
-              , sd_sid                 VARCHAR         NULL
-              , seq_num                INT             NULL
               , topic_type_id          INT             NULL
               , mesh_coded             BOOLEAN         NULL
               , mesh_code              VARCHAR         NULL
@@ -222,8 +209,6 @@ namespace DataHarvester
             CREATE TABLE expected.object_comments(
                 id                     INT             GENERATED ALWAYS AS IDENTITY (START WITH 4001 INCREMENT BY 1) PRIMARY KEY
               , sd_oid                 VARCHAR        NULL
-              , sd_sid                 VARCHAR         NULL
-              , seq_num                INT             NULL
               , ref_type               VARCHAR         NULL 
               , ref_source             VARCHAR         NULL 
               , pmid                   VARCHAR         NULL 
@@ -243,8 +228,6 @@ namespace DataHarvester
             CREATE TABLE expected.object_descriptions(
                 id                     INT             GENERATED ALWAYS AS IDENTITY (START WITH 4001 INCREMENT BY 1) PRIMARY KEY
               , sd_oid                 VARCHAR        NULL
-              , sd_sid                 VARCHAR         NULL
-              , seq_num                INT             NULL
               , description_type_id    INT             NULL
               , label                  VARCHAR         NULL
               , description_text       VARCHAR         NULL
@@ -263,8 +246,6 @@ namespace DataHarvester
             CREATE TABLE expected.object_identifiers(
                 id                     INT             GENERATED ALWAYS AS IDENTITY (START WITH 4001 INCREMENT BY 1) PRIMARY KEY
               , sd_oid                 VARCHAR        NULL
-              , sd_sid                 VARCHAR         NULL
-              , seq_num                INT             NULL
               , identifier_value       VARCHAR         NULL
               , identifier_type_id     INT             NULL
               , identifier_org_id      INT             NULL
@@ -285,8 +266,6 @@ namespace DataHarvester
             CREATE TABLE expected.object_db_links(
                 id                     INT             GENERATED ALWAYS AS IDENTITY (START WITH 4001 INCREMENT BY 1) PRIMARY KEY
               , sd_oid                 VARCHAR        NULL
-              , sd_sid                 VARCHAR         NULL
-              , seq_num                INT             NULL
               , db_sequence            INT             NULL
               , db_name                VARCHAR         NULL
               , id_in_db               VARCHAR         NULL
@@ -304,8 +283,6 @@ namespace DataHarvester
             CREATE TABLE expected.object_publication_types(
                 id                     INT             GENERATED ALWAYS AS IDENTITY (START WITH 4001 INCREMENT BY 1) PRIMARY KEY
               , sd_oid                 VARCHAR        NULL
-              , sd_sid                 VARCHAR         NULL
-              , seq_num                INT             NULL
               , type_name              VARCHAR         NULL
               , record_hash            CHAR(32)        NULL
             );
@@ -321,8 +298,6 @@ namespace DataHarvester
             CREATE TABLE expected.object_relationships(
                 id                     INT             GENERATED ALWAYS AS IDENTITY (START WITH 4001 INCREMENT BY 1) PRIMARY KEY
               , sd_oid                 VARCHAR        NULL
-              , sd_sid                 VARCHAR         NULL
-              , seq_num                INT             NULL
               , relationship_type_id   INT             NULL
               , target_sd_oid          VARCHAR        NULL
               , targetsd_sid           VARCHAR         NULL
@@ -341,8 +316,6 @@ namespace DataHarvester
             CREATE TABLE expected.object_rights(
                 id                     INT             GENERATED ALWAYS AS IDENTITY (START WITH 4001 INCREMENT BY 1) PRIMARY KEY
               , sd_oid                 VARCHAR        NULL
-              , sd_sid                 VARCHAR         NULL
-              , seq_num                INT             NULL
               , rights_name            VARCHAR         NULL
               , rights_uri             VARCHAR         NULL
               , comments               VARCHAR         NULL

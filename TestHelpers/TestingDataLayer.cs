@@ -65,8 +65,8 @@ namespace DataHarvester
                 edb.LoadInitialInputTables();
                 _logger.Information("Data loaded from manual inspections");  
 
-                edb.CalculateAndAddOIDs();
-                _logger.Information("OIDs calculated and inserted");
+                //edb.CalculateAndAddOIDs();
+                //_logger.Information("OIDs calculated and inserted");
 
                 tsb.TearDownForeignSchema();
                 _logger.Information("mon_sf link deleted");

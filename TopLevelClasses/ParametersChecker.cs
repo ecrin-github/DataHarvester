@@ -154,7 +154,7 @@ namespace DataHarvester
         [Option('E', "establish_expected_test_data", Required = false, HelpText = "If present only creates and fills tables for the 'expected' data. for comparison with processed test data")]
         public bool setup_expected_data_only { get; set; }
 
-        [Option('F', "harvest_all_test_data", Required = false, HelpText = "If present only creates and fills tables for the 'expected' data. for comparison with processed test data")]
+        [Option('F', "harvest_all_test_data", Required = false, HelpText = "If present only creates and fills tables for the designated test data, for comparison with expected test data")]
         public bool harvest_all_test_data { get; set; }
     }
 
