@@ -71,7 +71,7 @@ namespace DataHarvester.pubmed
 
             FullDataObject fob = new FullDataObject(sdoid, download_datetime);
 
-            // add in the defaults form pubmed articles
+            // add in the defaults for pubmed articles
             fob.object_class_id = 23;
             fob.object_class = "Text";
             fob.object_type_id = 12;
@@ -1477,7 +1477,7 @@ namespace DataHarvester.pubmed
                 art_title = art_title + " ";
             }
 
-            fob.title = art_title;
+            fob.title = art_title.Trim();
             fob.display_title = ((author_string != "" ? author_string + ". " : "") + art_title + journal_source).Trim();
 
             // Tidy up doi status.

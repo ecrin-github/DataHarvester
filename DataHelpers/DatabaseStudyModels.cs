@@ -39,6 +39,8 @@ namespace DataHarvester
         public List<StudyTopic> topics { get; set; }
         public List<StudyFeature> features { get; set; }
         public List<StudyRelationship> relationships { get; set; }
+        public List<StudyLocation> sites { get; set; }
+        public List<StudyCountry> countries { get; set; }
         public List<StudyLink> studylinks { get; set; }
         public List<AvailableIPD> ipd_info { get; set; }
 
@@ -386,6 +388,45 @@ namespace DataHarvester
             sd_sid = _sd_sid;
             link_label = _link_label;
             link_url = _link_url;
+        }
+    }
+
+
+    public class StudyLocation
+    {
+        public string sd_sid { get; set; }
+        public string facility { get; set; }
+        public int? city_id { get; set; }
+        public string city_name { get; set; }
+        public int? country_id { get; set; }
+        public string country_name { get; set; }
+        public int? status_id { get; set; }
+        public string status{ get; set; }
+
+        public StudyLocation(string _sd_sid, string _facility, string _city_name,
+                             string _country_name, int? _status_id, string _status)
+        {
+            sd_sid = _sd_sid;
+            facility = _facility;
+            city_name = _city_name;
+            country_name = _country_name;
+            status_id = _status_id;
+            status = _status;
+        }
+    }
+
+
+
+    public class StudyCountry
+    {
+        public string sd_sid { get; set; }
+        public int country_id { get; set; }
+        public string country_name { get; set; }
+
+        public StudyCountry(string _sd_sid, string _country_name)
+        {
+            sd_sid = _sd_sid;
+            country_name = _country_name;
         }
     }
 

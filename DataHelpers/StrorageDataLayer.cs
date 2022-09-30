@@ -93,6 +93,25 @@ namespace DataHarvester
                 }
             }
 
+            if (source.has_study_countries && s.countries.Count > 0)
+            {
+                using (var conn = new NpgsqlConnection(db_conn))
+                {
+                    conn.Open();
+                    sch.study_countries_helper.SaveAll(conn, s.countries);
+                }
+            }
+
+            if (source.has_study_locations && s.sites.Count > 0)
+            {
+                using (var conn = new NpgsqlConnection(db_conn))
+                {
+                    conn.Open();
+                    sch.study_locations_helper.SaveAll(conn, s.sites);
+                }
+            }
+
+
             if (source.has_study_links && s.studylinks.Count > 0)
             {
                 using (var conn = new NpgsqlConnection(db_conn))

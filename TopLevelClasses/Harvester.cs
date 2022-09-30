@@ -173,7 +173,8 @@ namespace DataHarvester
             // -------------------------------------------------------------------
 
             ContextDataManager.Source context_source = new ContextDataManager.Source(source.id, source.source_type, source.database_name, source.db_conn,
-                                                       source.has_study_tables, source.has_study_topics, source.has_study_contributors);
+                                                       source.has_study_tables, source.has_study_topics, source.has_study_contributors,
+                                                       source.has_study_countries, source.has_study_locations);
             ContextDataManager.Credentials context_creds = new ContextDataManager.Credentials(creds.Host, creds.Username, creds.Password);
 
             _logger_helper.LogHeader("Updating context data");
@@ -191,7 +192,8 @@ namespace DataHarvester
             HashDataLibrary.Source hash_source = new HashDataLibrary.Source(source.id, source.source_type, source.database_name, source.db_conn,
                       source.has_study_tables, source.has_study_topics, source.has_study_features,
                       source.has_study_contributors, source.has_study_references, source.has_study_relationships,
-                      source.has_study_links, source.has_study_ipd_available, source.has_object_datasets,
+                      source.has_study_links, source.has_study_ipd_available, source.has_study_countries,
+                      source.has_study_locations, source.has_object_datasets,
                       source.has_object_dates, source.has_object_rights, source.has_object_relationships,
                       source.has_object_pubmed_set);
 

@@ -27,6 +27,8 @@ namespace DataHarvester
         public bool has_study_contributors { get; }
         public bool has_study_references { get; }
         public bool has_study_relationships { get; }
+        public bool has_study_countries { get; }
+        public bool has_study_locations { get; }
         public bool has_study_links { get; }
         public bool has_object_datasets { get; }
         public bool has_study_ipd_available { get; }

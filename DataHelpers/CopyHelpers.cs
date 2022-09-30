@@ -16,6 +16,7 @@ namespace DataHarvester
                 .MapVarchar("identifier_date", x => x.identifier_date)
                 .MapVarchar("identifier_link", x => x.identifier_link);
 
+
         public PostgreSQLCopyHelper<StudyTitle> study_titles_helper =
             new PostgreSQLCopyHelper<StudyTitle>("sd", "study_titles")
                 .MapVarchar("sd_sid", x => x.sd_sid)
@@ -89,6 +90,22 @@ namespace DataHarvester
                 .MapVarchar("citation", x => x.citation)
                 .MapVarchar("doi", x => x.doi)
                 .MapVarchar("comments", x => x.comments);
+
+
+        public PostgreSQLCopyHelper<StudyLocation> study_locations_helper =
+            new PostgreSQLCopyHelper<StudyLocation>("sd", "study_locations")
+                .MapVarchar("sd_sid", x => x.sd_sid)
+                .MapVarchar("facility", x => x.facility)
+                .MapVarchar("city_name", x => x.city_name)
+                .MapVarchar("country_name", x => x.country_name)
+                .MapInteger("status_id", x => x.status_id)
+                .MapVarchar("status", x => x.status);
+
+
+        public PostgreSQLCopyHelper<StudyCountry> study_countries_helper =
+            new PostgreSQLCopyHelper<StudyCountry>("sd", "study_countries")
+                .MapVarchar("sd_sid", x => x.sd_sid)
+                .MapVarchar("country_name", x => x.country_name);
 
 
         public PostgreSQLCopyHelper<AvailableIPD> study_avail_ipd_helper =

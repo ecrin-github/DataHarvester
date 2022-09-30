@@ -202,6 +202,7 @@ namespace DataHarvester
             Execute_SQL(sql_string);
         }
 
+
         public void create_table_study_links()
         {
             string sql_string = @"DROP TABLE IF EXISTS sd.study_links;
@@ -213,6 +214,45 @@ namespace DataHarvester
               , record_hash            CHAR(32)        NULL
             );
             CREATE INDEX study_links_sd_sid ON sd.study_links(sd_sid);";
+
+            Execute_SQL(sql_string);
+        }
+
+
+        public void create_table_study_locations()
+        {
+            string sql_string = @"DROP TABLE IF EXISTS sd.study_locations;
+            CREATE TABLE sd.study_locations(
+                id                     INT             GENERATED ALWAYS AS IDENTITY PRIMARY KEY
+              , sd_sid                 VARCHAR         NOT NULL
+              , facility_org_id        INT             NULL
+              , facility               VARCHAR         NULL
+              , facility_ror_id        VARCHAR         NULL
+              , city_id                INT             NULL
+              , city_name              VARCHAR         NULL
+              , country_id             INT             NULL
+              , country_name           VARCHAR         NULL
+              , status_id              INT             NULL
+              , status                 VARCHAR         NULL
+              , record_hash            CHAR(32)        NULL
+            );
+            CREATE INDEX study_locations_sd_sid ON sd.study_locations(sd_sid);";
+
+            Execute_SQL(sql_string);
+        }
+
+
+        public void create_table_study_countries()
+        {  
+            string sql_string = @"DROP TABLE IF EXISTS sd.study_countries;
+            CREATE TABLE sd.study_countries(
+                id                     INT             GENERATED ALWAYS AS IDENTITY PRIMARY KEY
+              , sd_sid                 VARCHAR         NOT NULL
+              , country_id             INT             NULL
+              , country_name           VARCHAR         NULL
+              , record_hash            CHAR(32)        NULL
+            );
+            CREATE INDEX study_countries_sd_sid ON sd.study_countries(sd_sid);";
 
             Execute_SQL(sql_string);
         }
@@ -234,6 +274,7 @@ namespace DataHarvester
 
             Execute_SQL(sql_string);
         }
+
 
         /*
         public void create_table_study_hashes()

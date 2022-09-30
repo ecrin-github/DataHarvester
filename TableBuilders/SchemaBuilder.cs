@@ -35,6 +35,8 @@ namespace DataHarvester
                 if (_source.has_study_references) study_tablebuilder.create_table_study_references();
                 if (_source.has_study_relationships) study_tablebuilder.create_table_study_relationships();
                 if (_source.has_study_links) study_tablebuilder.create_table_study_links();
+                if (_source.has_study_countries) study_tablebuilder.create_table_study_countries();
+                if (_source.has_study_locations) study_tablebuilder.create_table_study_locations();
                 if (_source.has_study_ipd_available) study_tablebuilder.create_table_ipd_available();
 
                 _logger.Information("Study tables recreated");

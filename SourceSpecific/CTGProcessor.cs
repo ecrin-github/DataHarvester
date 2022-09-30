@@ -35,6 +35,8 @@ namespace DataHarvester.ctg
             List<StudyTopic> topics = new List<StudyTopic>();
             List<StudyFeature> features = new List<StudyFeature>();
             List<StudyRelationship> relationships = new List<StudyRelationship>();
+            List<StudyLocation> sites = new List<StudyLocation>();
+            List<StudyCountry> countries = new List<StudyCountry>();
 
             List<DataObject> data_objects = new List<DataObject>();
             List<ObjectDataset> object_datasets = new List<ObjectDataset>();
@@ -663,7 +665,7 @@ namespace DataHarvester.ctg
             {
                 var officials = RetrieveListElements(ContactsLocationsModule, "OverallOfficialList");
 
-                if (officials != null && officials.Count() > 0)
+                if (officials != null && officials.Any())
                 {
                     foreach (XElement official in officials)
                     {
@@ -701,53 +703,130 @@ namespace DataHarvester.ctg
                         }
                     }
                 }
-            }
 
-            
-            if (IPDSharingModule != null)
-            {
-                if (IPDSharingModule != null)
+                var locations = RetrieveListElements(ContactsLocationsModule, "LocationList");
+
+                if (locations != null && locations.Any())
                 {
-                    string IPDSharingDescription = FieldValue(IPDSharingModule, "IPDSharingDescription");
-                    if (IPDSharingDescription != null)
+                    foreach (XElement location in locations)
                     {
-                        string sharing_statement = "(As of " + status_verified_date + "): " + sh.StringClean(IPDSharingDescription);
-
-                        string IPDSharingTimeFrame = FieldValue(IPDSharingModule, "IPDSharingTimeFrame") ?? "";
-                        if (IPDSharingTimeFrame != "")
+                        string facility = null;
+                        string fac = sh.ReplaceApos(sh.TrimString(FieldValue(location, "LocationFacility")));
+                        if (fac != null)
                         {
-                            sharing_statement += "\nTime frame: " + sh.StringClean(IPDSharingTimeFrame);
-                        }
+                            // Common abbreviations used within CGT site descriptors
 
-                        string IPDSharingAccessCriteria = FieldValue(IPDSharingModule, "IPDSharingAccessCriteria") ?? "";
-                        if (IPDSharingAccessCriteria != "")
-                        {
-                            sharing_statement += "\nAccess Criteria: " + sh.StringClean(IPDSharingAccessCriteria);
-                        }
-
-                        string IPDSharingURL = FieldValue(IPDSharingModule, "IPDSharingURL") ?? "";
-                        if (IPDSharingURL != "")
-                        {
-                            sharing_statement += "\nURL: " + sh.StringClean(IPDSharingURL);
-                        }
-
-                        var IPDSharingInfoTypeList = RetrieveListElements(IPDSharingModule, "IPDSharingInfoTypeList");
-                        if (IPDSharingInfoTypeList != null && IPDSharingInfoTypeList.Count() > 0)
-                        {
-                            string itemlist = "";
-                            foreach (XElement infotype in IPDSharingInfoTypeList)
+                            facility = fac.Replace(".", "");
+                            facility = facility.Replace("Med ", "Medical ");
+                            facility = facility.Replace("Gen ", "General ");
+                            if (facility.EndsWith(" Univ") || facility.Contains("Univ "))
                             {
-                                string item_type = (infotype == null) ? null : (string)infotype;
-                                itemlist += (item_type != null) ? ", " + item_type : "";
+                                facility = facility.Replace("Univ", "University");
                             }
-                            string infoitemlist = sh.StringClean(itemlist.Substring(1));
-
-                            sharing_statement += "\nInformation available: " + infoitemlist;
+                            if (facility.EndsWith(" Ctr") || facility.Contains("Ctr "))
+                            {
+                                facility = facility.Replace("Ctr", "Center");  // N.B. US spelling
+                            }
+                            if (facility.EndsWith(" Hosp") || facility.Contains("Hosp "))
+                            {
+                                facility = facility.Replace("Hosp", "Hospital");  // N.B. US spelling
+                            }
                         }
-
-                        s.data_sharing_statement = sharing_statement;
+                        string city = FieldValue(location, "LocationCity");
+                        string country = FieldValue(location, "LocationCountry");
+                        string status = FieldValue(location, "LocationStatus");
+                        int? status_id = string.IsNullOrEmpty(status) ? null : th.GetStatusId(status);
+                        sites.Add(new StudyLocation(sid, facility, city, country, status_id, status));
                     }
                 }
+
+                // derive distinct countries from sites
+
+                if (sites.Any())
+                {
+                    foreach (StudyLocation st in sites)
+                    {
+                        if (st.country_name != null)
+                        {
+                            if (countries.Count == 0)
+                            {
+                                countries.Add(new StudyCountry(st.sd_sid, st.country_name));
+                            }
+                            else
+                            {
+                                bool add_country = true;
+                                foreach (StudyCountry c in countries)
+                                {
+                                    if (c.country_name == st.country_name)
+                                    {
+                                        add_country = false;
+                                        break;
+                                    }
+                                }
+                                if (add_country)
+                                {
+                                    countries.Add(new StudyCountry(st.sd_sid, st.country_name));
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+
+
+            // ipd information
+            
+            if (IPDSharingModule != null)
+            {                
+                string sharing_statement = "";
+                string IPDSharing = FieldValue(IPDSharingModule, "IPDSharing");
+
+                if (IPDSharing != null)
+                {
+                    sharing_statement = "IPD Sharing: " + sh.StringClean(IPDSharing) + " (as of " + status_verified_date + ")";
+                }
+                    
+                string IPDSharingDescription = FieldValue(IPDSharingModule, "IPDSharingDescription");
+
+                if (IPDSharingDescription != null)
+                {
+                    sharing_statement += "\nDescription: " + sh.StringClean(IPDSharingDescription);
+
+                    string IPDSharingTimeFrame = FieldValue(IPDSharingModule, "IPDSharingTimeFrame") ?? "";
+                    if (IPDSharingTimeFrame != "")
+                    {
+                        sharing_statement += "\nTime frame: " + sh.StringClean(IPDSharingTimeFrame);
+                    }
+
+                    string IPDSharingAccessCriteria = FieldValue(IPDSharingModule, "IPDSharingAccessCriteria") ?? "";
+                    if (IPDSharingAccessCriteria != "")
+                    {
+                        sharing_statement += "\nAccess Criteria: " + sh.StringClean(IPDSharingAccessCriteria);
+                    }
+
+                    string IPDSharingURL = FieldValue(IPDSharingModule, "IPDSharingURL") ?? "";
+                    if (IPDSharingURL != "")
+                    {
+                        sharing_statement += "\nURL: " + sh.StringClean(IPDSharingURL);
+                    }
+
+                    var IPDSharingInfoTypeList = RetrieveListElements(IPDSharingModule, "IPDSharingInfoTypeList");
+                    if (IPDSharingInfoTypeList != null && IPDSharingInfoTypeList.Count() > 0)
+                    {
+                        string itemlist = "";
+                        foreach (XElement infotype in IPDSharingInfoTypeList)
+                        {
+                            string item_type = (infotype == null) ? null : (string)infotype;
+                            itemlist += (item_type != null) ? ", " + item_type : "";
+                        }
+
+                        string infoitemlist = sh.StringClean(itemlist.Substring(1));
+                        sharing_statement += "\nAdditional information available: " + infoitemlist;
+                    }
+                   
+                }
+
+                s.data_sharing_statement = sharing_statement;
             }
 
 
@@ -1755,6 +1834,8 @@ namespace DataHarvester.ctg
             s.topics = topics;
             s.features = features;
             s.relationships = relationships;
+            s.sites = sites;  
+            s.countries = countries;
 
             s.data_objects = data_objects;
             s.object_datasets = object_datasets;
