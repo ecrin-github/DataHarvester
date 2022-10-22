@@ -1,13 +1,12 @@
 ﻿using System;
-using Serilog;
 
 namespace DataHarvester
 {
     public class StringHelpers
     {
-        private readonly ILogger _logger;
+        private readonly LoggingHelper _logger;
 
-        public StringHelpers(ILogger logger)
+        public StringHelpers(LoggingHelper logger)
         {
             _logger = logger;
         }
@@ -143,7 +142,7 @@ namespace DataHarvester
             }
             catch (Exception e)
             {
-                _logger.Error("In ReplaceApos: " + e.Message + " (input was '" + apos_name + "')");
+                _logger.LogError("In ReplaceApos: " + e.Message + " (input was '" + apos_name + "')");
                 return apos_name;
             }
 
@@ -342,7 +341,7 @@ namespace DataHarvester
 
             catch (Exception e)
             {
-                _logger.Error("In replace_tags: " + e.Message + " (Input was '" + input_string + "')");
+                _logger.LogError("In replace_tags: " + e.Message + " (Input was '" + input_string + "')");
                 return null;
             }
         }

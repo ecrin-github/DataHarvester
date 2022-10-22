@@ -1,7 +1,6 @@
 ﻿using System;
 using System.IO;
 using System.Reflection;
-using Serilog;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -35,22 +34,18 @@ namespace DataHarvester
                      // Register services (or develop a comp root)
                      services.AddSingleton<ICredentials, Credentials>();
                      services.AddSingleton<IParametersChecker, ParametersChecker>();
-                     services.AddSingleton<ILoggerHelper, LoggerHelper>();
                      services.AddSingleton<IHarvester, Harvester>();
                      services.AddSingleton<IMonitorDataLayer, MonitorDataLayer>();
                      services.AddSingleton<IStorageDataLayer, StorageDataLayer>();
                      services.AddSingleton<ITestingDataLayer, TestingDataLayer>();
                      services.AddTransient<ISource, Source>();
                  })
-                 .UseSerilog(new LoggerConfiguration()
-                        .ReadFrom.Configuration(configFiles)
-                        .CreateLogger())
                  .Build();
-
+  
             // Check the command line arguments to ensure they are valid,
             // If they are, start the program by instantiating the Harvester object
             // and telling it to run. The parameter checking process also creates
-            // a singleton monitor repository.
+            // a singleton monitor repository and a log file.
 
             ParametersChecker paramChecker = ActivatorUtilities
                                     .CreateInstance<ParametersChecker>(host.Services);

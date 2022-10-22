@@ -5,16 +5,15 @@ using System.Linq;
 using System.Text.RegularExpressions;
 using System.Xml;
 using System.Xml.Linq;
-using Serilog;
 
 namespace DataHarvester.ctg
 {
     public class CTGProcessor : IStudyProcessor
     {
         IMonitorDataLayer _mon_repo;
-        ILogger _logger;
+        LoggingHelper _logger;
 
-        public CTGProcessor(IMonitorDataLayer mon_repo, ILogger logger)
+        public CTGProcessor(IMonitorDataLayer mon_repo, LoggingHelper logger)
         {
             _mon_repo = mon_repo;
             _logger = logger;

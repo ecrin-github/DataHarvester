@@ -1,7 +1,5 @@
 ﻿using Dapper.Contrib.Extensions;
-using Dapper;
 using System;
-using System.ComponentModel;
 
 namespace DataHarvester
 {

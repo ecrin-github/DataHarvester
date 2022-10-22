@@ -3,16 +3,15 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Xml;
 using System.Xml.Linq;
-using Serilog;
 
 namespace DataHarvester.biolincc
 {
     public class BioLinccProcessor : IStudyProcessor
     { 
         IMonitorDataLayer _mon_repo;
-        ILogger _logger;
+        LoggingHelper _logger;
 
-        public BioLinccProcessor(IMonitorDataLayer mon_repo, ILogger logger)
+        public BioLinccProcessor(IMonitorDataLayer mon_repo, LoggingHelper logger)
         {
             _mon_repo = mon_repo;
             _logger = logger;

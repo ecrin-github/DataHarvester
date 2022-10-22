@@ -6,8 +6,8 @@ using System.Linq;
 
 namespace DataHarvester
 {
-    public class LoggerHelper : ILoggerHelper
-    {
+    public class LoggerHelper //: ILoggerHelper
+    {    /*
         private ILogger _logger;
 
         public LoggerHelper(ILogger logger)
@@ -15,13 +15,15 @@ namespace DataHarvester
             _logger = logger;
         }
 
+        
         public void LogHeader(string header_text)
         {
             _logger.Information("");
             _logger.Information(header_text.ToUpper());
             _logger.Information("");
         }
-
+        
+                
 
         public void LogCommandLineParameters(Options opts)
         {
@@ -48,7 +50,7 @@ namespace DataHarvester
             _logger.Information("Update org ids only is " + opts.org_update_only);
             _logger.Information("");
         }
-
+        
 
         public void LogStudyHeader(Options opts, string dbline)
         {
@@ -68,7 +70,7 @@ namespace DataHarvester
             _logger.Information(dividerline);
             _logger.Information("");
         }
-
+       
 
         public void LogTableStatistics(ISource s, string schema)
         {
@@ -147,6 +149,7 @@ namespace DataHarvester
             }
         }
 
+         
 
         private string GetTableRecordCount(string db_conn, string schema, string table_name)
         {
@@ -170,5 +173,7 @@ namespace DataHarvester
                 return conn.Query<hash_stat>(sql_string);
             }
         }
+
+        */
     }
 }

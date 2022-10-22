@@ -4,16 +4,15 @@ using System.Data;
 using System.Linq;
 using System.Xml;
 using System.Xml.Linq;
-using Serilog;
 
 namespace DataHarvester.pubmed
 {
     public class PubmedProcessor : IObjectProcessor
     {
         IMonitorDataLayer _mon_repo;
-        ILogger _logger;
+        LoggingHelper _logger;
 
-        public PubmedProcessor(IMonitorDataLayer mon_repo, ILogger logger)
+        public PubmedProcessor(IMonitorDataLayer mon_repo, LoggingHelper logger)
         {
             _mon_repo = mon_repo;
             _logger = logger;
@@ -108,12 +107,12 @@ namespace DataHarvester.pubmed
                 else
                 {
                     fob.version = pmidVersion;
-                    _logger.Information("PMID version for {sdoid} not an integer", sdoid);
+                    _logger.LogLine("PMID version for {sdoid} not an integer", sdoid);
                 }
             }
             else
             {
-                _logger.Information("No PMID version attribute found for {sdoid}", sdoid);
+                _logger.LogLine("No PMID version attribute found for {sdoid}", sdoid);
             }
 
 
@@ -129,12 +128,12 @@ namespace DataHarvester.pubmed
             if (version_id != null)
             {
                 string qText = "A version attribute (" + version_id + ") found for pmid {sdoid}";
-                _logger.Information(qText, sdoid);
+                _logger.LogLine(qText, sdoid);
             }
             if (version_date != null)
             {
                 string qText = "A version date attribute (" + version_date + ") found for pmid {sdoid}";
-                _logger.Information(qText, sdoid);
+                _logger.LogLine(qText, sdoid);
             }
 
             #endregion
@@ -252,14 +251,14 @@ namespace DataHarvester.pubmed
                 {
                     article_title_present = false;
                     string qText = "The citation has an empty article title element, pmid {sdoid}";
-                    _logger.Information(qText, sdoid);
+                    _logger.LogLine(qText, sdoid);
                 }
            }
            else
            {
                article_title_present = false;
                string qText = "The citation does not have an article title element, pmid {sdoid}";
-                _logger.Information(qText, sdoid);
+                _logger.LogLine(qText, sdoid);
             }
 
 
@@ -346,7 +345,7 @@ namespace DataHarvester.pubmed
                     {
                         vernacular_title_present = false;
                         string qText = "The article and vernacular titles seem identical, for pmid {sdoid}";
-                        _logger.Information(qText, sdoid);
+                        _logger.LogLine(qText, sdoid);
                     }
                 }
             }
@@ -404,7 +403,7 @@ namespace DataHarvester.pubmed
                         {
                             string qText = "The title starts with '[', end with ')', but unable to match parentheses. Title = " 
                                            + atitle + ", for pmid {sdoid}";
-                            _logger.Information(qText, sdoid);
+                            _logger.LogLine(qText, sdoid);
                         }
                     }
                     else
@@ -413,7 +412,7 @@ namespace DataHarvester.pubmed
 
                         string qText = "The title starts with a '[' but there is no matching ']' or ')' at the end of the title. Title = "
                                            + atitle + ", for pmid {sdoid}";
-                        _logger.Information(qText, sdoid);
+                        _logger.LogLine(qText, sdoid);
                     }
 
                     // Store the title(s) - square brackets being present.
@@ -598,7 +597,7 @@ namespace DataHarvester.pubmed
                         else
                         {
                             string qText = "Unexpected date type (" + date_type + ") found in an article date element, pmid {sdoid}"; 
-                            _logger.Information(qText, sdoid);
+                            _logger.LogLine(qText, sdoid);
                         }
                     }
                 }
@@ -656,7 +655,7 @@ namespace DataHarvester.pubmed
                                     {
                                         date_type = 0;
                                         string qText = "An unexpexted status (" + pub_status + ") found a date in the history section, pmid {sdoid}";
-                                        _logger.Information(qText, sdoid);
+                                        _logger.LogLine(qText, sdoid);
                                         break;
                                     }
                             }
@@ -921,7 +920,7 @@ namespace DataHarvester.pubmed
                                             {
                                                 string qText = "Two different dois have been supplied: " + fob.doi +
                                                                " from ELocation, and " + other_id + " from Article Ids, pmid { sdoid}";
-                                                _logger.Information(qText, sdoid);
+                                                _logger.LogLine(qText, sdoid);
                                                 break;
                                             }
                                         }
@@ -950,7 +949,7 @@ namespace DataHarvester.pubmed
                                         {
                                             // should be present already! - if a different value log it a a query
                                             string qText = "Two different values for pmid found: record pmiod is {sdoid}, but in article ids the value " + other_id + " is listed";
-                                            _logger.Information(qText, sdoid);
+                                            _logger.LogLine(qText, sdoid);
                                             identifiers.Add(new ObjectIdentifier(sdoid, 16, "PMID", sdoid, 100133, "National Library of Medicine"));
                                         }
                                         break;
@@ -992,7 +991,7 @@ namespace DataHarvester.pubmed
                                 default:
                                     {
                                         string qText = "A unexpexted article id type (" + id_type + ") found a date in the article id section, for pmid {sdoid}";
-                                        _logger.Information(qText, sdoid);
+                                        _logger.LogLine(qText, sdoid);
                                         break;
                                     }
                             }
@@ -1148,7 +1147,7 @@ namespace DataHarvester.pubmed
                                 {
                                     string qText = "person " + full_name + "(linked to {sdoid}) identifier ";
                                     qText += "is not an ORCID (" + identifier + " (source =" + identifier_source + "))";
-                                    _logger.Information(qText, sdoid);
+                                    _logger.LogLine(qText, sdoid);
                                     identifier = ""; identifier_source = "";  // do not store in db
                                 }
                             }

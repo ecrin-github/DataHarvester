@@ -2,16 +2,15 @@
 using System.Collections.Generic;
 using System.Net.Http;
 using System.Threading.Tasks;
-using Serilog;
 
 namespace DataHarvester
 {
     public class HtmlHelpers
     {
         //private readonly IMonitorDataLayer mon_repo;
-        private readonly ILogger _logger;
+        private readonly LoggingHelper _logger;
 
-        public HtmlHelpers(ILogger logger)
+        public HtmlHelpers(LoggingHelper logger)
         {
             _logger = logger; 
         }

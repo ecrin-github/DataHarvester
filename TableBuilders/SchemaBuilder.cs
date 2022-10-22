@@ -1,15 +1,14 @@
-﻿using Serilog;
-
+﻿
 namespace DataHarvester
 {
     public class SchemaBuilder
     {
         private ISource _source;
-        private ILogger _logger;
+        private LoggingHelper _logger;
         private StudyTableBuilder study_tablebuilder;
         private ObjectTableBuilder object_tablebuilder;
 
-        public SchemaBuilder(ISource source, ILogger logger)
+        public SchemaBuilder(ISource source, LoggingHelper logger)
         {
             _source = source;
             _logger = logger;
@@ -39,7 +38,7 @@ namespace DataHarvester
                 if (_source.has_study_locations) study_tablebuilder.create_table_study_locations();
                 if (_source.has_study_ipd_available) study_tablebuilder.create_table_ipd_available();
 
-                _logger.Information("Study tables recreated");
+                _logger.LogLine("Study tables recreated");
             }
 
             // object tables - these common to all databases
@@ -66,7 +65,7 @@ namespace DataHarvester
                 object_tablebuilder.create_table_object_publication_types();
             }
 
-            _logger.Information("Object tables recreated");
+            _logger.LogLine("Object tables recreated");
         }
 
     }

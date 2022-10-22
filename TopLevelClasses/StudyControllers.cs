@@ -1,19 +1,18 @@
 ﻿using System.Collections.Generic;
 using System.IO;
 using System.Xml;
-using Serilog;
 
 namespace DataHarvester
 {
     public class StudyController
     {
-        ILogger _logger;
+        LoggingHelper _logger;
         IMonitorDataLayer _mon_repo;
         IStorageDataLayer _storage_repo;
         IStudyProcessor _processor;
         ISource _source;
 
-        public StudyController(ILogger logger, IMonitorDataLayer mon_repo, IStorageDataLayer storage_repo,
+        public StudyController(LoggingHelper logger, IMonitorDataLayer mon_repo, IStorageDataLayer storage_repo,
                               ISource source, IStudyProcessor processor)
         {
             _logger = logger;
@@ -34,7 +33,7 @@ namespace DataHarvester
             int k = 0;
             for (int m = 0; m < total_amount; m += chunk)
             {
-                // if (k >= 50000) break; // for testing...
+                if (k >= 1000) break; // for testing...
 
                 IEnumerable<StudyFileRecord> file_list = _mon_repo
                         .FetchStudyFileRecordsByOffset(_source.id, m, chunk, harvest_type_id);
@@ -63,7 +62,7 @@ namespace DataHarvester
                         }
                     }
 
-                    if (k % chunk == 0) _logger.Information("Records harvested: " + k.ToString());
+                    if (k % chunk == 0) _logger.LogLine("Records harvested: " + k.ToString());
                 }
 
             }

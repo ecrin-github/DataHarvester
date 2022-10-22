@@ -413,6 +413,12 @@ namespace DataHarvester
             status_id = _status_id;
             status = _status;
         }
+
+        public StudyLocation(string _sd_sid, string _facility)
+        {
+            sd_sid = _sd_sid;
+            facility = _facility;
+        }
     }
 
 

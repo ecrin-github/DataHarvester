@@ -4,16 +4,15 @@ using System.Globalization;
 using System.Linq;
 using System.Xml;
 using System.Xml.Linq;
-using Serilog;
 
 namespace DataHarvester.euctr
 {
     public class EUCTRProcessor : IStudyProcessor
     {
         IMonitorDataLayer _mon_repo;
-        ILogger _logger;
+        LoggingHelper _logger;
 
-        public EUCTRProcessor(IMonitorDataLayer mon_repo, ILogger logger)
+        public EUCTRProcessor(IMonitorDataLayer mon_repo, LoggingHelper logger)
         {
             _mon_repo = mon_repo;
             _logger = logger;

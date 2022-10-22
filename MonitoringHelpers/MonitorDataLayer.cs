@@ -4,9 +4,8 @@ using Microsoft.Extensions.Configuration;
 using Npgsql;
 using System;
 using System.Collections.Generic;
-using System.IO;
 using System.Linq;
-using Serilog;
+
 
 namespace DataHarvester
 {
@@ -24,7 +23,7 @@ namespace DataHarvester
         /// from the app settings, themselves derived from a json file.
         /// </summary>
         /// 
-        public MonitorDataLayer(ILogger logger, ICredentials credentials)
+        public MonitorDataLayer(ICredentials credentials)
         {
             builder = new NpgsqlConnectionStringBuilder();
 

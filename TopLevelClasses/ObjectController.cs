@@ -1,19 +1,18 @@
 ﻿using System.Collections.Generic;
 using System.IO;
 using System.Xml;
-using Serilog;
 
 namespace DataHarvester
 {
     public class ObjectController
     {
-        ILogger _logger;
+        LoggingHelper _logger;
         IMonitorDataLayer _mon_repo;
         IStorageDataLayer _storage_repo;
         IObjectProcessor _processor;
         ISource _source;
 
-        public ObjectController(ILogger logger, IMonitorDataLayer mon_repo, IStorageDataLayer storage_repo,
+        public ObjectController(LoggingHelper logger, IMonitorDataLayer mon_repo, IStorageDataLayer storage_repo,
                               ISource source, IObjectProcessor processor)
         {
             _logger = logger;
@@ -63,7 +62,7 @@ namespace DataHarvester
                         }
                     }
 
-                    if (k % chunk == 0) _logger.Information("Records harvested: " + k.ToString());
+                    if (k % chunk == 0) _logger.LogLine("Records harvested: " + k.ToString());
                 }
 
             }

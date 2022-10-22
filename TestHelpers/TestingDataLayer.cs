@@ -1,6 +1,5 @@
 ﻿using Dapper;
 using Npgsql;
-using Serilog;
 using System;
 using System.Collections.Generic;
 using System.Text;
@@ -12,7 +11,7 @@ namespace DataHarvester
         ICredentials _credentials;
         NpgsqlConnectionStringBuilder builder;
         private string _db_conn;
-        ILogger _logger;
+        LoggingHelper _logger;
 
         /// <summary>
         /// Constructor is used to build the connection string, 
@@ -20,7 +19,7 @@ namespace DataHarvester
         /// from the app settings, themselves derived from a json file.
         /// </summary>
         /// 
-        public TestingDataLayer(ILogger logger, ICredentials credentials)
+        public TestingDataLayer(ICredentials credentials)
         {
             builder = new NpgsqlConnectionStringBuilder();
 
@@ -33,7 +32,7 @@ namespace DataHarvester
 
             _credentials = credentials;
 
-            _logger = logger;
+            _logger = new LoggingHelper("test data from SPs");
         }
 
         public Credentials Credentials => (Credentials)_credentials;
@@ -43,42 +42,42 @@ namespace DataHarvester
         {
             try
             {
-                _logger.Information("STARTING EXPECTED DATA ASSEMBLY");
+                _logger.LogLine("STARTING EXPECTED DATA ASSEMBLY");
 
                 TestSchemaBuilder tsb = new TestSchemaBuilder(_db_conn);
 
                 tsb.SetUpMonSchema();
-                _logger.Information("mon_sf link established");
+                _logger.LogLine("mon_sf link established");
 
                 tsb.SetUpExpectedTables();
-                _logger.Information("Expected Data tables recreated");
+                _logger.LogLine("Expected Data tables recreated");
 
                 tsb.SetUpSDCompositeTables();
-                _logger.Information("SD composite test data tables recreated");
+                _logger.LogLine("SD composite test data tables recreated");
 
                 ExpectedDataBuilder edb = new ExpectedDataBuilder(_db_conn);
 
                 edb.InitialiseTestStudiesList();
                 edb.InitialiseTestPubMedObjectsList();
-                _logger.Information("List of test studies and pubmed objects inserted");
+                _logger.LogLine("List of test studies and pubmed objects inserted");
 
                 edb.LoadInitialInputTables();
-                _logger.Information("Data loaded from manual inspections");  
+                _logger.LogLine("Data loaded from manual inspections");  
 
                 //edb.CalculateAndAddOIDs();
                 //_logger.Information("OIDs calculated and inserted");
 
                 tsb.TearDownForeignSchema();
-                _logger.Information("mon_sf link deleted");
+                _logger.LogLine("mon_sf link deleted");
 
                 return 0;
             }
 
             catch (Exception e)
             {
-                _logger.Error(e.Message);
-                _logger.Error(e.StackTrace);
-                _logger.Information("Closing Log");
+                _logger.LogCodeError("Error in establishing test data deom stored procedures", e.Message, e.StackTrace);
+                _logger.LogLine("Closing Log");
+                _logger.CloseLog();
                 return -1;
             }
         }
@@ -91,12 +90,12 @@ namespace DataHarvester
             {
                 tdb.DeleteExistingStudyData();
                 tdb.TransferStudyData();  
-                _logger.Information("New study SD test data for source " + source.id + " added to CompSD");
+                _logger.LogLine("New study SD test data for source " + source.id + " added to CompSD");
             }
 
             tdb.DeleteExistingObjectData();
             tdb.TransferObjectData();
-            _logger.Information("New object SD test data for source " + source.id + " added to CompSD");
+            _logger.LogLine("New object SD test data for source " + source.id + " added to CompSD");
         }
 
 

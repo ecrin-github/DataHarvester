@@ -1,28 +1,21 @@
 ﻿using CommandLine;
-using Serilog;
 using System;
 using System.Collections.Generic;
-using System.Linq;
 
 namespace DataHarvester
 {
     internal class ParametersChecker : IParametersChecker
     {
-        private ILogger _logger;
-        private ILoggerHelper _logger_helper;
-        private ICredentials _credentials;
         private IMonitorDataLayer _mon_repo;
         private ITestingDataLayer _test_repo;
+        private LoggingHelper _logging_helper;
 
-        public ParametersChecker(ILogger logger, ILoggerHelper logger_helper, 
-                  ICredentials credentials, IMonitorDataLayer mon_repo,
-                  ITestingDataLayer test_repo)
+        public ParametersChecker(IMonitorDataLayer mon_repo, ITestingDataLayer test_repo)
         {
-            _logger = logger;
-            _logger_helper = logger_helper;
-            _credentials = credentials;
             _mon_repo = mon_repo;
             _test_repo = test_repo;
+
+            _logging_helper = new LoggingHelper("no source yet");
         }
 
         // Parse command line arguments and return true only if no errors.
@@ -99,10 +92,8 @@ namespace DataHarvester
 
             catch (Exception e)  
             {
-                _logger.Error(e.Message);
-                _logger.Error(e.StackTrace);
-                _logger.Information("Harvester application aborted");
-                _logger_helper.LogHeader("Closing Log");
+                _logging_helper.LogCodeError("Harvester application aborted", e.Message, e.StackTrace);
+                _logging_helper.CloseLog();
                 return false;
             }
 
@@ -112,27 +103,29 @@ namespace DataHarvester
         private void HandleParseError(IEnumerable<Error> errs)
         {
             // log the errors
-            _logger.Error("Error in the command line arguments - they could not be parsed");
+            _logging_helper.LogHeader("Error in input parameters");
+            _logging_helper.LogLine("Error in the command line arguments - they could not be parsed");
             int n = 0;
             foreach (Error e in errs)
             {
                 n++;
-                _logger.Error("Error {n}: Tag was {Tag}", n.ToString(), e.Tag.ToString());
+                _logging_helper.LogParseError("Tag was ", n.ToString(), e.Tag.ToString());
+
                 if (e.GetType().Name == "UnknownOptionError")
                 {
-                    _logger.Error("Error {n}: Unknown option was {UnknownOption}", n.ToString(), ((UnknownOptionError)e).Token);
+                    _logging_helper.LogParseError("Unknown option was ", n.ToString(), ((UnknownOptionError)e).Token);
                 }
                 if (e.GetType().Name == "MissingRequiredOptionError")
                 {
-                    _logger.Error("Error {n}: Missing option was {MissingOption}", n.ToString(), ((MissingRequiredOptionError)e).NameInfo.NameText);
+                    _logging_helper.LogParseError("Missing option was ", n.ToString(), ((MissingRequiredOptionError)e).NameInfo.NameText);
                 }
                 if (e.GetType().Name == "BadFormatConversionError")
                 {
-                    _logger.Error("Error {n}: Wrongly formatted option was {MissingOption}", n.ToString(), ((BadFormatConversionError)e).NameInfo.NameText);
+                    _logging_helper.LogParseError("Wrongly formatted option was ", n.ToString(), ((BadFormatConversionError)e).NameInfo.NameText);
                 }
             }
-            _logger.Information("Harvester application aborted");
-            _logger_helper.LogHeader("Closing Log");
+            _logging_helper.LogLine("Harvester application aborted");
+            _logging_helper.CloseLog();
         }
 
     }

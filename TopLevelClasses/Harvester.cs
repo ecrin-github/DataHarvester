@@ -5,30 +5,22 @@ using DataHarvester.isrctn;
 using DataHarvester.pubmed;
 using DataHarvester.who;
 using DataHarvester.yoda;
-using Serilog;
 using System;
-using System.Linq;
 using ContextDataManager;
 using HashDataLibrary;
-using System.Xml.Serialization;
 
 namespace DataHarvester
 {
     class Harvester : IHarvester
     {
-        ILogger _logger;
-        ILoggerHelper _logger_helper;
+        LoggingHelper _logging_helper;
         IMonitorDataLayer _mon_repo;
         IStorageDataLayer _storage_repo;
         ITestingDataLayer _test_repo;
 
-        public Harvester(ILogger logger, ILoggerHelper logger_helper,
-                         IMonitorDataLayer mon_repo, IStorageDataLayer storage_repo, 
-                         ITestingDataLayer test_repo
-                         )
+        public Harvester(IMonitorDataLayer mon_repo, IStorageDataLayer storage_repo, 
+                         ITestingDataLayer test_repo)
         {
-            _logger = logger;
-            _logger_helper = logger_helper;
             _mon_repo = mon_repo;
             _storage_repo = storage_repo;
             _test_repo = test_repo;
@@ -38,33 +30,52 @@ namespace DataHarvester
         {
             try
             {
-                _logger_helper.LogHeader("STARTING HARVESTER");
-                _logger_helper.LogCommandLineParameters(opts);
                 foreach (int source_id in opts.source_ids)
                 {
-                    HarvestData(source_id, opts);
+                    // Obtain source details, augment with connection string for this database
+
+                    ISource source = _mon_repo.FetchSourceParameters(source_id);
+                    Credentials creds = _mon_repo.Credentials;
+                    source.db_conn = creds.GetConnectionString(source.database_name, opts.harvest_type_id);
+
+                    // establish and begin the logger helper for this harvest
+
+                    _logging_helper = new LoggingHelper(source.database_name);
+                    _logging_helper.LogHeader("STARTING HARVESTER");
+                    _logging_helper.LogCommandLineParameters(opts);
+                    _logging_helper.LogStudyHeader(opts, "For source: " + source.id + ": " + source.database_name);
+
+                    // call the main routine to do the harvesting, if not just a context data update
+
+                    if (!opts.org_update_only)
+                    {
+                        HarvestData(source, opts, creds, _logging_helper);
+                    }
+
+                    // called for all options and source types
+
+                    UpdateContextData(source, opts, creds, _logging_helper);
+                    UpdateHashData(source, opts, _logging_helper);
+                    TidyAndWriteStatistics(source, opts, _logging_helper);
+                    _logging_helper = null;
+
                 }
-                _logger_helper.LogHeader("Closing Log");
+
                 return 0;
             }
 
             catch (Exception e)
             {
-                _logger.Error(e.Message);
-                _logger.Error(e.StackTrace);
-                _logger_helper.LogHeader("Closing Log");
+                _logging_helper.LogCodeError("Harvester application aborted", e.Message, e.StackTrace);
+                _logging_helper.CloseLog();
                 return -1;
             }
         }
 
-        private void HarvestData(int source_id, Options opts)
-        {
-            // Obtain source details, augment with connection string for this database
 
-            ISource source = _mon_repo.FetchSourceParameters(source_id);
-            Credentials creds = _mon_repo.Credentials;
-            source.db_conn = creds.GetConnectionString(source.database_name, opts.harvest_type_id);
-            _logger_helper.LogStudyHeader(opts, "For source: " + source.id + ": " + source.database_name);
+
+        private void HarvestData(ISource source, Options opts, Credentials creds, LoggingHelper logging_helper)
+        {
 
             if (!opts.org_update_only)
             {
@@ -76,23 +87,23 @@ namespace DataHarvester
                     // Set up expected data for later processing.
                     // This is data derived from manual inspection of files and requires
                     // a very different method, using stored procedures in the test db
-                    _test_repo.EstablishExpectedData();   
+                    _test_repo.EstablishExpectedData();
                 }
                 else
-                {   
+                {
                     // Otherwise...
                     // construct the sd tables. (Some sources may be data objects only.)
 
-                    _logger_helper.LogHeader("Recreate database tables");
-                    SchemaBuilder sdb = new SchemaBuilder(source, _logger);
+                    _logging_helper.LogHeader("Recreate database tables");
+                    SchemaBuilder sdb = new SchemaBuilder(source, logging_helper);
                     sdb.RecreateTables();
 
                     // Construct the harvest_event record.
 
-                    _logger_helper.LogHeader("Process data");
+                    _logging_helper.LogHeader("Process data");
                     int harvest_id = _mon_repo.GetNextHarvestEventId();
                     HarvestEvent harvest = new HarvestEvent(harvest_id, source.id, opts.harvest_type_id);
-                    _logger.Information("Harvest event " + harvest_id.ToString() + " began");
+                    _logging_helper.LogLine("Harvest event " + harvest_id.ToString() + " began");
 
                     // Harvest the data from the local XML files
                     IStudyProcessor study_processor = null;
@@ -103,7 +114,7 @@ namespace DataHarvester
                     {
                         if (source.uses_who_harvest)
                         {
-                            study_processor = new WHOProcessor(_mon_repo, _logger);
+                            study_processor = new WHOProcessor(_mon_repo, logging_helper);
                         }
                         else
                         {
@@ -111,33 +122,33 @@ namespace DataHarvester
                             {
                                 case 101900:
                                     {
-                                        study_processor = new BioLinccProcessor(_mon_repo, _logger);
+                                        study_processor = new BioLinccProcessor(_mon_repo, logging_helper);
                                         break;
                                     }
                                 case 101901:
                                     {
-                                        study_processor = new YodaProcessor(_mon_repo, _logger);
+                                        study_processor = new YodaProcessor(_mon_repo, logging_helper);
                                         break;
                                     }
                                 case 100120:
                                     {
-                                        study_processor = new CTGProcessor(_mon_repo, _logger);
+                                        study_processor = new CTGProcessor(_mon_repo, logging_helper);
                                         break;
                                     }
                                 case 100123:
                                     {
-                                        study_processor = new EUCTRProcessor(_mon_repo, _logger);
+                                        study_processor = new EUCTRProcessor(_mon_repo, logging_helper);
                                         break;
                                     }
                                 case 100126:
                                     {
-                                        study_processor = new ISRCTNProcessor(_mon_repo, _logger);
+                                        study_processor = new ISRCTNProcessor(_mon_repo, logging_helper);
                                         break;
                                     }
                             }
                         }
 
-                        StudyController c = new StudyController(_logger, _mon_repo, _storage_repo, source, study_processor);
+                        StudyController c = new StudyController(logging_helper, _mon_repo, _storage_repo, source, study_processor);
                         harvest.num_records_harvested = c.LoopThroughFiles(opts.harvest_type_id, harvest_id);
                     }
                     else
@@ -147,43 +158,47 @@ namespace DataHarvester
                         {
                             case 100135:
                                 {
-                                    object_processor = new PubmedProcessor(_mon_repo, _logger);
+                                    object_processor = new PubmedProcessor(_mon_repo, logging_helper);
                                     break;
                                 }
                         }
 
-                        ObjectController c = new ObjectController(_logger, _mon_repo, _storage_repo, source, object_processor);
+                        ObjectController c = new ObjectController(logging_helper, _mon_repo, _storage_repo, source, object_processor);
                         harvest.num_records_harvested = c.LoopThroughFiles(opts.harvest_type_id, harvest_id);
                     }
 
                     harvest.time_ended = DateTime.Now;
                     _mon_repo.StoreHarvestEvent(harvest);
 
-                    _logger.Information("Number of source XML files: " + harvest.num_records_available.ToString());
-                    _logger.Information("Number of files harvested: " + harvest.num_records_harvested.ToString());
-                    _logger.Information("Harvest event " + harvest_id.ToString() + " ended");
+                    logging_helper.LogLine("Number of source XML files: " + harvest.num_records_available.ToString());
+                    logging_helper.LogLine("Number of files harvested: " + harvest.num_records_harvested.ToString());
+                    logging_helper.LogLine("Harvest event " + harvest_id.ToString() + " ended");
+                    logging_helper.SwitchLog();
                 }
             }
+        }
 
-            // The functions below have to be run even if the harvest is 'org_update_only',
-            // and also for the expected data in the test database.
 
+        private void UpdateContextData(ISource source, Options opts, Credentials creds, LoggingHelper logging_helper)
+        { 
             // -------------------------------------------------------------------
-            // MAKE USE OF SEPARATE 'CONTEXT' PROJECT (Same Solution, not DLL) 
+            // MAKES USE OF SEPARATE 'CONTEXT' PROJECT (Same Solution, not DLL) 
             // -------------------------------------------------------------------
 
-            ContextDataManager.Source context_source = new ContextDataManager.Source(source.id, source.source_type, source.database_name, source.db_conn,
+             ContextDataManager.Source context_source = new ContextDataManager.Source(source.id, source.source_type, source.database_name, source.db_conn,
                                                        source.has_study_tables, source.has_study_topics, source.has_study_contributors,
                                                        source.has_study_countries, source.has_study_locations);
-            ContextDataManager.Credentials context_creds = new ContextDataManager.Credentials(creds.Host, creds.Username, creds.Password);
+             ContextDataManager.Credentials context_creds = new ContextDataManager.Credentials(creds.Host, creds.Username, creds.Password);
+            
+             ContextMain context_main = new ContextMain(context_creds, context_source, logging_helper.LogFilePath);
+             context_main.UpdateDataFromContext();
+        }
 
-            _logger_helper.LogHeader("Updating context data");
-            ContextMain context_main = new ContextMain(_logger);
 
-            context_main.UpdateDataFromContext(context_creds, context_source);
-
+        private void UpdateHashData(ISource source, Options opts, LoggingHelper logging_helper)
+        {
             // -------------------------------------------------------------------
-            // MAKE USE OF SEPARATE 'HASH' PROJECT (Same Solution, not DLL) 
+            // MAKES USE OF SEPARATE 'HASH' PROJECT (Same Solution, not DLL) 
             // -------------------------------------------------------------------
 
             // Note the hashes can only be done after all the data is complete, including 
@@ -197,30 +212,42 @@ namespace DataHarvester
                       source.has_object_dates, source.has_object_rights, source.has_object_relationships,
                       source.has_object_pubmed_set);
 
-            _logger_helper.LogHeader("Creating Record Hashes");
-            HashMain hash_main = new HashMain(_logger, hash_source);
+            HashMain hash_main = new HashMain(hash_source, logging_helper.LogFilePath);
             hash_main.HashData();
+        }
 
+
+        private void TidyAndWriteStatistics(ISource source, Options opts, LoggingHelper logging_helper)
+        {
             // If harvesting test data it needs to be transferred  
             // to the sdcomp schema for safekeeping and further processing
             // If a normal harvest from a full source statistics should be produced.
             // If the harvest was of the manual 'expected' data do neither.
 
+            logging_helper.Reattach();
+
             if (source.source_type != "test")
             {
+                // if not loadingt the 'expected' test data
+
                 if (opts.harvest_type_id == 3)
                 {
                     // transfer sd data to test composite data store for later comparison
                     // otherwise it will be overwritten by the next harvest of sd data
+
                     _test_repo.TransferTestSDData(source);
                 }
                 else
                 {
                     // summarise results by providing stats on the sd tables
-                    _logger_helper.LogTableStatistics(source, "sd");
+                    logging_helper.LogTableStatistics(source, "sd");
                 }
             }
+
+            logging_helper.CloseLog();
+
         }
+
     }
 }
 
