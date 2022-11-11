@@ -26,6 +26,8 @@ namespace DataHarvester.euctr
             List<StudyContributor> contributors = new List<StudyContributor>();
             List<StudyTopic> topics = new List<StudyTopic>();
             List<StudyFeature> features = new List<StudyFeature>();
+            List<StudyLocation> sites = new List<StudyLocation>();
+            List<StudyCountry> countries = new List<StudyCountry>();
 
             List<DataObject> data_objects = new List<DataObject>();
             List<ObjectTitle> object_titles = new List<ObjectTitle>();
@@ -38,6 +40,7 @@ namespace DataHarvester.euctr
             StringHelpers sh = new StringHelpers(_logger);
             DateHelpers dh = new DateHelpers();
             IdentifierHelpers ih = new IdentifierHelpers();
+            TypeHelpers th = new TypeHelpers();
 
             string study_description = null;
 
@@ -461,6 +464,7 @@ namespace DataHarvester.euctr
             }
 
             // study design info
+
             var feats = r.Element("features");
             if (feats != null)
             {
@@ -652,6 +656,7 @@ namespace DataHarvester.euctr
             }
 
             // eligibility
+
             var population = r.Element("population");
             if (population != null)
             {
@@ -805,7 +810,8 @@ namespace DataHarvester.euctr
             }
 
 
-            // for topics
+            // topics (mostly IMPs)
+
             var imps = r.Element("imps");
             if (imps != null)
             {
@@ -942,7 +948,7 @@ namespace DataHarvester.euctr
                 return res;
             }
 
-            // public List<MeddraTerm> meddra_terms { get; set; }
+
             var meddra_terms = r.Element("meddra_terms");
             if (meddra_terms != null)
             {
@@ -965,16 +971,43 @@ namespace DataHarvester.euctr
                 }
             }
 
-            // not used at present
-            //public string competent_authority { get; set; }
+
+            var cs = r.Element("countries");
+            if (cs != null)
+            {
+                var country_lines = cs.Elements("Country");
+                if (country_lines?.Any() == true)
+                {
+                    foreach (XElement cline in country_lines)
+                    {
+                        string country_name = sh.ReplaceApos(GetElementAsString(cline.Element("name")).Trim());
+                        string country_status = GetElementAsString(cline.Element("status"))?.Trim();
+
+                        country_name = country_name.Replace("Korea, Republic of", "South Korea");
+                        country_name = country_name.Replace("Russian Federation", "Russia");
+                        country_name = country_name.Replace("Tanzania, United Republic of", "Tanzania");
+
+                        if (string.IsNullOrEmpty(country_status))
+                        {
+                            countries.Add(new StudyCountry(sid, country_name));
+                        }
+                        else
+                        {
+                            int? status_id = string.IsNullOrEmpty(country_status) ? null : th.GetStatusId(country_status);
+                            countries.Add(new StudyCountry(sid, country_name, status_id, country_status));
+                        }
+                    }
+                }
+            }
+
 
             // DATA OBJECTS and their attributes
 
-            // ----------------------------------------------------------
-            // initial data object is the EUCTR registry entry
-            // ----------------------------------------------------------
+                            // ----------------------------------------------------------
+                            // initial data object is the EUCTR registry entry
+                            // ----------------------------------------------------------
 
-            string object_title = "EU CTR registry entry";
+                        string object_title = "EU CTR registry entry";
             string object_display_title = s.display_title + " :: EU CTR registry entry";
             SplitDate entered_in_db = dh.GetDatePartsFromISOString(GetElementAsString(r.Element("entered_in_db")));
             int? registry_pub_year = (entered_in_db != null) ? entered_in_db.year : s.study_start_year;
@@ -1161,12 +1194,14 @@ namespace DataHarvester.euctr
             s.contributors = contributors;
             s.topics = topics;
             s.features = features;
+            s.countries = countries;
 
             s.data_objects = data_objects;
             s.object_titles = object_titles;
             s.object_instances = object_instances;
             s.object_dates = object_dates;
-     
+
+
             return s;
         
         }

@@ -11,6 +11,7 @@ namespace DataHarvester
             {
                 case "completed": type_id = 21; break;
                 case "recruiting": type_id = 14; break;
+                case "ongoing": type_id = 25; break;                
                 case "active, not recruiting": type_id = 15; break;
                 case "not yet recruiting": type_id = 16; break;
                 case "unknown status": type_id = 0; break;
@@ -19,9 +20,12 @@ namespace DataHarvester
                 case "withheld": type_id = 13; break;
                 case "no longer available": type_id = 17; break;
                 case "suspended": type_id = 18; break;
+                case "terminated": type_id = 22; break;
+                case "prematurely ended": type_id = 22; break;
                 case "enrolling by invitation": type_id = 19; break;
                 case "approved for marketing": type_id = 20; break;
-                case "terminated": type_id = 22; break;
+                case "other": type_id = 24; break;
+                default: type_id = 0; break;
             }
             return type_id;
         }

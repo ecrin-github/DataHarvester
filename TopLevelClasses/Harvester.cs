@@ -41,8 +41,8 @@ namespace DataHarvester
                     // establish and begin the logger helper for this harvest
 
                     _logging_helper = new LoggingHelper(source.database_name);
-                    _logging_helper.LogHeader("STARTING HARVESTER");
                     _logging_helper.LogCommandLineParameters(opts);
+                    _logging_helper.LogHeader("STARTING HARVESTER");
                     _logging_helper.LogStudyHeader(opts, "For source: " + source.id + ": " + source.database_name);
 
                     // call the main routine to do the harvesting, if not just a context data update
@@ -51,6 +51,10 @@ namespace DataHarvester
                     {
                         HarvestData(source, opts, creds, _logging_helper);
                     }
+
+                    // relinquish control on log file to enable later stages to re-usae it
+
+                    _logging_helper.SwitchLog();  
 
                     // called for all options and source types
 
@@ -66,6 +70,7 @@ namespace DataHarvester
 
             catch (Exception e)
             {
+                _logging_helper.LogHeader("UNHANDLED EXCEPTION");
                 _logging_helper.LogCodeError("Harvester application aborted", e.Message, e.StackTrace);
                 _logging_helper.CloseLog();
                 return -1;
@@ -173,7 +178,6 @@ namespace DataHarvester
                     logging_helper.LogLine("Number of source XML files: " + harvest.num_records_available.ToString());
                     logging_helper.LogLine("Number of files harvested: " + harvest.num_records_harvested.ToString());
                     logging_helper.LogLine("Harvest event " + harvest_id.ToString() + " ended");
-                    logging_helper.SwitchLog();
                 }
             }
         }

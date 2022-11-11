@@ -24,28 +24,18 @@ namespace DataHarvester
             logfile_startofpath = settings["logfilepath"];
 
             string dt_string = DateTime.Now.ToString("s", System.Globalization.CultureInfo.InvariantCulture)
-                              .Replace("-", "").Replace(":", "").Replace("T", " ");
+                              .Replace(":", "").Replace("T", " ");
 
-            if (sourceName == "no source yet")
+            string log_folder_path = Path.Combine(logfile_startofpath, sourceName);
+            if (!Directory.Exists(log_folder_path))
             {
-                logfile_path = Path.Combine(logfile_startofpath, "HV startup " + dt_string + ".log");
+                Directory.CreateDirectory(log_folder_path);
             }
-            else if (sourceName == "test data from SPs")
-            {
-                logfile_path = Path.Combine(logfile_startofpath, "HV test data from SPs " + dt_string + ".log");
-            }
-            else
-            {
-                string log_folder_path = Path.Combine(logfile_startofpath, sourceName);
-                if (!Directory.Exists(log_folder_path))
-                {
-                    Directory.CreateDirectory(log_folder_path);
-                }
 
-                logfile_path = Path.Combine(log_folder_path, "HV " + dt_string + ".log");
-            }
+            logfile_path = Path.Combine(log_folder_path, "HV " + sourceName + " " + dt_string + ".log");
             sw = new StreamWriter(logfile_path, true, System.Text.Encoding.UTF8);
         }
+
 
         public string LogFilePath => logfile_path;
 
@@ -174,6 +164,8 @@ namespace DataHarvester
                 if (s.has_study_relationships) LogLine(GetTableRecordCount(db_conn, schema, "study_relationships"));
                 if (s.has_study_links) LogLine(GetTableRecordCount(db_conn, schema, "study_links"));
                 if (s.has_study_ipd_available) LogLine(GetTableRecordCount(db_conn, schema, "study_ipd_available"));
+                if (s.has_study_countries) LogLine(GetTableRecordCount(db_conn, schema, "study_countries"));
+                if (s.has_study_locations) LogLine(GetTableRecordCount(db_conn, schema, "study_locations"));
 
                 LogLine(GetTableRecordCount(db_conn, schema, "study_hashes"));
                 IEnumerable<hash_stat> study_hash_stats = (GetHashStats(db_conn, schema, "study_hashes"));

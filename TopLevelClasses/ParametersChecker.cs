@@ -14,8 +14,6 @@ namespace DataHarvester
         {
             _mon_repo = mon_repo;
             _test_repo = test_repo;
-
-            _logging_helper = new LoggingHelper("no source yet");
         }
 
         // Parse command line arguments and return true only if no errors.
@@ -86,12 +84,16 @@ namespace DataHarvester
                                                         " does not correspond to a known source");
                         }
                     }
+
                     return true;    // Got this far - the program can run!
                 }
             }
 
             catch (Exception e)  
             {
+                _logging_helper = new LoggingHelper("no source");
+                _logging_helper.LogHeader("INVALID PARAMETERS");
+                _logging_helper.LogCommandLineParameters(opts);
                 _logging_helper.LogCodeError("Harvester application aborted", e.Message, e.StackTrace);
                 _logging_helper.CloseLog();
                 return false;
@@ -103,8 +105,12 @@ namespace DataHarvester
         private void HandleParseError(IEnumerable<Error> errs)
         {
             // log the errors
+
+            _logging_helper = new LoggingHelper("no source");
+            _logging_helper.LogHeader("UNABLE TO PARSE PARAMETERS");
             _logging_helper.LogHeader("Error in input parameters");
             _logging_helper.LogLine("Error in the command line arguments - they could not be parsed");
+
             int n = 0;
             foreach (Error e in errs)
             {

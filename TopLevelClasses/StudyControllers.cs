@@ -33,7 +33,7 @@ namespace DataHarvester
             int k = 0;
             for (int m = 0; m < total_amount; m += chunk)
             {
-                if (k >= 1000) break; // for testing...
+                // if (k >= 500) break; // for testing...
 
                 IEnumerable<StudyFileRecord> file_list = _mon_repo
                         .FetchStudyFileRecordsByOffset(_source.id, m, chunk, harvest_type_id);
@@ -41,7 +41,7 @@ namespace DataHarvester
                 int n = 0; string filePath = "";
                 foreach (StudyFileRecord rec in file_list)
                 {
-                    // if (k > 50) break; // for testing...
+                    //if (k > 500) break; // for testing...
 
                     n++; k++;
                     filePath = rec.local_path;

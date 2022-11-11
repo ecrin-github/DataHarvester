@@ -30,6 +30,7 @@ namespace DataHarvester.who
             List<DataHarvester.StudyFeature> study_features = new List<DataHarvester.StudyFeature>();
             List<StudyTopic> study_topics = new List<StudyTopic>();
             List<StudyContributor> study_contributors = new List<StudyContributor>();
+            List<StudyCountry> countries = new List<StudyCountry>();
 
             List<DataObject> data_objects = new List<DataObject>();
             List<ObjectTitle> data_object_titles = new List<ObjectTitle>();
@@ -1067,6 +1068,87 @@ namespace DataHarvester.who
                 }
             }
 
+
+            XElement c = r.Element("country_list");
+            if (c != null)
+            {
+                var country_names = c.Elements("string");
+                if (country_names?.Any() == true)
+                {
+                    foreach (XElement country in country_names)
+                    {
+                        var country_name = (string)country;
+
+                        if (!string.IsNullOrEmpty(country_name))
+                        {
+                            country_name = sh.ReplaceApos(country_name.Trim());
+
+                            if (country_name.EndsWith(".") || country_name.EndsWith(",")
+                                || country_name.EndsWith(")") || country_name.EndsWith("?")
+                                || country_name.EndsWith("‘") || country_name.EndsWith("·")
+                                || country_name.EndsWith("'"))
+                            {
+                                country_name = country_name.Remove(country_name.Length - 1, 1);
+                            }
+
+                            country_name = country_name.Replace("(", " ").Replace(")", " ");
+                            country_name = country_name.Replace("only ", "").Replace("Only in ", "");
+                            country_name = country_name.Replace(" only", "").Replace(" Only", "");
+
+                            var clower = country_name.ToLower();
+                            if (clower.Length > 1 && clower != "na"
+                                && clower != "n a" && clower != "other" && clower != "nothing"
+                                && clower != "not applicable" && clower != "not provided"
+                                && clower != "etc" && clower != "Under selecting")
+                            {
+                                if (clower != "none" && clower != "nnone"
+                                    && clower != "mone" && clower != "none."
+                                    && clower != "non" && clower != "noe"
+                                    && clower != "no country" && clower != "many"
+                                    && clower != "north" && clower != "south")
+                                {
+                                    //the following can have misleading commas inside a name
+
+                                    country_name = country_name.Replace("Palestine, State of", "State of Palestine");
+                                    country_name = country_name.Replace("Korea, Republic of", "South Korea");
+                                    country_name = country_name.Replace("Korea,Republic of", "South Korea");
+                                    country_name = country_name.Replace("Tanzania, United Republic Of", "Tanzania");
+                                    country_name = country_name.Replace("Korea, Democratic People’s Republic Of", "North Korea");
+                                    country_name = country_name.Replace("Korea, Democratic People’s Republic of", "North Korea");
+                                    country_name = country_name.Replace("Taiwan, Province Of China", "Taiwan");
+                                    country_name = country_name.Replace("Taiwan, Province of China", "Taiwan");
+                                    country_name = country_name.Replace("Taiwan, Taipei", "Taiwan");
+                                    country_name = country_name.Replace("Congo, The Democratic Republic Of The", "Democratic Republic of the Congo");
+                                    country_name = country_name.Replace("Japan,Asia except Japan", "Asia");
+                                    country_name = country_name.Replace("Japan, Japan", "Japan");
+
+                                    if (country_name.Contains(","))
+                                    {
+                                        string[] country_list = country_name.Split(",");
+                                        for (int i = 0; i < country_list.Length; i++)
+                                        {
+                                            string ci = country_list[i].Trim();
+                                            string cil = ci.ToLower();
+                                            if (!cil.Contains("other") && !cil.Contains("countries")
+                                                && cil != "islamic republic of"
+                                                && cil != "republic of")
+                                            {
+                                                countries.Add(new StudyCountry(sid, ci));
+                                            }
+                                        }
+                                    }
+                                    else
+                                    {
+                                        countries.Add(new StudyCountry(sid, country_name));
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+
+            
             // edit contributors - try to ensure properly categorised
 
             if (study_contributors.Count > 0)
@@ -1106,6 +1188,7 @@ namespace DataHarvester.who
             s.features = study_features;
             s.topics = study_topics;
             s.contributors = study_contributors;
+            s.countries = countries;
 
             s.data_objects = data_objects;
             s.object_titles = data_object_titles;

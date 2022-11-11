@@ -105,7 +105,9 @@ namespace DataHarvester
         public PostgreSQLCopyHelper<StudyCountry> study_countries_helper =
             new PostgreSQLCopyHelper<StudyCountry>("sd", "study_countries")
                 .MapVarchar("sd_sid", x => x.sd_sid)
-                .MapVarchar("country_name", x => x.country_name);
+                .MapVarchar("country_name", x => x.country_name)
+                .MapInteger("status_id", x => x.status_id)
+                .MapVarchar("status", x => x.status);
 
 
         public PostgreSQLCopyHelper<AvailableIPD> study_avail_ipd_helper =

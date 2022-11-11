@@ -747,6 +747,7 @@ namespace DataHarvester.ctg
                     {
                         if (st.country_name != null)
                         {
+                            st.country_name = sh.ReplaceApos(st.country_name.Trim());
                             if (countries.Count == 0)
                             {
                                 countries.Add(new StudyCountry(st.sd_sid, st.country_name));
@@ -1551,7 +1552,6 @@ namespace DataHarvester.ctg
                         else
                         {
                             // store data for later inspection
-
                             // N.B. pubmed and other references that are marked as protocols need to be processed somehow...
 
                             ipd_info.Add(new AvailableIPD(sid, ipd_id, ipd_type, ipd_url, ipd_comment));

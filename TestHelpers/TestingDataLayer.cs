@@ -31,8 +31,7 @@ namespace DataHarvester
             _db_conn = builder.ConnectionString;
 
             _credentials = credentials;
-
-            _logger = new LoggingHelper("test data from SPs");
+            
         }
 
         public Credentials Credentials => (Credentials)_credentials;
@@ -40,6 +39,8 @@ namespace DataHarvester
 
         public int EstablishExpectedData()
         {
+            _logger = new LoggingHelper("test");
+
             try
             {
                 _logger.LogLine("STARTING EXPECTED DATA ASSEMBLY");
@@ -75,7 +76,7 @@ namespace DataHarvester
 
             catch (Exception e)
             {
-                _logger.LogCodeError("Error in establishing test data deom stored procedures", e.Message, e.StackTrace);
+                _logger.LogCodeError("Error in establishing test data from stored procedures", e.Message, e.StackTrace);
                 _logger.LogLine("Closing Log");
                 _logger.CloseLog();
                 return -1;

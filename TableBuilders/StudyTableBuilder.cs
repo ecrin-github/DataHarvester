@@ -250,6 +250,8 @@ namespace DataHarvester
               , sd_sid                 VARCHAR         NOT NULL
               , country_id             INT             NULL
               , country_name           VARCHAR         NULL
+              , status_id              INT             NULL
+              , status                 VARCHAR         NULL
               , record_hash            CHAR(32)        NULL
             );
             CREATE INDEX study_countries_sd_sid ON sd.study_countries(sd_sid);";

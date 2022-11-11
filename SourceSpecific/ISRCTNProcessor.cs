@@ -906,15 +906,15 @@ namespace DataHarvester.isrctn
                                 {
                                     // countries provided as a list
                                     // but some countries have a comma in them...
-                                    item_value.Replace("Korea, South", "South Korea");
-                                    item_value.Replace("Congo, Democratic Republic", "Democratic Republic of the Congo");
+                                    item_value = item_value.Replace("Korea, South", "South Korea");
+                                    item_value = item_value.Replace("Congo, Democratic Republic", "Democratic Republic of the Congo");
 
                                     string[] rec_countries = item_value.Split(",");
                                     if (rec_countries.Length > 0)
                                     {
                                         for (int i = 0; i < rec_countries.Length; i++)
                                         {
-                                            string c = rec_countries[i].Trim();
+                                            string c = sh.ReplaceApos(rec_countries[i]?.Trim());
                                             if (c != "")
                                             {
                                                 string c2 = c.ToLower();
@@ -959,7 +959,7 @@ namespace DataHarvester.isrctn
                             case "Trial participating centre":
                                 {
                                     // just the name of the centre, 
-                                    // should notr normally be duplicated
+                                    // should not normally be duplicated
                                     sites.Add(new StudyLocation(sid, item_value));
                                     break;
                                 }
@@ -1188,27 +1188,37 @@ namespace DataHarvester.isrctn
                         }
 
                         // correct a common past url error in download process
+                        // and remove any trailing full stop, semi-colon or slash
+
                         if (output_url.StartsWith("https://www.isrctn.com/http"))
                         {
                             output_url = output_url.Substring(23);
                         }
 
+                        if (output_url.EndsWith(";") || output_url.EndsWith(".")
+                                || output_url.EndsWith("/"))
+                        {
+                            output_url = output_url.Substring(0, output_url.Length - 1);
+                        }
 
                         // depends if they are an article, usually with a pubmed reference,
                         // or some other type of output
 
-                        if (output_type.ToLower() == "protocol article" 
-                            || output_type.ToLower() == "results article"
-                            || output_type.ToLower() == "interim results article"
-                            || output_type.ToLower() == "other publications")
+                        string output_lower = output_type.ToLower();
+                        if (output_lower == "protocol article" || output_lower == "results article" 
+                            || output_lower == "interim results article" || output_lower == "preprint results" 
+                            || output_lower == "other publications" || output_lower == "abstract results" 
+                            || output_lower == "abstract results" || output_lower == "thesis results " 
+                            || output_lower == "thesis results" || output_lower == "protocol (preprint)"
+                            || output_lower == "preprint (other)")
                         {
-                            string doi = "";
-                            string citation = "";
-                            string pmid_string = "";
 
-                            // try and get a pmid
+                            string doi = "", citation = "", pmid_string = "";
                             int pmid = 0;
                             bool pmid_found = false;
+
+                            // try and get a pmid
+
                             if (output_url.Contains("pubmed"))
                             {
                                 if (output_url.Contains("list_uids="))
@@ -1237,11 +1247,7 @@ namespace DataHarvester.isrctn
                                 }
                                 else
                                 {
-                                    // 'just' pubmed...
-                                    if (output_url.EndsWith("/"))
-                                    {
-                                        output_url = output_url.Substring(0, output_url.Length - 1);
-                                    }
+                                    // 'just' /puibmed_id at the end ...
                                     string poss_pmid = output_url.Substring(output_url.LastIndexOf("/") + 1);
                                     if (Int32.TryParse(poss_pmid, out pmid))
                                     {
@@ -1283,6 +1289,8 @@ namespace DataHarvester.isrctn
                                 }
                             }
 
+                            // add the details to the study references
+
                             references.Add(new StudyReference(sid, pmid_string, citation, doi, comments));
                         }
                         else
@@ -1293,38 +1301,58 @@ namespace DataHarvester.isrctn
                             // create object details
                             string object_type = "";
                             int object_type_id;
+                            string object_class = "Text";
+                            int object_class_id = 23;
 
                             // One of several data object types - usually as stored by ISRCTN
-                            if (output_type.ToLower() == "basic results" 
-                                || output_type.ToLower() == "abstract results")
+                            if (output_lower == "basic results" || output_lower == "funder report results"
+                                || output_lower == "thesis results" || output_lower == "poster results"
+                                || output_lower == "other unpublished results" || output_lower == "book results")
                             {
                                 object_type_id = 79;
                                 object_type = "Results or CSR summary";
                             }
-                            else if (output_type.ToLower() == "protocol file")
+                            else if (output_lower == "protocol file" || output_lower == "protocol (other)")
                             {
                                 object_type_id = 11;
                                 object_type = "Study Protocol";
                             }
-                            else if (output_type.ToLower() == "participant information sheet")
+                            else if (output_lower == "participant information sheet")
                             {
                                 object_type_id = 19;
                                 object_type = "Patient information sheets";
                             }
-                            else if (output_type.ToLower() == "plain english results")
+                            else if (output_lower == "dataset")
+                            {
+                                object_type_id = 80;
+                                object_type = "Individual participant data";
+                                object_class_id = 14;
+                                object_class = "Dataset";
+                            }
+                            else if (output_lower == "plain english results")
                             {
                                 object_type_id = 88;
                                 object_type = "Summary of results for public";
                             }
-                            else if (output_type.ToLower().Contains("analysis"))
+                            else if (output_lower.Contains("analysis"))
                             {
                                 object_type_id = 22;
                                 object_type = "Statistical analysis plan";
                             }
-                            else if (output_type.ToLower().Contains("consent"))
+                            else if (output_lower.Contains("consent"))
                             {
                                 object_type_id = 18;
                                 object_type = "Informed consent forms";
+                            }
+                            else if (output_lower == "other files")
+                            {
+                                object_type_id = 37;
+                                object_type = "Other text based object";
+                            }
+                            else if (output_lower == "trial website")
+                            {
+                                object_type_id = 134;
+                                object_type = "Website";
                             }
                             else
                             {
@@ -1333,7 +1361,8 @@ namespace DataHarvester.isrctn
                             }
 
                             // does this object exist in the additional files list - it should do...
-                            // but may not be the case
+                            // but may not be the case. If it does get the name
+
                             string specific_object_name = "";
                             if (additional_files.Count > 0)
                             {
@@ -1354,21 +1383,60 @@ namespace DataHarvester.isrctn
 
                             if (specific_object_name == "")
                             {
+                                // may be able to derive a document title from the url
+                                string url_lower = output_url.ToLower();
+                                if (url_lower.Contains(".pdf"))
+                                {
+                                    int file_suffix_pos = url_lower.IndexOf(".pdf");
+                                    int name_start_pos = output_url.LastIndexOf('/', file_suffix_pos);
+                                    specific_object_name = output_url.Substring(name_start_pos + 1, file_suffix_pos + 3 - name_start_pos);
+                                }
+                                else if (url_lower.Contains(".docx"))
+                                {
+                                    int file_suffix_pos = url_lower.IndexOf(".docx");
+                                    int name_start_pos = output_url.LastIndexOf("/", file_suffix_pos);
+                                    specific_object_name = output_url.Substring(name_start_pos + 1, file_suffix_pos + 4 - name_start_pos);
+                                }
+                                else if (url_lower.Contains(".doc"))
+                                {
+                                    int file_suffix_pos = url_lower.IndexOf(".doc");
+                                    int name_start_pos = output_url.LastIndexOf("/", file_suffix_pos);
+                                    specific_object_name = output_url.Substring(name_start_pos + 1, file_suffix_pos + 3 - name_start_pos);
+                                }
+                                else if (url_lower.Contains(".pptx"))
+                                {
+                                    int file_suffix_pos = url_lower.IndexOf(".pptx");
+                                    int name_start_pos = output_url.LastIndexOf("/", file_suffix_pos);
+                                    specific_object_name = output_url.Substring(name_start_pos + 1, file_suffix_pos + 4 - name_start_pos);
+                                }
+                                else if (url_lower.Contains(".ppt"))
+                                {
+                                    int file_suffix_pos = url_lower.IndexOf(".ppt");
+                                    int name_start_pos = output_url.LastIndexOf("/", file_suffix_pos);
+                                    specific_object_name = output_url.Substring(name_start_pos + 1, file_suffix_pos + 3 - name_start_pos);
+                                }
+                            }
+
+
+                            if (specific_object_name == "")
+                            {
                                 object_title = object_type;
                                 object_display_title = s.display_title + " :: " + object_type;
                                 sd_oid = sid + " :: " + object_type_id.ToString() + " :: " + object_type;
                                 title_type_id = 22;
                                 title_type = "Study short name :: object type";
 
-                                // in almost all cases the lack of a matching document
-                                // is because the material is provided a a web page
+                                // in almost all cases the lack of a matching document or embedded document
+                                // is because the material is provided as a web page
 
-                                res_type_id = 35;
-                                res_type = "Web text";
+                                if (output_url.StartsWith("http"))
+                                {
+                                    res_type_id = 35;
+                                    res_type = "Web text";
+                                }
 
                                 // need to check if the sd_oid a duplicate?
                                 // probably not as most objects should have a specific name
-
                             }
                             else
                             { 
@@ -1399,10 +1467,30 @@ namespace DataHarvester.isrctn
                                 title_type = "Study short name :: object name";
                             }
 
-                            //string details = GetElementAsString(item.Element("details")).Trim();
+
+                            // do a check that the sd_oid and resulting object name is not a duplicate
+                            // if it is add a suffix before making the addition
+                   
+                            int next_num = 0;
+                            if (data_objects.Any())
+                            {
+                                foreach (DataObject d_o in data_objects)
+                                {
+                                    if (d_o.sd_oid.StartsWith(sd_oid))
+                                    {
+                                        next_num++;
+                                    }
+                                }
+                            }
+                           
+                            if (next_num > 0)
+                            {
+                                sd_oid += "_" + next_num.ToString();
+                                object_display_title += "_" + next_num.ToString();
+                            }
 
                             DataObject new_dobj = new DataObject(sd_oid, sid, object_title, object_display_title, year_published,
-                                        23, "Text", object_type_id, object_type, 100126, "ISRCTN", 11, download_datetime);
+                                        object_class_id, object_class, object_type_id, object_type, 100126, "ISRCTN", 11, download_datetime);
 
                             if (details.ToLower().StartsWith("version"))
                             {
@@ -1527,6 +1615,24 @@ namespace DataHarvester.isrctn
                 }
             }
             return res;
+        }
+
+
+        // check name...
+        private int CheckObjectName(List<ObjectTitle> titles, string object_display_title)
+        {
+            int num_of_this_type = 0;
+            if (titles.Count > 0)
+            {
+                for (int j = 0; j < titles.Count; j++)
+                {
+                    if (titles[j].title_text.Contains(object_display_title))
+                    {
+                        num_of_this_type++;
+                    }
+                }
+            }
+            return num_of_this_type;
         }
 
         private string GetElementAsString(XElement e) => (e == null) ? null : (string)e;

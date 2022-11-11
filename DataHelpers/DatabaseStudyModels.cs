@@ -428,11 +428,22 @@ namespace DataHarvester
         public string sd_sid { get; set; }
         public int country_id { get; set; }
         public string country_name { get; set; }
+        public int? status_id { get; set; }
+        public string status { get; set; }
 
         public StudyCountry(string _sd_sid, string _country_name)
         {
             sd_sid = _sd_sid;
             country_name = _country_name;
+        }
+
+        public StudyCountry(string _sd_sid, string _country_name,
+                             int? _status_id, string _status)
+        {
+            sd_sid = _sd_sid;
+            country_name = _country_name;
+            status_id = _status_id;
+            status = _status;
         }
     }
 
